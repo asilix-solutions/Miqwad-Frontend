@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Eye, MapPin, Phone } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
-import { Badge } from "@shared/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import type { AdminProvider } from "../types";
 
 interface Props {

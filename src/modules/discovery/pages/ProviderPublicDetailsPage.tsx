@@ -14,7 +14,7 @@ import {
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { EmptyState } from "@shared/components/feedback/EmptyState";
-import { Badge } from "@shared/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@shared/components/ui/button";
 import { cn } from "@shared/lib/utils";
 import {

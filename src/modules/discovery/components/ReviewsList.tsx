@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Star, MessageSquareQuote } from "lucide-react";
 import type { ProviderReviewsResponse } from "../types";
-import { Badge } from "@shared/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Read-only reviews list used in the public provider details page.

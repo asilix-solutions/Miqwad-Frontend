@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { MapPin, Star, ShieldCheck, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@shared/lib/utils";
-import { Badge } from "@shared/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import type { NearbyProvider } from "../types";
 import { FavoriteButton } from "./FavoriteButton";
 

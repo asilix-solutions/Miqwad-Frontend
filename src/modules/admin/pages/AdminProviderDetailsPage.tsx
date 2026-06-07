@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, MapPin, Phone, Mail, Calendar, Clock } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
-import { Badge } from "@shared/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { useProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
