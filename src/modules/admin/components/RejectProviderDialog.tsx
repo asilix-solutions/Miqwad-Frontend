@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@shared/components/ui/button";
-import { Label } from "@shared/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@shared/components/ui/textarea";
 import {
   rejectProviderSchema,

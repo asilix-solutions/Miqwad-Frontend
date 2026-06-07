@@ -10,7 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@shared/components/ui/input";
-import { Label } from "@shared/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Button } from "@shared/components/ui/button";
 import { useToast } from "@shared/components/ui/toastContext";

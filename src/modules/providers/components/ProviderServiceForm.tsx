@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Input } from "@shared/components/ui/input";
-import { Label } from "@shared/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Select } from "@shared/components/ui/select";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Button } from "@shared/components/ui/button";

@@ -6,7 +6,7 @@ import { User as UserIcon, Wrench } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@shared/components/ui/input";
-import { Label } from "@shared/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Button } from "@shared/components/ui/button";
 import { Spinner } from "@shared/components/ui/spinner";
 import { useToast } from "@shared/components/ui/toastContext";

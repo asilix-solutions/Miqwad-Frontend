@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { Control, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { Label } from "@shared/components/ui/label";
+import { Label } from "@/components/ui/label";
 import { Select } from "@shared/components/ui/select";
 import { Spinner } from "@shared/components/ui/spinner";
 import { useBrandsQuery, useModelsQuery, useYearsQuery } from "../hooks/useBrandsModels";
