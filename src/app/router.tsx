@@ -1,0 +1,385 @@
+/**
+ * @file router.tsx
+ *
+ * Application route definitions with **route-level code splitting**.
+ *
+ * ## What changed
+ * All page-level components are now loaded via `React.lazy()` instead of
+ * eager top-level imports. This means Vite generates a separate chunk per
+ * page, and the browser only downloads a page's code when the user navigates
+ * to that route — dramatically reducing the initial bundle size.
+ *
+ * ## Suspense boundary strategy
+ * Rather than a single top-level `<Suspense>`, boundaries are placed at the
+ * **layout shell level** (guest routes, app/protected routes, provider routes,
+ * admin routes). This ensures that when navigating between pages *within the
+ * same layout*, only the page content area shows the loading spinner — the
+ * layout chrome (sidebar, header, bottom nav) stays mounted and visible.
+ *
+ * Each `<Suspense>` is wrapped in an `<ErrorBoundary>` to catch chunk-load
+ * failures (e.g. network errors during dynamic import) and render a
+ * recoverable error UI instead of a white screen.
+ *
+ * ## What stays eagerly imported
+ * - Layouts (`AppLayout`) — must render immediately as the shell
+ * - Guards (`ProtectedRoute`, `GuestRoute`, `RoleGuard`) — must evaluate
+ *   synchronously to redirect before any page renders
+ * - `PageLoader` & `ErrorBoundary` — must be available immediately as
+ *   fallback/catch UIs
+ */
+
+import { lazy, Suspense } from "react";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
+import { AppLayout } from "@shared/components/layout/AppLayout";
+import { GuestRoute } from "@shared/guards/GuestRoute";
+import { ProtectedRoute } from "@shared/guards/ProtectedRoute";
+import { RoleGuard } from "@shared/guards/RoleGuard";
+import { PageLoader } from "@shared/components/feedback/PageLoader";
+import { ErrorBoundary } from "@shared/components/error/ErrorBoundary";
+
+// ─── Auth Pages ───────────────────────────────────────────────────────────────
+const LoginPage = lazy(() =>
+  import("@modules/auth/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
+);
+const OtpPage = lazy(() =>
+  import("@modules/auth/pages/OtpPage").then((m) => ({ default: m.OtpPage }))
+);
+const RegisterPage = lazy(() =>
+  import("@modules/auth/pages/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  }))
+);
+const CompleteProfilePage = lazy(() =>
+  import("@modules/auth/pages/CompleteProfilePage").then((m) => ({
+    default: m.CompleteProfilePage,
+  }))
+);
+const ProfilePage = lazy(() =>
+  import("@modules/auth/pages/ProfilePage").then((m) => ({
+    default: m.ProfilePage,
+  }))
+);
+const DashboardPlaceholderPage = lazy(() =>
+  import("@modules/auth/pages/DashboardPlaceholderPage").then((m) => ({
+    default: m.DashboardPlaceholderPage,
+  }))
+);
+
+// ─── Vehicle Pages ────────────────────────────────────────────────────────────
+const VehiclesListPage = lazy(() =>
+  import("@modules/vehicles/pages/VehiclesListPage").then((m) => ({
+    default: m.VehiclesListPage,
+  }))
+);
+const AddVehiclePage = lazy(() =>
+  import("@modules/vehicles/pages/AddVehiclePage").then((m) => ({
+    default: m.AddVehiclePage,
+  }))
+);
+const EditVehiclePage = lazy(() =>
+  import("@modules/vehicles/pages/EditVehiclePage").then((m) => ({
+    default: m.EditVehiclePage,
+  }))
+);
+const VehicleDetailsPage = lazy(() =>
+  import("@modules/vehicles/pages/VehicleDetailsPage").then((m) => ({
+    default: m.VehicleDetailsPage,
+  }))
+);
+
+// ─── Service Pages ────────────────────────────────────────────────────────────
+const CategoriesPage = lazy(() =>
+  import("@modules/services/pages/CategoriesPage").then((m) => ({
+    default: m.CategoriesPage,
+  }))
+);
+
+// ─── Provider Pages ───────────────────────────────────────────────────────────
+const ProviderRegisterPage = lazy(() =>
+  import("@modules/providers/pages/ProviderRegisterPage").then((m) => ({
+    default: m.ProviderRegisterPage,
+  }))
+);
+const ProviderPendingPage = lazy(() =>
+  import("@modules/providers/pages/ProviderPendingPage").then((m) => ({
+    default: m.ProviderPendingPage,
+  }))
+);
+const ProviderServicesPage = lazy(() =>
+  import("@modules/providers/pages/ProviderServicesPage").then((m) => ({
+    default: m.ProviderServicesPage,
+  }))
+);
+const AddProviderServicePage = lazy(() =>
+  import("@modules/providers/pages/AddProviderServicePage").then((m) => ({
+    default: m.AddProviderServicePage,
+  }))
+);
+const EditProviderServicePage = lazy(() =>
+  import("@modules/providers/pages/EditProviderServicePage").then((m) => ({
+    default: m.EditProviderServicePage,
+  }))
+);
+
+// ─── Provider Onboarding Pages ────────────────────────────────────────────────
+const OnboardingLoadingPage = lazy(() =>
+  import("@modules/providers/onboarding/pages/OnboardingLoadingPage").then(
+    (m) => ({ default: m.OnboardingLoadingPage }),
+  )
+);
+const OnboardingAccountPage = lazy(() =>
+  import("@modules/providers/onboarding/pages/OnboardingAccountPage").then(
+    (m) => ({ default: m.OnboardingAccountPage }),
+  )
+);
+const OnboardingDocumentsPage = lazy(() =>
+  import("@modules/providers/onboarding/pages/OnboardingDocumentsPage").then(
+    (m) => ({ default: m.OnboardingDocumentsPage }),
+  )
+);
+const OnboardingReviewPage = lazy(() =>
+  import("@modules/providers/onboarding/pages/OnboardingReviewPage").then(
+    (m) => ({ default: m.OnboardingReviewPage }),
+  )
+);
+
+// ─── Admin Pages ──────────────────────────────────────────────────────────────
+const AdminProvidersPage = lazy(() =>
+  import("@modules/admin/pages/AdminProvidersPage").then((m) => ({
+    default: m.AdminProvidersPage,
+  }))
+);
+const AdminProviderDetailsPage = lazy(() =>
+  import("@modules/admin/pages/AdminProviderDetailsPage").then((m) => ({
+    default: m.AdminProviderDetailsPage,
+  }))
+);
+
+// ─── Discovery Pages ─────────────────────────────────────────────────────────
+const NearbyServicesPage = lazy(() =>
+  import("@modules/discovery/pages/NearbyServicesPage").then((m) => ({
+    default: m.NearbyServicesPage,
+  }))
+);
+const ProviderPublicDetailsPage = lazy(() =>
+  import("@modules/discovery/pages/ProviderPublicDetailsPage").then((m) => ({
+    default: m.ProviderPublicDetailsPage,
+  }))
+);
+const FavoritesPage = lazy(() =>
+  import("@modules/discovery/pages/FavoritesPage").then((m) => ({
+    default: m.FavoritesPage,
+  }))
+);
+
+// ─── Suspense wrapper helper ──────────────────────────────────────────────────
+
+/**
+ * Layout-level Suspense + ErrorBoundary wrapper used as a pathless route
+ * element. Renders an `<Outlet />` wrapped in `<ErrorBoundary>` and
+ * `<Suspense>` so that lazy-loaded child routes show a loading spinner
+ * only in the content area, while the parent layout shell stays mounted.
+ */
+function SuspenseOutlet() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Outlet />
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+/**
+ * App routes.
+ *
+ * Public (guest-only):
+ *   /login              - phone entry
+ *   /verify-otp         - 6-digit verification
+ *
+ * Authenticated:
+ *   /complete-profile   - one-off, gated by user.isProfileComplete
+ *
+ *   /app/*              - customer (or any logged-in user) area
+ *     /app/dashboard
+ *     /app/vehicles[...]
+ *     /app/services        - read-only categories grid
+ *     /app/profile
+ *
+ *   /provider/*         - provider area (role=provider)
+ *     /provider/register
+ *     /provider/pending
+ *     /provider/services
+ *     /provider/services/add
+ *     /provider/services/:id/edit
+ *
+ *   /admin/*            - admin area (role=admin)
+ *     /admin/providers
+ *     /admin/providers/:id
+ */
+export const router = createBrowserRouter([
+  { path: "/", element: <Navigate to="/app/dashboard" replace /> },
+
+  // ── Guest routes (login / OTP) ──────────────────────────────────────────
+  {
+    element: <GuestRoute />,
+    children: [
+      {
+        // Suspense boundary for guest/auth pages — covers login + OTP
+        element: <SuspenseOutlet />,
+        children: [
+          { path: "/login", element: <LoginPage /> },
+          { path: "/verify-otp", element: <OtpPage /> },
+          { path: "/register", element: <RegisterPage /> },
+        ],
+      },
+    ],
+  },
+
+  // ── Protected routes (authenticated users) ──────────────────────────────
+  {
+    element: <ProtectedRoute />,
+    children: [
+      // complete-profile sits outside AppLayout — gets its own Suspense
+      {
+        path: "/complete-profile",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <CompleteProfilePage />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
+
+      // Customer / general authenticated area
+      {
+        path: "/app",
+        element: <AppLayout />,
+        children: [
+          {
+            // Suspense boundary for all /app/* pages — layout shell stays mounted
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              { path: "dashboard", element: <DashboardPlaceholderPage /> },
+              { path: "profile", element: <ProfilePage /> },
+              { path: "services", element: <CategoriesPage /> },
+              { path: "vehicles", element: <VehiclesListPage /> },
+              { path: "vehicles/add", element: <AddVehiclePage /> },
+              { path: "vehicles/:id", element: <VehicleDetailsPage /> },
+              { path: "vehicles/:id/edit", element: <EditVehiclePage /> },
+              // Discovery (Sprint 4) — customer-only.
+              {
+                element: <RoleGuard allow={["customer", "driver"]} />,
+                children: [
+                  { path: "services/nearby", element: <NearbyServicesPage /> },
+                  {
+                    path: "services/providers/:id",
+                    element: <ProviderPublicDetailsPage />,
+                  },
+                  { path: "favorites", element: <FavoritesPage /> },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+
+      // Provider onboarding — full-width layout, no AppLayout chrome
+      {
+        path: "/provider/onboarding",
+        async lazy() {
+          const { OnboardingLayout } = await import(
+            "@modules/providers/onboarding/components/OnboardingLayout"
+          );
+          return { Component: OnboardingLayout };
+        },
+        children: [
+          {
+            element: <SuspenseOutlet />,
+            children: [
+              {
+                index: true,
+                element: <OnboardingLoadingPage />,
+                handle: { onboardingStep: "loading" },
+              },
+              {
+                path: "account",
+                element: <OnboardingAccountPage />,
+                handle: { onboardingStep: "account" },
+              },
+              {
+                path: "documents",
+                element: <OnboardingDocumentsPage />,
+                handle: { onboardingStep: "documents" },
+              },
+              {
+                path: "review",
+                element: <OnboardingReviewPage />,
+                handle: { onboardingStep: "review" },
+              },
+            ],
+          },
+        ],
+      },
+
+      // Provider area — any authenticated user can hit /provider/register
+      // to upgrade to a provider, but /provider/services etc require role=provider.
+      {
+        path: "/provider",
+        element: <AppLayout />,
+        children: [
+          {
+            // Suspense boundary for all /provider/* pages
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="services" replace /> },
+              { path: "register", element: <ProviderRegisterPage /> },
+              {
+                element: <RoleGuard allow={["provider"]} />,
+                children: [
+                  { path: "pending", element: <ProviderPendingPage /> },
+                  { path: "services", element: <ProviderServicesPage /> },
+                  { path: "services/add", element: <AddProviderServicePage /> },
+                  {
+                    path: "services/:id/edit",
+                    element: <EditProviderServicePage />,
+                  },
+                  { path: "profile", element: <ProfilePage /> },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+
+      // Admin area — locked to role=admin only.
+      {
+        path: "/admin",
+        element: <AppLayout />,
+        children: [
+          {
+            // Suspense boundary for all /admin/* pages
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="providers" replace /> },
+              {
+                element: <RoleGuard allow={["admin"]} />,
+                children: [
+                  { path: "providers", element: <AdminProvidersPage /> },
+                  {
+                    path: "providers/:id",
+                    element: <AdminProviderDetailsPage />,
+                  },
+                  { path: "profile", element: <ProfilePage /> },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  { path: "*", element: <Navigate to="/login" replace /> },
+]);
