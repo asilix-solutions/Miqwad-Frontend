@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@shared/components/ui/toastContext";
 import { VehicleForm } from "../components/VehicleForm";
 import { useCreateVehicleMutation } from "../hooks/useVehicleMutations";

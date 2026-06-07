@@ -1,7 +1,7 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { useToast } from "@shared/components/ui/toastContext";

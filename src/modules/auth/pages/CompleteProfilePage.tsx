@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { User as UserIcon, Wrench } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
-import { Card, CardContent } from "@shared/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
 import { Button } from "@shared/components/ui/button";

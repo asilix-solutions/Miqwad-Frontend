@@ -1,7 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAppSelector } from "@app/store";
-import { Card, CardContent } from "@shared/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@shared/components/feedback/EmptyState";
 
 /**

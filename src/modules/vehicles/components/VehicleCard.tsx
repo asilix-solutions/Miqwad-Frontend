@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Car, Eye, Pencil, Trash2, Fuel, Gauge } from "lucide-react";
-import { Card } from "@shared/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@shared/components/ui/button";
 import type { Vehicle } from "../types";
 
