@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Search, SlidersHorizontal, X, RotateCcw } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
-import { Input } from "@shared/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Select } from "@shared/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@shared/lib/utils";

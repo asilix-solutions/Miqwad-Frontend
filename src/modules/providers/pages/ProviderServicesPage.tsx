@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Plus, Search, Wrench } from "lucide-react";
 import { Button } from "@shared/components/ui/button";
-import { Input } from "@shared/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { EmptyState } from "@shared/components/feedback/EmptyState";
