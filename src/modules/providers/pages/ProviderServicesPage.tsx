@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@shared/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { setServicesSearch } from "../store/providersSlice";
 import { useProviderServicesQuery } from "../hooks/useProviderQueries";

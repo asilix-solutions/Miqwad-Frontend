@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogBody,
   DialogFooter,
-} from "@shared/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { Button } from "@shared/components/ui/button";
 import type { Vehicle } from "../types";
 

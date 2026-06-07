@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogBody,
   DialogFooter,
-} from "@shared/components/ui/dialog";
+} from "@/components/ui/dialog";
 import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
 import { Textarea } from "@shared/components/ui/textarea";
