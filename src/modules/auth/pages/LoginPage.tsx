@@ -5,7 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@shared/components/ui/toastContext";
 import { phoneSchema, type PhoneFormValues } from "../schemas/auth.schemas";
 import { useRegisterMutation } from "../hooks/useAuthMutations";

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { resetRegisterDraft } from "../store/providersSlice";
 import { ProviderRegisterStepper } from "../components/ProviderRegisterStepper";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 /**
  * /provider/register — entry point used both for first-time provider

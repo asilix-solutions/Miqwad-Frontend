@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { useAppSelector } from "@app/store";

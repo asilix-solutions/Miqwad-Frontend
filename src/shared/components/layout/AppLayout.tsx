@@ -16,7 +16,7 @@ import {
   MapPin,
   Heart,
 } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { logout } from "@modules/auth/store/authSlice";
 import { authApi } from "@modules/auth/api/authApi";

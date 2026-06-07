@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { FileUpload, type PickedFile } from "@shared/components/ui/fileUpload";
 import type { KycDocumentType, ProviderDocument } from "../types";
 

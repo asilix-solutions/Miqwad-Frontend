@@ -4,7 +4,7 @@ import { Heart } from "lucide-react";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { EmptyState } from "@shared/components/feedback/EmptyState";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useFavoritesQuery, useNearbySearchQuery } from "../hooks/useDiscoveryQueries";
 import { NearbyProviderCard } from "../components/NearbyProviderCard";

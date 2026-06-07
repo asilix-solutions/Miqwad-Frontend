@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Clock, Edit, Tag, Trash2 } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { ProviderService } from "../types";
 

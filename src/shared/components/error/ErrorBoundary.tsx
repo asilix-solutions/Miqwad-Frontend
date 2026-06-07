@@ -18,7 +18,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 // ---------------------------------------------------------------------------
 // Props & State Interfaces

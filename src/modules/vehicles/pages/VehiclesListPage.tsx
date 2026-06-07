@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Car, Plus, Search } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@shared/components/ui/select";
 import { LoadingState } from "@shared/components/feedback/LoadingState";

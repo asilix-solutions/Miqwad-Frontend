@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import type { ProviderRegisterDraft } from "../store/providersSlice";
 

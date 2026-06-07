@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useAppSelector } from "@app/store";
 import { useToast } from "@shared/components/ui/toastContext";

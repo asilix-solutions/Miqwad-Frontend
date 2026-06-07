@@ -28,7 +28,7 @@ import { useTranslation } from "react-i18next";
 import { Clock, FileText, Info, AlertTriangle, RotateCcw } from "lucide-react";
 import { useReviewStatus } from "../hooks/useReviewStatus";
 import { ReviewTimeline } from "../components/ReviewTimeline";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import type { OnboardingStepKey } from "../types";
 
 // ---------------------------------------------------------------------------

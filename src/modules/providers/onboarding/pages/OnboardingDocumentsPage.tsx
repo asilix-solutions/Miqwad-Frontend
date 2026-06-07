@@ -30,7 +30,7 @@ import { Plus, AlertTriangle, RotateCcw, ArrowRight } from "lucide-react";
 import { useDocumentUpload } from "../hooks/useDocumentUpload";
 import { DocumentRow } from "../components/DocumentRow";
 import { DocumentDropzone } from "../components/DocumentDropzone";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import type { OnboardingStepKey, UploadDoc } from "../types";
 
 // ---------------------------------------------------------------------------

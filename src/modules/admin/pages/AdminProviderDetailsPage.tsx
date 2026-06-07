@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, MapPin, Phone, Mail, Calendar, Clock } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";

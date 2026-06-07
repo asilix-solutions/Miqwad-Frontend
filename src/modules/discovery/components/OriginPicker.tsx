@@ -3,7 +3,7 @@ import { MapPin, Crosshair } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { setOrigin } from "../store/discoverySlice";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { KSA_CITIES } from "../types";
 import { cn } from "@shared/lib/utils";
 

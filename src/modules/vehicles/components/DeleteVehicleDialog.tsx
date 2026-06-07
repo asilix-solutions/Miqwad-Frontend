@@ -9,7 +9,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import type { Vehicle } from "../types";
 
 interface Props {

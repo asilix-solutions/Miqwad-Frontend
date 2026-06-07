@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, Navigate } from "react-router-dom";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ProviderStatusBanner } from "../components/ProviderStatusBanner";
 import { useAppSelector } from "@app/store";
 

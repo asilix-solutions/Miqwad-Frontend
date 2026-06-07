@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { MapPinOff } from "lucide-react";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@app/store";
 import { resetFilters, setRadius } from "../store/discoverySlice";
 

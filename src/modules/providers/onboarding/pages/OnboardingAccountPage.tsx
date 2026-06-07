@@ -25,7 +25,7 @@ import { useTranslation } from "react-i18next";
 import { Check, AlertTriangle, RotateCcw } from "lucide-react";
 import { useAccountSummary } from "../hooks/useAccountSummary";
 import { AccountSummaryCard } from "../components/AccountSummaryCard";
-import { Button } from "@shared/components/ui/button";
+import { Button } from "@/components/ui/button";
 import type { OnboardingStepKey } from "../types";
 
 // ---------------------------------------------------------------------------
