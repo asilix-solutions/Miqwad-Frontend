@@ -3,7 +3,7 @@ import type { Control, FieldErrors, UseFormSetValue, UseFormWatch } from "react-
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
-import { Select } from "@shared/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@shared/components/ui/spinner";
 import { useBrandsQuery, useModelsQuery, useYearsQuery } from "../hooks/useBrandsModels";
 import type { VehicleFormValues } from "../schemas/vehicles.schemas";
@@ -64,18 +64,21 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
           control={control}
           render={({ field }) => (
             <Select
-              id="brand"
-              value={field.value || ""}
-              invalid={!!errors.brandId}
-              onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+              value={field.value ? String(field.value) : "none"}
+              onValueChange={(val) => field.onChange(val === "none" ? 0 : Number(val))}
               disabled={brandsQuery.isLoading}
             >
-              <option value="">{t("common.select")}</option>
-              {brandsQuery.data?.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
+              <SelectTrigger id="brand" aria-invalid={!!errors.brandId}>
+                <SelectValue placeholder={t("common.select")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t("common.select")}</SelectItem>
+                {brandsQuery.data?.map((b) => (
+                  <SelectItem key={b.id} value={String(b.id)}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         />
@@ -97,20 +100,23 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
           control={control}
           render={({ field }) => (
             <Select
-              id="model"
-              value={field.value || ""}
-              invalid={!!errors.modelId}
-              onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+              value={field.value ? String(field.value) : "none"}
+              onValueChange={(val) => field.onChange(val === "none" ? 0 : Number(val))}
               disabled={!brandId || modelsQuery.isFetching}
             >
-              <option value="">
-                {!brandId ? t("vehicles.pickBrandFirst") : t("common.select")}
-              </option>
-              {modelsQuery.data?.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
+              <SelectTrigger id="model" aria-invalid={!!errors.modelId}>
+                <SelectValue placeholder={!brandId ? t("vehicles.pickBrandFirst") : t("common.select")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  {!brandId ? t("vehicles.pickBrandFirst") : t("common.select")}
+                </SelectItem>
+                {modelsQuery.data?.map((m) => (
+                  <SelectItem key={m.id} value={String(m.id)}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         />
@@ -132,20 +138,23 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
           control={control}
           render={({ field }) => (
             <Select
-              id="year"
-              value={field.value || ""}
-              invalid={!!errors.year}
-              onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+              value={field.value ? String(field.value) : "none"}
+              onValueChange={(val) => field.onChange(val === "none" ? 0 : Number(val))}
               disabled={!modelId || yearsQuery.isFetching}
             >
-              <option value="">
-                {!modelId ? t("vehicles.pickModelFirst") : t("common.select")}
-              </option>
-              {yearsQuery.data?.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
+              <SelectTrigger id="year" aria-invalid={!!errors.year}>
+                <SelectValue placeholder={!modelId ? t("vehicles.pickModelFirst") : t("common.select")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  {!modelId ? t("vehicles.pickModelFirst") : t("common.select")}
+                </SelectItem>
+                {yearsQuery.data?.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           )}
         />
