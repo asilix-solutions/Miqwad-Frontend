@@ -2,7 +2,13 @@ import { useTranslation } from "react-i18next";
 import { Search, SlidersHorizontal, X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@shared/lib/utils";
 import { useAppDispatch, useAppSelector } from "@app/store";
@@ -88,17 +94,22 @@ export function NearbyFilters({
       {/* Category */}
       <FilterBlock label={t("discovery.filters.category")}>
         <Select
-          value={f.categoryId == null ? "" : String(f.categoryId)}
-          onChange={(e) =>
-            dispatch(setCategory(e.target.value === "" ? null : Number(e.target.value)))
+          value={f.categoryId == null ? "all" : String(f.categoryId)}
+          onValueChange={(val) =>
+            dispatch(setCategory(val === "all" ? null : Number(val)))
           }
         >
-          <option value="">{t("discovery.filters.anyCategory")}</option>
-          {(categoriesQ.data ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {isAr ? c.nameAr : c.nameEn}
-            </option>
-          ))}
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("discovery.filters.anyCategory")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("discovery.filters.anyCategory")}</SelectItem>
+            {(categoriesQ.data ?? []).map((c) => (
+              <SelectItem key={c.id} value={String(c.id)}>
+                {isAr ? c.nameAr : c.nameEn}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </FilterBlock>
 
