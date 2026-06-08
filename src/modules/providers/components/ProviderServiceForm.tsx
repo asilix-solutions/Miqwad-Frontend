@@ -1,10 +1,16 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@shared/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
@@ -48,6 +54,7 @@ export function ProviderServiceForm({
     defaultValues: toFormValues(defaultValues),
   });
   const {
+    control,
     register,
     handleSubmit,
     watch,
@@ -90,24 +97,35 @@ export function ProviderServiceForm({
 
         <div>
           <Label htmlFor="categoryId">{t("providers.services.fields.category")}</Label>
-          <Select
-            id="categoryId"
-            invalid={!!errors.categoryId}
-            {...register("categoryId", {
-              setValueAs: (v: unknown) =>
-                v === "" || v === null || v === undefined
-                  ? Number.NaN
-                  : Number(v),
-              onChange: () => setValue("subcategoryId", null),
-            })}
-          >
-            <option value="">{t("common.select")}</option>
-            {categoriesQ.data?.map((c) => (
-              <option key={c.id} value={c.id}>
-                {isAr ? c.nameAr : c.nameEn}
-              </option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name="categoryId"
+            render={({ field }) => (
+              <Select
+                value={Number.isNaN(field.value) ? "none" : String(field.value)}
+                onValueChange={(v) => {
+                  field.onChange(v === "none" ? Number.NaN : Number(v));
+                  setValue("subcategoryId", null);
+                }}
+              >
+                <SelectTrigger
+                  id="categoryId"
+                  aria-invalid={!!errors.categoryId}
+                  className="w-full"
+                >
+                  <SelectValue placeholder={t("common.select")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("common.select")}</SelectItem>
+                  {categoriesQ.data?.map((c) => (
+                    <SelectItem key={c.id} value={String(c.id)}>
+                      {isAr ? c.nameAr : c.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.categoryId && (
             <p className="mt-1 text-xs text-danger-500">
               {t(errors.categoryId.message ?? "common.requiredField")}
@@ -120,25 +138,45 @@ export function ProviderServiceForm({
             {t("providers.services.fields.subcategory")}{" "}
             <span className="text-ink-400 text-xs">({t("common.optional")})</span>
           </Label>
-          <Select
-            id="subcategoryId"
-            disabled={!validCategoryId || subcategoriesQ.isLoading}
-            {...register("subcategoryId", {
-              setValueAs: (v: unknown) =>
-                v === "" || v === null || v === undefined ? null : Number(v),
-            })}
-          >
-            <option value="">
-              {!validCategoryId
-                ? t("providers.services.pickCategoryFirst")
-                : t("common.select")}
-            </option>
-            {subcategoriesQ.data?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {isAr ? s.nameAr : s.nameEn}
-              </option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name="subcategoryId"
+            render={({ field }) => (
+              <Select
+                value={field.value === null ? "none" : String(field.value)}
+                onValueChange={(v) => {
+                  field.onChange(v === "none" ? null : Number(v));
+                }}
+                disabled={!validCategoryId || subcategoriesQ.isLoading}
+              >
+                <SelectTrigger
+                  id="subcategoryId"
+                  aria-invalid={!!errors.subcategoryId}
+                  className="w-full"
+                >
+                  <SelectValue
+                    placeholder={
+                      !validCategoryId
+                        ? t("providers.services.pickCategoryFirst")
+                        : t("common.select")
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    {!validCategoryId
+                      ? t("providers.services.pickCategoryFirst")
+                      : t("common.select")}
+                  </SelectItem>
+                  {subcategoriesQ.data?.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>
+                      {isAr ? s.nameAr : s.nameEn}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
         <div>
