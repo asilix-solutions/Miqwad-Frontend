@@ -1,10 +1,16 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   vehicleSchema,
@@ -175,13 +181,28 @@ export function VehicleForm({
 
           <div>
             <Label htmlFor="fuelType">{t("vehicles.fields.fuelType")}</Label>
-            <Select id="fuelType" {...register("fuelType")}>
-              <option value="">{t("common.select")}</option>
-              <option value="gasoline">{t("vehicles.fields.fuelGasoline")}</option>
-              <option value="diesel">{t("vehicles.fields.fuelDiesel")}</option>
-              <option value="hybrid">{t("vehicles.fields.fuelHybrid")}</option>
-              <option value="electric">{t("vehicles.fields.fuelElectric")}</option>
-            </Select>
+            <Controller
+              control={control}
+              name="fuelType"
+              render={({ field }) => (
+                <Select
+                  value={field.value || "none"}
+                  onValueChange={(val) => field.onChange(val === "none" ? "" : val)}
+                  disabled={field.disabled}
+                >
+                  <SelectTrigger id="fuelType" aria-invalid={!!errors.fuelType}>
+                    <SelectValue placeholder={t("common.select")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t("common.select")}</SelectItem>
+                    <SelectItem value="gasoline">{t("vehicles.fields.fuelGasoline")}</SelectItem>
+                    <SelectItem value="diesel">{t("vehicles.fields.fuelDiesel")}</SelectItem>
+                    <SelectItem value="hybrid">{t("vehicles.fields.fuelHybrid")}</SelectItem>
+                    <SelectItem value="electric">{t("vehicles.fields.fuelElectric")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
           <div>
             <Label htmlFor="imageUrl">

@@ -4,7 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Car, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@shared/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
 import { ErrorState } from "@shared/components/feedback/ErrorState";
 import { EmptyState } from "@shared/components/feedback/EmptyState";
@@ -96,19 +102,23 @@ export function VehiclesListPage() {
           />
         </div>
         <Select
-          value={filters.fuelType}
-          onChange={(e) =>
+          value={filters.fuelType || "all"}
+          onValueChange={(val) =>
             dispatch(setListFilters({
-              fuelType: e.target.value as typeof filters.fuelType,
+              fuelType: (val === "all" ? "" : val) as typeof filters.fuelType,
             }))
           }
-          aria-label={t("vehicles.fields.fuelType")}
         >
-          <option value="">{t("vehicles.filterAll")}</option>
-          <option value="gasoline">{t("vehicles.fields.fuelGasoline")}</option>
-          <option value="diesel">{t("vehicles.fields.fuelDiesel")}</option>
-          <option value="hybrid">{t("vehicles.fields.fuelHybrid")}</option>
-          <option value="electric">{t("vehicles.fields.fuelElectric")}</option>
+          <SelectTrigger aria-label={t("vehicles.fields.fuelType")} className="w-full">
+            <SelectValue placeholder={t("vehicles.filterAll")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("vehicles.filterAll")}</SelectItem>
+            <SelectItem value="gasoline">{t("vehicles.fields.fuelGasoline")}</SelectItem>
+            <SelectItem value="diesel">{t("vehicles.fields.fuelDiesel")}</SelectItem>
+            <SelectItem value="hybrid">{t("vehicles.fields.fuelHybrid")}</SelectItem>
+            <SelectItem value="electric">{t("vehicles.fields.fuelElectric")}</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
