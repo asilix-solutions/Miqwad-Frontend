@@ -3,7 +3,7 @@
  * once the .NET implementation matches the MVP spec.
  */
 
-export type UserRole = "customer" | "provider" | "driver" | "admin";
+export type UserRole = "customer" | "provider" | "driver" | "admin" | "super_admin";
 
 /**
  * Provider KYC state stored on the user object so the router
@@ -25,6 +25,16 @@ export interface User {
   providerStatus?: ProviderStatus | null;
   /** Optional rejection reason set by an admin. */
   providerRejectionReason?: string | null;
+  /**
+   * Granular permission codes for role-based access control.
+   *
+   * Optional so that existing User objects (e.g. deserialized from
+   * localStorage before this field existed) degrade gracefully —
+   * `undefined` is treated as "no permissions" by `hasPermission()`.
+   * The auth boundary (login/verify-otp) should always populate this
+   * field; downstream code must never assume it is present.
+   */
+  permissions?: string[];
 }
 
 export interface AuthTokens {
