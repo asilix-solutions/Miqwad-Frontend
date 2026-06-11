@@ -485,6 +485,15 @@ const ar = {
     description: "لوحة التحكم الحالية مخصصة لمسؤولي النظام فقط. إن كنت تبحث عن خدمات مقود للعملاء فستتوفر قريبًا.",
     logout: "تسجيل الخروج",
   },
+  adminNav: {
+    dashboard: "لوحة التحكم",
+    providers: "المزودون",
+    users: "المستخدمون",
+    finance: "المالية",
+    escrow: "الضمان والنزاعات",
+    audit: "التدقيق",
+    settings: "الإعدادات",
+  },
 };
 
 const en: typeof ar = {
@@ -969,6 +978,15 @@ const en: typeof ar = {
     title: "This app is for administrators",
     description: "The current dashboard is restricted to system administrators. If you are looking for Maqwad customer services, they will be available soon.",
     logout: "Sign out",
+  },
+  adminNav: {
+    dashboard: "Dashboard",
+    providers: "Providers",
+    users: "Users",
+    finance: "Finance",
+    escrow: "Escrow & Disputes",
+    audit: "Audit Log",
+    settings: "Settings",
   },
 };
 
