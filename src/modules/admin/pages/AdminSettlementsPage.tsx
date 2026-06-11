@@ -5,6 +5,7 @@ import { useSettlementsQuery } from "../hooks/useAdminQueries";
 import type { SettlementStatus, SettlementRecord } from "../types";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
+import { formatCurrency } from "@shared/lib/formatCurrency";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,7 +78,7 @@ export function AdminSettlementsPage() {
         header: t("superAdmin.finance.settlements.columns.amount"),
         render: (row) => (
           <span className="tabular-nums font-medium text-[var(--color-ink-body)]">
-            {row.amount.toLocaleString("en-US")} ر.س
+            {formatCurrency(row.amount, i18n.language)}
           </span>
         ),
       },

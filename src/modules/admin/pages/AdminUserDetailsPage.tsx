@@ -90,7 +90,7 @@ export function AdminUserDetailsPage() {
         </h2>
         <Button asChild variant="outline">
           <Link to="/admin/users">
-            <BackIcon className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
+            <BackIcon className="w-4 h-4 me-2" />
             {t("superAdmin.users.detail.backToUsers")}
           </Link>
         </Button>

@@ -2,12 +2,13 @@ import { useTranslation } from "react-i18next";
 import { Users, Store, Clock, ShieldAlert, Wallet, AlertCircle } from "lucide-react";
 import { useDashboardStatsQuery } from "../hooks/useAdminQueries";
 import { StatCard } from "../components/dashboard/StatCard";
+import { formatCurrency } from "@shared/lib/formatCurrency";
 
 /**
  * Super Admin Dashboard overview page.
  */
 export function AdminDashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isLoading, isError, refetch } = useDashboardStatsQuery();
 
   if (isError) {
@@ -24,11 +25,6 @@ export function AdminDashboardPage() {
       </div>
     );
   }
-
-  const formatCurrency = (value: number | undefined) => {
-    if (value === undefined) return "0";
-    return new Intl.NumberFormat("en-US").format(value) + " ر.س";
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -72,7 +68,7 @@ export function AdminDashboardPage() {
         />
         <StatCard
           title={t("superAdmin.dashboard.monthlyRevenue")}
-          value={isLoading ? 0 : formatCurrency(data?.monthlyRevenue)}
+          value={isLoading ? 0 : formatCurrency(data?.monthlyRevenue, i18n.language)}
           icon={Wallet}
           tone="neutral"
           isLoading={isLoading}
