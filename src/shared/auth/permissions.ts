@@ -63,6 +63,22 @@ export const PERMISSIONS = {
     delete: "cities.delete",
   },
 
+  // ── Brands ─────────────────────────────────────────────────────────────────
+  brands: {
+    view: "brands.view",
+    create: "brands.create",
+    edit: "brands.edit",
+    delete: "brands.delete",
+  },
+
+  // ── Models ─────────────────────────────────────────────────────────────────
+  models: {
+    view: "models.view",
+    create: "models.create",
+    edit: "models.edit",
+    delete: "models.delete",
+  },
+
   // ── Finance ────────────────────────────────────────────────────────────────
   finance: {
     view: "finance.view",

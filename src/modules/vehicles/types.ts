@@ -23,11 +23,15 @@ export type FuelType = "gasoline" | "diesel" | "hybrid" | "electric";
 export interface Brand {
   id: number;
   name: string;
+  nameAr: string;
+  nameEn: string;
 }
 
 export interface VehicleModel {
   id: number;
   name: string;
+  nameAr: string;
+  nameEn: string;
 }
 
 export interface Vehicle {

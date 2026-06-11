@@ -2,6 +2,7 @@ import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
 import type { ServiceCategory } from "@modules/services/types";
+import type { Brand, VehicleModel } from "@modules/vehicles/types";
 
 /**
  * Admin transport layer.
@@ -123,6 +124,38 @@ export const adminApi = {
 
   deleteCity: async (id: string): Promise<void> => {
     await apiClient.delete(`/admin/cities/${id}`);
+  },
+
+  // ── Vehicle Brands ─────────────────────────────────────────────────────────
+
+  createBrand: async (payload: Omit<Brand, "id" | "name">): Promise<Brand> => {
+    const { data } = await apiClient.post<Brand>("/admin/brands", payload);
+    return data;
+  },
+
+  updateBrand: async (id: number, payload: Partial<Omit<Brand, "id" | "name">>): Promise<Brand> => {
+    const { data } = await apiClient.put<Brand>(`/admin/brands/${id}`, payload);
+    return data;
+  },
+
+  deleteBrand: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/brands/${id}`);
+  },
+
+  // ── Vehicle Models ─────────────────────────────────────────────────────────
+
+  createModel: async (brandId: number, payload: Omit<VehicleModel, "id" | "name">): Promise<VehicleModel> => {
+    const { data } = await apiClient.post<VehicleModel>(`/admin/brands/${brandId}/models`, payload);
+    return data;
+  },
+
+  updateModel: async (brandId: number, modelId: number, payload: Partial<Omit<VehicleModel, "id" | "name">>): Promise<VehicleModel> => {
+    const { data } = await apiClient.put<VehicleModel>(`/admin/brands/${brandId}/models/${modelId}`, payload);
+    return data;
+  },
+
+  deleteModel: async (brandId: number, modelId: number): Promise<void> => {
+    await apiClient.delete(`/admin/brands/${brandId}/models/${modelId}`);
   },
 };
 

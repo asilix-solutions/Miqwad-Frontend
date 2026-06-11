@@ -83,3 +83,31 @@ export const citySchema = z.object({
 });
 
 export type CityFormValues = z.infer<typeof citySchema>;
+
+/** Schema used by the admin brand create/edit dialog. */
+export const brandSchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+});
+
+export type BrandFormValues = z.infer<typeof brandSchema>;
+
+/** Schema used by the admin model create/edit dialog. */
+export const modelSchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+});
+
+export type ModelFormValues = z.infer<typeof modelSchema>;
