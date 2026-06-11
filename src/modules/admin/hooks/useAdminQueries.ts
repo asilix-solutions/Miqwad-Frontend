@@ -11,6 +11,7 @@ export const adminKeys = {
   providers: (status?: AdminProviderStatus) =>
     [...adminKeys.all, "providers", status ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
+  user: (id: string) => [...adminKeys.all, "user", id] as const,
 };
 
 export function useDashboardStatsQuery() {
@@ -52,6 +53,36 @@ export function useRejectProviderMutation() {
       adminApi.rejectProvider(input.providerId, input.reason),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.all });
+    },
+  });
+}
+
+export function useUserQuery(id: string) {
+  return useQuery({
+    queryKey: adminKeys.user(id),
+    queryFn: () => adminApi.getUser(id),
+  });
+}
+
+export function useSuspendUserMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { userId: string; reason: string }) =>
+      adminApi.suspendUser(input.userId, input.reason),
+    onSuccess: (_, input) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.user(input.userId) });
+    },
+  });
+}
+
+export function useRestoreUserMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => adminApi.restoreUser(userId),
+    onSuccess: (_, userId) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.user(userId) });
     },
   });
 }

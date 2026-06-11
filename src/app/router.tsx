@@ -197,6 +197,11 @@ const AdminUsersPage = lazy(() =>
     default: m.AdminUsersPage,
   }))
 );
+const AdminUserDetailsPage = lazy(() =>
+  import("@modules/admin/pages/AdminUserDetailsPage").then((m) => ({
+    default: m.AdminUserDetailsPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -430,7 +435,10 @@ export const router = createBrowserRouter([
                   {
                     path: "users",
                     element: <PermissionGuard permission="users.view" />,
-                    children: [{ index: true, element: <AdminUsersPage /> }],
+                    children: [
+                      { index: true, element: <AdminUsersPage /> },
+                      { path: ":id", element: <AdminUserDetailsPage /> },
+                    ],
                   },
                   { path: "providers", element: <AdminProvidersPage /> },
                   {

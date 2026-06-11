@@ -228,6 +228,48 @@ export async function tryAdminMock(
     return ok(config, response);
   }
 
+  // -- GET /admin/users/:id ---------------------------------------------------
+  if (url.startsWith("admin/users/") && method === "get" && !url.includes("/suspend") && !url.includes("/restore")) {
+    requireAdmin(config);
+    const id = url.split("/")[2];
+    const user = SEED_USERS.find((u) => u.id === id);
+    if (!user) throw fail(config, 404, "NOT_FOUND", "المستخدم غير موجود");
+    
+    // AdminUserDetail stub
+    const detail = {
+      ...user,
+      createdAt: new Date("2025-01-01T10:00:00Z").toISOString(),
+      lastActiveAt: new Date().toISOString(),
+      email: `${user.id}@example.com`,
+      ordersCount: Math.floor(Math.random() * 50),
+    };
+    return ok(config, detail);
+  }
+
+  // -- POST /admin/users/:id/suspend ------------------------------------------
+  if (url.startsWith("admin/users/") && url.endsWith("/suspend") && method === "post") {
+    requireAdmin(config);
+    const id = url.split("/")[2];
+    const userIdx = SEED_USERS.findIndex((u) => u.id === id);
+    if (userIdx === -1) throw fail(config, 404, "NOT_FOUND", "المستخدم غير موجود");
+    
+    // Mutate in-memory mock state
+    SEED_USERS[userIdx] = { ...SEED_USERS[userIdx], status: "suspended" };
+    return ok(config, SEED_USERS[userIdx]);
+  }
+
+  // -- POST /admin/users/:id/restore ------------------------------------------
+  if (url.startsWith("admin/users/") && url.endsWith("/restore") && method === "post") {
+    requireAdmin(config);
+    const id = url.split("/")[2];
+    const userIdx = SEED_USERS.findIndex((u) => u.id === id);
+    if (userIdx === -1) throw fail(config, 404, "NOT_FOUND", "المستخدم غير موجود");
+    
+    // Mutate in-memory mock state
+    SEED_USERS[userIdx] = { ...SEED_USERS[userIdx], status: "active" };
+    return ok(config, SEED_USERS[userIdx]);
+  }
+
   // Not ours — let the next handler / real backend deal with it.
   return null;
 }

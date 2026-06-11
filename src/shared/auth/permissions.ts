@@ -124,8 +124,10 @@ export const PERMISSIONS = {
  * const canView: boolean = hasPermission(user.permissions, PERMISSIONS.providers.view);
  * ```
  */
-export type PermissionCode =
-  (typeof PERMISSIONS)[keyof typeof PERMISSIONS][keyof (typeof PERMISSIONS)[keyof typeof PERMISSIONS]];
+type ObjectValues<T> = T[keyof T];
+export type PermissionCode = ObjectValues<{
+  [K in keyof typeof PERMISSIONS]: ObjectValues<typeof PERMISSIONS[K]>
+}>;
 
 // =============================================================================
 // Wildcard sentinel

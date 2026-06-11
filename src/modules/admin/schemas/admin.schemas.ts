@@ -9,3 +9,13 @@ export const rejectProviderSchema = z.object({
 });
 
 export type RejectProviderFormValues = z.infer<typeof rejectProviderSchema>;
+
+/** Schema used by the admin suspend user dialog. */
+export const suspendUserSchema = z.object({
+  reason: z
+    .string()
+    .min(3, { message: "common.requiredField" })
+    .max(500),
+});
+
+export type SuspendUserFormValues = z.infer<typeof suspendUserSchema>;
