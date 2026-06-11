@@ -217,14 +217,9 @@ const AdminDisputeDetailsPage = lazy(() =>
     default: m.AdminDisputeDetailsPage,
   }))
 );
-const AdminCategoriesPage = lazy(() =>
-  import("@modules/admin/pages/AdminCategoriesPage").then((m) => ({
-    default: m.AdminCategoriesPage,
-  }))
-);
-const AdminCitiesPage = lazy(() =>
-  import("@modules/admin/pages/AdminCitiesPage").then((m) => ({
-    default: m.AdminCitiesPage,
+const AdminReferenceDataPage = lazy(() =>
+  import("@modules/admin/pages/AdminReferenceDataPage").then((m) => ({
+    default: m.AdminReferenceDataPage,
   }))
 );
 
@@ -489,18 +484,22 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
-                    path: "categories",
+                    // Reference Data — consolidated container (categories + cities)
+                    path: "reference",
                     element: <PermissionGuard permission="categories.view" />,
                     children: [
-                      { index: true, element: <AdminCategoriesPage /> },
+                      { index: true, element: <AdminReferenceDataPage /> },
                     ],
                   },
                   {
+                    // Legacy redirect: /admin/categories → /admin/reference?tab=categories
+                    path: "categories",
+                    element: <Navigate to="/admin/reference?tab=categories" replace />,
+                  },
+                  {
+                    // Legacy redirect: /admin/cities → /admin/reference?tab=cities
                     path: "cities",
-                    element: <PermissionGuard permission="cities.view" />,
-                    children: [
-                      { index: true, element: <AdminCitiesPage /> },
-                    ],
+                    element: <Navigate to="/admin/reference?tab=cities" replace />,
                   },
                   { path: "profile", element: <ProfilePage /> },
                 ],

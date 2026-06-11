@@ -495,10 +495,19 @@ const ar = {
     escrow: "الضمان والنزاعات",
     audit: "التدقيق",
     settings: "الإعدادات",
+    reference: "البيانات المرجعية",
     categories: "البيانات المرجعية",
     cities: "المدن",
   },
   superAdmin: {
+    reference: {
+      title: "البيانات المرجعية",
+      subtitle: "إدارة التصنيفات والمدن والبيانات الثابتة للمنصة",
+      tabs: {
+        categories: "التصنيفات",
+        cities: "المدن",
+      },
+    },
     dashboard: {
       title: "لوحة التحكم",
       subtitle: "نظرة عامة على أداء المنصة والإحصائيات الرئيسية",
@@ -1308,10 +1317,19 @@ const en: typeof ar = {
     escrow: "Escrow & Disputes",
     audit: "Audit Log",
     settings: "Settings",
+    reference: "Reference Data",
     categories: "Reference Data",
     cities: "Cities",
   },
   superAdmin: {
+    reference: {
+      title: "Reference Data",
+      subtitle: "Manage categories, cities, and other platform reference data",
+      tabs: {
+        categories: "Categories",
+        cities: "Cities",
+      },
+    },
     dashboard: {
       title: "Dashboard",
       subtitle: "Overview of platform performance and key statistics",

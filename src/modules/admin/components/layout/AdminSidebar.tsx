@@ -14,8 +14,7 @@ import {
   ShieldAlert,
   ScrollText,
   Settings,
-  Tags,
-  MapPin,
+  FolderTree,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -30,13 +29,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", labelPath: "adminNav.dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: Store },
-  { key: "users", labelPath: "adminNav.users", path: "/admin/users", icon: Users },
-  { key: "categories", labelPath: "adminNav.categories", path: "/admin/categories", icon: Tags },
-  { key: "cities", labelPath: "adminNav.cities", path: "/admin/cities", icon: MapPin },
-  { key: "finance", labelPath: "adminNav.finance", path: "/admin/finance", icon: Wallet },
-  { key: "escrow", labelPath: "adminNav.escrow", path: "/admin/escrow", icon: ShieldAlert },
-  { key: "audit", labelPath: "adminNav.audit", path: "/admin/audit", icon: ScrollText },
-  { key: "settings", labelPath: "adminNav.settings", path: "/admin/settings", icon: Settings },
+  { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
+  { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
+  { key: "finance",   labelPath: "adminNav.finance",   path: "/admin/finance",   icon: Wallet },
+  { key: "escrow",    labelPath: "adminNav.escrow",    path: "/admin/escrow",    icon: ShieldAlert },
+  { key: "audit",     labelPath: "adminNav.audit",     path: "/admin/audit",     icon: ScrollText },
+  { key: "settings",  labelPath: "adminNav.settings",  path: "/admin/settings",  icon: Settings },
 ];
 
 export function AdminSidebar() {
