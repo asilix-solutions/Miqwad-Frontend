@@ -619,6 +619,46 @@ const ar = {
         approved: "موافق عليه",
         rejected: "مرفوض",
       },
+      settlements: {
+        title: "المالية — التسويات",
+        subtitle: "مراجعة واعتماد طلبات سحب الرصيد من المزودين",
+        tabs: {
+          pending: "قيد الانتظار",
+          approved: "موافق عليه",
+          rejected: "مرفوض",
+          all: "الكل",
+        },
+        columns: {
+          providerName: "المزود",
+          amount: "المبلغ",
+          status: "الحالة",
+          requestedAt: "تاريخ الطلب",
+        },
+        empty: {
+          pending: "لا توجد تسويات قيد الانتظار",
+          approved: "لا توجد تسويات معتمدة",
+          rejected: "لا توجد تسويات مرفوضة",
+          all: "لا توجد تسويات للعرض",
+        },
+        error: "تعذّر تحميل بيانات التسويات",
+        approve: "اعتماد",
+        reject: "رفض",
+        approveConfirm: {
+          title: "اعتماد تسوية",
+          description: "هل أنت متأكد من اعتماد تسوية بمبلغ {{amount}} للمزود {{provider}}؟ سيتم خصم المبلغ من الرصيد وتحويله للمزود.",
+          confirm: "اعتماد",
+          cancel: "إلغاء",
+          success: "تم اعتماد التسوية بنجاح"
+        },
+        rejectConfirm: {
+          title: "رفض تسوية",
+          reason: "سبب الرفض",
+          reasonPlaceholder: "اكتب سبب الرفض...",
+          confirm: "رفض",
+          cancel: "إلغاء",
+          success: "تم رفض التسوية بنجاح"
+        }
+      },
     },
   },
 };
@@ -1239,6 +1279,46 @@ const en: typeof ar = {
         pending: "Pending",
         approved: "Approved",
         rejected: "Rejected",
+      },
+      settlements: {
+        title: "Finance — Settlements",
+        subtitle: "Review and approve provider withdrawal requests",
+        tabs: {
+          pending: "Pending",
+          approved: "Approved",
+          rejected: "Rejected",
+          all: "All",
+        },
+        columns: {
+          providerName: "Provider",
+          amount: "Amount",
+          status: "Status",
+          requestedAt: "Requested At",
+        },
+        empty: {
+          pending: "No pending settlements",
+          approved: "No approved settlements",
+          rejected: "No rejected settlements",
+          all: "No settlements to display",
+        },
+        error: "Could not load settlements data",
+        approve: "Approve",
+        reject: "Reject",
+        approveConfirm: {
+          title: "Approve Settlement",
+          description: "Are you sure you want to approve a settlement of {{amount}} for {{provider}}? The amount will be deducted from escrow and transferred.",
+          confirm: "Approve",
+          cancel: "Cancel",
+          success: "Settlement approved successfully"
+        },
+        rejectConfirm: {
+          title: "Reject Settlement",
+          reason: "Rejection reason",
+          reasonPlaceholder: "Enter the rejection reason...",
+          confirm: "Reject",
+          cancel: "Cancel",
+          success: "Settlement rejected successfully"
+        }
       },
     },
   },
