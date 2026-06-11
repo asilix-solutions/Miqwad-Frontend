@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { useTranslation } from "react-i18next";
 import { User as UserIcon, Wrench } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
@@ -42,7 +43,7 @@ export function CompleteProfilePage() {
       const destination =
         values.role === "provider"
           ? "/provider/onboarding"
-          : "/app/dashboard";
+          : defaultHomeFor("customer");
       navigate(destination, { replace: true });
     } catch (err) {
       toast.error(t("profile.saveFailed"), err instanceof Error ? err.message : undefined);

@@ -480,6 +480,11 @@ const ar = {
       comingSoon: "قريبًا",
     },
   },
+  adminOnly: {
+    title: "هذا التطبيق مخصص للمسؤولين",
+    description: "لوحة التحكم الحالية مخصصة لمسؤولي النظام فقط. إن كنت تبحث عن خدمات مقود للعملاء فستتوفر قريبًا.",
+    logout: "تسجيل الخروج",
+  },
 };
 
 const en: typeof ar = {
@@ -959,6 +964,11 @@ const en: typeof ar = {
       button: "Book now",
       comingSoon: "Coming soon",
     },
+  },
+  adminOnly: {
+    title: "This app is for administrators",
+    description: "The current dashboard is restricted to system administrators. If you are looking for Maqwad customer services, they will be available soon.",
+    logout: "Sign out",
   },
 };
 

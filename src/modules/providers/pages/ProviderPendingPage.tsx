@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, Navigate } from "react-router-dom";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { ProviderStatusBanner } from "../components/ProviderStatusBanner";
 import { useAppSelector } from "@app/store";
@@ -16,7 +17,7 @@ export function ProviderPendingPage() {
   const user = useAppSelector((s) => s.auth.user);
 
   if (!user || user.role !== "provider") {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
   if (user.providerStatus === "approved") {
     return <Navigate to="/provider/services" replace />;
@@ -39,7 +40,7 @@ export function ProviderPendingPage() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button asChild variant="outline">
-          <Link to="/app/dashboard">{t("providers.backToHome")}</Link>
+          <Link to={defaultHomeFor(user?.role ?? "customer")}>{t("providers.backToHome")}</Link>
         </Button>
         {isRejected && (
           <Button asChild>

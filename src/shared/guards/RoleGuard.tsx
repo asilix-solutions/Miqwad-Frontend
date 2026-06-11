@@ -37,7 +37,9 @@ export function defaultHomeFor(role: UserRole): string {
     case "driver":
     case "customer":
     default:
-      return "/app/dashboard";
+      // ===== FROZEN: client/EndUser landing — revert to "/app/dashboard" when client routes are re-enabled =====
+      return "/unavailable";
+      // ===== END FROZEN =====
   }
 }
 

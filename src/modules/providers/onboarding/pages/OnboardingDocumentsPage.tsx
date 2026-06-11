@@ -31,6 +31,8 @@ import { useDocumentUpload } from "../hooks/useDocumentUpload";
 import { DocumentRow } from "../components/DocumentRow";
 import { DocumentDropzone } from "../components/DocumentDropzone";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@app/store";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import type { OnboardingStepKey, UploadDoc } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -202,6 +204,7 @@ function ErrorFallback({ onRetry }: { onRetry: () => void }) {
 export function OnboardingDocumentsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
 
   // Simulated async loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -332,8 +335,8 @@ export function OnboardingDocumentsPage() {
   }, [navigate]);
 
   const handleSaveLater = useCallback(() => {
-    void navigate("/app/dashboard");
-  }, [navigate]);
+    void navigate(defaultHomeFor(user?.role ?? "customer"));
+  }, [navigate, user]);
 
   const handleBackToAccount = useCallback(() => {
     void navigate("/provider/onboarding/account");

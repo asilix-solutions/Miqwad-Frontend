@@ -29,6 +29,8 @@ import { Clock, FileText, Info, AlertTriangle, RotateCcw } from "lucide-react";
 import { useReviewStatus } from "../hooks/useReviewStatus";
 import { ReviewTimeline } from "../components/ReviewTimeline";
 import { Button } from "@/components/ui/button";
+import { useAppSelector } from "@app/store";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import type { OnboardingStepKey } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -227,10 +229,11 @@ function ActionCard({ icon, title, hint }: ActionCardProps) {
 export function OnboardingReviewPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const user = useAppSelector((s) => s.auth.user);
   const { data, isLoading, isError, refetch } = useReviewStatus();
 
   const handleEnterDashboard = () => {
-    void navigate("/app/dashboard", { replace: true });
+    void navigate(defaultHomeFor(user?.role ?? "customer"), { replace: true });
   };
 
   const handleRetry = () => {

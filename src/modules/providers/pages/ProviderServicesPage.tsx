@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { Plus, Search, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +48,7 @@ export function ProviderServicesPage() {
   const deleteMutation = useDeleteProviderServiceMutation(providerId);
 
   if (!user || user.role !== "provider") {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
   if (user.providerStatus !== "approved") {
     return <Navigate to="/provider/pending" replace />;

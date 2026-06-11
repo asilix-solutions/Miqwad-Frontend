@@ -55,43 +55,70 @@ const CompleteProfilePage = lazy(() =>
     default: m.CompleteProfilePage,
   }))
 );
+// ===== FROZEN: client/EndUser lazy imports — re-enable when client web app is needed =====
+// const DashboardPlaceholderPage = lazy(() =>
+//   import("@modules/auth/pages/DashboardPlaceholderPage").then((m) => ({
+//     default: m.DashboardPlaceholderPage,
+//   }))
+// );
+//
+// // ─── Vehicle Pages ────────────────────────────────────────────────────────────
+// const VehiclesListPage = lazy(() =>
+//   import("@modules/vehicles/pages/VehiclesListPage").then((m) => ({
+//     default: m.VehiclesListPage,
+//   }))
+// );
+// const AddVehiclePage = lazy(() =>
+//   import("@modules/vehicles/pages/AddVehiclePage").then((m) => ({
+//     default: m.AddVehiclePage,
+//   }))
+// );
+// const EditVehiclePage = lazy(() =>
+//   import("@modules/vehicles/pages/EditVehiclePage").then((m) => ({
+//     default: m.EditVehiclePage,
+//   }))
+// );
+// const VehicleDetailsPage = lazy(() =>
+//   import("@modules/vehicles/pages/VehicleDetailsPage").then((m) => ({
+//     default: m.VehicleDetailsPage,
+//   }))
+// );
+//
+// // ─── Service Pages ────────────────────────────────────────────────────────────
+// const CategoriesPage = lazy(() =>
+//   import("@modules/services/pages/CategoriesPage").then((m) => ({
+//     default: m.CategoriesPage,
+//   }))
+// );
+//
+// // ─── Discovery Pages ─────────────────────────────────────────────────────────
+// const NearbyServicesPage = lazy(() =>
+//   import("@modules/discovery/pages/NearbyServicesPage").then((m) => ({
+//     default: m.NearbyServicesPage,
+//   }))
+// );
+// const ProviderPublicDetailsPage = lazy(() =>
+//   import("@modules/discovery/pages/ProviderPublicDetailsPage").then((m) => ({
+//     default: m.ProviderPublicDetailsPage,
+//   }))
+// );
+// const FavoritesPage = lazy(() =>
+//   import("@modules/discovery/pages/FavoritesPage").then((m) => ({
+//     default: m.FavoritesPage,
+//   }))
+// );
+// ===== END FROZEN =====
+
 const ProfilePage = lazy(() =>
   import("@modules/auth/pages/ProfilePage").then((m) => ({
     default: m.ProfilePage,
   }))
 );
-const DashboardPlaceholderPage = lazy(() =>
-  import("@modules/auth/pages/DashboardPlaceholderPage").then((m) => ({
-    default: m.DashboardPlaceholderPage,
-  }))
-);
 
-// ─── Vehicle Pages ────────────────────────────────────────────────────────────
-const VehiclesListPage = lazy(() =>
-  import("@modules/vehicles/pages/VehiclesListPage").then((m) => ({
-    default: m.VehiclesListPage,
-  }))
-);
-const AddVehiclePage = lazy(() =>
-  import("@modules/vehicles/pages/AddVehiclePage").then((m) => ({
-    default: m.AddVehiclePage,
-  }))
-);
-const EditVehiclePage = lazy(() =>
-  import("@modules/vehicles/pages/EditVehiclePage").then((m) => ({
-    default: m.EditVehiclePage,
-  }))
-);
-const VehicleDetailsPage = lazy(() =>
-  import("@modules/vehicles/pages/VehicleDetailsPage").then((m) => ({
-    default: m.VehicleDetailsPage,
-  }))
-);
-
-// ─── Service Pages ────────────────────────────────────────────────────────────
-const CategoriesPage = lazy(() =>
-  import("@modules/services/pages/CategoriesPage").then((m) => ({
-    default: m.CategoriesPage,
+// ─── Admin-Only Notice Page (shown to non-admin roles while client routes are frozen) ──
+const AdminOnlyNoticePage = lazy(() =>
+  import("@modules/auth/pages/AdminOnlyNoticePage").then((m) => ({
+    default: m.AdminOnlyNoticePage,
   }))
 );
 
@@ -156,23 +183,6 @@ const AdminProviderDetailsPage = lazy(() =>
   }))
 );
 
-// ─── Discovery Pages ─────────────────────────────────────────────────────────
-const NearbyServicesPage = lazy(() =>
-  import("@modules/discovery/pages/NearbyServicesPage").then((m) => ({
-    default: m.NearbyServicesPage,
-  }))
-);
-const ProviderPublicDetailsPage = lazy(() =>
-  import("@modules/discovery/pages/ProviderPublicDetailsPage").then((m) => ({
-    default: m.ProviderPublicDetailsPage,
-  }))
-);
-const FavoritesPage = lazy(() =>
-  import("@modules/discovery/pages/FavoritesPage").then((m) => ({
-    default: m.FavoritesPage,
-  }))
-);
-
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
 /**
@@ -196,12 +206,11 @@ function SuspenseOutlet() {
  *
  * Reads the current user from the Redux store and redirects to the
  * correct home page via `defaultHomeFor()`.  For unauthenticated
- * visitors the fallback is `/app/dashboard` — ProtectedRoute will
- * then bounce them to `/login`.
+ * visitors the fallback is `/login`.
  */
 function RootRedirect() {
   const user = useAppSelector((s) => s.auth.user);
-  const target = user ? defaultHomeFor(user.role) : "/app/dashboard";
+  const target = user ? defaultHomeFor(user.role) : "/login";
   return <Navigate to={target} replace />;
 }
 
@@ -267,38 +276,52 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // ===== FROZEN: client/EndUser routes — re-enable when client web app is needed =====
       // Customer / general authenticated area
+      // {
+      //   path: "/app",
+      //   element: <AppLayout />,
+      //   children: [
+      //     {
+      //       // Suspense boundary for all /app/* pages — layout shell stays mounted
+      //       element: <SuspenseOutlet />,
+      //       children: [
+      //         { index: true, element: <Navigate to="dashboard" replace /> },
+      //         { path: "dashboard", element: <DashboardPlaceholderPage /> },
+      //         { path: "profile", element: <ProfilePage /> },
+      //         { path: "services", element: <CategoriesPage /> },
+      //         { path: "vehicles", element: <VehiclesListPage /> },
+      //         { path: "vehicles/add", element: <AddVehiclePage /> },
+      //         { path: "vehicles/:id", element: <VehicleDetailsPage /> },
+      //         { path: "vehicles/:id/edit", element: <EditVehiclePage /> },
+      //         // Discovery (Sprint 4) — customer-only.
+      //         {
+      //           element: <RoleGuard allow={["customer", "driver"]} />,
+      //           children: [
+      //             { path: "services/nearby", element: <NearbyServicesPage /> },
+      //             {
+      //               path: "services/providers/:id",
+      //               element: <ProviderPublicDetailsPage />,
+      //             },
+      //             { path: "favorites", element: <FavoritesPage /> },
+      //           ],
+      //         },
+      //       ],
+      //     },
+      //   ],
+      // },
+      // ===== END FROZEN =====
+
+      // Admin-only notice page — non-admin roles land here while client routes are frozen
       {
-        path: "/app",
-        element: <AppLayout />,
-        children: [
-          {
-            // Suspense boundary for all /app/* pages — layout shell stays mounted
-            element: <SuspenseOutlet />,
-            children: [
-              { index: true, element: <Navigate to="dashboard" replace /> },
-              { path: "dashboard", element: <DashboardPlaceholderPage /> },
-              { path: "profile", element: <ProfilePage /> },
-              { path: "services", element: <CategoriesPage /> },
-              { path: "vehicles", element: <VehiclesListPage /> },
-              { path: "vehicles/add", element: <AddVehiclePage /> },
-              { path: "vehicles/:id", element: <VehicleDetailsPage /> },
-              { path: "vehicles/:id/edit", element: <EditVehiclePage /> },
-              // Discovery (Sprint 4) — customer-only.
-              {
-                element: <RoleGuard allow={["customer", "driver"]} />,
-                children: [
-                  { path: "services/nearby", element: <NearbyServicesPage /> },
-                  {
-                    path: "services/providers/:id",
-                    element: <ProviderPublicDetailsPage />,
-                  },
-                  { path: "favorites", element: <FavoritesPage /> },
-                ],
-              },
-            ],
-          },
-        ],
+        path: "/unavailable",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <AdminOnlyNoticePage />
+            </Suspense>
+          </ErrorBoundary>
+        ),
       },
 
       // Provider onboarding — full-width layout, no AppLayout chrome

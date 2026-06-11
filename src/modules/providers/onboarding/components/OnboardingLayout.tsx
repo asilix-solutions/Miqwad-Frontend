@@ -16,6 +16,8 @@
 
 import { Outlet, useMatches, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAppSelector } from "@app/store";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { OnboardingStepper } from "./OnboardingStepper";
 import type { OnboardingStepKey } from "../types";
 import type { OnboardingStep } from "./OnboardingStepper";
@@ -63,6 +65,7 @@ export function OnboardingLayout() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const matches = useMatches();
+  const user = useAppSelector((s) => s.auth.user);
 
   // Walk the matched routes bottom-up to find the deepest onboarding handle.
   const currentStep = deriveCurrentStep(matches);
@@ -70,7 +73,7 @@ export function OnboardingLayout() {
   const isLoadingStep = currentStep === 0;
 
   const handleSkip = () => {
-    void navigate("/app/dashboard", { replace: true });
+    void navigate(defaultHomeFor(user?.role ?? "customer"), { replace: true });
   };
 
   return (

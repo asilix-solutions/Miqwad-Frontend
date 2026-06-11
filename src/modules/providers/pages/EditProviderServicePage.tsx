@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@shared/components/feedback/LoadingState";
@@ -32,7 +33,7 @@ export function EditProviderServicePage() {
   const mutation = useUpdateProviderServiceMutation(providerId, serviceId);
 
   if (!user || user.role !== "provider") {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
   if (user.providerStatus !== "approved") {
     return <Navigate to="/provider/pending" replace />;

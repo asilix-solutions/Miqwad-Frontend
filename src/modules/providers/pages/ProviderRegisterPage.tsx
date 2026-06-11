@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { resetRegisterDraft } from "../store/providersSlice";
 import { ProviderRegisterStepper } from "../components/ProviderRegisterStepper";
@@ -40,7 +41,7 @@ export function ProviderRegisterPage() {
           size="sm"
           onClick={() => {
             dispatch(resetRegisterDraft());
-            navigate("/app/dashboard");
+            navigate(defaultHomeFor(user?.role ?? "customer"));
           }}
         >
           {t("providers.backToHome")}
