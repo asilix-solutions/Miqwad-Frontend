@@ -172,6 +172,11 @@ const OnboardingReviewPage = lazy(() =>
 );
 
 // ─── Admin Pages ──────────────────────────────────────────────────────────────
+const AdminLayout = lazy(() =>
+  import("@modules/admin/components/layout/AdminLayout").then((m) => ({
+    default: m.AdminLayout,
+  }))
+);
 const AdminProvidersPage = lazy(() =>
   import("@modules/admin/pages/AdminProvidersPage").then((m) => ({
     default: m.AdminProvidersPage,
@@ -395,7 +400,13 @@ export const router = createBrowserRouter([
       // Admin area — locked to role=admin only.
       {
         path: "/admin",
-        element: <AppLayout />,
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <AdminLayout />
+            </Suspense>
+          </ErrorBoundary>
+        ),
         children: [
           {
             // Suspense boundary for all /admin/* pages

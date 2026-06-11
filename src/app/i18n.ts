@@ -357,6 +357,7 @@ const ar = {
   },
   admin: {
     title: "لوحة المسؤول",
+    logout: "تسجيل الخروج",
     providersTitle: "مراجعة مقدّمي الخدمة",
     providersSubtitle: "الموافقة أو الرفض للطلبات الواردة",
     statusAll: "كل الحالات",
@@ -851,6 +852,7 @@ const en: typeof ar = {
   },
   admin: {
     title: "Admin",
+    logout: "Log out",
     providersTitle: "Provider review",
     providersSubtitle: "Approve or reject incoming applications",
     statusAll: "All statuses",
