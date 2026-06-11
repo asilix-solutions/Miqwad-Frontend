@@ -1,6 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus } from "../types";
 
 /**
  * Admin transport layer.
@@ -53,6 +53,21 @@ export const adminApi = {
       `/admin/providers/${providerId}/reject`,
       { reason },
     );
+    return data;
+  },
+
+  getSettlements: async (params: { page: number; pageSize: number; status?: SettlementStatus }): Promise<PaginatedResponse<SettlementRecord>> => {
+    const { data } = await apiClient.get<PaginatedResponse<SettlementRecord>>("/admin/settlements", { params });
+    return data;
+  },
+
+  approveSettlement: async (id: string): Promise<SettlementRecord> => {
+    const { data } = await apiClient.post<SettlementRecord>(`/admin/settlements/${id}/approve`);
+    return data;
+  },
+
+  rejectSettlement: async (id: string, reason: string): Promise<SettlementRecord> => {
+    const { data } = await apiClient.post<SettlementRecord>(`/admin/settlements/${id}/reject`, { reason });
     return data;
   },
 };

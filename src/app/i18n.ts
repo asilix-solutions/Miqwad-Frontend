@@ -613,6 +613,13 @@ const ar = {
       empty: "لا يوجد مستخدمون",
       error: "تعذّر تحميل المستخدمين",
     },
+    finance: {
+      settlementStatus: {
+        pending: "قيد الانتظار",
+        approved: "موافق عليه",
+        rejected: "مرفوض",
+      },
+    },
   },
 };
 
@@ -1226,6 +1233,13 @@ const en: typeof ar = {
       },
       empty: "No users found",
       error: "Could not load users",
+    },
+    finance: {
+      settlementStatus: {
+        pending: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+      },
     },
   },
 };

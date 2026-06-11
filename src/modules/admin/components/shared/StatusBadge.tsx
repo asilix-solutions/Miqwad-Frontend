@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider";
+export type StatusBadgeKind = "user" | "provider" | "settlement";
 
 export interface StatusBadgeProps {
   status: string;
@@ -21,16 +21,24 @@ const PROVIDER_STATUS_TONES: Record<string, BadgeTone> = {
   rejected: "danger",
 };
 
+const SETTLEMENT_STATUS_TONES: Record<string, BadgeTone> = {
+  pending: "warning",
+  approved: "success",
+  rejected: "danger",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
-  const toneMap = kind === "user" ? USER_STATUS_TONES : PROVIDER_STATUS_TONES;
+  const toneMap = kind === "user" ? USER_STATUS_TONES : kind === "provider" ? PROVIDER_STATUS_TONES : SETTLEMENT_STATUS_TONES;
   const tone = toneMap[status] || "neutral";
 
   const i18nKey =
     kind === "user"
       ? `superAdmin.users.status.${status}`
-      : `superAdmin.providers.status.${status}`;
+      : kind === "provider"
+      ? `superAdmin.providers.status.${status}`
+      : `superAdmin.finance.settlementStatus.${status}`;
 
   return (
     <Badge tone={tone} className={className}>
