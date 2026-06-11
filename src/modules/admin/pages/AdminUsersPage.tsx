@@ -12,6 +12,7 @@ import { Search, ChevronRight, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUsersQuery } from "@modules/admin/hooks/useAdminQueries";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
+import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import type { AdminUserRow } from "@modules/admin/types";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -98,19 +99,7 @@ export function AdminUsersPage() {
       {
         key: "status",
         header: t("superAdmin.users.columns.status"),
-        render: (row) => {
-          const statusTones = {
-            active: "success",
-            suspended: "danger",
-            pending: "warning",
-          } as const;
-
-          return (
-            <Badge tone={statusTones[row.status]}>
-              {t(`superAdmin.users.status.${row.status}`)}
-            </Badge>
-          );
-        },
+        render: (row) => <StatusBadge status={row.status} kind="user" />,
       },
     ],
     [t]

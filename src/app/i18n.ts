@@ -506,6 +506,13 @@ const ar = {
       monthlyRevenue: "الإيراد الشهري",
       error: "تعذّر تحميل البيانات",
     },
+    providers: {
+      status: {
+        pending: "قيد الانتظار",
+        approved: "موافق عليه",
+        rejected: "مرفوض",
+      },
+    },
     users: {
       title: "المستخدمون",
       subtitle: "إدارة المستخدمين في المنصة",
@@ -1066,6 +1073,13 @@ const en: typeof ar = {
       openDisputes: "Open Disputes",
       monthlyRevenue: "Monthly Revenue",
       error: "Could not load data",
+    },
+    providers: {
+      status: {
+        pending: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+      },
     },
     users: {
       title: "Users",
