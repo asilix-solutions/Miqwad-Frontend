@@ -15,10 +15,11 @@ import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CategoriesPanel } from "../components/reference/CategoriesPanel";
 import { CitiesPanel } from "../components/reference/CitiesPanel";
+import { BrandsModelsPanel } from "../components/reference/BrandsModelsPanel";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type TabKey = "categories" | "cities";
+type TabKey = "categories" | "cities" | "brands";
 
 interface TabDef {
   key: TabKey;
@@ -28,12 +29,13 @@ interface TabDef {
 const TABS: readonly TabDef[] = [
   { key: "categories", labelI18n: "superAdmin.reference.tabs.categories" },
   { key: "cities",     labelI18n: "superAdmin.reference.tabs.cities" },
+  { key: "brands",     labelI18n: "superAdmin.reference.tabs.brands" },
 ] as const;
 
 const DEFAULT_TAB: TabKey = "categories";
 
 function isValidTab(value: string | null): value is TabKey {
-  return value === "categories" || value === "cities";
+  return value === "categories" || value === "cities" || value === "brands";
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -88,6 +90,7 @@ export function AdminReferenceDataPage() {
       {/* ── Active panel (deferred mount — only mounts when tab is active) ── */}
       {activeTab === "categories" && <CategoriesPanel />}
       {activeTab === "cities" && <CitiesPanel />}
+      {activeTab === "brands" && <BrandsModelsPanel />}
     </div>
   );
 }

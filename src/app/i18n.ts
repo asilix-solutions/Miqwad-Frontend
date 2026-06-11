@@ -506,6 +506,7 @@ const ar = {
       tabs: {
         categories: "التصنيفات",
         cities: "المدن",
+        brands: "الماركات والموديلات",
       },
     },
     dashboard: {
@@ -581,6 +582,63 @@ const ar = {
         created: "تمت إضافة المدينة بنجاح",
         updated: "تم تعديل المدينة بنجاح",
         deleted: "تم حذف المدينة بنجاح",
+      }
+    },
+    brands: {
+      title: "الماركات",
+      subtitle: "إدارة ماركات المركبات",
+      add: "إضافة ماركة",
+      edit: "تعديل ماركة",
+      delete: "حذف",
+      manageModels: "إدارة الموديلات",
+      columns: {
+        nameAr: "الاسم (عربي)",
+        nameEn: "الاسم (إنجليزي)",
+        modelsCount: "عدد الموديلات",
+        actions: "الإجراءات",
+      },
+      form: {
+        nameAr: "الاسم بالعربية",
+        nameEn: "الاسم بالإنجليزية",
+      },
+      deleteConfirm: {
+        title: "حذف الماركة",
+        description: "حذف الماركة {{name}} سيحذف جميع موديلاتها ({{count}} موديل) وقد يؤثّر على المركبات المرتبطة",
+        confirm: "حذف الماركة",
+        cancel: "إلغاء",
+      },
+      success: {
+        created: "تمت إضافة الماركة بنجاح",
+        updated: "تم تعديل الماركة بنجاح",
+        deleted: "تم حذف الماركة بنجاح",
+      }
+    },
+    models: {
+      title: "الموديلات",
+      modelsOf: "موديلات {{brandName}}",
+      subtitle: "إدارة موديلات الماركة المحددة",
+      add: "إضافة موديل",
+      edit: "تعديل موديل",
+      delete: "حذف",
+      columns: {
+        nameAr: "الاسم (عربي)",
+        nameEn: "الاسم (إنجليزي)",
+        actions: "الإجراءات",
+      },
+      form: {
+        nameAr: "الاسم بالعربية",
+        nameEn: "الاسم بالإنجليزية",
+      },
+      deleteConfirm: {
+        title: "حذف الموديل",
+        description: "هل أنت متأكد من حذف الموديل: {{name}}؟ قد يؤثّر هذا الإجراء على المركبات المرتبطة.",
+        confirm: "حذف الموديل",
+        cancel: "إلغاء",
+      },
+      success: {
+        created: "تمت إضافة الموديل بنجاح",
+        updated: "تم تعديل الموديل بنجاح",
+        deleted: "تم حذف الموديل بنجاح",
       }
     },
     providers: {
@@ -1328,6 +1386,7 @@ const en: typeof ar = {
       tabs: {
         categories: "Categories",
         cities: "Cities",
+        brands: "Brands & Models",
       },
     },
     dashboard: {
@@ -1403,6 +1462,63 @@ const en: typeof ar = {
         created: "City created successfully",
         updated: "City updated successfully",
         deleted: "City deleted successfully",
+      }
+    },
+    brands: {
+      title: "Brands",
+      subtitle: "Manage vehicle brands",
+      add: "Add Brand",
+      edit: "Edit Brand",
+      delete: "Delete",
+      manageModels: "Manage Models",
+      columns: {
+        nameAr: "Name (Arabic)",
+        nameEn: "Name (English)",
+        modelsCount: "Models Count",
+        actions: "Actions",
+      },
+      form: {
+        nameAr: "Name in Arabic",
+        nameEn: "Name in English",
+      },
+      deleteConfirm: {
+        title: "Delete Brand",
+        description: "Deleting the brand {{name}} will delete all its models ({{count}} models) and may affect associated vehicles.",
+        confirm: "Delete Brand",
+        cancel: "Cancel",
+      },
+      success: {
+        created: "Brand created successfully",
+        updated: "Brand updated successfully",
+        deleted: "Brand deleted successfully",
+      }
+    },
+    models: {
+      title: "Models",
+      modelsOf: "Models of {{brandName}}",
+      subtitle: "Manage models for the selected brand",
+      add: "Add Model",
+      edit: "Edit Model",
+      delete: "Delete",
+      columns: {
+        nameAr: "Name (Arabic)",
+        nameEn: "Name (English)",
+        actions: "Actions",
+      },
+      form: {
+        nameAr: "Name in Arabic",
+        nameEn: "Name in English",
+      },
+      deleteConfirm: {
+        title: "Delete Model",
+        description: "Are you sure you want to delete the model: {{name}}? Warning: This may affect associated vehicles.",
+        confirm: "Delete Model",
+        cancel: "Cancel",
+      },
+      success: {
+        created: "Model created successfully",
+        updated: "Model updated successfully",
+        deleted: "Model deleted successfully",
       }
     },
     providers: {
