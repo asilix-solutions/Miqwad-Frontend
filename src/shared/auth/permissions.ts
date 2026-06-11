@@ -87,6 +87,14 @@ export const PERMISSIONS = {
     delete: "services.delete",
   },
 
+  // ── Packages ───────────────────────────────────────────────────────────────
+  packages: {
+    view: "packages.view",
+    create: "packages.create",
+    edit: "packages.edit",
+    delete: "packages.delete",
+  },
+
   // ── Finance ────────────────────────────────────────────────────────────────
   finance: {
     view: "finance.view",

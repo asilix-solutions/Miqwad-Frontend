@@ -132,3 +132,23 @@ export const serviceSchema = z.object({
 });
 
 export type ServiceFormValues = z.infer<typeof serviceSchema>;
+
+/** Schema used by the admin package create/edit dialog. */
+export const packageSchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  serviceIds: z.array(z.number()).min(1, { message: "common.requiredField" }),
+  price: z.number().min(0, { message: "common.requiredField" }),
+  descriptionAr: z.string().nullable().optional(),
+  descriptionEn: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  sortOrder: z.number().nullable().optional(),
+});
+
+export type PackageFormValues = z.infer<typeof packageSchema>;

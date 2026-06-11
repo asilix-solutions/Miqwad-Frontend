@@ -1,7 +1,7 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { Service, ServiceCategory, ServicePackage } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 
 /**
@@ -126,6 +126,32 @@ export const adminApi = {
 
   deleteService: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/services/${id}`);
+  },
+
+  // ── Packages ───────────────────────────────────────────────────────────────
+
+  getPackages: async (params?: { isActive?: boolean }): Promise<ServicePackage[]> => {
+    const { data } = await apiClient.get<ServicePackage[]>("/admin/packages", { params });
+    return data;
+  },
+
+  getPackage: async (id: number): Promise<ServicePackage> => {
+    const { data } = await apiClient.get<ServicePackage>(`/admin/packages/${id}`);
+    return data;
+  },
+
+  createPackage: async (payload: Omit<ServicePackage, "id">): Promise<ServicePackage> => {
+    const { data } = await apiClient.post<ServicePackage>("/admin/packages", payload);
+    return data;
+  },
+
+  updatePackage: async (id: number, payload: Partial<ServicePackage>): Promise<ServicePackage> => {
+    const { data } = await apiClient.put<ServicePackage>(`/admin/packages/${id}`, payload);
+    return data;
+  },
+
+  deletePackage: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/packages/${id}`);
   },
 
   getCities: async (): Promise<City[]> => {

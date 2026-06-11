@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tansta
 import { adminApi } from "../api/adminApi";
 import type { AdminProviderStatus, SettlementStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { Service, ServiceCategory, ServicePackage } from "@modules/services/types";
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
@@ -22,6 +22,8 @@ export const adminKeys = {
   escrow: (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) => [...adminKeys.all, "escrow", params] as const,
   cities: () => [...adminKeys.all, "cities"] as const,
   services: (params?: { categoryId?: number; isActive?: boolean }) => [...adminKeys.all, "services", params] as const,
+  packages: (params?: { isActive?: boolean }) => [...adminKeys.all, "packages", params] as const,
+  package: (id: number) => [...adminKeys.all, "package", id] as const,
 };
 
 
@@ -239,6 +241,54 @@ export function useDeleteServiceMutation() {
     mutationFn: (id: number) => adminApi.deleteService(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
+    },
+  });
+}
+
+// ── Packages ───────────────────────────────────────────────────────────────
+
+export function useAdminPackagesQuery(params?: { isActive?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.packages(params),
+    queryFn: () => adminApi.getPackages(params),
+  });
+}
+
+export function usePackageQuery(id: number) {
+  return useQuery({
+    queryKey: adminKeys.package(id),
+    queryFn: () => adminApi.getPackage(id),
+  });
+}
+
+export function useCreatePackageMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<ServicePackage, "id">) => adminApi.createPackage(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "packages"] });
+    },
+  });
+}
+
+export function useUpdatePackageMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<ServicePackage> }) =>
+      adminApi.updatePackage(id, payload),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "packages"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.package(variables.id) });
+    },
+  });
+}
+
+export function useDeletePackageMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deletePackage(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "packages"] });
     },
   });
 }
