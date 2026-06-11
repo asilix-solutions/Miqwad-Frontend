@@ -506,6 +506,31 @@ const ar = {
       monthlyRevenue: "الإيراد الشهري",
       error: "تعذّر تحميل البيانات",
     },
+    users: {
+      title: "المستخدمون",
+      subtitle: "إدارة المستخدمين في المنصة",
+      searchPlaceholder: "ابحث بالاسم أو الجوال",
+      columns: {
+        name: "الاسم",
+        phone: "الجوال",
+        role: "الدور",
+        status: "الحالة",
+      },
+      roles: {
+        customer: "عميل",
+        provider: "مقدّم خدمة",
+        driver: "سائق",
+        admin: "مسؤول",
+        super_admin: "مدير عام",
+      },
+      status: {
+        active: "نشط",
+        suspended: "موقوف",
+        pending: "معلّق",
+      },
+      empty: "لا يوجد مستخدمون",
+      error: "تعذّر تحميل المستخدمين",
+    },
   },
 };
 
@@ -1012,6 +1037,31 @@ const en: typeof ar = {
       openDisputes: "Open Disputes",
       monthlyRevenue: "Monthly Revenue",
       error: "Could not load data",
+    },
+    users: {
+      title: "Users",
+      subtitle: "Manage users in the platform",
+      searchPlaceholder: "Search by name or phone",
+      columns: {
+        name: "Name",
+        phone: "Phone",
+        role: "Role",
+        status: "Status",
+      },
+      roles: {
+        customer: "Customer",
+        provider: "Provider",
+        driver: "Driver",
+        admin: "Admin",
+        super_admin: "Super Admin",
+      },
+      status: {
+        active: "Active",
+        suspended: "Suspended",
+        pending: "Pending",
+      },
+      empty: "No users found",
+      error: "Could not load users",
     },
   },
 };

@@ -34,6 +34,7 @@ import { AppLayout } from "@shared/components/layout/AppLayout";
 import { GuestRoute } from "@shared/guards/GuestRoute";
 import { ProtectedRoute } from "@shared/guards/ProtectedRoute";
 import { RoleGuard, defaultHomeFor } from "@shared/guards/RoleGuard";
+import { PermissionGuard } from "@shared/auth/PermissionGuard";
 import { PageLoader } from "@shared/components/feedback/PageLoader";
 import { ErrorBoundary } from "@shared/components/error/ErrorBoundary";
 import { useAppSelector } from "@app/store";
@@ -189,6 +190,11 @@ const AdminProvidersPage = lazy(() =>
 const AdminProviderDetailsPage = lazy(() =>
   import("@modules/admin/pages/AdminProviderDetailsPage").then((m) => ({
     default: m.AdminProviderDetailsPage,
+  }))
+);
+const AdminUsersPage = lazy(() =>
+  import("@modules/admin/pages/AdminUsersPage").then((m) => ({
+    default: m.AdminUsersPage,
   }))
 );
 
@@ -421,6 +427,11 @@ export const router = createBrowserRouter([
                 element: <RoleGuard allow={["admin", "super_admin"]} />,
                 children: [
                   { path: "dashboard", element: <AdminDashboardPage /> },
+                  {
+                    path: "users",
+                    element: <PermissionGuard permission="users.view" />,
+                    children: [{ index: true, element: <AdminUsersPage /> }],
+                  },
                   { path: "providers", element: <AdminProvidersPage /> },
                   {
                     path: "providers/:id",

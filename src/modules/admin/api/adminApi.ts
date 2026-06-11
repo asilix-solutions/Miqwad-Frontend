@@ -1,5 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
-import type { AdminProvider, AdminProviderStatus, DashboardStats } from "../types";
+import type { PaginatedResponse } from "@shared/types/api";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow } from "../types";
 
 /**
  * Admin transport layer.
@@ -11,6 +12,11 @@ import type { AdminProvider, AdminProviderStatus, DashboardStats } from "../type
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const { data } = await apiClient.get<DashboardStats>("/admin/dashboard/stats");
+    return data;
+  },
+
+  getUsers: async (params: { page: number; pageSize: number }): Promise<PaginatedResponse<AdminUserRow>> => {
+    const { data } = await apiClient.get<PaginatedResponse<AdminUserRow>>("/admin/users", { params });
     return data;
   },
 

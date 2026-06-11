@@ -13,6 +13,7 @@
  */
 
 import type { ProviderProfile } from "@modules/providers/types";
+import type { UserRole } from "@modules/auth/types";
 
 export type AdminProviderStatus = "pending" | "approved" | "rejected" | "all";
 
@@ -21,6 +22,14 @@ export type AdminProvider = ProviderProfile;
 
 export interface RejectProviderRequest {
   reason: string;
+}
+
+export interface AdminUserRow {
+  id: string;
+  name: string;
+  phone: string;
+  role: UserRole;
+  status: "active" | "suspended" | "pending";
 }
 
 export interface DashboardStats {

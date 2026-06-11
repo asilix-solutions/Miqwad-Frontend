@@ -30,13 +30,13 @@ export function StatCard({
   const { bg, text } = toneMap[tone];
 
   return (
-    <Card className="flex items-center gap-4 p-6 transition-shadow hover:shadow-md">
+    <Card className="flex flex-col items-center justify-center text-center gap-3 p-6 transition-shadow hover:shadow-md">
       <div
         className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${bg} ${text}`}
       >
         <Icon className="h-6 w-6" />
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-center gap-1">
         <span className="text-sm font-medium text-[var(--color-muted)]">{title}</span>
         {isLoading ? (
           <Skeleton className="h-8 w-24" />

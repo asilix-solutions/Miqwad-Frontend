@@ -41,7 +41,7 @@ export function AdminDashboardPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           title={t("superAdmin.dashboard.totalUsers")}
           value={data?.totalUsers ?? 0}
