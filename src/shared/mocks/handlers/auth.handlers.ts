@@ -18,12 +18,19 @@ interface MockUser {
   phoneNumber: string;
   fullName: string;
   email: string | null;
-  role: "customer" | "provider" | "driver" | "admin";
+  role: "customer" | "provider" | "driver" | "admin" | "super_admin";
   avatarUrl: string | null;
   isProfileComplete: boolean;
   providerId?: number | null;
   providerStatus?: "pending" | "approved" | "rejected" | null;
   providerRejectionReason?: string | null;
+  /**
+   * Granular permission codes for RBAC.
+   * Super-admin receives `["*"]` (wildcard → all permissions).
+   * Regular users receive an empty array until role-specific
+   * permission sets are defined on the backend.
+   */
+  permissions: string[];
 }
 
 /**
@@ -33,8 +40,18 @@ interface MockUser {
  * `import.meta.env.DEV`) once a real backend takes over.
  */
 function defaultRoleForPhone(phone: string): MockUser["role"] {
-  if (phone === "500000000") return "admin";
+  if (phone === "500000000") return "super_admin";
   return "customer";
+}
+
+/**
+ * Returns the permission array for a newly-seeded mock user.
+ * Super-admin receives the wildcard (`["*"]`); all other roles
+ * receive an empty array until per-role permission sets are defined.
+ */
+function permissionsForRole(role: MockUser["role"]): string[] {
+  if (role === "super_admin") return ["*"];
+  return [];
 }
 
 interface MockDB {
@@ -179,18 +196,20 @@ export async function tryAuthMock(
     let user = Object.values(db.users).find((u) => u.phoneNumber === phone);
     if (!user) {
       const role = defaultRoleForPhone(phone);
+      const isAdmin = role === "admin" || role === "super_admin";
       user = {
         id: makeId("usr"),
         phoneNumber: phone,
-        fullName: role === "admin" ? "مسؤول النظام" : "",
+        fullName: isAdmin ? "مسؤول النظام" : "",
         email: null,
         role,
         avatarUrl: null,
-        // Admin demo accounts skip the profile-completion screen.
-        isProfileComplete: role === "admin",
+        // Admin / super-admin demo accounts skip the profile-completion screen.
+        isProfileComplete: isAdmin,
         providerId: null,
         providerStatus: null,
         providerRejectionReason: null,
+        permissions: permissionsForRole(role),
       };
       db.users[user.id] = user;
     }
@@ -230,11 +249,13 @@ export async function tryAuthMock(
       ...me,
       fullName: body.fullName ?? me.fullName,
       email: body.email ?? me.email ?? null,
-      // Don't allow the client to escalate to admin via this endpoint.
+      // Don't allow the client to escalate to admin / super_admin via this endpoint.
       role:
-        body.role === "admin" && me.role !== "admin"
+        (body.role === "admin" || body.role === "super_admin") &&
+        me.role !== "admin" && me.role !== "super_admin"
           ? me.role
           : ((body.role as MockUser["role"]) ?? me.role),
+      permissions: me.permissions,
       isProfileComplete: Boolean(body.fullName && (body.role ?? me.role)),
     };
     db.users[updated.id] = updated;

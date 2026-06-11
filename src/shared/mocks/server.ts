@@ -5,6 +5,7 @@ import { tryAuthMock } from "./handlers/auth.handlers";
 import { tryVehiclesMock } from "./handlers/vehicles.handlers";
 import { tryProvidersMock } from "./handlers/providers.handlers";
 import { tryDiscoveryMock } from "./handlers/discovery.handlers";
+import { tryAdminMock } from "./handlers/admin.handlers";
 
 /**
  * Conditionally enable the in-process mock adapter.
@@ -45,6 +46,7 @@ export function installMocks(): void {
     return;
   }
   apiClient.defaults.adapter = createMockAdapter(previous, [
+    tryAdminMock,
     tryAuthMock,
     tryVehiclesMock,
     tryProvidersMock,

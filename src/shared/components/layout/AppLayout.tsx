@@ -178,6 +178,7 @@ interface NavItemSpec {
 
 function navItemsForRole(role: UserRole): NavItemSpec[] {
   switch (role) {
+    case "super_admin":
     case "admin":
       return [
         {

@@ -21,9 +21,15 @@ interface RoleGuardProps {
   allow: ReadonlyArray<UserRole>;
 }
 
-/** Maps a role to its primary landing route. */
-function defaultHomeFor(role: UserRole): string {
+/** Maps a role to its primary landing route.
+ *
+ *  This is the **single source of truth** for post-login / redirect landing.
+ *  Every call-site that needs "where does this role go?" must import and
+ *  call this function — never duplicate the mapping.
+ */
+export function defaultHomeFor(role: UserRole): string {
   switch (role) {
+    case "super_admin":
     case "admin":
       return "/admin/providers";
     case "provider":

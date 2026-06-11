@@ -33,9 +33,10 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppLayout } from "@shared/components/layout/AppLayout";
 import { GuestRoute } from "@shared/guards/GuestRoute";
 import { ProtectedRoute } from "@shared/guards/ProtectedRoute";
-import { RoleGuard } from "@shared/guards/RoleGuard";
+import { RoleGuard, defaultHomeFor } from "@shared/guards/RoleGuard";
 import { PageLoader } from "@shared/components/feedback/PageLoader";
 import { ErrorBoundary } from "@shared/components/error/ErrorBoundary";
+import { useAppSelector } from "@app/store";
 
 // ─── Auth Pages ───────────────────────────────────────────────────────────────
 const LoginPage = lazy(() =>
@@ -191,6 +192,20 @@ function SuspenseOutlet() {
 }
 
 /**
+ * Role-aware root redirect.
+ *
+ * Reads the current user from the Redux store and redirects to the
+ * correct home page via `defaultHomeFor()`.  For unauthenticated
+ * visitors the fallback is `/app/dashboard` — ProtectedRoute will
+ * then bounce them to `/login`.
+ */
+function RootRedirect() {
+  const user = useAppSelector((s) => s.auth.user);
+  const target = user ? defaultHomeFor(user.role) : "/app/dashboard";
+  return <Navigate to={target} replace />;
+}
+
+/**
  * App routes.
  *
  * Public (guest-only):
@@ -218,7 +233,7 @@ function SuspenseOutlet() {
  *     /admin/providers/:id
  */
 export const router = createBrowserRouter([
-  { path: "/", element: <Navigate to="/app/dashboard" replace /> },
+  { path: "/", element: <RootRedirect /> },
 
   // ── Guest routes (login / OTP) ──────────────────────────────────────────
   {
@@ -365,7 +380,7 @@ export const router = createBrowserRouter([
             children: [
               { index: true, element: <Navigate to="providers" replace /> },
               {
-                element: <RoleGuard allow={["admin"]} />,
+                element: <RoleGuard allow={["admin", "super_admin"]} />,
                 children: [
                   { path: "providers", element: <AdminProvidersPage /> },
                   {

@@ -43,7 +43,7 @@ interface CurrentUser {
   phoneNumber: string;
   fullName: string;
   email: string | null;
-  role: "customer" | "provider" | "driver" | "admin";
+  role: "customer" | "provider" | "driver" | "admin" | "super_admin";
   avatarUrl: string | null;
   isProfileComplete: boolean;
   providerId?: number | null;
@@ -548,7 +548,7 @@ export async function tryProvidersMock(
   if (url === "admin/providers" && method === "get") {
     const me = readCurrentUser();
     if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
-    if (me.role !== "admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
     const status = (config.params as { status?: string } | undefined)?.status;
     const all = Object.values(db.providers);
     const filtered =
@@ -564,7 +564,7 @@ export async function tryProvidersMock(
   m = url.match(/^admin\/providers\/(\d+)\/approve$/);
   if (m && method === "patch") {
     const me = readCurrentUser();
-    if (!me || me.role !== "admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+    if (!me || (me.role !== "admin" && me.role !== "super_admin")) throw fail(config, 403, "FORBIDDEN", "غير مسموح");
     const id = Number(m[1]);
     const p = db.providers[id];
     if (!p) throw fail(config, 404, "NOT_FOUND", "غير موجود");
@@ -580,7 +580,7 @@ export async function tryProvidersMock(
   m = url.match(/^admin\/providers\/(\d+)\/reject$/);
   if (m && method === "patch") {
     const me = readCurrentUser();
-    if (!me || me.role !== "admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+    if (!me || (me.role !== "admin" && me.role !== "super_admin")) throw fail(config, 403, "FORBIDDEN", "غير مسموح");
     const id = Number(m[1]);
     const p = db.providers[id];
     if (!p) throw fail(config, 404, "NOT_FOUND", "غير موجود");

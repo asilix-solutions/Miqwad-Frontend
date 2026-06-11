@@ -6,6 +6,7 @@ import { AuthLayout } from "@shared/components/layout/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@shared/components/ui/toastContext";
 import { useAppSelector } from "@app/store";
+import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { OtpInput } from "../components/OtpInput";
 import { useResendTimer } from "../hooks/useResendTimer";
 import { useRegisterMutation, useVerifyOtpMutation } from "../hooks/useAuthMutations";
@@ -51,7 +52,7 @@ export function OtpPage() {
       if (!res.user.isProfileComplete) {
         navigate("/complete-profile", { replace: true });
       } else {
-        navigate("/app/dashboard", { replace: true });
+        navigate(defaultHomeFor(res.user.role), { replace: true });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("auth.invalidOtp");

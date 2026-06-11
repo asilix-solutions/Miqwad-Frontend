@@ -28,6 +28,22 @@ export interface Paginated<T> {
   total: number;
 }
 
+/**
+ * Standard paginated response shape for admin endpoints.
+ *
+ * Extends the simpler `Paginated<T>` with a pre-computed `totalPages`
+ * field.  This is the agreed contract between the frontend and the
+ * .NET backend — an adapter layer can normalise raw backend responses
+ * (which may use `Count`, `TotalRecords`, etc.) into this shape.
+ */
+export interface PaginatedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 /** User-facing error normalised from axios/network errors. */
 export class AppError extends Error {
   code: string;
