@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatDate } from "@shared/lib/formatDate";
 
 export function AdminUserDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,19 +23,6 @@ export function AdminUserDetailsPage() {
 
   const isRtl = i18n.language === "ar";
   const BackIcon = isRtl ? ArrowRight : ArrowLeft;
-
-  const formatDate = (isoString?: string | null) => {
-    if (!isoString) return "—";
-    try {
-      return new Intl.DateTimeFormat(i18n.language, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(new Date(isoString));
-    } catch {
-      return isoString;
-    }
-  };
 
   const getInitials = (name: string) =>
     name
@@ -172,7 +160,7 @@ export function AdminUserDetailsPage() {
                     {t("superAdmin.users.detail.createdAt")}
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
-                    {formatDate(user.createdAt)}
+                    {formatDate(user.createdAt, i18n.language, { year: "numeric", month: "long", day: "numeric" })}
                   </dd>
                 </div>
                 <div className="space-y-1">
@@ -180,7 +168,7 @@ export function AdminUserDetailsPage() {
                     {t("superAdmin.users.detail.lastActiveAt")}
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
-                    {formatDate(user.lastActiveAt)}
+                    {formatDate(user.lastActiveAt, i18n.language, { year: "numeric", month: "long", day: "numeric" })}
                   </dd>
                 </div>
               </dl>
@@ -230,18 +218,22 @@ export function AdminUserDetailsPage() {
         </div>
       </div>
 
-      <SuspendUserDialog
-        userId={user.id}
-        userName={user.name}
-        open={suspendOpen}
-        onOpenChange={setSuspendOpen}
-      />
-      <RestoreUserDialog
-        userId={user.id}
-        userName={user.name}
-        open={restoreOpen}
-        onOpenChange={setRestoreOpen}
-      />
+      {suspendOpen && (
+        <SuspendUserDialog
+          userId={user.id}
+          userName={user.name}
+          open={suspendOpen}
+          onOpenChange={setSuspendOpen}
+        />
+      )}
+      {restoreOpen && (
+        <RestoreUserDialog
+          userId={user.id}
+          userName={user.name}
+          open={restoreOpen}
+          onOpenChange={setRestoreOpen}
+        />
+      )}
     </div>
   );
 }

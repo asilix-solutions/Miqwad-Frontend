@@ -7,6 +7,7 @@ import { DataTable, type DataTableColumn } from "@modules/admin/components/share
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatCurrency } from "@shared/lib/formatCurrency";
+import { formatDate } from "@shared/lib/formatDate";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import {
   Pagination,
@@ -88,11 +89,7 @@ export function AdminDisputesPage() {
         header: t("superAdmin.escrow.columns.createdAt"),
         render: (row) => (
           <span className="text-[var(--color-ink-body)]">
-            {new Intl.DateTimeFormat(i18n.language, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }).format(new Date(row.createdAt))}
+            {formatDate(row.createdAt, i18n.language, { year: "numeric", month: "short", day: "numeric" })}
           </span>
         ),
       },

@@ -8,6 +8,7 @@ import type { AdminProvider, AdminProviderStatus } from "../types";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatDate } from "@shared/lib/formatDate";
 
 
 const TABS: ReadonlyArray<{ key: AdminProviderStatus; label: string }> = [
@@ -72,11 +73,7 @@ export function AdminProvidersPage() {
         header: t("superAdmin.providers.columns.createdAt"),
         render: (row) => (
           <span className="text-[var(--color-ink-body)]">
-            {new Intl.DateTimeFormat(i18n.language, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }).format(new Date(row.createdAt))}
+            {formatDate(row.createdAt, i18n.language, { year: "numeric", month: "short", day: "numeric" })}
           </span>
         ),
       },

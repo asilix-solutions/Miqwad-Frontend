@@ -9,6 +9,7 @@ import { DisputeDocumentViewerDialog } from "@modules/admin/components/escrow/Di
 import { Can } from "@shared/auth/Can";
 import { formatCurrency } from "@shared/lib/formatCurrency";
 import { ResolveDisputeDialog } from "@modules/admin/components/escrow/ResolveDisputeDialog";
+import { formatDate } from "@shared/lib/formatDate";
 
 export function AdminDisputeDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -99,13 +100,13 @@ export function AdminDisputeDetailsPage() {
             <div>
               <p className="text-sm text-[var(--color-muted)]">{t("superAdmin.escrow.detail.createdAt")}</p>
               <p className="text-[var(--color-ink-body)]">
-                {new Intl.DateTimeFormat(i18n.language, {
+                {formatDate(dispute.createdAt, i18n.language, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",
                   minute: "2-digit"
-                }).format(new Date(dispute.createdAt))}
+                })}
               </p>
             </div>
           </div>
@@ -148,11 +149,11 @@ export function AdminDisputeDetailsPage() {
                 <div>
                   <p className="text-sm text-[var(--color-muted)]">{t("superAdmin.escrow.detail.resolvedAt")}</p>
                   <p className="text-[var(--color-ink-body)]">
-                    {new Intl.DateTimeFormat(i18n.language, {
+                    {formatDate(dispute.resolvedAt, i18n.language, {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
-                    }).format(new Date(dispute.resolvedAt))}
+                    })}
                   </p>
                 </div>
               )}
@@ -196,14 +197,16 @@ export function AdminDisputeDetailsPage() {
         )}
       </div>
 
-      <ResolveDisputeDialog
-        disputeId={dispute.id}
-        orderId={dispute.orderId}
-        amount={dispute.amount}
-        openedByName={dispute.openedByName}
-        open={isResolveDialogOpen}
-        onOpenChange={setIsResolveDialogOpen}
-      />
+      {isResolveDialogOpen && (
+        <ResolveDisputeDialog
+          disputeId={dispute.id}
+          orderId={dispute.orderId}
+          amount={dispute.amount}
+          openedByName={dispute.openedByName}
+          open={isResolveDialogOpen}
+          onOpenChange={setIsResolveDialogOpen}
+        />
+      )}
 
       {selectedDoc && (
         <DisputeDocumentViewerDialog

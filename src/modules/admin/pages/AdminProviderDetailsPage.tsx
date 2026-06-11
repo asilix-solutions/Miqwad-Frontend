@@ -21,6 +21,7 @@ import { DocumentViewerDialog } from "../components/DocumentViewerDialog";
 import { ApproveProviderDialog } from "../components/ApproveProviderDialog";
 import type { AdminProvider } from "../types";
 import type { ProviderDocument } from "@modules/providers/types";
+import { formatDate } from "@shared/lib/formatDate";
 /**
  * /admin/providers/:id — single-provider review with approve/reject.
  *
@@ -171,7 +172,7 @@ export function AdminProviderDetailsPage() {
                 <Field
                   icon={<Calendar className="h-4 w-4" />}
                   label={t("common.status")}
-                  value={new Date(provider.createdAt).toLocaleDateString(i18n.language)}
+                  value={formatDate(provider.createdAt, i18n.language)}
                 />
               </dl>
 
@@ -281,27 +282,33 @@ export function AdminProviderDetailsPage() {
         </div>
       </div>
 
-      <RejectProviderDialog
-        open={showReject != null}
-        provider={showReject}
-        onCancel={() => setShowReject(null)}
-        onConfirm={handleReject}
-        submitting={rejectMutation.isPending}
-      />
+      {showReject != null && (
+        <RejectProviderDialog
+          open={showReject != null}
+          provider={showReject}
+          onCancel={() => setShowReject(null)}
+          onConfirm={handleReject}
+          submitting={rejectMutation.isPending}
+        />
+      )}
       
-      <ApproveProviderDialog
-        providerName={provider.companyName}
-        open={showApprove}
-        onOpenChange={setShowApprove}
-        onConfirm={handleApprove}
-        submitting={approveMutation.isPending}
-      />
+      {showApprove && (
+        <ApproveProviderDialog
+          providerName={provider.companyName}
+          open={showApprove}
+          onOpenChange={setShowApprove}
+          onConfirm={handleApprove}
+          submitting={approveMutation.isPending}
+        />
+      )}
 
-      <DocumentViewerDialog
-        document={viewDocument}
-        open={viewDocument != null}
-        onOpenChange={(open) => !open && setViewDocument(null)}
-      />
+      {viewDocument != null && (
+        <DocumentViewerDialog
+          document={viewDocument}
+          open={viewDocument != null}
+          onOpenChange={(open) => !open && setViewDocument(null)}
+        />
+      )}
     </div>
   );
 }

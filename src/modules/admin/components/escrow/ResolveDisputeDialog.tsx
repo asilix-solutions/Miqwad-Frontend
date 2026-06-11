@@ -39,7 +39,7 @@ export function ResolveDisputeDialog({
   disputeId,
   orderId,
   amount,
-  providerName = "المزود",
+  providerName,
   open,
   onOpenChange,
 }: ResolveDisputeDialogProps) {
@@ -81,11 +81,12 @@ export function ResolveDisputeDialog({
   };
 
   const getLiveSummary = () => {
+    const displayProviderName = providerName || t("superAdmin.escrow.roles.provider");
     switch (decision) {
       case "release_to_provider":
         return t("superAdmin.escrow.resolve.summary.release", {
           amount: formatCurrency(amount, i18n.language),
-          provider: providerName,
+          provider: displayProviderName,
         });
       case "refund_to_customer":
         return t("superAdmin.escrow.resolve.summary.refund", {
@@ -96,7 +97,7 @@ export function ResolveDisputeDialog({
         return t("superAdmin.escrow.resolve.summary.partial", {
           partialAmount: formatCurrency(partial, i18n.language),
           remainingAmount: formatCurrency(Math.max(0, amount - partial), i18n.language),
-          provider: providerName,
+          provider: displayProviderName,
         });
       default:
         return "";

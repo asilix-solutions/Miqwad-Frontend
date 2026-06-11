@@ -6,6 +6,7 @@ import type { SettlementStatus, SettlementRecord } from "../types";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { formatCurrency } from "@shared/lib/formatCurrency";
+import { formatDate } from "@shared/lib/formatDate";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,11 +93,7 @@ export function AdminSettlementsPage() {
         header: t("superAdmin.finance.settlements.columns.requestedAt"),
         render: (row) => (
           <span className="text-[var(--color-ink-body)]">
-            {new Intl.DateTimeFormat(i18n.language, {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            }).format(new Date(row.requestedAt))}
+            {formatDate(row.requestedAt, i18n.language, { year: "numeric", month: "short", day: "numeric" })}
           </span>
         ),
       },
@@ -217,17 +214,21 @@ export function AdminSettlementsPage() {
         </Pagination>
       )}
 
-      <SettlementApproveDialog
-        open={approveDialogData.open}
-        settlement={approveDialogData.settlement}
-        onOpenChange={(open) => setApproveDialogData((prev) => ({ ...prev, open }))}
-      />
+      {approveDialogData.open && (
+        <SettlementApproveDialog
+          open={approveDialogData.open}
+          settlement={approveDialogData.settlement}
+          onOpenChange={(open) => setApproveDialogData((prev) => ({ ...prev, open }))}
+        />
+      )}
 
-      <SettlementRejectDialog
-        open={rejectDialogData.open}
-        settlement={rejectDialogData.settlement}
-        onOpenChange={(open) => setRejectDialogData((prev) => ({ ...prev, open }))}
-      />
+      {rejectDialogData.open && (
+        <SettlementRejectDialog
+          open={rejectDialogData.open}
+          settlement={rejectDialogData.settlement}
+          onOpenChange={(open) => setRejectDialogData((prev) => ({ ...prev, open }))}
+        />
+      )}
     </div>
   );
 }
