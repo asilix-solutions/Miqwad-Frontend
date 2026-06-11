@@ -440,10 +440,13 @@ export const router = createBrowserRouter([
                       { path: ":id", element: <AdminUserDetailsPage /> },
                     ],
                   },
-                  { path: "providers", element: <AdminProvidersPage /> },
                   {
-                    path: "providers/:id",
-                    element: <AdminProviderDetailsPage />,
+                    path: "providers",
+                    element: <PermissionGuard permission="providers.view" />,
+                    children: [
+                      { index: true, element: <AdminProvidersPage /> },
+                      { path: ":id", element: <AdminProviderDetailsPage /> },
+                    ],
                   },
                   { path: "profile", element: <ProfilePage /> },
                 ],

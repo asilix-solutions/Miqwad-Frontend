@@ -33,6 +33,7 @@ export function useAdminProvidersQuery(status: AdminProviderStatus = "pending") 
   return useQuery({
     queryKey: adminKeys.providers(status),
     queryFn: () => adminApi.listProviders(status),
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -507,6 +507,28 @@ const ar = {
       error: "تعذّر تحميل البيانات",
     },
     providers: {
+      title: "المزودون",
+      subtitle: "مراجعة واعتماد مزودي الخدمة",
+      columns: {
+        companyName: "المزود",
+        phone: "الجوال",
+        city: "المدينة",
+        status: "الحالة",
+        createdAt: "تاريخ التقديم",
+      },
+      tabs: {
+        pending: "قيد الانتظار",
+        approved: "موافق عليه",
+        rejected: "مرفوض",
+        all: "الكل",
+      },
+      empty: {
+        pending: "لا توجد طلبات معلّقة",
+        approved: "لا يوجد مزودون معتمدون",
+        rejected: "لا توجد طلبات مرفوضة",
+        all: "لا يوجد مزودون",
+      },
+      error: "تعذّر تحميل المزودين",
       status: {
         pending: "قيد الانتظار",
         approved: "موافق عليه",
@@ -1075,6 +1097,28 @@ const en: typeof ar = {
       error: "Could not load data",
     },
     providers: {
+      title: "Providers",
+      subtitle: "Review and approve service providers",
+      columns: {
+        companyName: "Provider",
+        phone: "Phone",
+        city: "City",
+        status: "Status",
+        createdAt: "Applied At",
+      },
+      tabs: {
+        pending: "Pending",
+        approved: "Approved",
+        rejected: "Rejected",
+        all: "All",
+      },
+      empty: {
+        pending: "No pending requests",
+        approved: "No approved providers",
+        rejected: "No rejected requests",
+        all: "No providers found",
+      },
+      error: "Could not load providers",
       status: {
         pending: "Pending",
         approved: "Approved",

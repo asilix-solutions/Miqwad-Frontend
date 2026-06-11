@@ -1,131 +1,123 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { ShieldCheck } from "lucide-react";
-import { LoadingState } from "@shared/components/feedback/LoadingState";
-import { ErrorState } from "@shared/components/feedback/ErrorState";
-import { EmptyState } from "@shared/components/feedback/EmptyState";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { setAdminStatus } from "@modules/providers/store/providersSlice";
-import { useToast } from "@shared/components/ui/toastContext";
-import { AdminProviderCard } from "../components/AdminProviderCard";
-import { RejectProviderDialog } from "../components/RejectProviderDialog";
-import {
-  useAdminProvidersQuery,
-  useApproveProviderMutation,
-  useRejectProviderMutation,
-} from "../hooks/useAdminQueries";
+import { useAdminProvidersQuery } from "../hooks/useAdminQueries";
 import type { AdminProvider, AdminProviderStatus } from "../types";
-import { cn } from "@shared/lib/utils";
+import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
+import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-/**
- * /admin/providers — list of provider applications with status tabs.
- *
- * Responsive layout:
- *  - mobile: tabs scroll horizontally, cards stack single-column.
- *  - sm+: tabs sit inline with a 2-column card grid.
- */
 const TABS: ReadonlyArray<{ key: AdminProviderStatus; label: string }> = [
-  { key: "pending", label: "admin.statusPending" },
-  { key: "approved", label: "admin.statusApproved" },
-  { key: "rejected", label: "admin.statusRejected" },
-  { key: "all", label: "admin.statusAll" },
+  { key: "pending", label: "superAdmin.providers.tabs.pending" },
+  { key: "approved", label: "superAdmin.providers.tabs.approved" },
+  { key: "rejected", label: "superAdmin.providers.tabs.rejected" },
+  { key: "all", label: "superAdmin.providers.tabs.all" },
 ];
 
 export function AdminProvidersPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const dispatch = useAppDispatch();
-  const toast = useToast();
+  const navigate = useNavigate();
+
   const status = useAppSelector((s) => s.providers.adminStatus);
   const q = useAdminProvidersQuery(status);
-  const approveMutation = useApproveProviderMutation();
-  const rejectMutation = useRejectProviderMutation();
-  const [rejectTarget, setRejectTarget] = useState<AdminProvider | null>(null);
 
-  const handleApprove = async (id: number) => {
-    try {
-      await approveMutation.mutateAsync(id);
-      toast.success(t("admin.approved"));
-    } catch {
-      toast.error(t("admin.actionFailed"));
-    }
-  };
+  const columns: DataTableColumn<AdminProvider>[] = useMemo(
+    () => [
+      {
+        key: "companyName",
+        header: t("superAdmin.providers.columns.companyName"),
+        render: (row) => {
+          const parts = row.companyName.trim().split(/\s+/);
+          const initials = parts.length > 1
+            ? `${parts[0]?.[0] || ""}${parts[1]?.[0] || ""}`
+            : `${parts[0]?.[0] || ""}${parts[0]?.[1] || ""}`;
 
-  const handleReject = async (reason: string) => {
-    if (!rejectTarget) return;
-    try {
-      await rejectMutation.mutateAsync({ providerId: rejectTarget.id, reason });
-      toast.success(t("admin.rejected"));
-      setRejectTarget(null);
-    } catch {
-      toast.error(t("admin.actionFailed"));
-    }
-  };
+          return (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-[var(--color-surface-2)] text-[var(--color-ink-secondary)] text-xs font-medium">
+                  {initials.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-medium text-[var(--color-ink-body)]">{row.companyName}</span>
+            </div>
+          );
+        },
+      },
+      {
+        key: "phone",
+        header: t("superAdmin.providers.columns.phone"),
+        render: (row) => (
+          <span className="tabular-nums text-[var(--color-ink-body)]">{row.phone}</span>
+        ),
+      },
+      {
+        key: "city",
+        header: t("superAdmin.providers.columns.city"),
+        render: (row) => (
+          <span className="text-[var(--color-ink-body)]">{row.city || "—"}</span>
+        ),
+      },
+      {
+        key: "status",
+        header: t("superAdmin.providers.columns.status"),
+        render: (row) => <StatusBadge status={row.status} kind="provider" />,
+      },
+      {
+        key: "createdAt",
+        header: t("superAdmin.providers.columns.createdAt"),
+        render: (row) => (
+          <span className="text-[var(--color-ink-body)]">
+            {new Intl.DateTimeFormat(i18n.language, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }).format(new Date(row.createdAt))}
+          </span>
+        ),
+      },
+    ],
+    [t, i18n.language]
+  );
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-ink-900">
-          {t("admin.providersTitle")}
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {t("superAdmin.providers.title")}
         </h1>
-        <p className="text-sm text-ink-500 mt-1">{t("admin.providersSubtitle")}</p>
-      </header>
-
-      {/* Tabs — horizontally scrollable on mobile, inline on sm+ */}
-      <div
-        role="tablist"
-        className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1"
-      >
-        {TABS.map((tab) => {
-          const isActive = status === tab.key;
-          return (
-            <button
-              key={tab.key}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => dispatch(setAdminStatus(tab.key))}
-              className={cn(
-                "shrink-0 h-9 rounded-full px-4 text-sm font-medium transition-colors whitespace-nowrap",
-                isActive
-                  ? "bg-brand-500 text-white shadow-brand"
-                  : "bg-white border border-ink-200 text-ink-700 hover:bg-ink-100",
-              )}
-            >
-              {t(tab.label)}
-            </button>
-          );
-        })}
+        <p className="text-muted-foreground">
+          {t("superAdmin.providers.subtitle")}
+        </p>
       </div>
 
-      {q.isLoading ? (
-        <LoadingState />
-      ) : q.isError ? (
-        <ErrorState onRetry={() => q.refetch()} />
-      ) : (q.data?.length ?? 0) === 0 ? (
-        <EmptyState
-          icon={<ShieldCheck className="h-6 w-6" />}
-          title={t("admin.emptyForStatus")}
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {q.data?.map((p) => (
-            <AdminProviderCard
-              key={p.id}
-              provider={p}
-              onApprove={handleApprove}
-              onReject={(prov) => setRejectTarget(prov)}
-              isMutating={approveMutation.isPending || rejectMutation.isPending}
-            />
+      <Tabs
+        value={status}
+        onValueChange={(v) => dispatch(setAdminStatus(v as AdminProviderStatus))}
+        className="w-full"
+      >
+        <TabsList className="w-full sm:w-auto flex justify-start overflow-x-auto">
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.key} value={tab.key} className="min-w-fit">
+              {t(tab.label)}
+            </TabsTrigger>
           ))}
-        </div>
-      )}
+        </TabsList>
+      </Tabs>
 
-      <RejectProviderDialog
-        open={rejectTarget != null}
-        provider={rejectTarget}
-        onCancel={() => setRejectTarget(null)}
-        onConfirm={handleReject}
-        submitting={rejectMutation.isPending}
+      <DataTable<AdminProvider>
+        columns={columns}
+        rows={q.data || []}
+        isLoading={q.isLoading}
+        isError={q.isError}
+        emptyText={t(`superAdmin.providers.empty.${status}`)}
+        errorText={t("superAdmin.providers.error")}
+        getRowKey={(row) => row.id.toString()}
+        onRowClick={(row) => navigate(`/admin/providers/${row.id}`)}
       />
     </div>
   );
