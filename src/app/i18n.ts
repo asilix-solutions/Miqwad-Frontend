@@ -660,6 +660,19 @@ const ar = {
         }
       },
     },
+    escrow: {
+      disputeStatus: {
+        open: "مفتوح",
+        under_review: "قيد المراجعة",
+        resolved: "محلول",
+      },
+      escrowStatus: {
+        held: "محتجز",
+        released: "مُحرر",
+        refunded: "مُسترجع",
+        disputed: "متنازع عليه",
+      },
+    },
   },
 };
 
@@ -1319,6 +1332,19 @@ const en: typeof ar = {
           cancel: "Cancel",
           success: "Settlement rejected successfully"
         }
+      },
+    },
+    escrow: {
+      disputeStatus: {
+        open: "Open",
+        under_review: "Under Review",
+        resolved: "Resolved",
+      },
+      escrowStatus: {
+        held: "Held",
+        released: "Released",
+        refunded: "Refunded",
+        disputed: "Disputed",
       },
     },
   },

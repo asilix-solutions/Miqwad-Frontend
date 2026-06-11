@@ -1,6 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus } from "../types";
 
 /**
  * Admin transport layer.
@@ -68,6 +68,26 @@ export const adminApi = {
 
   rejectSettlement: async (id: string, reason: string): Promise<SettlementRecord> => {
     const { data } = await apiClient.post<SettlementRecord>(`/admin/settlements/${id}/reject`, { reason });
+    return data;
+  },
+
+  getDisputes: async (params: { page: number; pageSize: number; status?: DisputeStatus | "all" }): Promise<PaginatedResponse<DisputeRecord>> => {
+    const { data } = await apiClient.get<PaginatedResponse<DisputeRecord>>("/admin/disputes", { params });
+    return data;
+  },
+
+  getDispute: async (id: string): Promise<DisputeDetail> => {
+    const { data } = await apiClient.get<DisputeDetail>(`/admin/disputes/${id}`);
+    return data;
+  },
+
+  resolveDispute: async (id: string, payload: { decision: ResolveDecision; note: string; partialAmount?: number }): Promise<DisputeDetail> => {
+    const { data } = await apiClient.post<DisputeDetail>(`/admin/disputes/${id}/resolve`, payload);
+    return data;
+  },
+
+  getEscrowTransactions: async (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }): Promise<PaginatedResponse<EscrowTransaction>> => {
+    const { data } = await apiClient.get<PaginatedResponse<EscrowTransaction>>("/admin/escrow", { params });
     return data;
   },
 };

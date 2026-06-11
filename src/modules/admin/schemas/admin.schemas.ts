@@ -30,3 +30,27 @@ export const rejectSettlementSchema = z.object({
 
 export type RejectSettlementFormValues = z.infer<typeof rejectSettlementSchema>;
 
+/** Schema used by the admin resolve dispute dialog. */
+export const resolveDisputeSchema = z.object({
+  decision: z.enum(["release_to_provider", "refund_to_customer", "partial_refund"], {
+    error: "common.requiredField",
+  }),
+  note: z
+    .string()
+    .min(3, { message: "common.requiredField" })
+    .max(500),
+  partialAmount: z.number().optional(),
+}).superRefine((data, ctx) => {
+  if (data.decision === "partial_refund") {
+    if (data.partialAmount === undefined || data.partialAmount <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "common.requiredField",
+        path: ["partialAmount"],
+      });
+    }
+  }
+});
+
+export type ResolveDisputeFormValues = z.infer<typeof resolveDisputeSchema>;
+
