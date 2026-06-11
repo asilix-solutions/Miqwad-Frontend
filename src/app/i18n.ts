@@ -495,6 +495,18 @@ const ar = {
     audit: "التدقيق",
     settings: "الإعدادات",
   },
+  superAdmin: {
+    dashboard: {
+      title: "لوحة التحكم",
+      subtitle: "نظرة عامة على أداء المنصة والإحصائيات الرئيسية",
+      totalUsers: "إجمالي المستخدمين",
+      activeProviders: "المزودون النشطون",
+      pendingVerifications: "توثيقات معلّقة",
+      openDisputes: "نزاعات مفتوحة",
+      monthlyRevenue: "الإيراد الشهري",
+      error: "تعذّر تحميل البيانات",
+    },
+  },
 };
 
 const en: typeof ar = {
@@ -989,6 +1001,18 @@ const en: typeof ar = {
     escrow: "Escrow & Disputes",
     audit: "Audit Log",
     settings: "Settings",
+  },
+  superAdmin: {
+    dashboard: {
+      title: "Dashboard",
+      subtitle: "Overview of platform performance and key statistics",
+      totalUsers: "Total Users",
+      activeProviders: "Active Providers",
+      pendingVerifications: "Pending Verifications",
+      openDisputes: "Open Disputes",
+      monthlyRevenue: "Monthly Revenue",
+      error: "Could not load data",
+    },
   },
 };
 

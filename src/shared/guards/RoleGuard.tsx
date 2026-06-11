@@ -31,7 +31,7 @@ export function defaultHomeFor(role: UserRole): string {
   switch (role) {
     case "super_admin":
     case "admin":
-      return "/admin/providers";
+      return "/admin/dashboard";
     case "provider":
       return "/provider/services";
     case "driver":

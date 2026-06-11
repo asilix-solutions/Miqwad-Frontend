@@ -171,10 +171,14 @@ const OnboardingReviewPage = lazy(() =>
   )
 );
 
-// ─── Admin Pages ──────────────────────────────────────────────────────────────
 const AdminLayout = lazy(() =>
   import("@modules/admin/components/layout/AdminLayout").then((m) => ({
     default: m.AdminLayout,
+  }))
+);
+const AdminDashboardPage = lazy(() =>
+  import("@modules/admin/pages/AdminDashboardPage").then((m) => ({
+    default: m.AdminDashboardPage,
   }))
 );
 const AdminProvidersPage = lazy(() =>
@@ -412,10 +416,11 @@ export const router = createBrowserRouter([
             // Suspense boundary for all /admin/* pages
             element: <SuspenseOutlet />,
             children: [
-              { index: true, element: <Navigate to="providers" replace /> },
+              { index: true, element: <Navigate to="dashboard" replace /> },
               {
                 element: <RoleGuard allow={["admin", "super_admin"]} />,
                 children: [
+                  { path: "dashboard", element: <AdminDashboardPage /> },
                   { path: "providers", element: <AdminProvidersPage /> },
                   {
                     path: "providers/:id",

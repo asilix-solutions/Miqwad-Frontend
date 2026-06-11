@@ -9,7 +9,15 @@ export const adminKeys = {
   all: ["admin"] as const,
   providers: (status?: AdminProviderStatus) =>
     [...adminKeys.all, "providers", status ?? "all"] as const,
+  dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
 };
+
+export function useDashboardStatsQuery() {
+  return useQuery({
+    queryKey: adminKeys.dashboardStats(),
+    queryFn: () => adminApi.getDashboardStats(),
+  });
+}
 
 export function useAdminProvidersQuery(status: AdminProviderStatus = "pending") {
   return useQuery({

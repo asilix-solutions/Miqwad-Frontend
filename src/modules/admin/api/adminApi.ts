@@ -1,5 +1,5 @@
 import { apiClient } from "@shared/lib/axios";
-import type { AdminProvider, AdminProviderStatus } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats } from "../types";
 
 /**
  * Admin transport layer.
@@ -9,6 +9,11 @@ import type { AdminProvider, AdminProviderStatus } from "../types";
  * `VITE_USE_MOCKS=false`.
  */
 export const adminApi = {
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    const { data } = await apiClient.get<DashboardStats>("/admin/dashboard/stats");
+    return data;
+  },
+
   listProviders: async (status?: AdminProviderStatus): Promise<AdminProvider[]> => {
     const params = status && status !== "all" ? { status } : undefined;
     const { data } = await apiClient.get<AdminProvider[]>("/admin/providers", { params });
@@ -30,3 +35,4 @@ export const adminApi = {
     return data;
   },
 };
+

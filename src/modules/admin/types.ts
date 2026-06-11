@@ -22,3 +22,11 @@ export type AdminProvider = ProviderProfile;
 export interface RejectProviderRequest {
   reason: string;
 }
+
+export interface DashboardStats {
+  totalUsers: number;
+  activeProviders: number;
+  pendingVerifications: number;
+  openDisputes: number;
+  monthlyRevenue: number;
+}
