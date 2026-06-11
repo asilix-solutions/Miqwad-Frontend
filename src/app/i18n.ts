@@ -507,6 +507,7 @@ const ar = {
         categories: "التصنيفات",
         cities: "المدن",
         brands: "الماركات والموديلات",
+        services: "الخدمات",
       },
     },
     dashboard: {
@@ -639,6 +640,52 @@ const ar = {
         created: "تمت إضافة الموديل بنجاح",
         updated: "تم تعديل الموديل بنجاح",
         deleted: "تم حذف الموديل بنجاح",
+      }
+    },
+    services: {
+      title: "الخدمات",
+      subtitle: "إدارة الخدمات المتاحة وتفعيلها",
+      add: "إضافة خدمة",
+      edit: "تعديل الخدمة",
+      delete: "حذف",
+      columns: {
+        nameAr: "الاسم (عربي)",
+        nameEn: "الاسم (إنجليزي)",
+        categoryId: "التصنيف",
+        basePrice: "السعر",
+        isActive: "الحالة",
+        actions: "الإجراءات",
+      },
+      form: {
+        nameAr: "الاسم بالعربية",
+        nameEn: "الاسم بالإنجليزية",
+        category: "التصنيف",
+        basePrice: "السعر الأساسي",
+        duration: "المدة المتوقعة (دقائق)",
+        descriptionAr: "الوصف (عربي)",
+        descriptionEn: "الوصف (إنجليزي)",
+        isActive: "مفعّلة",
+        sortOrder: "الترتيب",
+      },
+      status: {
+        active: "مفعّلة",
+        inactive: "معطّلة",
+      },
+      filters: {
+        category: "التصنيف",
+        status: "الحالة",
+        all: "الكل",
+      },
+      deleteConfirm: {
+        title: "حذف الخدمة",
+        description: "هل أنت متأكد من حذف الخدمة: {{name}}؟",
+        confirm: "حذف الخدمة",
+        cancel: "إلغاء",
+      },
+      success: {
+        created: "تمت إضافة الخدمة بنجاح",
+        updated: "تم تعديل الخدمة بنجاح",
+        deleted: "تم حذف الخدمة بنجاح",
       }
     },
     providers: {
@@ -1387,6 +1434,7 @@ const en: typeof ar = {
         categories: "Categories",
         cities: "Cities",
         brands: "Brands & Models",
+        services: "Services",
       },
     },
     dashboard: {
@@ -1519,6 +1567,52 @@ const en: typeof ar = {
         created: "Model created successfully",
         updated: "Model updated successfully",
         deleted: "Model deleted successfully",
+      }
+    },
+    services: {
+      title: "Services",
+      subtitle: "Manage and enable available services",
+      add: "Add Service",
+      edit: "Edit Service",
+      delete: "Delete",
+      columns: {
+        nameAr: "Name (Arabic)",
+        nameEn: "Name (English)",
+        categoryId: "Category",
+        basePrice: "Price",
+        isActive: "Status",
+        actions: "Actions",
+      },
+      form: {
+        nameAr: "Name in Arabic",
+        nameEn: "Name in English",
+        category: "Category",
+        basePrice: "Base Price",
+        duration: "Estimated Duration (mins)",
+        descriptionAr: "Description (Arabic)",
+        descriptionEn: "Description (English)",
+        isActive: "Active",
+        sortOrder: "Sort Order",
+      },
+      status: {
+        active: "Active",
+        inactive: "Inactive",
+      },
+      filters: {
+        category: "Category",
+        status: "Status",
+        all: "All",
+      },
+      deleteConfirm: {
+        title: "Delete Service",
+        description: "Are you sure you want to delete the service: {{name}}?",
+        confirm: "Delete Service",
+        cancel: "Cancel",
+      },
+      success: {
+        created: "Service created successfully",
+        updated: "Service updated successfully",
+        deleted: "Service deleted successfully",
       }
     },
     providers: {

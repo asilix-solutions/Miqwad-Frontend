@@ -16,10 +16,11 @@ import { useTranslation } from "react-i18next";
 import { CategoriesPanel } from "../components/reference/CategoriesPanel";
 import { CitiesPanel } from "../components/reference/CitiesPanel";
 import { BrandsModelsPanel } from "../components/reference/BrandsModelsPanel";
+import { ServicesPanel } from "../components/reference/ServicesPanel";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type TabKey = "categories" | "cities" | "brands";
+type TabKey = "categories" | "cities" | "brands" | "services";
 
 interface TabDef {
   key: TabKey;
@@ -30,12 +31,13 @@ const TABS: readonly TabDef[] = [
   { key: "categories", labelI18n: "superAdmin.reference.tabs.categories" },
   { key: "cities",     labelI18n: "superAdmin.reference.tabs.cities" },
   { key: "brands",     labelI18n: "superAdmin.reference.tabs.brands" },
+  { key: "services",   labelI18n: "superAdmin.reference.tabs.services" },
 ] as const;
 
 const DEFAULT_TAB: TabKey = "categories";
 
 function isValidTab(value: string | null): value is TabKey {
-  return value === "categories" || value === "cities" || value === "brands";
+  return value === "categories" || value === "cities" || value === "brands" || value === "services";
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -91,6 +93,7 @@ export function AdminReferenceDataPage() {
       {activeTab === "categories" && <CategoriesPanel />}
       {activeTab === "cities" && <CitiesPanel />}
       {activeTab === "brands" && <BrandsModelsPanel />}
+      {activeTab === "services" && <ServicesPanel />}
     </div>
   );
 }
