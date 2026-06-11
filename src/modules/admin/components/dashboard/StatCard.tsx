@@ -12,12 +12,12 @@ export interface StatCardProps {
   isLoading?: boolean;
 }
 
-const toneMap: Record<StatCardTone, { bg: string; text: string }> = {
-  brand: { bg: "bg-[var(--color-brand-100)]", text: "text-[var(--color-brand-orange)]" },
-  success: { bg: "bg-[var(--color-success-50)]", text: "text-[var(--color-success-500)]" },
-  warning: { bg: "bg-[var(--color-warning-50)]", text: "text-[var(--color-warning-500)]" },
-  danger: { bg: "bg-[var(--color-danger-50)]", text: "text-[var(--color-danger-500)]" },
-  neutral: { bg: "bg-[var(--color-ink-100)]", text: "text-[var(--color-ink-500)]" },
+const toneMap: Record<StatCardTone, { bgStyle: string; color: string }> = {
+  brand: { bgStyle: "color-mix(in srgb, var(--color-brand-orange) 12%, transparent)", color: "var(--color-brand-orange)" },
+  success: { bgStyle: "color-mix(in srgb, var(--color-success-500) 12%, transparent)", color: "var(--color-success-500)" },
+  warning: { bgStyle: "color-mix(in srgb, var(--color-warning-500) 12%, transparent)", color: "var(--color-warning-500)" },
+  danger: { bgStyle: "color-mix(in srgb, var(--color-danger-500) 12%, transparent)", color: "var(--color-danger-500)" },
+  neutral: { bgStyle: "var(--color-surface-2)", color: "var(--color-ink-secondary)" },
 };
 
 export function StatCard({
@@ -27,22 +27,37 @@ export function StatCard({
   tone = "neutral",
   isLoading = false,
 }: StatCardProps) {
-  const { bg, text } = toneMap[tone];
+  const { bgStyle, color } = toneMap[tone];
 
   return (
-    <Card className="flex flex-col items-center justify-center text-center gap-3 p-6 transition-shadow hover:shadow-md">
+    <Card className="relative flex flex-row items-start justify-between overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] transition-shadow duration-200 hover:shadow-[var(--shadow-2)]">
+      {/* Accent Detail */}
       <div
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${bg} ${text}`}
-      >
-        <Icon className="h-6 w-6" />
-      </div>
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-sm font-medium text-[var(--color-muted)]">{title}</span>
+        className="absolute inset-y-0 start-0 w-[3px] opacity-60"
+        style={{ backgroundColor: color }}
+      />
+
+      <div className="flex flex-col text-start">
+        <span className="mb-2 text-[13px] font-medium text-[var(--color-muted)]">
+          {title}
+        </span>
         {isLoading ? (
-          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-[28px] w-[80px]" />
         ) : (
-          <span className="text-2xl font-bold text-[var(--color-ink-body)]">{value}</span>
+          <span className="tabular-nums text-[28px] font-bold leading-[1.1] text-[var(--color-ink-body)]">
+            {value}
+          </span>
         )}
+      </div>
+
+      <div
+        className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: isLoading ? "var(--color-surface-2)" : bgStyle,
+          color: color,
+        }}
+      >
+        <Icon className="h-[22px] w-[22px]" />
       </div>
     </Card>
   );

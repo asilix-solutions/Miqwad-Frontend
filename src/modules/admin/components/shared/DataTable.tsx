@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Inbox } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -53,15 +53,15 @@ export function DataTable<T>({
   // onRowClick applies subtle hover states.
 
   const containerClass =
-    "overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-sm";
+    "bg-[var(--color-surface)] border border-[var(--color-divider)] rounded-[var(--radius-md)] overflow-hidden shadow-[var(--shadow-1)]";
   const headerRowClass =
     "border-b border-[var(--color-divider)] bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-2)]";
   const headerCellClass =
-    "h-11 px-4 text-start text-[13px] font-medium text-[var(--color-muted)] align-middle";
+    "h-[44px] text-[12px] font-semibold tracking-wide text-[var(--color-muted)] text-start px-4 align-middle";
   const bodyRowBaseClass =
-    "border-b border-[var(--color-divider)] last:border-0 transition-colors hover:bg-[var(--color-surface-2)]";
+    "h-14 border-b border-[color-mix(in_srgb,var(--color-divider)_70%,transparent)] last:border-0 hover:bg-[color-mix(in_srgb,var(--color-surface-2)_60%,transparent)] transition-colors duration-150";
   const bodyCellClass =
-    "h-14 px-4 text-start text-sm text-[var(--color-ink-body)] align-middle";
+    "px-4 text-[14px] text-[var(--color-ink-body)] align-middle text-start";
 
   const renderHeader = () => (
     <TableHeader>
@@ -82,10 +82,12 @@ export function DataTable<T>({
           {renderHeader()}
           <TableBody>
             <TableRow>
-              <TableCell colSpan={columns.length} className="py-12 text-center align-middle">
-                <div className="flex flex-col items-center justify-center gap-3 text-[var(--color-muted)]">
-                  <AlertCircle className="h-8 w-8 text-destructive" />
-                  <span className="text-sm">{errorText}</span>
+              <TableCell colSpan={columns.length} className="py-14 text-center align-middle">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--color-danger-500)_10%,transparent)]">
+                    <AlertCircle className="h-10 w-10 text-[var(--color-danger-500)]" />
+                  </div>
+                  <span className="text-[14px] font-medium text-[var(--color-ink-body)]">{errorText}</span>
                 </div>
               </TableCell>
             </TableRow>
@@ -101,11 +103,11 @@ export function DataTable<T>({
         <Table>
           {renderHeader()}
           <TableBody>
-            {Array.from({ length: 6 }).map((_, index) => (
-              <TableRow key={`skeleton-${index}`} className={bodyRowBaseClass}>
-                {columns.map((col) => (
+            {Array.from({ length: 6 }).map((_, rowIndex) => (
+              <TableRow key={`skeleton-${rowIndex}`} className={bodyRowBaseClass}>
+                {columns.map((col, colIndex) => (
                   <TableCell key={col.key} className={bodyCellClass}>
-                    <Skeleton className="h-5 w-full" />
+                    <Skeleton className={`h-[14px] rounded ${colIndex === 0 ? "w-[60%]" : "w-[40%]"}`} />
                   </TableCell>
                 ))}
               </TableRow>
@@ -123,9 +125,12 @@ export function DataTable<T>({
         <TableBody>
           {rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={columns.length} className="py-12 text-center align-middle">
-                <div className="flex flex-col items-center justify-center gap-3 text-[var(--color-muted)]">
-                  <span className="text-sm">{emptyText}</span>
+              <TableCell colSpan={columns.length} className="py-14 text-center align-middle">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-2)]">
+                    <Inbox className="h-10 w-10 text-[var(--color-muted)]" />
+                  </div>
+                  <span className="text-[14px] text-[var(--color-muted)]">{emptyText}</span>
                 </div>
               </TableCell>
             </TableRow>
