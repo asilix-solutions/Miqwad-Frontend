@@ -1,6 +1,7 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus } from "../types";
+import type { ServiceCategory } from "@modules/services/types";
 
 /**
  * Admin transport layer.
@@ -89,6 +90,20 @@ export const adminApi = {
   getEscrowTransactions: async (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }): Promise<PaginatedResponse<EscrowTransaction>> => {
     const { data } = await apiClient.get<PaginatedResponse<EscrowTransaction>>("/admin/escrow", { params });
     return data;
+  },
+
+  createCategory: async (payload: Omit<ServiceCategory, "id">): Promise<ServiceCategory> => {
+    const { data } = await apiClient.post<ServiceCategory>("/admin/categories", payload);
+    return data;
+  },
+
+  updateCategory: async (id: number, payload: Partial<ServiceCategory>): Promise<ServiceCategory> => {
+    const { data } = await apiClient.put<ServiceCategory>(`/admin/categories/${id}`, payload);
+    return data;
+  },
+
+  deleteCategory: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/categories/${id}`);
   },
 };
 

@@ -54,3 +54,18 @@ export const resolveDisputeSchema = z.object({
 
 export type ResolveDisputeFormValues = z.infer<typeof resolveDisputeSchema>;
 
+/** Schema used by the admin category create/edit dialog. */
+export const categorySchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  iconUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  colorHint: z.enum(["blue", "green", "orange", "purple", "red", "navy"]).optional(),
+});
+
+export type CategoryFormValues = z.infer<typeof categorySchema>;

@@ -138,7 +138,8 @@ function parseBody(data: unknown): Record<string, unknown> {
  * will eventually seed — replace by the real `GET /Services/categories`
  * response shape once the API is live.
  */
-const CATEGORIES: ServiceCategory[] = [
+let nextCategoryId = 11;
+let CATEGORIES: ServiceCategory[] = [
   { id: 1, nameAr: "تغيير الزيت", nameEn: "Oil change", iconUrl: null, colorHint: "orange" },
   { id: 2, nameAr: "الكهرباء", nameEn: "Electrical", iconUrl: null, colorHint: "blue" },
   { id: 3, nameAr: "الكفرات", nameEn: "Tires", iconUrl: null, colorHint: "navy" },
@@ -541,6 +542,66 @@ export async function tryProvidersMock(
     }
     delete db.services[serviceId];
     saveDb(db);
+    return ok(config, { success: true });
+  }
+
+  // -- POST /admin/categories -------------------------------------------------
+  if (url === "admin/categories" && method === "post") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const body = parseBody(config.data) as Partial<ServiceCategory>;
+    if (!body.nameAr || !body.nameEn) {
+      throw fail(config, 400, "VALIDATION", "بيانات ناقصة");
+    }
+
+    const id = nextCategoryId++;
+    const newCat: ServiceCategory = {
+      id,
+      nameAr: String(body.nameAr),
+      nameEn: String(body.nameEn),
+      iconUrl: body.iconUrl ? String(body.iconUrl) : null,
+      colorHint: body.colorHint as ServiceCategory["colorHint"],
+    };
+    CATEGORIES.push(newCat);
+    return ok(config, newCat, 201);
+  }
+
+  // -- PUT /admin/categories/{id} ---------------------------------------------
+  m = url.match(/^admin\/categories\/(\d+)$/);
+  if (m && method === "put") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const id = Number(m[1]);
+    const index = CATEGORIES.findIndex((c) => c.id === id);
+    if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+
+    const body = parseBody(config.data) as Partial<ServiceCategory>;
+    const updated: ServiceCategory = {
+      ...CATEGORIES[index],
+      nameAr: body.nameAr ? String(body.nameAr) : CATEGORIES[index].nameAr,
+      nameEn: body.nameEn ? String(body.nameEn) : CATEGORIES[index].nameEn,
+      iconUrl: body.iconUrl !== undefined ? (body.iconUrl ? String(body.iconUrl) : null) : CATEGORIES[index].iconUrl,
+      colorHint: body.colorHint !== undefined ? body.colorHint as ServiceCategory["colorHint"] : CATEGORIES[index].colorHint,
+    };
+    CATEGORIES[index] = updated;
+    return ok(config, updated);
+  }
+
+  // -- DELETE /admin/categories/{id} ------------------------------------------
+  if (m && method === "delete") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const id = Number(m[1]);
+    const index = CATEGORIES.findIndex((c) => c.id === id);
+    if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+
+    CATEGORIES.splice(index, 1);
     return ok(config, { success: true });
   }
 

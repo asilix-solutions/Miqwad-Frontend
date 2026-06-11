@@ -217,6 +217,11 @@ const AdminDisputeDetailsPage = lazy(() =>
     default: m.AdminDisputeDetailsPage,
   }))
 );
+const AdminCategoriesPage = lazy(() =>
+  import("@modules/admin/pages/AdminCategoriesPage").then((m) => ({
+    default: m.AdminCategoriesPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -476,6 +481,13 @@ export const router = createBrowserRouter([
                     children: [
                       { index: true, element: <AdminDisputesPage /> },
                       { path: ":id", element: <AdminDisputeDetailsPage /> },
+                    ],
+                  },
+                  {
+                    path: "categories",
+                    element: <PermissionGuard permission="categories.view" />,
+                    children: [
+                      { index: true, element: <AdminCategoriesPage /> },
                     ],
                   },
                   { path: "profile", element: <ProfilePage /> },

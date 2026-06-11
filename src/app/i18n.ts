@@ -91,6 +91,7 @@ const ar = {
     invalidPhone: "رقم الجوال غير صحيح، يجب أن يبدأ بـ 5",
     invalidOtp: "الرمز غير صحيح",
     invalidEmail: "البريد الإلكتروني غير صحيح",
+    invalidUrl: "الرابط غير صحيح، يجب أن يبدأ بـ http أو https",
   },
   profile: {
     title: "الملف الشخصي",
@@ -494,6 +495,7 @@ const ar = {
     escrow: "الضمان والنزاعات",
     audit: "التدقيق",
     settings: "الإعدادات",
+    categories: "البيانات المرجعية",
   },
   superAdmin: {
     dashboard: {
@@ -505,6 +507,44 @@ const ar = {
       openDisputes: "نزاعات مفتوحة",
       monthlyRevenue: "الإيراد الشهري",
       error: "تعذّر تحميل البيانات",
+    },
+    categories: {
+      title: "التصنيفات",
+      subtitle: "إدارة التصنيفات الرئيسية للخدمات",
+      add: "إضافة تصنيف",
+      edit: "تعديل التصنيف",
+      delete: "حذف",
+      columns: {
+        nameAr: "الاسم (عربي)",
+        nameEn: "الاسم (إنجليزي)",
+        colorHint: "اللون",
+        actions: "",
+      },
+      form: {
+        nameAr: "الاسم بالعربية",
+        nameEn: "الاسم بالإنجليزية",
+        iconUrl: "رابط الأيقونة",
+        colorHint: "اللون",
+        colorOptions: {
+          blue: "أزرق",
+          green: "أخضر",
+          orange: "برتقالي",
+          purple: "بنفسجي",
+          red: "أحمر",
+          navy: "كحلي",
+        }
+      },
+      deleteConfirm: {
+        title: "حذف التصنيف",
+        description: "هل أنت متأكد من حذف التصنيف: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات والخدمات المرتبطة به.",
+        confirm: "حذف التصنيف",
+        cancel: "إلغاء",
+      },
+      success: {
+        created: "تمت إضافة التصنيف بنجاح",
+        updated: "تم تعديل التصنيف بنجاح",
+        deleted: "تم حذف التصنيف بنجاح",
+      }
     },
     providers: {
       title: "المزودون",
@@ -835,7 +875,9 @@ const en: typeof ar = {
     invalidPhone: "Invalid phone number, must start with 5",
     invalidOtp: "Invalid code",
     invalidEmail: "Invalid email",
+    invalidUrl: "Invalid URL format, must start with http or https",
   },
+
   profile: {
     title: "Profile",
     editAvatar: "Change photo",
@@ -1238,6 +1280,7 @@ const en: typeof ar = {
     escrow: "Escrow & Disputes",
     audit: "Audit Log",
     settings: "Settings",
+    categories: "Reference Data",
   },
   superAdmin: {
     dashboard: {
@@ -1249,6 +1292,44 @@ const en: typeof ar = {
       openDisputes: "Open Disputes",
       monthlyRevenue: "Monthly Revenue",
       error: "Could not load data",
+    },
+    categories: {
+      title: "Categories",
+      subtitle: "Manage main service categories",
+      add: "Add Category",
+      edit: "Edit Category",
+      delete: "Delete",
+      columns: {
+        nameAr: "Name (Arabic)",
+        nameEn: "Name (English)",
+        colorHint: "Color",
+        actions: "",
+      },
+      form: {
+        nameAr: "Name in Arabic",
+        nameEn: "Name in English",
+        iconUrl: "Icon URL",
+        colorHint: "Color",
+        colorOptions: {
+          blue: "Blue",
+          green: "Green",
+          orange: "Orange",
+          purple: "Purple",
+          red: "Red",
+          navy: "Navy",
+        }
+      },
+      deleteConfirm: {
+        title: "Delete Category",
+        description: "Are you sure you want to delete the category: {{name}}? Warning: This may affect providers and services linked to it.",
+        confirm: "Delete Category",
+        cancel: "Cancel",
+      },
+      success: {
+        created: "Category added successfully",
+        updated: "Category updated successfully",
+        deleted: "Category deleted successfully",
+      }
     },
     providers: {
       title: "Providers",

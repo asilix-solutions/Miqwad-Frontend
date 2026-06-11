@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { adminApi } from "../api/adminApi";
 import type { AdminProviderStatus, SettlementStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
-
+import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
+import type { ServiceCategory } from "@modules/services/types";
 /**
  * Admin queries + mutations.
  */
@@ -157,3 +158,41 @@ export function useEscrowQuery(params: { page: number; pageSize: number; status?
   });
 }
 
+// ── Categories ─────────────────────────────────────────────────────────────
+
+export function useAdminCategoriesQuery() {
+  // We wrap the client query because the client GET /categories returns all 
+  // categories which is exactly what the admin needs to list them.
+  return useServiceCategoriesQuery();
+}
+
+export function useCreateCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<ServiceCategory, "id">) => adminApi.createCategory(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+export function useUpdateCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<ServiceCategory> }) =>
+      adminApi.updateCategory(id, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+export function useDeleteCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deleteCategory(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
