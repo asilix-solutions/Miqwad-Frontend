@@ -8,7 +8,7 @@ import type { AdminProvider, AdminProviderStatus } from "../types";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 const TABS: ReadonlyArray<{ key: AdminProviderStatus; label: string }> = [
   { key: "pending", label: "superAdmin.providers.tabs.pending" },
@@ -95,19 +95,27 @@ export function AdminProvidersPage() {
         </p>
       </div>
 
-      <Tabs
-        value={status}
-        onValueChange={(v) => dispatch(setAdminStatus(v as AdminProviderStatus))}
-        className="w-full"
-      >
-        <TabsList className="w-full sm:w-auto flex justify-start overflow-x-auto">
-          {TABS.map((tab) => (
-            <TabsTrigger key={tab.key} value={tab.key} className="min-w-fit">
+      <div className="flex gap-2 mb-[20px] bg-transparent overflow-x-auto">
+        {TABS.map((tab) => {
+          const isActive = status === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => dispatch(setAdminStatus(tab.key))}
+              className={`
+                text-[14px] py-2 px-4 rounded-full border border-transparent cursor-pointer transition-colors duration-150 whitespace-nowrap
+                ${isActive 
+                  ? "bg-[var(--color-brand-orange)] text-white font-semibold" 
+                  : "bg-transparent text-[var(--color-muted)] font-medium hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]"
+                }
+              `}
+            >
               {t(tab.label)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+            </button>
+          );
+        })}
+      </div>
 
       <DataTable<AdminProvider>
         columns={columns}
