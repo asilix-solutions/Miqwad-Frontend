@@ -55,6 +55,14 @@ export const PERMISSIONS = {
     delete: "categories.delete",
   },
 
+  // ── Cities ─────────────────────────────────────────────────────────────────
+  cities: {
+    view: "cities.view",
+    create: "cities.create",
+    edit: "cities.edit",
+    delete: "cities.delete",
+  },
+
   // ── Finance ────────────────────────────────────────────────────────────────
   finance: {
     view: "finance.view",

@@ -496,6 +496,7 @@ const ar = {
     audit: "التدقيق",
     settings: "الإعدادات",
     categories: "البيانات المرجعية",
+    cities: "المدن",
   },
   superAdmin: {
     dashboard: {
@@ -544,6 +545,33 @@ const ar = {
         created: "تمت إضافة التصنيف بنجاح",
         updated: "تم تعديل التصنيف بنجاح",
         deleted: "تم حذف التصنيف بنجاح",
+      }
+    },
+    cities: {
+      title: "المدن",
+      subtitle: "إدارة المدن المتاحة في المنصة",
+      add: "إضافة مدينة",
+      edit: "تعديل مدينة",
+      delete: "حذف",
+      columns: {
+        nameAr: "الاسم (عربي)",
+        nameEn: "الاسم (إنجليزي)",
+        actions: "",
+      },
+      form: {
+        nameAr: "الاسم بالعربية",
+        nameEn: "الاسم بالإنجليزية",
+      },
+      deleteConfirm: {
+        title: "حذف المدينة",
+        description: "هل أنت متأكد من حذف المدينة: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات المرتبطين بها.",
+        confirm: "حذف المدينة",
+        cancel: "إلغاء",
+      },
+      success: {
+        created: "تمت إضافة المدينة بنجاح",
+        updated: "تم تعديل المدينة بنجاح",
+        deleted: "تم حذف المدينة بنجاح",
       }
     },
     providers: {
@@ -1281,6 +1309,7 @@ const en: typeof ar = {
     audit: "Audit Log",
     settings: "Settings",
     categories: "Reference Data",
+    cities: "Cities",
   },
   superAdmin: {
     dashboard: {
@@ -1326,9 +1355,36 @@ const en: typeof ar = {
         cancel: "Cancel",
       },
       success: {
-        created: "Category added successfully",
+        created: "Category created successfully",
         updated: "Category updated successfully",
         deleted: "Category deleted successfully",
+      }
+    },
+    cities: {
+      title: "Cities",
+      subtitle: "Manage available cities on the platform",
+      add: "Add City",
+      edit: "Edit City",
+      delete: "Delete",
+      columns: {
+        nameAr: "Name (Arabic)",
+        nameEn: "Name (English)",
+        actions: "",
+      },
+      form: {
+        nameAr: "Name in Arabic",
+        nameEn: "Name in English",
+      },
+      deleteConfirm: {
+        title: "Delete City",
+        description: "Are you sure you want to delete the city: {{name}}? This may affect associated service providers.",
+        confirm: "Delete City",
+        cancel: "Cancel",
+      },
+      success: {
+        created: "City created successfully",
+        updated: "City updated successfully",
+        deleted: "City deleted successfully",
       }
     },
     providers: {

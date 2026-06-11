@@ -3,6 +3,7 @@ import { adminApi } from "../api/adminApi";
 import type { AdminProviderStatus, SettlementStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
 import type { ServiceCategory } from "@modules/services/types";
+import type { City } from "../types";
 /**
  * Admin queries + mutations.
  */
@@ -17,7 +18,9 @@ export const adminKeys = {
   disputes: (params: { page: number; pageSize: number; status?: DisputeStatus | "all" }) => [...adminKeys.all, "disputes", params] as const,
   dispute: (id: string) => [...adminKeys.all, "dispute", id] as const,
   escrow: (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) => [...adminKeys.all, "escrow", params] as const,
+  cities: () => [...adminKeys.all, "cities"] as const,
 };
+
 
 export function useDashboardStatsQuery() {
   return useQuery({
@@ -196,3 +199,44 @@ export function useDeleteCategoryMutation() {
     },
   });
 }
+
+// ── Cities ─────────────────────────────────────────────────────────────────
+
+export function useCitiesQuery() {
+  return useQuery({
+    queryKey: adminKeys.cities(),
+    queryFn: () => adminApi.getCities(),
+  });
+}
+
+export function useCreateCityMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<City, "id">) => adminApi.createCity(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.cities() });
+    },
+  });
+}
+
+export function useUpdateCityMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<City> }) =>
+      adminApi.updateCity(id, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.cities() });
+    },
+  });
+}
+
+export function useDeleteCityMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteCity(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.cities() });
+    },
+  });
+}
+

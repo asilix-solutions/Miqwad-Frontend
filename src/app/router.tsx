@@ -222,6 +222,11 @@ const AdminCategoriesPage = lazy(() =>
     default: m.AdminCategoriesPage,
   }))
 );
+const AdminCitiesPage = lazy(() =>
+  import("@modules/admin/pages/AdminCitiesPage").then((m) => ({
+    default: m.AdminCitiesPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -488,6 +493,13 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="categories.view" />,
                     children: [
                       { index: true, element: <AdminCategoriesPage /> },
+                    ],
+                  },
+                  {
+                    path: "cities",
+                    element: <PermissionGuard permission="cities.view" />,
+                    children: [
+                      { index: true, element: <AdminCitiesPage /> },
                     ],
                   },
                   { path: "profile", element: <ProfilePage /> },

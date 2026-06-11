@@ -15,6 +15,7 @@ import {
   ScrollText,
   Settings,
   Tags,
+  MapPin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: Store },
   { key: "users", labelPath: "adminNav.users", path: "/admin/users", icon: Users },
   { key: "categories", labelPath: "adminNav.categories", path: "/admin/categories", icon: Tags },
+  { key: "cities", labelPath: "adminNav.cities", path: "/admin/cities", icon: MapPin },
   { key: "finance", labelPath: "adminNav.finance", path: "/admin/finance", icon: Wallet },
   { key: "escrow", labelPath: "adminNav.escrow", path: "/admin/escrow", icon: ShieldAlert },
   { key: "audit", labelPath: "adminNav.audit", path: "/admin/audit", icon: ScrollText },

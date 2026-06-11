@@ -14,6 +14,12 @@
 
 import type { ProviderProfile } from "@modules/providers/types";
 
+export interface City {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+}
+
 export type AdminProviderStatus = "pending" | "approved" | "rejected" | "all";
 
 /** Re-export so the admin module doesn't need a direct providers import. */

@@ -69,3 +69,17 @@ export const categorySchema = z.object({
 });
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
+
+/** Schema used by the admin city create/edit dialog. */
+export const citySchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+});
+
+export type CityFormValues = z.infer<typeof citySchema>;

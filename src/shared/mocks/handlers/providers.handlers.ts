@@ -37,6 +37,9 @@ import type {
   ServiceCategory,
   ServiceSubcategory,
 } from "@modules/services/types";
+import { KSA_CITIES } from "@modules/discovery/types";
+import type { City } from "@modules/admin/types";
+
 
 interface CurrentUser {
   id: string;
@@ -151,6 +154,13 @@ let CATEGORIES: ServiceCategory[] = [
   { id: 9, nameAr: "السمكرة والدهان", nameEn: "Body & paint", iconUrl: null, colorHint: "red" },
   { id: 10, nameAr: "النقل والاستلام", nameEn: "Pickup & delivery", iconUrl: null, colorHint: "navy" },
 ];
+
+let CITIES: City[] = [...KSA_CITIES].map((c) => ({
+  id: c.key,
+  nameAr: c.nameAr,
+  nameEn: c.nameEn,
+}));
+
 
 const SUBCATEGORIES: Record<number, ServiceSubcategory[]> = {
   1: [
@@ -604,6 +614,67 @@ export async function tryProvidersMock(
     CATEGORIES.splice(index, 1);
     return ok(config, { success: true });
   }
+
+  // -- GET /admin/cities ------------------------------------------------------
+  if (url === "admin/cities" && method === "get") {
+    return ok(config, CITIES);
+  }
+
+  // -- POST /admin/cities -----------------------------------------------------
+  if (url === "admin/cities" && method === "post") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const body = parseBody(config.data) as Partial<City>;
+    if (!body.nameAr || !body.nameEn) {
+      throw fail(config, 400, "VALIDATION", "بيانات ناقصة");
+    }
+
+    const newCity: City = {
+      id: `city_${Date.now()}`,
+      nameAr: String(body.nameAr),
+      nameEn: String(body.nameEn),
+    };
+    CITIES.push(newCity);
+    return ok(config, newCity, 201);
+  }
+
+  // -- PUT /admin/cities/{id} -------------------------------------------------
+  m = url.match(/^admin\/cities\/([^/]+)$/);
+  if (m && method === "put") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const id = m[1];
+    const index = CITIES.findIndex((c) => c.id === id);
+    if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+
+    const body = parseBody(config.data) as Partial<City>;
+    const updated: City = {
+      ...CITIES[index],
+      nameAr: body.nameAr ? String(body.nameAr) : CITIES[index].nameAr,
+      nameEn: body.nameEn ? String(body.nameEn) : CITIES[index].nameEn,
+    };
+    CITIES[index] = updated;
+    return ok(config, updated);
+  }
+
+  // -- DELETE /admin/cities/{id} ----------------------------------------------
+  if (m && method === "delete") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const id = m[1];
+    const index = CITIES.findIndex((c) => c.id === id);
+    if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+
+    CITIES.splice(index, 1);
+    return ok(config, { success: true });
+  }
+
 
   // -- GET /admin/providers?status=pending|approved|rejected ------------------
   if (url === "admin/providers" && method === "get") {
