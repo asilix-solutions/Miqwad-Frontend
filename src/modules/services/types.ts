@@ -20,3 +20,19 @@ export interface ServiceSubcategory {
   categoryId: number;
   averagePrice: number | null;
 }
+
+export interface Service {
+  id: number;
+  nameAr: string;
+  nameEn: string;
+  categoryId: number;
+  basePrice: number;
+  estimatedDuration?: number | null;
+  isActive: boolean;
+  descriptionAr?: string | null;
+  descriptionEn?: string | null;
+  sortOrder?: number | null;
+}
+
+// FUTURE: ServicePackage { id; nameAr; nameEn; serviceIds: number[] }
+// FUTURE: ProviderServiceOverride { providerId; serviceId; price }

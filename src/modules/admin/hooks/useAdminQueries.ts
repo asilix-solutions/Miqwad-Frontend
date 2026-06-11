@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tansta
 import { adminApi } from "../api/adminApi";
 import type { AdminProviderStatus, SettlementStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
-import type { ServiceCategory } from "@modules/services/types";
+import type { Service, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
@@ -21,6 +21,7 @@ export const adminKeys = {
   dispute: (id: string) => [...adminKeys.all, "dispute", id] as const,
   escrow: (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) => [...adminKeys.all, "escrow", params] as const,
   cities: () => [...adminKeys.all, "cities"] as const,
+  services: (params?: { categoryId?: number; isActive?: boolean }) => [...adminKeys.all, "services", params] as const,
 };
 
 
@@ -198,6 +199,46 @@ export function useDeleteCategoryMutation() {
     mutationFn: (id: number) => adminApi.deleteCategory(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+// ── Services ───────────────────────────────────────────────────────────────
+
+export function useAdminServicesQuery(params?: { categoryId?: number; isActive?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.services(params),
+    queryFn: () => adminApi.getServices(params),
+  });
+}
+
+export function useCreateServiceMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<Service, "id">) => adminApi.createService(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
+    },
+  });
+}
+
+export function useUpdateServiceMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<Service> }) =>
+      adminApi.updateService(id, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
+    },
+  });
+}
+
+export function useDeleteServiceMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deleteService(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
     },
   });
 }

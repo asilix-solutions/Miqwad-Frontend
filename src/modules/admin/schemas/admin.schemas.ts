@@ -111,3 +111,24 @@ export const modelSchema = z.object({
 });
 
 export type ModelFormValues = z.infer<typeof modelSchema>;
+
+/** Schema used by the admin service create/edit dialog. */
+export const serviceSchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  categoryId: z.number().positive({ message: "common.requiredField" }),
+  basePrice: z.number().min(0, { message: "common.requiredField" }),
+  estimatedDuration: z.number().nullable().optional(),
+  descriptionAr: z.string().nullable().optional(),
+  descriptionEn: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  sortOrder: z.number().nullable().optional(),
+});
+
+export type ServiceFormValues = z.infer<typeof serviceSchema>;

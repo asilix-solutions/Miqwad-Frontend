@@ -1,7 +1,7 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
-import type { ServiceCategory } from "@modules/services/types";
+import type { Service, ServiceCategory } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 
 /**
@@ -105,6 +105,27 @@ export const adminApi = {
 
   deleteCategory: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/categories/${id}`);
+  },
+
+  // ── Services ─────────────────────────────────────────────────────────────
+
+  getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<Service[]> => {
+    const { data } = await apiClient.get<Service[]>("/admin/services", { params });
+    return data;
+  },
+
+  createService: async (payload: Omit<Service, "id">): Promise<Service> => {
+    const { data } = await apiClient.post<Service>("/admin/services", payload);
+    return data;
+  },
+
+  updateService: async (id: number, payload: Partial<Service>): Promise<Service> => {
+    const { data } = await apiClient.put<Service>(`/admin/services/${id}`, payload);
+    return data;
+  },
+
+  deleteService: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/services/${id}`);
   },
 
   getCities: async (): Promise<City[]> => {

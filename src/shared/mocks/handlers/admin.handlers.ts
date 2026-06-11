@@ -35,6 +35,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail } from "@modules/admin/types";
+import type { Service } from "@modules/services/types";
 
 // =============================================================================
 // Local types — shape of the current user stored in localStorage
@@ -156,6 +157,17 @@ const SEED_DISPUTES: DisputeDetail[] = [
   {
     id: "dsp_10", orderId: "ord_113", escrowTransactionId: "esc_13", openedByName: "محمد السبيعي", openedByRole: "customer", status: "open", amount: 4100, reason: "ضرر بالسيارة أثناء تواجدها بالورشة", createdAt: "2025-06-11T12:00:00Z", evidence: []
   }
+];
+
+let SEED_SERVICES: Service[] = [
+  { id: 1, nameAr: "غسيل خارجي", nameEn: "Exterior Wash", categoryId: 1, basePrice: 50, isActive: true },
+  { id: 2, nameAr: "تلميع داخلي", nameEn: "Interior Detailing", categoryId: 1, basePrice: 150, isActive: true },
+  { id: 3, nameAr: "تغيير زيت المحرك", nameEn: "Engine Oil Change", categoryId: 2, basePrice: 200, isActive: true, estimatedDuration: 30 },
+  { id: 4, nameAr: "فحص كمبيوتر", nameEn: "Computer Diagnostics", categoryId: 3, basePrice: 100, isActive: true },
+  { id: 5, nameAr: "تبديل بطارية", nameEn: "Battery Replacement", categoryId: 4, basePrice: 50, isActive: true },
+  { id: 6, nameAr: "وزن أذرعة", nameEn: "Wheel Alignment", categoryId: 5, basePrice: 120, isActive: true },
+  { id: 7, nameAr: "تعبئة فريون", nameEn: "AC Freon Recharge", categoryId: 6, basePrice: 150, isActive: false },
+  { id: 8, nameAr: "صيانة دورية", nameEn: "Periodic Maintenance", categoryId: 2, basePrice: 500, isActive: false, descriptionAr: "تشمل الفلاتر والزيوت", descriptionEn: "Includes filters and oils" },
 ];
 
 
@@ -498,6 +510,69 @@ export async function tryAdminMock(
     };
 
     return ok(config, response);
+  }
+
+  // -- GET /admin/services ---------------------------------------------------
+  if (url === "admin/services" && method === "get") {
+    requireAdmin(config);
+    const params = (config.params ?? {}) as Record<string, unknown>;
+    const categoryId = params["categoryId"] ? Number(params["categoryId"]) : undefined;
+    const isActiveParam = params["isActive"] as string | undefined;
+
+    let filtered = SEED_SERVICES;
+    if (categoryId) {
+      filtered = filtered.filter(s => s.categoryId === categoryId);
+    }
+    if (isActiveParam !== undefined) {
+      const isActive = isActiveParam === "true";
+      filtered = filtered.filter(s => s.isActive === isActive);
+    }
+
+    return ok(config, filtered);
+  }
+
+  // -- POST /admin/services --------------------------------------------------
+  if (url === "admin/services" && method === "post") {
+    requireAdmin(config);
+    const payload = JSON.parse(config.data || "{}");
+    const newId = Math.max(0, ...SEED_SERVICES.map(s => s.id)) + 1;
+    const newService: Service = {
+      id: newId,
+      nameAr: payload.nameAr,
+      nameEn: payload.nameEn,
+      categoryId: payload.categoryId,
+      basePrice: payload.basePrice,
+      estimatedDuration: payload.estimatedDuration ?? null,
+      isActive: payload.isActive ?? true,
+      descriptionAr: payload.descriptionAr ?? null,
+      descriptionEn: payload.descriptionEn ?? null,
+      sortOrder: payload.sortOrder ?? null,
+    };
+    SEED_SERVICES.push(newService);
+    return ok(config, newService);
+  }
+
+  // -- PUT /admin/services/:id -----------------------------------------------
+  if (url.startsWith("admin/services/") && method === "put") {
+    requireAdmin(config);
+    const id = Number(url.split("/")[2]);
+    const idx = SEED_SERVICES.findIndex((s) => s.id === id);
+    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخدمة غير موجودة");
+
+    const payload = JSON.parse(config.data || "{}");
+    SEED_SERVICES[idx] = { ...SEED_SERVICES[idx], ...payload };
+    return ok(config, SEED_SERVICES[idx]);
+  }
+
+  // -- DELETE /admin/services/:id --------------------------------------------
+  if (url.startsWith("admin/services/") && method === "delete") {
+    requireAdmin(config);
+    const id = Number(url.split("/")[2]);
+    const idx = SEED_SERVICES.findIndex((s) => s.id === id);
+    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخدمة غير موجودة");
+
+    SEED_SERVICES.splice(idx, 1);
+    return ok(config, { success: true });
   }
 
   // Not ours — let the next handler / real backend deal with it.

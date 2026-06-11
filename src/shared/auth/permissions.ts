@@ -79,6 +79,14 @@ export const PERMISSIONS = {
     delete: "models.delete",
   },
 
+  // ── Services ───────────────────────────────────────────────────────────────
+  services: {
+    view: "services.view",
+    create: "services.create",
+    edit: "services.edit",
+    delete: "services.delete",
+  },
+
   // ── Finance ────────────────────────────────────────────────────────────────
   finance: {
     view: "finance.view",
