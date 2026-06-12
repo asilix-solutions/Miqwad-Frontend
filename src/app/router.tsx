@@ -222,6 +222,16 @@ const AdminReferenceDataPage = lazy(() =>
     default: m.AdminReferenceDataPage,
   }))
 );
+const AdminPackagesPage = lazy(() =>
+  import("@modules/admin/pages/AdminPackagesPage").then((m) => ({
+    default: m.AdminPackagesPage,
+  }))
+);
+const AdminPackageBuilderPage = lazy(() =>
+  import("@modules/admin/pages/AdminPackageBuilderPage").then((m) => ({
+    default: m.AdminPackageBuilderPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -489,6 +499,15 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="categories.view" />,
                     children: [
                       { index: true, element: <AdminReferenceDataPage /> },
+                    ],
+                  },
+                  {
+                    path: "packages",
+                    element: <PermissionGuard permission="packages.view" />,
+                    children: [
+                      { index: true, element: <AdminPackagesPage /> },
+                      { path: "builder", element: <AdminPackageBuilderPage /> },
+                      { path: "builder/:id", element: <AdminPackageBuilderPage /> },
                     ],
                   },
                   {
