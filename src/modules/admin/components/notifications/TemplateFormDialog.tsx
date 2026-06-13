@@ -210,23 +210,23 @@ export function TemplateFormDialog({
 
           {/* Variables Editor */}
           <div className="space-y-3 p-4 bg-[var(--color-surface-2)] rounded-md">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
                 <Label className="text-base">{t("superAdmin.notifications.templates.form.variables")}</Label>
                 <p className="text-sm text-[var(--color-ink-lighter)]">
                   {t("superAdmin.notifications.templates.form.variableHint")}
                 </p>
-                <p className="text-sm text-[var(--color-ink-lighter)] w-fit text-start" dir="rtl">
-                  {t("superAdmin.notifications.templates.form.variableExample")}{" "}
-                  <span dir="ltr" className="text-xs bg-black/5 px-1.5 py-0.5 rounded font-mono align-middle">{"{{userName}}"}</span>
-                </p>
+                <div className="flex items-center gap-1.5 w-max" dir="rtl">
+                  <span className="text-sm text-[var(--color-ink-lighter)]">مثال:</span>
+                  <span dir="ltr" className="font-mono text-xs text-[var(--color-ink-lighter)]">{"{{userName}}"}</span>
+                </div>
               </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setValue("variables", [...variables, ""])}
-                className="gap-2"
+                className="gap-2 shrink-0"
               >
                 <Plus size={16} />
                 {t("superAdmin.notifications.templates.form.addVariable")}
