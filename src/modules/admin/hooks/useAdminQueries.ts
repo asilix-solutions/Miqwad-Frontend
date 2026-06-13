@@ -8,6 +8,7 @@ import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrand
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
+import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { useTranslation } from "react-i18next";
 
@@ -35,6 +36,10 @@ export const adminKeys = {
   templates: (params?: { isActive?: boolean }) => [...adminKeys.all, "templates", params] as const,
   template: (id: string) => [...adminKeys.all, "template", id] as const,
   notifications: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "notifications", params] as const,
+  placements: (params?: { isActive?: boolean }) => [...adminKeys.all, "placements", params] as const,
+  placement: (id: number) => [...adminKeys.all, "placement", id] as const,
+  campaigns: (params?: { status?: string; placementId?: number }) => [...adminKeys.all, "campaigns", params] as const,
+  campaign: (id: number) => [...adminKeys.all, "campaign", id] as const,
 };
 
 
@@ -577,3 +582,126 @@ export function useSentNotificationsQuery(params: { page: number; pageSize: numb
   });
 }
 
+// ── Ads (Campaigns & Placements) ───────────────────────────────────────────
+
+export function usePlacementsQuery(params?: { isActive?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.placements(params),
+    queryFn: () => adminApi.getPlacements(params),
+  });
+}
+
+export function useCreatePlacementMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (payload: Omit<AdPlacement, "id">) => adminApi.createPlacement(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useUpdatePlacementMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<Omit<AdPlacement, "id">> }) =>
+      adminApi.updatePlacement(id, payload),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.placement(variables.id) });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useDeletePlacementMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deletePlacement(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useCampaignsQuery(params: { page: number; pageSize: number; status?: string; placementId?: number }) {
+  return useQuery({
+    queryKey: adminKeys.campaigns(params),
+    queryFn: () => adminApi.getCampaigns(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCampaignQuery(id: number) {
+  return useQuery({
+    queryKey: adminKeys.campaign(id),
+    queryFn: () => adminApi.getCampaign(id),
+  });
+}
+
+export function useCreateCampaignMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (payload: Omit<AdCampaign, "id" | "createdAt">) => adminApi.createCampaign(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useUpdateCampaignMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<Omit<AdCampaign, "id" | "createdAt">> }) =>
+      adminApi.updateCampaign(id, payload),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.campaign(variables.id) });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useDeleteCampaignMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deleteCampaign(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}

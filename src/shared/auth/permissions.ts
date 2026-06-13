@@ -151,6 +151,15 @@ export const PERMISSIONS = {
     delete: "notifications.delete",
   },
 
+  // ── Ads ────────────────────────────────────────────────────────────────────
+  ads: {
+    view: "ads.view",
+    create: "ads.create",
+    edit: "ads.edit",
+    delete: "ads.delete",
+    publish: "ads.publish",
+  },
+
   // ── Settings ───────────────────────────────────────────────────────────────
   settings: {
     view: "settings.view",

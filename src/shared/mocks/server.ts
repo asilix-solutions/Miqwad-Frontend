@@ -8,6 +8,7 @@ import { tryDiscoveryMock } from "./handlers/discovery.handlers";
 import { tryAdminMock } from "./handlers/admin.handlers";
 
 import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handlers";
+import { tryAdminAdsMock } from "./handlers/admin.ads.handlers";
 
 /**
  * Conditionally enable the in-process mock adapter.
@@ -50,6 +51,7 @@ export function installMocks(): void {
   apiClient.defaults.adapter = createMockAdapter(previous, [
     tryAdminMock,
     tryAdminNotificationsMock,
+    tryAdminAdsMock,
     tryAuthMock,
     tryVehiclesMock,
     tryProvidersMock,
