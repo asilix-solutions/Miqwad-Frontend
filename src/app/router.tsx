@@ -232,6 +232,11 @@ const AdminPackageBuilderPage = lazy(() =>
     default: m.AdminPackageBuilderPage,
   }))
 );
+const AdminPlansPage = lazy(() =>
+  import("@modules/admin/pages/AdminPlansPage").then((m) => ({
+    default: m.AdminPlansPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -508,6 +513,13 @@ export const router = createBrowserRouter([
                       { index: true, element: <AdminPackagesPage /> },
                       { path: "builder", element: <AdminPackageBuilderPage /> },
                       { path: "builder/:id", element: <AdminPackageBuilderPage /> },
+                    ],
+                  },
+                  {
+                    path: "plans",
+                    element: <PermissionGuard permission="plans.view" />,
+                    children: [
+                      { index: true, element: <AdminPlansPage /> },
                     ],
                   },
                   {

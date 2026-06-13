@@ -16,6 +16,7 @@ import {
   Settings,
   FolderTree,
   Package,
+  CreditCard,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -33,6 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
   { key: "packages",  labelPath: "adminNav.packages",  path: "/admin/packages",  icon: Package },
+  { key: "plans",     labelPath: "adminNav.plans",     path: "/admin/plans",     icon: CreditCard },
   { key: "finance",   labelPath: "adminNav.finance",   path: "/admin/finance",   icon: Wallet },
   { key: "escrow",    labelPath: "adminNav.escrow",    path: "/admin/escrow",    icon: ShieldAlert },
   { key: "audit",     labelPath: "adminNav.audit",     path: "/admin/audit",     icon: ScrollText },

@@ -173,7 +173,7 @@ export const planSchema = z.object({
       labelAr: z.string().min(1, { message: "common.requiredField" }),
       labelEn: z.string().min(1, { message: "common.requiredField" }),
     })
-  ).default([]),
+  ),
   isActive: z.boolean(),
   sortOrder: z.number().nullable().optional(),
 });
