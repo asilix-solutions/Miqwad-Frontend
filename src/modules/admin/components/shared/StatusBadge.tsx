@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription" | "notification" | "campaign";
+export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription" | "notification" | "campaign" | "audit";
 
 export interface StatusBadgeProps {
   status: string;
@@ -61,6 +61,12 @@ const CAMPAIGN_STATUS_TONES: Record<string, BadgeTone> = {
   ended: "neutral",
 };
 
+const AUDIT_ACTION_TONES: Record<string, BadgeTone> = {
+  create: "success", update: "info", delete: "danger", approve: "success",
+  reject: "danger", resolve: "success", suspend: "danger", restore: "success",
+  send: "info", settle: "success", cancel: "warning", login: "neutral",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
@@ -72,6 +78,7 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
     : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
     : kind === "notification" ? NOTIFICATION_STATUS_TONES
     : kind === "campaign" ? CAMPAIGN_STATUS_TONES
+    : kind === "audit" ? AUDIT_ACTION_TONES
     : ESCROW_STATUS_TONES;
     
   const tone = toneMap[status] || "neutral";
@@ -91,6 +98,8 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.notifications.history.status.${status}`
       : kind === "campaign"
       ? `superAdmin.ads.status.${status}`
+      : kind === "audit"
+      ? `superAdmin.audit.actions.${status}`
       : `superAdmin.escrow.escrowStatus.${status}`;
 
   return (

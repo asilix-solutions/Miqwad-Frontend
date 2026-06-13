@@ -507,6 +507,20 @@ const ar = {
     subscriptions: "الاشتراكات",
   },
   superAdmin: {
+    audit: {
+      title: "التدقيق",
+      subtitle: "سجل العمليات والتدقيق في النظام",
+      searchPlaceholder: "ابحث...",
+      export: "تصدير CSV",
+      exported: "تم تصدير السجل بنجاح",
+      empty: "لا توجد سجلات تدقيق لعرضها",
+      pageOf: "صفحة {{page}} من {{total}}",
+      columns: { time: "الوقت", actor: "المستخدم", action: "الإجراء", module: "الوحدة", summary: "الملخص", details: "التفاصيل" },
+      filters: { allModules: "كل الوحدات", allActions: "كل الإجراءات", dateFrom: "من تاريخ", dateTo: "إلى تاريخ" },
+      actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", resolve: "حسم", suspend: "علّق", restore: "استعاد", send: "أرسل", settle: "سوّى", cancel: "ألغى", login: "سجّل دخول" },
+      modules: { users: "المستخدمون", providers: "المزودون", settlements: "التسويات", disputes: "النزاعات", services: "الخدمات", packages: "الباقات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
+      detail: { actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
+    },
     ads: {
       title: "الإعلانات", subtitle: "إدارة الحملات الإعلانية ومواضع العرض",
       tabs: { campaigns: "الحملات", placements: "مواضع العرض" },
@@ -1724,6 +1738,20 @@ const en: typeof ar = {
     subscriptions: "Subscriptions",
   },
   superAdmin: {
+    audit: {
+      title: "Audit Log",
+      subtitle: "System audit and activity log",
+      searchPlaceholder: "Search...",
+      export: "Export CSV",
+      exported: "Audit log exported successfully",
+      empty: "No audit logs to display",
+      pageOf: "Page {{page}} of {{total}}",
+      columns: { time: "Time", actor: "Actor", action: "Action", module: "Module", summary: "Summary", details: "Details" },
+      filters: { allModules: "All Modules", allActions: "All Actions", dateFrom: "Date From", dateTo: "Date To" },
+      actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", resolve: "Resolve", suspend: "Suspend", restore: "Restore", send: "Send", settle: "Settle", cancel: "Cancel", login: "Login" },
+      modules: { users: "Users", providers: "Providers", settlements: "Settlements", disputes: "Disputes", services: "Services", packages: "Packages", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
+      detail: { actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
+    },
     ads: {
       title: "Ads", subtitle: "Manage ad campaigns and placements",
       tabs: { campaigns: "Campaigns", placements: "Placements" },
