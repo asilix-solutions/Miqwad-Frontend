@@ -257,6 +257,11 @@ const AdminCampaignBuilderPage = lazy(() =>
     default: m.AdminCampaignBuilderPage,
   }))
 );
+const AdminSettingsHubPage = lazy(() =>
+  import("@modules/admin/pages/AdminSettingsHubPage").then((m) => ({
+    default: m.AdminSettingsHubPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -563,7 +568,7 @@ export const router = createBrowserRouter([
                     path: "settings",
                     element: <PermissionGuard permission="settings.view" />,
                     children: [
-                      { index: true, element: <div /> }
+                      { index: true, element: <AdminSettingsHubPage /> }
                     ],
                   },
                   {
