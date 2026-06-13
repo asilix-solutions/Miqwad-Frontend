@@ -44,12 +44,32 @@ export interface AdminUserDetail extends AdminUserRow {
   ordersCount?: number;
 }
 
+export interface MonthlyPoint { month: string; value: number; }
+export interface StatusCount  { status: string; count: number; }
+
 export interface DashboardStats {
   totalUsers: number;
   activeProviders: number;
   pendingVerifications: number;
   openDisputes: number;
   monthlyRevenue: number;
+
+  // Trend deltas vs previous month (percentage, can be negative)
+  trends?: {
+    totalUsers: number;
+    activeProviders: number;
+    pendingVerifications: number;
+    openDisputes: number;
+    monthlyRevenue: number;
+  };
+
+  // Time series — last 12 months, oldest first
+  revenueSeries?: MonthlyPoint[];
+  usersSeries?: MonthlyPoint[];
+
+  // Distributions for pie/bar charts
+  providerStatusBreakdown?: StatusCount[];
+  disputeStatusBreakdown?: StatusCount[];
 }
 
 export type SettlementStatus = "pending" | "approved" | "rejected";

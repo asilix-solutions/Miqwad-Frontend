@@ -34,7 +34,7 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail } from "@modules/admin/types";
+import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail, DashboardStats } from "@modules/admin/types";
 import type { Service, ServicePackage } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 
@@ -89,13 +89,17 @@ const SEED_USERS: AdminUserRecord[] = [
 ];
 
 /** Stub KPI data for the admin dashboard. */
-interface DashboardStats {
-  totalUsers: number;
-  activeProviders: number;
-  pendingVerifications: number;
-  openDisputes: number;
-  monthlyRevenue: number;
-}
+const generateLast12Months = () => {
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return months;
+};
+
+const last12Months = generateLast12Months();
 
 const MOCK_STATS: DashboardStats = {
   totalUsers: 1_247,
@@ -103,6 +107,31 @@ const MOCK_STATS: DashboardStats = {
   pendingVerifications: 12,
   openDisputes: 5,
   monthlyRevenue: 284_500,
+  trends: {
+    totalUsers: +8.2,
+    activeProviders: +3.1,
+    pendingVerifications: -5.0,
+    openDisputes: -12.0,
+    monthlyRevenue: +15.4,
+  },
+  revenueSeries: last12Months.map((month, i) => ({
+    month,
+    value: 180000 + (i * 8000) + (i % 2 === 0 ? 5000 : -2000),
+  })),
+  usersSeries: last12Months.map((month, i) => ({
+    month,
+    value: 800 + (i * 40) + (i % 3 === 0 ? 15 : 0),
+  })),
+  providerStatusBreakdown: [
+    { status: "approved", count: 83 },
+    { status: "pending", count: 12 },
+    { status: "rejected", count: 7 },
+  ],
+  disputeStatusBreakdown: [
+    { status: "open", count: 5 },
+    { status: "under_review", count: 3 },
+    { status: "resolved", count: 41 },
+  ],
 };
 
 const SEED_SETTLEMENTS: SettlementRecord[] = [
