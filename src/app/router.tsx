@@ -247,6 +247,11 @@ const AdminNotificationsHubPage = lazy(() =>
     default: m.AdminNotificationsHubPage,
   }))
 );
+const AdminAdsHubPage = lazy(() =>
+  import("@modules/admin/pages/AdminAdsHubPage").then((m) => ({
+    default: m.AdminAdsHubPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -538,6 +543,13 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="notifications.view" />,
                     children: [
                       { index: true, element: <AdminNotificationsHubPage /> },
+                    ],
+                  },
+                  {
+                    path: "ads",
+                    element: <PermissionGuard permission="ads.view" />,
+                    children: [
+                      { index: true, element: <AdminAdsHubPage /> },
                     ],
                   },
                   {

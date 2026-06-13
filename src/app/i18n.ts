@@ -16,6 +16,7 @@ const ar = {
     loading: "جارٍ التحميل…",
     retry: "إعادة المحاولة",
     requiredField: "هذا الحقل مطلوب",
+    invalidUrl: "رابط غير صالح",
     optional: "اختياري",
     select: "اختر…",
     add: "إضافة",
@@ -489,6 +490,7 @@ const ar = {
   },
   adminNav: {
     dashboard: "لوحة التحكم",
+    ads: "الإعلانات",
     providers: "المزودون",
     users: "المستخدمون",
     finance: "المالية",
@@ -504,6 +506,17 @@ const ar = {
     subscriptions: "الاشتراكات",
   },
   superAdmin: {
+    ads: {
+      title: "الإعلانات", subtitle: "إدارة الحملات الإعلانية ومواضع العرض",
+      tabs: { campaigns: "الحملات", placements: "مواضع العرض" },
+      status: { draft:"مسودة", scheduled:"مجدولة", active:"نشطة", paused:"موقوفة", ended:"منتهية" },
+      filters: { allStatuses:"كل الحالات", allPlacements:"كل المواضع" },
+      columns: { title:"العنوان", placement:"الموضع", period:"الفترة", status:"الحالة", code:"الرمز", actions:"إجراءات" },
+      campaigns: { add:"إنشاء حملة", empty:"لا توجد حملات بعد", deleteTitle:"حذف الحملة", deleteMessage:"سيتم حذف هذه الحملة نهائياً. هل أنت متأكد؟" },
+      placements: { add:"إضافة موضع", empty:"لا توجد مواضع بعد", deleteTitle:"حذف الموضع", deleteMessage:"سيتم حذف هذا الموضع نهائياً. قد تتأثر الحملات المرتبطة. هل أنت متأكد؟",
+        form: { codeLabel:"الرمز التقني", nameAr:"الاسم (عربي)", nameEn:"الاسم (إنجليزي)", descAr:"الوصف (عربي)", descEn:"الوصف (إنجليزي)", isActive:"مُفعّل", createTitle:"إضافة موضع", editTitle:"تعديل موضع" } },
+      errors: { endBeforeStart:"تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية" }
+    },
     packages: {
       title: "الباقات",
       subtitle: "إدارة الباقات والميزات الإضافية",
@@ -1179,6 +1192,7 @@ const en: typeof ar = {
     loading: "Loading…",
     retry: "Retry",
     requiredField: "This field is required",
+    invalidUrl: "Invalid URL",
     optional: "optional",
     select: "Select…",
     add: "Add",
@@ -1653,6 +1667,7 @@ const en: typeof ar = {
   },
   adminNav: {
     dashboard: "Dashboard",
+    ads: "Ads",
     providers: "Providers",
     users: "Users",
     finance: "Finance",
@@ -1668,6 +1683,17 @@ const en: typeof ar = {
     subscriptions: "Subscriptions",
   },
   superAdmin: {
+    ads: {
+      title: "Ads", subtitle: "Manage ad campaigns and placements",
+      tabs: { campaigns: "Campaigns", placements: "Placements" },
+      status: { draft: "Draft", scheduled: "Scheduled", active: "Active", paused: "Paused", ended: "Ended" },
+      filters: { allStatuses: "All statuses", allPlacements: "All placements" },
+      columns: { title: "Title", placement: "Placement", period: "Period", status: "Status", code: "Code", actions: "Actions" },
+      campaigns: { add: "Create campaign", empty: "No campaigns yet", deleteTitle: "Delete campaign", deleteMessage: "This campaign will be permanently deleted. Are you sure?" },
+      placements: { add: "Add placement", empty: "No placements yet", deleteTitle: "Delete placement", deleteMessage: "This placement will be permanently deleted. Linked campaigns may be affected. Are you sure?",
+        form: { codeLabel: "Technical code", nameAr: "Name (Arabic)", nameEn: "Name (English)", descAr: "Description (Arabic)", descEn: "Description (English)", isActive: "Active", createTitle: "Add placement", editTitle: "Edit placement" } },
+      errors: { endBeforeStart: "End date must be after start date" }
+    },
     packages: {
       title: "Packages",
       subtitle: "Manage packages and additional features",
