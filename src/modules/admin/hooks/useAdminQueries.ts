@@ -516,7 +516,6 @@ export function useCreateTemplateMutation() {
     mutationFn: (payload: Omit<NotificationTemplate, "id">) => adminApi.createTemplate(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -534,7 +533,6 @@ export function useUpdateTemplateMutation() {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
       void qc.invalidateQueries({ queryKey: adminKeys.template(variables.id) });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -550,7 +548,6 @@ export function useDeleteTemplateMutation() {
     mutationFn: (id: string) => adminApi.deleteTemplate(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -566,7 +563,6 @@ export function useSendNotificationMutation() {
     mutationFn: (payload: Omit<SentNotification, "id" | "status" | "sentAt" | "recipientsCount">) => adminApi.sendNotification(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "notifications"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -599,7 +595,6 @@ export function useCreatePlacementMutation() {
     mutationFn: (payload: Omit<AdPlacement, "id">) => adminApi.createPlacement(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -617,7 +612,6 @@ export function useUpdatePlacementMutation() {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
       void qc.invalidateQueries({ queryKey: adminKeys.placement(variables.id) });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -633,7 +627,6 @@ export function useDeletePlacementMutation() {
     mutationFn: (id: number) => adminApi.deletePlacement(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -649,10 +642,11 @@ export function useCampaignsQuery(params: { page: number; pageSize: number; stat
   });
 }
 
-export function useCampaignQuery(id: number) {
+export function useCampaignQuery(id: number, enabled = true) {
   return useQuery({
     queryKey: adminKeys.campaign(id),
     queryFn: () => adminApi.getCampaign(id),
+    enabled: enabled && Number.isFinite(id) && id > 0,
   });
 }
 
@@ -664,7 +658,6 @@ export function useCreateCampaignMutation() {
     mutationFn: (payload: Omit<AdCampaign, "id" | "createdAt">) => adminApi.createCampaign(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -682,7 +675,6 @@ export function useUpdateCampaignMutation() {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
       void qc.invalidateQueries({ queryKey: adminKeys.campaign(variables.id) });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
@@ -698,7 +690,6 @@ export function useDeleteCampaignMutation() {
     mutationFn: (id: number) => adminApi.deleteCampaign(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
-      toast.success(t("common.success") || "Success");
     },
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");

@@ -512,9 +512,24 @@ const ar = {
       status: { draft:"مسودة", scheduled:"مجدولة", active:"نشطة", paused:"موقوفة", ended:"منتهية" },
       filters: { allStatuses:"كل الحالات", allPlacements:"كل المواضع" },
       columns: { title:"العنوان", placement:"الموضع", period:"الفترة", status:"الحالة", code:"الرمز", actions:"إجراءات" },
-      campaigns: { add:"إنشاء حملة", empty:"لا توجد حملات بعد", deleteTitle:"حذف الحملة", deleteMessage:"سيتم حذف هذه الحملة نهائياً. هل أنت متأكد؟" },
-      placements: { add:"إضافة موضع", empty:"لا توجد مواضع بعد", deleteTitle:"حذف الموضع", deleteMessage:"سيتم حذف هذا الموضع نهائياً. قد تتأثر الحملات المرتبطة. هل أنت متأكد؟",
+      campaigns: { add:"إنشاء حملة", empty:"لا توجد حملات بعد", deleteTitle:"حذف الحملة", deleteMessage:"سيتم حذف هذه الحملة نهائياً. هل أنت متأكد؟", deleted: "تم حذف الحملة بنجاح" },
+      placements: { add:"إضافة موضع", empty:"لا توجد مواضع بعد", deleteTitle:"حذف الموضع", deleteMessage:"سيتم حذف هذا الموضع نهائياً. قد تتأثر الحملات المرتبطة. هل أنت متأكد؟", createdToast: "تم إضافة الموضع بنجاح", updatedToast: "تم تحديث الموضع بنجاح", deletedToast: "تم حذف الموضع بنجاح",
         form: { codeLabel:"الرمز التقني", nameAr:"الاسم (عربي)", nameEn:"الاسم (إنجليزي)", descAr:"الوصف (عربي)", descEn:"الوصف (إنجليزي)", isActive:"مُفعّل", createTitle:"إضافة موضع", editTitle:"تعديل موضع" } },
+      builder: {
+        createTitle: "إنشاء حملة",
+        editTitle: "تعديل حملة",
+        imageUrl: "رابط الصورة",
+        imageUrlHint: "رابط صورة الإعلان (اختياري)",
+        targetUrl: "رابط الوجهة",
+        paused: "إيقاف الحملة",
+        preview: "معاينة",
+        periodEmpty: "حدّد تاريخي البداية والنهاية",
+        startsAt: "تاريخ البداية",
+        endsAt: "تاريخ النهاية",
+        placement: "موضع العرض",
+        created: "تم إنشاء الحملة بنجاح",
+        updated: "تم تحديث الحملة بنجاح"
+      },
       errors: { endBeforeStart:"تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية" }
     },
     packages: {
@@ -1689,9 +1704,24 @@ const en: typeof ar = {
       status: { draft: "Draft", scheduled: "Scheduled", active: "Active", paused: "Paused", ended: "Ended" },
       filters: { allStatuses: "All statuses", allPlacements: "All placements" },
       columns: { title: "Title", placement: "Placement", period: "Period", status: "Status", code: "Code", actions: "Actions" },
-      campaigns: { add: "Create campaign", empty: "No campaigns yet", deleteTitle: "Delete campaign", deleteMessage: "This campaign will be permanently deleted. Are you sure?" },
-      placements: { add: "Add placement", empty: "No placements yet", deleteTitle: "Delete placement", deleteMessage: "This placement will be permanently deleted. Linked campaigns may be affected. Are you sure?",
+      campaigns: { add: "Create campaign", empty: "No campaigns yet", deleteTitle: "Delete campaign", deleteMessage: "This campaign will be permanently deleted. Are you sure?", deleted: "Campaign deleted successfully" },
+      placements: { add: "Add placement", empty: "No placements yet", deleteTitle: "Delete placement", deleteMessage: "This placement will be permanently deleted. Linked campaigns may be affected. Are you sure?", createdToast: "Placement added successfully", updatedToast: "Placement updated successfully", deletedToast: "Placement deleted successfully",
         form: { codeLabel: "Technical code", nameAr: "Name (Arabic)", nameEn: "Name (English)", descAr: "Description (Arabic)", descEn: "Description (English)", isActive: "Active", createTitle: "Add placement", editTitle: "Edit placement" } },
+      builder: {
+        createTitle: "Create Campaign",
+        editTitle: "Edit Campaign",
+        imageUrl: "Image URL",
+        imageUrlHint: "Ad image link (optional)",
+        targetUrl: "Target URL",
+        paused: "Pause Campaign",
+        preview: "Preview",
+        periodEmpty: "Select start and end dates",
+        startsAt: "Start Date",
+        endsAt: "End Date",
+        placement: "Placement",
+        created: "Campaign created successfully",
+        updated: "Campaign updated successfully"
+      },
       errors: { endBeforeStart: "End date must be after start date" }
     },
     packages: {

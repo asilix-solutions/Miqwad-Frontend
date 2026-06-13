@@ -252,6 +252,11 @@ const AdminAdsHubPage = lazy(() =>
     default: m.AdminAdsHubPage,
   }))
 );
+const AdminCampaignBuilderPage = lazy(() =>
+  import("@modules/admin/pages/AdminCampaignBuilderPage").then((m) => ({
+    default: m.AdminCampaignBuilderPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -550,6 +555,8 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="ads.view" />,
                     children: [
                       { index: true, element: <AdminAdsHubPage /> },
+                      { path: "campaigns/new", element: <AdminCampaignBuilderPage /> },
+                      { path: "campaigns/:id", element: <AdminCampaignBuilderPage /> },
                     ],
                   },
                   {

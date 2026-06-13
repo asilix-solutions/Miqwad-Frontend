@@ -34,7 +34,7 @@ export function PlacementsPanel() {
         id: placement.id,
         payload: { isActive: !placement.isActive },
       });
-      toast.success(t("common.saved"));
+      toast.success(t("superAdmin.ads.placements.updatedToast"));
     } catch {
       toast.error(t("common.saveFailed"));
     }

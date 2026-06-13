@@ -86,10 +86,10 @@ export function PlacementFormDialog({ placement, open, onOpenChange }: Props) {
     try {
       if (isEdit && placement) {
         await updateMutation.mutateAsync({ id: placement.id, payload: values });
-        toast.success(t("common.saved"));
+        toast.success(t("superAdmin.ads.placements.updatedToast"));
       } else {
         await createMutation.mutateAsync(values);
-        toast.success(t("common.saved"));
+        toast.success(t("superAdmin.ads.placements.createdToast"));
       }
       onOpenChange(false);
     } catch {

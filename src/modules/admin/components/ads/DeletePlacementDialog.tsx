@@ -32,7 +32,7 @@ export function DeletePlacementDialog({ placement, open, onOpenChange }: Props) 
     if (!placement) return;
     try {
       await deleteMutation.mutateAsync(placement.id);
-      toast.success(t("common.deleted"));
+      toast.success(t("superAdmin.ads.placements.deletedToast"));
       onOpenChange(false);
     } catch {
       toast.error(t("common.deleteFailed"));

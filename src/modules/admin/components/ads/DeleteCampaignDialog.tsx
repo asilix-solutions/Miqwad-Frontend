@@ -32,7 +32,7 @@ export function DeleteCampaignDialog({ campaign, open, onOpenChange }: Props) {
     if (!campaign) return;
     try {
       await deleteMutation.mutateAsync(campaign.id);
-      toast.success(t("common.deleted"));
+      toast.success(t("superAdmin.ads.campaigns.deleted"));
       onOpenChange(false);
     } catch {
       toast.error(t("common.deleteFailed"));
