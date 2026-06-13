@@ -146,6 +146,7 @@ export const PERMISSIONS = {
   // ── Notifications ──────────────────────────────────────────────────────────
   notifications: {
     view: "notifications.view",
+    manage: "notifications.manage",
     send: "notifications.send",
     delete: "notifications.delete",
   },

@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription";
+export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription" | "notification";
 
 export interface StatusBadgeProps {
   status: string;
@@ -47,6 +47,12 @@ const SUBSCRIPTION_STATUS_TONES: Record<string, BadgeTone> = {
   pending: "warning",
 };
 
+const NOTIFICATION_STATUS_TONES: Record<string, BadgeTone> = {
+  sent: "success",
+  pending: "warning",
+  failed: "danger",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
@@ -56,6 +62,7 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
     : kind === "settlement" ? SETTLEMENT_STATUS_TONES
     : kind === "dispute" ? DISPUTE_STATUS_TONES
     : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
+    : kind === "notification" ? NOTIFICATION_STATUS_TONES
     : ESCROW_STATUS_TONES;
     
   const tone = toneMap[status] || "neutral";
@@ -71,6 +78,8 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.escrow.disputeStatus.${status}`
       : kind === "subscription"
       ? `superAdmin.subscriptions.status.${status}`
+      : kind === "notification"
+      ? `superAdmin.notifications.history.status.${status}`
       : `superAdmin.escrow.escrowStatus.${status}`;
 
   return (

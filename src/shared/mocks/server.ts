@@ -7,6 +7,8 @@ import { tryProvidersMock } from "./handlers/providers.handlers";
 import { tryDiscoveryMock } from "./handlers/discovery.handlers";
 import { tryAdminMock } from "./handlers/admin.handlers";
 
+import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handlers";
+
 /**
  * Conditionally enable the in-process mock adapter.
  * Activated whenever VITE_USE_MOCKS=true (default in dev until the
@@ -47,6 +49,7 @@ export function installMocks(): void {
   }
   apiClient.defaults.adapter = createMockAdapter(previous, [
     tryAdminMock,
+    tryAdminNotificationsMock,
     tryAuthMock,
     tryVehiclesMock,
     tryProvidersMock,

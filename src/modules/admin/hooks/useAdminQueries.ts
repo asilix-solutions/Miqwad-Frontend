@@ -7,6 +7,9 @@ import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan } from "@modules/subscriptions/types";
+import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
+import { useToast } from "@shared/components/ui/toastContext";
+import { useTranslation } from "react-i18next";
 
 /**
  * Admin queries + mutations.
@@ -29,6 +32,9 @@ export const adminKeys = {
   plans: (params?: { isActive?: boolean }) => [...adminKeys.all, "plans", params] as const,
   plan: (id: number) => [...adminKeys.all, "plan", id] as const,
   subscriptions: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "subscriptions", params] as const,
+  templates: (params?: { isActive?: boolean }) => [...adminKeys.all, "templates", params] as const,
+  template: (id: string) => [...adminKeys.all, "template", id] as const,
+  notifications: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "notifications", params] as const,
 };
 
 
@@ -471,13 +477,103 @@ export function useUpdateModelMutation() {
   });
 }
 
-export function useDeleteModelMutation() {
+  export function useDeleteModelMutation() {
+    const qc = useQueryClient();
+    return useMutation({
+      mutationFn: ({ brandId, modelId }: { brandId: number; modelId: number }) => adminApi.deleteModel(brandId, modelId),
+      onSuccess: (_, variables) => {
+        void qc.invalidateQueries({ queryKey: ["lookups", "brands", variables.brandId, "models"] });
+      },
+    });
+  }
+
+// ── Notifications ──────────────────────────────────────────────────────────
+
+export function useTemplatesQuery(params?: { isActive?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.templates(params),
+    queryFn: () => adminApi.getTemplates(params),
+  });
+}
+
+export function useTemplateQuery(id: string) {
+  return useQuery({
+    queryKey: adminKeys.template(id),
+    queryFn: () => adminApi.getTemplate(id),
+  });
+}
+
+export function useCreateTemplateMutation() {
   const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
   return useMutation({
-    mutationFn: ({ brandId, modelId }: { brandId: number; modelId: number }) => adminApi.deleteModel(brandId, modelId),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands", variables.brandId, "models"] });
+    mutationFn: (payload: Omit<NotificationTemplate, "id">) => adminApi.createTemplate(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
+      toast.success(t("common.success") || "Success");
     },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useUpdateTemplateMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<NotificationTemplate> }) =>
+      adminApi.updateTemplate(id, payload),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.template(variables.id) });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useDeleteTemplateMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (id: string) => adminApi.deleteTemplate(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "templates"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useSendNotificationMutation() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (payload: Omit<SentNotification, "id" | "status" | "sentAt" | "recipientsCount">) => adminApi.sendNotification(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "notifications"] });
+      toast.success(t("common.success") || "Success");
+    },
+    onError: () => {
+      toast.error(t("common.saveFailed") || "Save failed");
+    }
+  });
+}
+
+export function useSentNotificationsQuery(params: { page: number; pageSize: number; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.notifications(params),
+    queryFn: () => adminApi.getSentNotifications(params),
+    placeholderData: keepPreviousData,
   });
 }
 

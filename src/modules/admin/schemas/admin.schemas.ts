@@ -179,3 +179,31 @@ export const planSchema = z.object({
 });
 
 export type PlanFormValues = z.infer<typeof planSchema>;
+
+/** Schema used by the admin notification template create/edit dialog. */
+export const templateSchema = z.object({
+  nameAr: z.string().min(2, { message: "common.requiredField" }).max(100),
+  nameEn: z.string().min(2, { message: "common.requiredField" }).max(100),
+  titleAr: z.string().min(2, { message: "common.requiredField" }).max(200),
+  titleEn: z.string().min(2, { message: "common.requiredField" }).max(200),
+  bodyAr: z.string().min(2, { message: "common.requiredField" }),
+  bodyEn: z.string().min(2, { message: "common.requiredField" }),
+  variables: z.array(z.string()).optional(),
+  channel: z.enum(["in_app", "push", "email", "sms"]),
+  isActive: z.boolean(),
+});
+
+export type TemplateFormValues = z.infer<typeof templateSchema>;
+
+/** Schema used by the admin send notification dialog. */
+export const sendNotificationSchema = z.object({
+  templateId: z.string().optional().nullable(),
+  titleAr: z.string().min(2, { message: "common.requiredField" }).max(200),
+  titleEn: z.string().min(2, { message: "common.requiredField" }).max(200),
+  bodyAr: z.string().min(2, { message: "common.requiredField" }),
+  bodyEn: z.string().min(2, { message: "common.requiredField" }),
+  audience: z.enum(["all", "customers", "providers"]),
+  channel: z.enum(["in_app", "push", "email", "sms"]),
+});
+
+export type SendNotificationFormValues = z.infer<typeof sendNotificationSchema>;

@@ -4,6 +4,7 @@ import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, 
 import type { Service, ServiceCategory, ServicePackage } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
+import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 
 /**
  * Admin transport layer.
@@ -242,6 +243,42 @@ export const adminApi = {
 
   deleteModel: async (brandId: number, modelId: number): Promise<void> => {
     await apiClient.delete(`/admin/brands/${brandId}/models/${modelId}`);
+  },
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+
+  getTemplates: async (params?: { isActive?: boolean }): Promise<NotificationTemplate[]> => {
+    const { data } = await apiClient.get<NotificationTemplate[]>("/admin/notification-templates", { params });
+    return data;
+  },
+
+  getTemplate: async (id: string): Promise<NotificationTemplate> => {
+    const { data } = await apiClient.get<NotificationTemplate>(`/admin/notification-templates/${id}`);
+    return data;
+  },
+
+  createTemplate: async (payload: Omit<NotificationTemplate, "id">): Promise<NotificationTemplate> => {
+    const { data } = await apiClient.post<NotificationTemplate>("/admin/notification-templates", payload);
+    return data;
+  },
+
+  updateTemplate: async (id: string, payload: Partial<NotificationTemplate>): Promise<NotificationTemplate> => {
+    const { data } = await apiClient.put<NotificationTemplate>(`/admin/notification-templates/${id}`, payload);
+    return data;
+  },
+
+  deleteTemplate: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/notification-templates/${id}`);
+  },
+
+  sendNotification: async (payload: Omit<SentNotification, "id" | "status" | "sentAt" | "recipientsCount">): Promise<SentNotification> => {
+    const { data } = await apiClient.post<SentNotification>("/admin/notifications/send", payload);
+    return data;
+  },
+
+  getSentNotifications: async (params: { page: number; pageSize: number; status?: string }): Promise<PaginatedResponse<SentNotification>> => {
+    const { data } = await apiClient.get<PaginatedResponse<SentNotification>>("/admin/notifications", { params });
+    return data;
   },
 };
 
