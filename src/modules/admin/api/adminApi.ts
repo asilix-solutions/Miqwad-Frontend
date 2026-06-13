@@ -3,6 +3,7 @@ import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
 import type { Service, ServiceCategory, ServicePackage } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
+import type { SubscriptionPlan } from "@modules/subscriptions/types";
 
 /**
  * Admin transport layer.
@@ -152,6 +153,32 @@ export const adminApi = {
 
   deletePackage: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/packages/${id}`);
+  },
+
+  // ── Subscription Plans ─────────────────────────────────────────────────────
+
+  getPlans: async (params?: { isActive?: boolean }): Promise<SubscriptionPlan[]> => {
+    const { data } = await apiClient.get<SubscriptionPlan[]>("/admin/plans", { params });
+    return data;
+  },
+
+  getPlan: async (id: number): Promise<SubscriptionPlan> => {
+    const { data } = await apiClient.get<SubscriptionPlan>(`/admin/plans/${id}`);
+    return data;
+  },
+
+  createPlan: async (payload: Omit<SubscriptionPlan, "id">): Promise<SubscriptionPlan> => {
+    const { data } = await apiClient.post<SubscriptionPlan>("/admin/plans", payload);
+    return data;
+  },
+
+  updatePlan: async (id: number, payload: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> => {
+    const { data } = await apiClient.put<SubscriptionPlan>(`/admin/plans/${id}`, payload);
+    return data;
+  },
+
+  deletePlan: async (id: number): Promise<void> => {
+    await apiClient.delete(`/admin/plans/${id}`);
   },
 
   getCities: async (): Promise<City[]> => {

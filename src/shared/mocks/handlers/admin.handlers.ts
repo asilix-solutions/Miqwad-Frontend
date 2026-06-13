@@ -36,6 +36,7 @@ import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail } from "@modules/admin/types";
 import type { Service, ServicePackage } from "@modules/services/types";
+import type { SubscriptionPlan } from "@modules/subscriptions/types";
 
 // =============================================================================
 // Local types — shape of the current user stored in localStorage
@@ -176,6 +177,60 @@ let SEED_PACKAGES: ServicePackage[] = [
   { id: 3, nameAr: "باقة الصيف", nameEn: "Summer Package", serviceIds: [1, 7], price: 180, isActive: false },
   { id: 4, nameAr: "باقة الزيت والفلاتر", nameEn: "Oil and Filters Package", serviceIds: [3, 8], price: 650, isActive: true },
   { id: 5, nameAr: "الباقة الأساسية", nameEn: "Basic Package", serviceIds: [1, 3], price: 230, isActive: true },
+];
+
+let SEED_PLANS: SubscriptionPlan[] = [
+  {
+    id: 1,
+    nameAr: "الأساسية",
+    nameEn: "Basic",
+    price: 99,
+    billingCycle: "monthly",
+    features: [
+      { id: "feat_1", labelAr: "إدراج في الدليل", labelEn: "Directory listing" },
+      { id: "feat_2", labelAr: "دعم فني عادي", labelEn: "Standard support" }
+    ],
+    isActive: true,
+  },
+  {
+    id: 2,
+    nameAr: "الاحترافية",
+    nameEn: "Pro",
+    price: 199,
+    billingCycle: "monthly",
+    features: [
+      { id: "feat_3", labelAr: "ظهور متقدم", labelEn: "Featured placement" },
+      { id: "feat_4", labelAr: "دعم فني أولوية", labelEn: "Priority support" },
+      { id: "feat_5", labelAr: "تقارير متقدمة", labelEn: "Advanced analytics" }
+    ],
+    isActive: true,
+  },
+  {
+    id: 3,
+    nameAr: "الاحترافية (سنوي)",
+    nameEn: "Pro (Yearly)",
+    price: 1990,
+    billingCycle: "yearly",
+    features: [
+      { id: "feat_6", labelAr: "ظهور متقدم", labelEn: "Featured placement" },
+      { id: "feat_7", labelAr: "دعم فني أولوية", labelEn: "Priority support" },
+      { id: "feat_8", labelAr: "تقارير متقدمة", labelEn: "Advanced analytics" },
+      { id: "feat_9", labelAr: "شهرين مجاناً", labelEn: "Two months free" }
+    ],
+    isActive: true,
+  },
+  {
+    id: 4,
+    nameAr: "المميزة",
+    nameEn: "Premium",
+    price: 299,
+    billingCycle: "monthly",
+    features: [
+      { id: "feat_10", labelAr: "حساب مدير مخصص", labelEn: "Dedicated account manager" },
+      { id: "feat_11", labelAr: "ظهور في الصفحة الرئيسية", labelEn: "Homepage placement" }
+    ],
+    isActive: false,
+  }
 ];
 
 
@@ -647,6 +702,74 @@ export async function tryAdminMock(
     if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الباقة غير موجودة");
 
     SEED_PACKAGES.splice(idx, 1);
+    return ok(config, { success: true });
+  }
+
+  // -- GET /admin/plans ---------------------------------------------------
+  if (url === "admin/plans" && method === "get") {
+    requireAdmin(config);
+    const params = (config.params ?? {}) as Record<string, unknown>;
+    const isActiveParam = params["isActive"] as string | undefined;
+
+    let filtered = SEED_PLANS;
+    if (isActiveParam !== undefined) {
+      const isActive = isActiveParam === "true";
+      filtered = filtered.filter(p => p.isActive === isActive);
+    }
+
+    return ok(config, filtered);
+  }
+
+  // -- GET /admin/plans/:id -----------------------------------------------
+  if (url.startsWith("admin/plans/") && method === "get") {
+    requireAdmin(config);
+    const id = Number(url.split("/")[2]);
+    const plan = SEED_PLANS.find(p => p.id === id);
+    if (!plan) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
+    return ok(config, plan);
+  }
+
+  // -- POST /admin/plans --------------------------------------------------
+  if (url === "admin/plans" && method === "post") {
+    requireAdmin(config);
+    const payload = JSON.parse(config.data || "{}");
+    const newId = Math.max(0, ...SEED_PLANS.map(p => p.id)) + 1;
+    const newPlan: SubscriptionPlan = {
+      id: newId,
+      nameAr: payload.nameAr,
+      nameEn: payload.nameEn,
+      descriptionAr: payload.descriptionAr ?? null,
+      descriptionEn: payload.descriptionEn ?? null,
+      price: payload.price,
+      billingCycle: payload.billingCycle,
+      features: payload.features || [],
+      isActive: payload.isActive ?? true,
+      sortOrder: payload.sortOrder ?? null,
+    };
+    SEED_PLANS.push(newPlan);
+    return ok(config, newPlan);
+  }
+
+  // -- PUT /admin/plans/:id -----------------------------------------------
+  if (url.startsWith("admin/plans/") && method === "put") {
+    requireAdmin(config);
+    const id = Number(url.split("/")[2]);
+    const idx = SEED_PLANS.findIndex((p) => p.id === id);
+    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
+
+    const payload = JSON.parse(config.data || "{}");
+    SEED_PLANS[idx] = { ...SEED_PLANS[idx], ...payload };
+    return ok(config, SEED_PLANS[idx]);
+  }
+
+  // -- DELETE /admin/plans/:id --------------------------------------------
+  if (url.startsWith("admin/plans/") && method === "delete") {
+    requireAdmin(config);
+    const id = Number(url.split("/")[2]);
+    const idx = SEED_PLANS.findIndex((p) => p.id === id);
+    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
+
+    SEED_PLANS.splice(idx, 1);
     return ok(config, { success: true });
   }
 

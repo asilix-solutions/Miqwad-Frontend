@@ -6,6 +6,8 @@ import type { Service, ServiceCategory, ServicePackage } from "@modules/services
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
+import type { SubscriptionPlan } from "@modules/subscriptions/types";
+
 /**
  * Admin queries + mutations.
  */
@@ -24,6 +26,8 @@ export const adminKeys = {
   services: (params?: { categoryId?: number; isActive?: boolean }) => [...adminKeys.all, "services", params] as const,
   packages: (params?: { isActive?: boolean }) => [...adminKeys.all, "packages", params] as const,
   package: (id: number) => [...adminKeys.all, "package", id] as const,
+  plans: (params?: { isActive?: boolean }) => [...adminKeys.all, "plans", params] as const,
+  plan: (id: number) => [...adminKeys.all, "plan", id] as const,
 };
 
 
@@ -289,6 +293,54 @@ export function useDeletePackageMutation() {
     mutationFn: (id: number) => adminApi.deletePackage(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "packages"] });
+    },
+  });
+}
+
+// ── Subscription Plans ─────────────────────────────────────────────────────
+
+export function useAdminPlansQuery(params?: { isActive?: boolean }) {
+  return useQuery({
+    queryKey: adminKeys.plans(params),
+    queryFn: () => adminApi.getPlans(params),
+  });
+}
+
+export function usePlanQuery(id: number) {
+  return useQuery({
+    queryKey: adminKeys.plan(id),
+    queryFn: () => adminApi.getPlan(id),
+  });
+}
+
+export function useCreatePlanMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Omit<SubscriptionPlan, "id">) => adminApi.createPlan(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
+    },
+  });
+}
+
+export function useUpdatePlanMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<SubscriptionPlan> }) =>
+      adminApi.updatePlan(id, payload),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
+      void qc.invalidateQueries({ queryKey: adminKeys.plan(variables.id) });
+    },
+  });
+}
+
+export function useDeletePlanMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.deletePlan(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
     },
   });
 }

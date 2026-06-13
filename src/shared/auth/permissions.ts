@@ -95,6 +95,19 @@ export const PERMISSIONS = {
     delete: "packages.delete",
   },
 
+  // ── Subscription Plans ─────────────────────────────────────────────────────
+  plans: {
+    view: "plans.view",
+    create: "plans.create",
+    edit: "plans.edit",
+    delete: "plans.delete",
+  },
+
+  // ── Subscriptions ──────────────────────────────────────────────────────────
+  subscriptions: {
+    view: "subscriptions.view",
+  },
+
   // ── Finance ────────────────────────────────────────────────────────────────
   finance: {
     view: "finance.view",

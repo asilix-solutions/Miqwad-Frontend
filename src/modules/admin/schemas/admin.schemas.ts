@@ -152,3 +152,30 @@ export const packageSchema = z.object({
 });
 
 export type PackageFormValues = z.infer<typeof packageSchema>;
+
+/** Schema used by the admin plan create/edit dialog. */
+export const planSchema = z.object({
+  nameAr: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  nameEn: z
+    .string()
+    .min(2, { message: "common.requiredField" })
+    .max(100),
+  descriptionAr: z.string().nullable().optional(),
+  descriptionEn: z.string().nullable().optional(),
+  price: z.number().min(0, { message: "common.requiredField" }),
+  billingCycle: z.enum(["monthly", "yearly"]),
+  features: z.array(
+    z.object({
+      id: z.string(),
+      labelAr: z.string().min(1, { message: "common.requiredField" }),
+      labelEn: z.string().min(1, { message: "common.requiredField" }),
+    })
+  ).default([]),
+  isActive: z.boolean(),
+  sortOrder: z.number().nullable().optional(),
+});
+
+export type PlanFormValues = z.infer<typeof planSchema>;
