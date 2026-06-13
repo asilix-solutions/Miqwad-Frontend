@@ -24,6 +24,8 @@ import { sendNotificationSchema, type SendNotificationFormValues } from "../../s
 import { SendConfirmDialog } from "./SendConfirmDialog";
 import { cn } from "@shared/lib/utils";
 
+const MANUAL_TEMPLATE_VALUE = "__manual__";
+
 const channelIcons: Record<string, React.FC<any>> = {
   in_app: Bell,
   push: Smartphone,
@@ -74,7 +76,7 @@ export function SendNotificationPanel() {
   const bodyEn = watch("bodyEn");
 
   const handleTemplateChange = (val: string) => {
-    if (!val) {
+    if (!val || val === MANUAL_TEMPLATE_VALUE) {
       setValue("templateId", null, { shouldValidate: true, shouldDirty: true });
       return;
     }
@@ -134,12 +136,12 @@ export function SendNotificationPanel() {
 
         <div className="space-y-2">
           <Label>{t("superAdmin.notifications.send.loadTemplate")}</Label>
-          <Select onValueChange={handleTemplateChange}>
+          <Select onValueChange={handleTemplateChange} defaultValue={MANUAL_TEMPLATE_VALUE}>
             <SelectTrigger>
               <SelectValue placeholder={t("superAdmin.notifications.send.manualOption")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t("superAdmin.notifications.send.manualOption")}</SelectItem>
+              <SelectItem value={MANUAL_TEMPLATE_VALUE}>{t("superAdmin.notifications.send.manualOption")}</SelectItem>
               {templates?.map((tmpl) => (
                 <SelectItem key={tmpl.id} value={String(tmpl.id)}>
                   {lang === "ar" ? tmpl.nameAr : tmpl.nameEn}
