@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow";
+export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription";
 
 export interface StatusBadgeProps {
   status: string;
@@ -40,6 +40,13 @@ const ESCROW_STATUS_TONES: Record<string, BadgeTone> = {
   disputed: "danger",
 };
 
+const SUBSCRIPTION_STATUS_TONES: Record<string, BadgeTone> = {
+  active: "success",
+  expired: "neutral",
+  cancelled: "danger",
+  pending: "warning",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
@@ -48,6 +55,7 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
     : kind === "provider" ? PROVIDER_STATUS_TONES 
     : kind === "settlement" ? SETTLEMENT_STATUS_TONES
     : kind === "dispute" ? DISPUTE_STATUS_TONES
+    : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
     : ESCROW_STATUS_TONES;
     
   const tone = toneMap[status] || "neutral";
@@ -61,6 +69,8 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.finance.settlementStatus.${status}`
       : kind === "dispute"
       ? `superAdmin.escrow.disputeStatus.${status}`
+      : kind === "subscription"
+      ? `superAdmin.subscriptions.status.${status}`
       : `superAdmin.escrow.escrowStatus.${status}`;
 
   return (

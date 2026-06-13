@@ -106,6 +106,7 @@ export const PERMISSIONS = {
   // ── Subscriptions ──────────────────────────────────────────────────────────
   subscriptions: {
     view: "subscriptions.view",
+    manage: "subscriptions.manage",
   },
 
   // ── Finance ────────────────────────────────────────────────────────────────

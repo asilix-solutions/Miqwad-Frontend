@@ -3,7 +3,7 @@ import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, SettlementRecord, SettlementStatus, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
 import type { Service, ServiceCategory, ServicePackage } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
-import type { SubscriptionPlan } from "@modules/subscriptions/types";
+import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 
 /**
  * Admin transport layer.
@@ -179,6 +179,18 @@ export const adminApi = {
 
   deletePlan: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/plans/${id}`);
+  },
+
+  // ── Provider Subscriptions ──────────────────────────────────────────────────
+
+  getSubscriptions: async (params: { page: number; pageSize: number; status?: string }): Promise<PaginatedResponse<ProviderSubscription>> => {
+    const { data } = await apiClient.get<PaginatedResponse<ProviderSubscription>>("/admin/subscriptions", { params });
+    return data;
+  },
+
+  cancelSubscription: async (id: number): Promise<ProviderSubscription> => {
+    const { data } = await apiClient.post<ProviderSubscription>(`/admin/subscriptions/${id}/cancel`);
+    return data;
   },
 
   getCities: async (): Promise<City[]> => {

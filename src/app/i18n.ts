@@ -500,6 +500,7 @@ const ar = {
     cities: "المدن",
     packages: "الباقات",
     plans: "خطط الاشتراك",
+    subscriptions: "الاشتراكات",
   },
   superAdmin: {
     packages: {
@@ -556,6 +557,37 @@ const ar = {
         updated: "تم تعديل الباقة بنجاح",
         deleted: "تم حذف الباقة بنجاح",
       },
+    },
+    subscriptions: {
+      title: "الاشتراكات",
+      subtitle: "إدارة خطط الاشتراك واشتراكات المزودين الحالية",
+      tabs: {
+        plans: "الخطط",
+        providers: "اشتراكات المزودين"
+      },
+      status: {
+        active: "نشط",
+        pending: "قيد الانتظار",
+        expired: "منتهي",
+        cancelled: "ملغى"
+      },
+      columns: {
+        providerName: "مقدم الخدمة",
+        planName: "الخطة",
+        price: "السعر",
+        billingCycle: "دورة الفوترة",
+        status: "الحالة",
+        startDate: "تاريخ البدء",
+        endDate: "تاريخ الانتهاء"
+      },
+      cancelConfirm: {
+        title: "إلغاء الاشتراك",
+        description: "هل أنت متأكد من إلغاء اشتراك {{provider}} في خطة {{plan}}؟ لا يمكن التراجع.",
+        confirm: "تأكيد الإلغاء"
+      },
+      success: {
+        cancelled: "تم إلغاء الاشتراك بنجاح"
+      }
     },
     plans: {
       title: "خطط الاشتراك",
@@ -1533,6 +1565,7 @@ const en: typeof ar = {
     cities: "Cities",
     packages: "Packages",
     plans: "Subscription Plans",
+    subscriptions: "Subscriptions",
   },
   superAdmin: {
     packages: {
@@ -1589,6 +1622,37 @@ const en: typeof ar = {
         updated: "Package updated successfully",
         deleted: "Package deleted successfully",
       },
+    },
+    subscriptions: {
+      title: "Subscriptions",
+      subtitle: "Manage subscription plans and active provider subscriptions",
+      tabs: {
+        plans: "Plans",
+        providers: "Provider Subscriptions"
+      },
+      status: {
+        active: "Active",
+        pending: "Pending",
+        expired: "Expired",
+        cancelled: "Cancelled"
+      },
+      columns: {
+        providerName: "Provider Name",
+        planName: "Plan",
+        price: "Price",
+        billingCycle: "Billing Cycle",
+        status: "Status",
+        startDate: "Start Date",
+        endDate: "End Date"
+      },
+      cancelConfirm: {
+        title: "Cancel Subscription",
+        description: "Are you sure you want to cancel {{provider}}'s subscription to the {{plan}} plan? This action cannot be undone.",
+        confirm: "Confirm Cancellation"
+      },
+      success: {
+        cancelled: "Subscription cancelled successfully"
+      }
     },
     plans: {
       title: "Subscription Plans",

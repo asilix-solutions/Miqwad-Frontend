@@ -26,4 +26,18 @@ export interface SubscriptionPlan {
   sortOrder?: number | null;
 }
 
-// FUTURE: ProviderSubscription { providerId; planId; status; startDate; endDate }
+export type SubscriptionStatus = "active" | "expired" | "cancelled" | "pending";
+
+export interface ProviderSubscription {
+  id: number;
+  providerId: number;
+  providerName: string;
+  planId: number;
+  planName: string;
+  price: number;
+  billingCycle: BillingCycle;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+}

@@ -237,6 +237,11 @@ const AdminPlansPage = lazy(() =>
     default: m.AdminPlansPage,
   }))
 );
+const AdminSubscriptionsHubPage = lazy(() =>
+  import("@modules/admin/pages/AdminSubscriptionsHubPage").then((m) => ({
+    default: m.AdminSubscriptionsHubPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -516,11 +521,17 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
-                    path: "plans",
-                    element: <PermissionGuard permission="plans.view" />,
+                    // Subscriptions Hub — consolidated container (plans + provider subscriptions)
+                    path: "subscriptions",
+                    element: <PermissionGuard permission="subscriptions.view" />,
                     children: [
-                      { index: true, element: <AdminPlansPage /> },
+                      { index: true, element: <AdminSubscriptionsHubPage /> },
                     ],
+                  },
+                  {
+                    // Legacy redirect: /admin/plans → /admin/subscriptions?tab=plans
+                    path: "plans",
+                    element: <AdminPlansPage />,
                   },
                   {
                     // Legacy redirect: /admin/categories → /admin/reference?tab=categories

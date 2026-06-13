@@ -28,6 +28,7 @@ export const adminKeys = {
   package: (id: number) => [...adminKeys.all, "package", id] as const,
   plans: (params?: { isActive?: boolean }) => [...adminKeys.all, "plans", params] as const,
   plan: (id: number) => [...adminKeys.all, "plan", id] as const,
+  subscriptions: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "subscriptions", params] as const,
 };
 
 
@@ -341,6 +342,26 @@ export function useDeletePlanMutation() {
     mutationFn: (id: number) => adminApi.deletePlan(id),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
+    },
+  });
+}
+
+// ── Provider Subscriptions ──────────────────────────────────────────────────
+
+export function useSubscriptionsQuery(params: { page: number; pageSize: number; status?: string }) {
+  return useQuery({
+    queryKey: adminKeys.subscriptions(params),
+    queryFn: () => adminApi.getSubscriptions(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCancelSubscriptionMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => adminApi.cancelSubscription(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "subscriptions"] });
     },
   });
 }
