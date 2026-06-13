@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { TemplatesPanel } from "../components/notifications/TemplatesPanel";
 import { SentHistoryPanel } from "../components/notifications/SentHistoryPanel";
 import { cn } from "@shared/lib/utils";
+import { SendNotificationPanel } from "../components/notifications/SendNotificationPanel";
 
 type TabValue = "templates" | "history" | "send";
 
@@ -56,11 +57,7 @@ export function AdminNotificationsHubPage() {
       <div className="mt-2">
         {currentTab === "templates" && <TemplatesPanel />}
         {currentTab === "history" && <SentHistoryPanel />}
-        {currentTab === "send" && (
-          <div className="flex flex-col items-center justify-center p-12 bg-white rounded-md border border-[var(--color-divider)] text-[var(--color-ink-lighter)]">
-            {t("superAdmin.notifications.sendPlaceholder")}
-          </div>
-        )}
+        {currentTab === "send" && <SendNotificationPanel />}
       </div>
     </div>
   );

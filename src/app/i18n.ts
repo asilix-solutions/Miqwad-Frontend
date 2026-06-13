@@ -632,6 +632,29 @@ const ar = {
           failed: "فشل",
         },
       },
+      send: {
+        compose: "تأليف الرسالة",
+        loadTemplate: "تحميل قالب",
+        manualOption: "تأليف يدوي",
+        titleAr: "العنوان (عربي)",
+        titleEn: "العنوان (إنجليزي)",
+        bodyAr: "النص (عربي)",
+        bodyEn: "النص (إنجليزي)",
+        audience: "الجمهور",
+        channel: "القناة",
+        preview: "معاينة",
+        previewEmpty: "ابدأ بالكتابة لرؤية المعاينة",
+        recipients: "سيُرسل إلى",
+        submit: "إرسال الإشعار",
+        sending: "جارٍ الإرسال…",
+        success: "تم إرسال الإشعار بنجاح",
+        error: "تعذّر إرسال الإشعار",
+        confirm: {
+          title: "تأكيد الإرسال",
+          message: "أنت على وشك إرسال هذا الإشعار إلى {{audience}} عبر {{channel}}. هل تريد المتابعة؟",
+          confirm: "إرسال"
+        }
+      },
     },
     subscriptions: {
       title: "الاشتراكات",
@@ -1772,6 +1795,29 @@ const en: typeof ar = {
           pending: "Pending",
           failed: "Failed",
         },
+      },
+      send: {
+        compose: "Compose message",
+        loadTemplate: "Load template",
+        manualOption: "Manual compose",
+        titleAr: "Title (Arabic)",
+        titleEn: "Title (English)",
+        bodyAr: "Body (Arabic)",
+        bodyEn: "Body (English)",
+        audience: "Audience",
+        channel: "Channel",
+        preview: "Preview",
+        previewEmpty: "Start typing to see the preview",
+        recipients: "Will be sent to",
+        submit: "Send notification",
+        sending: "Sending…",
+        success: "Notification sent successfully",
+        error: "Failed to send notification",
+        confirm: {
+          title: "Confirm send",
+          message: "You are about to send this notification to {{audience}} via {{channel}}. Continue?",
+          confirm: "Send"
+        }
       },
     },
     subscriptions: {
