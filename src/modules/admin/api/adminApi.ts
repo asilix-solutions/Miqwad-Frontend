@@ -7,6 +7,7 @@ import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscripti
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
+import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
 
 /**
  * Admin transport layer.
@@ -337,6 +338,21 @@ export const adminApi = {
 
   updateSettingsSection: async <T>(section: SettingsSection, payload: T): Promise<SystemSettings> => {
     const { data } = await apiClient.put<SystemSettings>(`/admin/settings/${section}`, payload);
+    return data;
+  },
+
+  // ── Audit Logs ─────────────────────────────────────────────────────────────
+
+  getAuditLogs: async (params: AuditLogQuery): Promise<PaginatedResponse<AuditLogEntry>> => {
+    const { data } = await apiClient.get<PaginatedResponse<AuditLogEntry>>("/admin/audit-logs", { params });
+    return data;
+  },
+
+  exportAuditLogs: async (params: Omit<AuditLogQuery, "page" | "pageSize">): Promise<Blob> => {
+    const { data } = await apiClient.get<Blob>("/admin/audit-logs/export", {
+      params,
+      responseType: "blob",
+    });
     return data;
   },
 };

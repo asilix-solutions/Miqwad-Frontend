@@ -10,6 +10,7 @@ import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SettingsSection } from "@modules/settings/types";
+import type { AuditLogQuery } from "@modules/audit/types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { useTranslation } from "react-i18next";
 
@@ -42,6 +43,7 @@ export const adminKeys = {
   campaigns: (params?: { status?: string; placementId?: number }) => [...adminKeys.all, "campaigns", params] as const,
   campaign: (id: number) => [...adminKeys.all, "campaign", id] as const,
   settings: () => [...adminKeys.all, "settings"] as const,
+  auditLogs: (params?: Partial<AuditLogQuery>) => [...adminKeys.all, "audit", params] as const,
 };
 
 
@@ -716,5 +718,21 @@ export function useUpdateSettingsSectionMutation() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: adminKeys.settings() });
     },
+  });
+}
+
+// ── Audit Logs ─────────────────────────────────────────────────────────────
+
+export function useAuditLogsQuery(params: AuditLogQuery) {
+  return useQuery({
+    queryKey: adminKeys.auditLogs(params),
+    queryFn: () => adminApi.getAuditLogs(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useExportAuditLogsMutation() {
+  return useMutation({
+    mutationFn: (params: Omit<AuditLogQuery, "page" | "pageSize">) => adminApi.exportAuditLogs(params),
   });
 }

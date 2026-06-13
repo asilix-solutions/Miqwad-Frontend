@@ -292,3 +292,22 @@ export const featureFlagsSchema = z.object({
 });
 
 export type FeatureFlagsFormValues = z.infer<typeof featureFlagsSchema>;
+
+/** Schema used by the admin audit log filter. */
+export const auditFilterSchema = z.object({
+  module: z.enum([
+    "users", "providers", "settlements", "disputes", "services",
+    "packages", "plans", "subscriptions", "notifications", "ads",
+    "settings", "auth"
+  ]).optional(),
+  action: z.enum([
+    "create", "update", "delete", "approve", "reject", "resolve",
+    "suspend", "restore", "send", "settle", "cancel", "login"
+  ]).optional(),
+  actorId: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  search: z.string().optional(),
+});
+
+export type AuditFilterValues = z.infer<typeof auditFilterSchema>;
