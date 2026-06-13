@@ -6,6 +6,7 @@ import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
+import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 
 /**
  * Admin transport layer.
@@ -325,6 +326,18 @@ export const adminApi = {
 
   deleteCampaign: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/ad-campaigns/${id}`);
+  },
+
+  // ── System Settings ────────────────────────────────────────────────────────
+
+  getSettings: async (): Promise<SystemSettings> => {
+    const { data } = await apiClient.get<SystemSettings>("/admin/settings");
+    return data;
+  },
+
+  updateSettingsSection: async <T>(section: SettingsSection, payload: T): Promise<SystemSettings> => {
+    const { data } = await apiClient.put<SystemSettings>(`/admin/settings/${section}`, payload);
+    return data;
   },
 };
 

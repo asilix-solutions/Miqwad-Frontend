@@ -239,3 +239,56 @@ export const campaignSchema = z.object({
 });
 
 export type CampaignFormValues = z.infer<typeof campaignSchema>;
+
+/** Schema used by the admin system settings (general) editor. */
+export const generalSettingsSchema = z.object({
+  platformNameAr: z.string().min(2, { message: "common.requiredField" }),
+  platformNameEn: z.string().min(2, { message: "common.requiredField" }),
+  logoUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  supportEmail: z.string().email({ message: "common.invalidEmail" }),
+  supportPhone: z.string().min(6, { message: "common.requiredField" }),
+  defaultCurrency: z.string().min(1, { message: "common.requiredField" }),
+  defaultLanguage: z.enum(["ar", "en"]),
+  timezone: z.string().min(1, { message: "common.requiredField" }),
+});
+
+export type GeneralSettingsFormValues = z.infer<typeof generalSettingsSchema>;
+
+/** Schema used by the admin system settings (business) editor. */
+export const businessSettingsSchema = z.object({
+  defaultCommissionRate: z.number().min(0).max(100),
+  minWithdrawalAmount: z.number().min(0),
+  settlementHoldDays: z.number().int().min(0),
+  escrowAutoReleaseDays: z.number().int().min(0),
+});
+
+export type BusinessSettingsFormValues = z.infer<typeof businessSettingsSchema>;
+
+/** Schema used by the admin system settings (contact) editor. */
+export const contactSettingsSchema = z.object({
+  termsUrlAr: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  termsUrlEn: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  privacyUrlAr: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  privacyUrlEn: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  twitterUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  instagramUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
+  whatsappNumber: z.string().optional().or(z.literal("")),
+});
+
+export type ContactSettingsFormValues = z.infer<typeof contactSettingsSchema>;
+
+/** Schema used by the admin system settings (feature flags) editor. */
+export const featureFlagSchema = z.object({
+  key: z.string().min(2, { message: "common.requiredField" }),
+  labelAr: z.string().min(1, { message: "common.requiredField" }),
+  labelEn: z.string().min(1, { message: "common.requiredField" }),
+  descriptionAr: z.string().optional(),
+  descriptionEn: z.string().optional(),
+  enabled: z.boolean(),
+});
+
+export const featureFlagsSchema = z.object({
+  flags: z.array(featureFlagSchema),
+});
+
+export type FeatureFlagsFormValues = z.infer<typeof featureFlagsSchema>;

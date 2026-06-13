@@ -560,6 +560,13 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
+                    path: "settings",
+                    element: <PermissionGuard permission="settings.view" />,
+                    children: [
+                      { index: true, element: <div /> }
+                    ],
+                  },
+                  {
                     // Legacy redirect: /admin/plans → /admin/subscriptions?tab=plans
                     path: "plans",
                     element: <AdminPlansPage />,

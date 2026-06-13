@@ -9,6 +9,7 @@ import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
+import type { SettingsSection } from "@modules/settings/types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { useTranslation } from "react-i18next";
 
@@ -40,6 +41,7 @@ export const adminKeys = {
   placement: (id: number) => [...adminKeys.all, "placement", id] as const,
   campaigns: (params?: { status?: string; placementId?: number }) => [...adminKeys.all, "campaigns", params] as const,
   campaign: (id: number) => [...adminKeys.all, "campaign", id] as const,
+  settings: () => [...adminKeys.all, "settings"] as const,
 };
 
 
@@ -694,5 +696,25 @@ export function useDeleteCampaignMutation() {
     onError: () => {
       toast.error(t("common.saveFailed") || "Save failed");
     }
+  });
+}
+
+// ── System Settings ────────────────────────────────────────────────────────
+
+export function useSettingsQuery() {
+  return useQuery({
+    queryKey: adminKeys.settings(),
+    queryFn: () => adminApi.getSettings(),
+  });
+}
+
+export function useUpdateSettingsSectionMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ section, payload }: { section: SettingsSection; payload: unknown }) =>
+      adminApi.updateSettingsSection(section, payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: adminKeys.settings() });
+    },
   });
 }

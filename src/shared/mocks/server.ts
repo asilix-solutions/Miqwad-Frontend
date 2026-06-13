@@ -9,6 +9,7 @@ import { tryAdminMock } from "./handlers/admin.handlers";
 
 import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handlers";
 import { tryAdminAdsMock } from "./handlers/admin.ads.handlers";
+import { tryAdminSettingsMock } from "./handlers/admin.settings.handlers";
 
 /**
  * Conditionally enable the in-process mock adapter.
@@ -52,6 +53,7 @@ export function installMocks(): void {
     tryAdminMock,
     tryAdminNotificationsMock,
     tryAdminAdsMock,
+    tryAdminSettingsMock,
     tryAuthMock,
     tryVehiclesMock,
     tryProvidersMock,
