@@ -519,7 +519,7 @@ const ar = {
       filters: { allModules: "كل الوحدات", allActions: "كل الإجراءات", dateFrom: "من تاريخ", dateTo: "إلى تاريخ" },
       actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", resolve: "حسم", suspend: "علّق", restore: "استعاد", send: "أرسل", settle: "سوّى", cancel: "ألغى", login: "سجّل دخول" },
       modules: { users: "المستخدمون", providers: "المزودون", settlements: "التسويات", disputes: "النزاعات", services: "الخدمات", packages: "الباقات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
-      detail: { actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
+      detail: { title: "تفاصيل الحدث", actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
     },
     ads: {
       title: "الإعلانات", subtitle: "إدارة الحملات الإعلانية ومواضع العرض",
@@ -1757,7 +1757,7 @@ const en: typeof ar = {
       filters: { allModules: "All Modules", allActions: "All Actions", dateFrom: "Date From", dateTo: "Date To" },
       actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", resolve: "Resolve", suspend: "Suspend", restore: "Restore", send: "Send", settle: "Settle", cancel: "Cancel", login: "Login" },
       modules: { users: "Users", providers: "Providers", settlements: "Settlements", disputes: "Disputes", services: "Services", packages: "Packages", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
-      detail: { actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
+      detail: { title: "Event details", actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
     },
     ads: {
       title: "Ads", subtitle: "Manage ad campaigns and placements",
