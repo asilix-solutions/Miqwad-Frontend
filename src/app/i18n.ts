@@ -799,6 +799,13 @@ const ar = {
       openDisputes: "نزاعات مفتوحة",
       monthlyRevenue: "الإيراد الشهري",
       error: "تعذّر تحميل البيانات",
+      charts: { revenue:"اتجاه الإيراد", users:"المستخدمون الجدد",
+            providerStatus:"حالات المزودين", disputeStatus:"حالات النزاعات" },
+      providerStatus: { approved:"مقبول", pending:"معلّق", rejected:"مرفوض" },
+      disputeStatusDist: { open:"مفتوح", under_review:"قيد المراجعة", resolved:"محسوم" },
+      widgets: { recentActivity:"آخر النشاطات", pendingProviders:"مزودون بانتظار المراجعة",
+                 openDisputes:"نزاعات مفتوحة", viewAll:"عرض الكل", empty:"لا يوجد" },
+      trendVsLastMonth:"مقارنة بالشهر السابق"
     },
     categories: {
       title: "التصنيفات",
@@ -2030,6 +2037,13 @@ const en: typeof ar = {
       openDisputes: "Open Disputes",
       monthlyRevenue: "Monthly Revenue",
       error: "Could not load data",
+      charts: { revenue:"Revenue Trend", users:"New Users",
+            providerStatus:"Provider Statuses", disputeStatus:"Dispute Statuses" },
+      providerStatus: { approved:"Approved", pending:"Pending", rejected:"Rejected" },
+      disputeStatusDist: { open:"Open", under_review:"Under Review", resolved:"Resolved" },
+      widgets: { recentActivity:"Recent Activity", pendingProviders:"Pending Providers",
+                 openDisputes:"Open Disputes", viewAll:"View All", empty:"Empty" },
+      trendVsLastMonth:"Compared to last month"
     },
     categories: {
       title: "Categories",

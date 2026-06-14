@@ -1,6 +1,7 @@
-import { type LucideIcon } from "lucide-react";
+import { type LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 type StatCardTone = "brand" | "success" | "warning" | "danger" | "neutral";
 
@@ -10,6 +11,8 @@ export interface StatCardProps {
   icon: LucideIcon;
   tone?: StatCardTone;
   isLoading?: boolean;
+  trend?: number;
+  invertTrendColor?: boolean;
 }
 
 const toneMap: Record<StatCardTone, { bgStyle: string; color: string }> = {
@@ -26,8 +29,12 @@ export function StatCard({
   icon: Icon,
   tone = "neutral",
   isLoading = false,
+  trend,
+  invertTrendColor = false,
 }: StatCardProps) {
   const { bgStyle, color } = toneMap[tone];
+  const { i18n } = useTranslation();
+  const nf = new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US");
 
   return (
     <Card className="relative flex flex-row items-start justify-between overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] transition-shadow duration-200 hover:shadow-[var(--shadow-2)]">
@@ -44,9 +51,36 @@ export function StatCard({
         {isLoading ? (
           <Skeleton className="h-[28px] w-[80px]" />
         ) : (
-          <span className="tabular-nums text-[28px] font-bold leading-[1.1] text-[var(--color-ink-body)]">
-            {value}
-          </span>
+          <div className="flex flex-col gap-1">
+            <span className="tabular-nums text-[28px] font-bold leading-[1.1] text-[var(--color-ink-body)]">
+              {value}
+            </span>
+            {trend !== undefined && (
+              <div className="flex items-center gap-1 mt-1">
+                {trend >= 0 ? (
+                  <TrendingUp
+                    className="h-3.5 w-3.5"
+                    style={{ color: invertTrendColor ? "var(--color-danger-500)" : "var(--color-success-500)" }}
+                  />
+                ) : (
+                  <TrendingDown
+                    className="h-3.5 w-3.5"
+                    style={{ color: invertTrendColor ? "var(--color-success-500)" : "var(--color-danger-500)" }}
+                  />
+                )}
+                <span
+                  className="text-xs font-medium"
+                  style={{
+                    color: trend === 0 
+                      ? "var(--color-muted)" 
+                      : (trend > 0 ? (invertTrendColor ? "var(--color-danger-500)" : "var(--color-success-500)") : (invertTrendColor ? "var(--color-success-500)" : "var(--color-danger-500)"))
+                  }}
+                >
+                  {nf.format(Math.abs(trend))}%
+                </span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
