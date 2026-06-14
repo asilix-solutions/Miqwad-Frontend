@@ -8,6 +8,7 @@ import { ChartTooltip } from "../components/dashboard/ChartTooltip";
 import { StatusBadge } from "../components/shared/StatusBadge";
 import { formatDate } from "@shared/lib/formatDate";
 import { Link } from "react-router-dom";
+import { QuickActions } from "../components/dashboard/QuickActions";
 /**
  * Super Admin Dashboard overview page.
  */
@@ -336,6 +337,13 @@ export function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-[var(--font-main)] font-semibold text-[var(--color-ink-body)] text-base">
+          {t("superAdmin.dashboard.quickActions.title")}
+        </h2>
+        <QuickActions />
+      </section>
     </div>
   );
 }

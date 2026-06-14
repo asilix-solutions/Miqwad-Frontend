@@ -793,6 +793,14 @@ const ar = {
     dashboard: {
       title: "لوحة التحكم",
       subtitle: "نظرة عامة على أداء المنصة والإحصائيات الرئيسية",
+      quickActions: {
+        title: "وصول سريع",
+        providers: "مراجعة المزودين",
+        notifications: "إرسال إشعار",
+        ads: "إنشاء حملة",
+        finance: "التسويات المالية",
+        settings: "الإعدادات"
+      },
       totalUsers: "إجمالي المستخدمين",
       activeProviders: "المزودون النشطون",
       pendingVerifications: "توثيقات معلّقة",
@@ -2031,6 +2039,14 @@ const en: typeof ar = {
     dashboard: {
       title: "Dashboard",
       subtitle: "Overview of platform performance and key statistics",
+      quickActions: {
+        title: "Quick actions",
+        providers: "Review providers",
+        notifications: "Send notification",
+        ads: "Create campaign",
+        finance: "Settlements",
+        settings: "Settings"
+      },
       totalUsers: "Total Users",
       activeProviders: "Active Providers",
       pendingVerifications: "Pending Verifications",
