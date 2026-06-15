@@ -291,6 +291,8 @@
     --card-foreground: var(--color-ink-body);
     --popover: var(--color-surface);
     --popover-foreground: var(--color-ink-body);
+    --accent: var(--color-surface-2);          /* #FAFAFC — subtle hover bg */
+    --accent-foreground: var(--color-ink-body); /* #0F1222 — text stays dark */
     --primary: var(--color-brand-orange);
     --primary-foreground: #FFFFFF;
     --secondary: var(--color-brand-blue);
@@ -311,6 +313,8 @@
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
