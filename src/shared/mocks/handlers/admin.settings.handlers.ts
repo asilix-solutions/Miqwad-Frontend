@@ -33,12 +33,6 @@ let SETTINGS: SystemSettings = {
     defaultLanguage: "ar",
     timezone: "Asia/Riyadh",
   },
-  business: {
-    defaultCommissionRate: 15,
-    minWithdrawalAmount: 100,
-    settlementHoldDays: 3,
-    escrowAutoReleaseDays: 7,
-  },
   contact: {
     termsUrlAr: "https://maqwad.com/terms",
     termsUrlEn: "https://maqwad.com/en/terms",

@@ -11,11 +11,10 @@ import { useSettingsQuery } from "../hooks/useAdminQueries";
 import { cn } from "@shared/lib/utils";
 
 import { GeneralSettingsPanel } from "../components/settings/GeneralSettingsPanel";
-import { BusinessSettingsPanel } from "../components/settings/BusinessSettingsPanel";
 import { ContactSettingsPanel } from "../components/settings/ContactSettingsPanel";
 import { FeatureFlagsPanel } from "../components/settings/FeatureFlagsPanel";
 
-type TabValue = "general" | "business" | "contact" | "flags";
+type TabValue = "general" | "contact" | "flags";
 
 export function AdminSettingsHubPage() {
   const { t } = useTranslation();
@@ -29,7 +28,6 @@ export function AdminSettingsHubPage() {
 
   const tabs: { value: TabValue; label: string }[] = [
     { value: "general", label: t("superAdmin.settings.tabs.general") },
-    { value: "business", label: t("superAdmin.settings.tabs.business") },
     { value: "contact", label: t("superAdmin.settings.tabs.contact") },
     { value: "flags", label: t("superAdmin.settings.tabs.flags") },
   ];
@@ -100,7 +98,6 @@ export function AdminSettingsHubPage() {
       {/* Content Panels */}
       <div className="mt-2">
         {currentTab === "general" && <GeneralSettingsPanel settings={settings} />}
-        {currentTab === "business" && <BusinessSettingsPanel settings={settings} />}
         {currentTab === "contact" && <ContactSettingsPanel settings={settings} />}
         {currentTab === "flags" && <FeatureFlagsPanel settings={settings} />}
       </div>

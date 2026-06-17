@@ -254,16 +254,6 @@ export const generalSettingsSchema = z.object({
 
 export type GeneralSettingsFormValues = z.infer<typeof generalSettingsSchema>;
 
-/** Schema used by the admin system settings (business) editor. */
-export const businessSettingsSchema = z.object({
-  defaultCommissionRate: z.number().min(0).max(100),
-  minWithdrawalAmount: z.number().min(0),
-  settlementHoldDays: z.number().int().min(0),
-  escrowAutoReleaseDays: z.number().int().min(0),
-});
-
-export type BusinessSettingsFormValues = z.infer<typeof businessSettingsSchema>;
-
 /** Schema used by the admin system settings (contact) editor. */
 export const contactSettingsSchema = z.object({
   termsUrlAr: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),

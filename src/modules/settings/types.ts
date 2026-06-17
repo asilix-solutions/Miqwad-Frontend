@@ -22,13 +22,6 @@ export interface GeneralSettings {
   timezone: string;          // e.g. "Asia/Riyadh"
 }
 
-export interface BusinessSettings {
-  defaultCommissionRate: number;   // percentage 0..100
-  minWithdrawalAmount: number;     // SAR
-  settlementHoldDays: number;      // days escrow holds before settle
-  escrowAutoReleaseDays: number;   // days then auto-release
-}
-
 export interface ContactSettings {
   termsUrlAr?: string;
   termsUrlEn?: string;
@@ -41,9 +34,8 @@ export interface ContactSettings {
 
 export interface SystemSettings {
   general: GeneralSettings;
-  business: BusinessSettings;
   contact: ContactSettings;
   featureFlags: FeatureFlag[];
 }
 
-export type SettingsSection = "general" | "business" | "contact" | "featureFlags";
+export type SettingsSection = "general" | "contact" | "featureFlags";
