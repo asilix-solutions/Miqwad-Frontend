@@ -154,6 +154,12 @@ export const PERMISSIONS = {
     view: "audit.view",
     export: "audit.export",
   },
+
+  // ── Complaints ─────────────────────────────────────────────────────────────
+  complaints: {
+    view: "complaints.view",
+    manage: "complaints.manage",
+  },
 } as const;
 
 // =============================================================================

@@ -17,6 +17,7 @@ import {
   CreditCard,
   Bell,
   Megaphone,
+  MessageSquareWarning,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -39,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
 
   { key: "notifications", labelPath: "adminNav.notifications", path: "/admin/notifications", icon: Bell },
   { key: "ads",       labelPath: "adminNav.ads",       path: "/admin/ads",       icon: Megaphone },
+  { key: "complaints", labelPath: "adminNav.complaints", path: "/admin/complaints", icon: MessageSquareWarning },
   { key: "audit",     labelPath: "adminNav.audit",     path: "/admin/audit",     icon: ScrollText },
   { key: "settings",  labelPath: "adminNav.settings",  path: "/admin/settings",  icon: Settings },
 ];

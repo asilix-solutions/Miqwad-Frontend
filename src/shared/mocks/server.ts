@@ -11,6 +11,7 @@ import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handle
 import { tryAdminAdsMock } from "./handlers/admin.ads.handlers";
 import { tryAdminSettingsMock } from "./handlers/admin.settings.handlers";
 import { tryAdminAuditMock } from "./handlers/admin.audit.handlers";
+import { tryAdminComplaintsMock } from "./handlers/admin.complaints.handlers";
 
 /**
  * Conditionally enable the in-process mock adapter.
@@ -53,6 +54,7 @@ export function installMocks(): void {
   apiClient.defaults.adapter = createMockAdapter(previous, [
     tryAdminMock,
     tryAdminAuditMock,
+    tryAdminComplaintsMock,
     tryAdminNotificationsMock,
     tryAdminAdsMock,
     tryAdminSettingsMock,

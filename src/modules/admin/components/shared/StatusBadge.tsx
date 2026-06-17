@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "subscription" | "notification" | "campaign" | "audit";
+export type StatusBadgeKind = "user" | "provider" | "subscription" | "notification" | "campaign" | "audit" | "complaint";
 
 export interface StatusBadgeProps {
   status: string;
@@ -50,6 +50,12 @@ const AUDIT_ACTION_TONES: Record<string, BadgeTone> = {
   send: "info", cancel: "warning", login: "neutral",
 };
 
+const COMPLAINT_STATUS_TONES: Record<string, BadgeTone> = {
+  new: "warning",
+  under_review: "info",
+  resolved: "success",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
@@ -59,6 +65,7 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
     : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
     : kind === "notification" ? NOTIFICATION_STATUS_TONES
     : kind === "campaign" ? CAMPAIGN_STATUS_TONES
+    : kind === "complaint" ? COMPLAINT_STATUS_TONES
     : AUDIT_ACTION_TONES;
     
   const tone = toneMap[status] || "neutral";
@@ -74,6 +81,8 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.notifications.history.status.${status}`
       : kind === "campaign"
       ? `superAdmin.ads.status.${status}`
+      : kind === "complaint"
+      ? `superAdmin.complaints.status.${status}`
       : `superAdmin.audit.actions.${status}`;
 
   return (

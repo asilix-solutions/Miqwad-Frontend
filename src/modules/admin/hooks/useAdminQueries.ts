@@ -11,6 +11,7 @@ import type { NotificationTemplate, SentNotification } from "@modules/notificati
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SettingsSection } from "@modules/settings/types";
 import type { AuditLogQuery } from "@modules/audit/types";
+import type { ComplaintsQuery, ComplaintStatus } from "@modules/complaints/types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { useTranslation } from "react-i18next";
 
@@ -41,6 +42,7 @@ export const adminKeys = {
   campaign: (id: number) => [...adminKeys.all, "campaign", id] as const,
   settings: () => [...adminKeys.all, "settings"] as const,
   auditLogs: (params?: Partial<AuditLogQuery>) => [...adminKeys.all, "audit", params] as const,
+  complaints: (params: ComplaintsQuery) => [...adminKeys.all, "complaints", params] as const,
 };
 
 
@@ -623,5 +625,26 @@ export function useAuditLogsQuery(params: AuditLogQuery) {
 export function useExportAuditLogsMutation() {
   return useMutation({
     mutationFn: (params: Omit<AuditLogQuery, "page" | "pageSize">) => adminApi.exportAuditLogs(params),
+  });
+}
+
+// ── Complaints ─────────────────────────────────────────────────────────────
+
+export function useComplaintsQuery(params: ComplaintsQuery) {
+  return useQuery({
+    queryKey: adminKeys.complaints(params),
+    queryFn: () => adminApi.getComplaints(params),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useUpdateComplaintStatusMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ComplaintStatus }) =>
+      adminApi.updateComplaintStatus(id, status),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "complaints"] });
+    },
   });
 }

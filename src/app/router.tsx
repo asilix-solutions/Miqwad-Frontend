@@ -245,6 +245,11 @@ const AdminAuditLogPage = lazy(() =>
     default: m.AdminAuditLogPage,
   }))
 );
+const AdminComplaintsPage = lazy(() =>
+  import("@modules/admin/pages/AdminComplaintsPage").then((m) => ({
+    default: m.AdminComplaintsPage,
+  }))
+);
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
@@ -531,6 +536,13 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="settings.view" />,
                     children: [
                       { index: true, element: <AdminSettingsHubPage /> }
+                    ],
+                  },
+                  {
+                    path: "complaints",
+                    element: <PermissionGuard permission="complaints.view" />,
+                    children: [
+                      { index: true, element: <AdminComplaintsPage /> }
                     ],
                   },
                   {

@@ -495,6 +495,7 @@ const ar = {
     providers: "المزودون",
     users: "المستخدمون",
     notifications: "الإشعارات",
+    complaints: "الشكاوى",
     audit: "التدقيق",
     settings: "الإعدادات",
     reference: "البيانات المرجعية",
@@ -505,6 +506,37 @@ const ar = {
     subscriptions: "الاشتراكات",
   },
   superAdmin: {
+    complaints: {
+      title: "الشكاوى",
+      subtitle: "مراجعة شكاوى العملاء وحلها",
+      columns: {
+        date: "التاريخ",
+        customer: "العميل",
+        title: "العنوان",
+        status: "الحالة",
+      },
+      status: {
+        new: "جديدة",
+        under_review: "قيد المراجعة",
+        resolved: "محلولة",
+      },
+      filters: {
+        all: "الكل",
+        search: "ابحث بالاسم أو العنوان...",
+        status: "اختر الحالة",
+      },
+      detail: {
+        title: "تفاصيل الشكوى",
+        statusLabel: "تحديث الحالة",
+        changeStatus: "تغيير حالة الشكوى",
+        body: "نص الشكوى",
+      },
+      toast: {
+        updated: "تم تحديث حالة الشكوى بنجاح",
+        error: "تعذر تحديث الشكوى",
+      },
+      empty: "لا توجد شكاوى",
+    },
     audit: {
       title: "التدقيق",
       subtitle: "سجل العمليات والتدقيق في النظام",
@@ -1548,6 +1580,7 @@ const en: typeof ar = {
     providers: "Providers",
     users: "Users",
     notifications: "Notifications",
+    complaints: "Complaints",
     audit: "Audit Log",
     settings: "Settings",
     reference: "Reference Data",
@@ -1558,6 +1591,37 @@ const en: typeof ar = {
     subscriptions: "Subscriptions",
   },
   superAdmin: {
+    complaints: {
+      title: "Complaints",
+      subtitle: "Review and resolve customer complaints",
+      columns: {
+        date: "Date",
+        customer: "Customer",
+        title: "Title",
+        status: "Status",
+      },
+      status: {
+        new: "New",
+        under_review: "Under Review",
+        resolved: "Resolved",
+      },
+      filters: {
+        all: "All",
+        search: "Search by name or title...",
+        status: "Select status",
+      },
+      detail: {
+        title: "Complaint Details",
+        statusLabel: "Update status",
+        changeStatus: "Change complaint status",
+        body: "Complaint text",
+      },
+      toast: {
+        updated: "Complaint status updated successfully",
+        error: "Could not update complaint",
+      },
+      empty: "No complaints found",
+    },
     audit: {
       title: "Audit Log",
       subtitle: "System audit and activity log",

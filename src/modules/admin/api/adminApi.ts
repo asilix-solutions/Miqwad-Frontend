@@ -8,6 +8,7 @@ import type { NotificationTemplate, SentNotification } from "@modules/notificati
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
+import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/complaints/types";
 
 /**
  * Admin transport layer.
@@ -296,6 +297,18 @@ export const adminApi = {
       params,
       responseType: "blob",
     });
+    return data;
+  },
+
+  // ── Complaints ─────────────────────────────────────────────────────────────
+
+  getComplaints: async (params: ComplaintsQuery): Promise<PaginatedResponse<Complaint>> => {
+    const { data } = await apiClient.get<PaginatedResponse<Complaint>>("/admin/complaints", { params });
+    return data;
+  },
+
+  updateComplaintStatus: async (id: string, status: ComplaintStatus): Promise<Complaint> => {
+    const { data } = await apiClient.patch<Complaint>(`/admin/complaints/${id}/status`, { status });
     return data;
   },
 };

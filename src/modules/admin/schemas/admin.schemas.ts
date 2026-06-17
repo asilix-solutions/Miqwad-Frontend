@@ -252,3 +252,10 @@ export const auditFilterSchema = z.object({
 });
 
 export type AuditFilterValues = z.infer<typeof auditFilterSchema>;
+
+/** Schema used by the admin complaint status update. */
+export const updateComplaintStatusSchema = z.object({
+  status: z.enum(["new", "under_review", "resolved"]),
+});
+
+export type UpdateComplaintStatusFormValues = z.infer<typeof updateComplaintStatusSchema>;
