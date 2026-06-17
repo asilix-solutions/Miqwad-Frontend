@@ -34,16 +34,5 @@ export interface Service {
   sortOrder?: number | null;
 }
 
-export interface ServicePackage {
-  id: number;
-  nameAr: string;
-  nameEn: string;
-  descriptionAr?: string | null;
-  descriptionEn?: string | null;
-  serviceIds: number[];
-  price: number;
-  isActive: boolean;
-  sortOrder?: number | null;
-}
 
 // FUTURE: ProviderServiceOverride { providerId; serviceId; price }

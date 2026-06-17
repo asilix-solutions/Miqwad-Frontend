@@ -188,7 +188,7 @@ export function AdminCampaignBuilderPage() {
                   name="titleAr"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>{t("superAdmin.packages.builder.nameAr")}</FormLabel>
+                      <FormLabel>{t("superAdmin.ads.placements.form.nameAr")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -201,7 +201,7 @@ export function AdminCampaignBuilderPage() {
                   name="titleEn"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>{t("superAdmin.packages.builder.nameEn")}</FormLabel>
+                      <FormLabel>{t("superAdmin.ads.placements.form.nameEn")}</FormLabel>
                       <FormControl>
                         <Input {...field} dir="ltr" />
                       </FormControl>
@@ -218,7 +218,7 @@ export function AdminCampaignBuilderPage() {
                   name="descriptionAr"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>{t("superAdmin.packages.builder.descriptionAr")} ({t("common.optional")})</FormLabel>
+                      <FormLabel>{t("superAdmin.ads.placements.form.descAr")} ({t("common.optional")})</FormLabel>
                       <FormControl>
                         <Textarea {...field} value={field.value ?? ""} className="resize-none" />
                       </FormControl>
@@ -231,7 +231,7 @@ export function AdminCampaignBuilderPage() {
                   name="descriptionEn"
                   render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>{t("superAdmin.packages.builder.descriptionEn")} ({t("common.optional")})</FormLabel>
+                      <FormLabel>{t("superAdmin.ads.placements.form.descEn")} ({t("common.optional")})</FormLabel>
                       <FormControl>
                         <Textarea {...field} value={field.value ?? ""} dir="ltr" className="resize-none" />
                       </FormControl>

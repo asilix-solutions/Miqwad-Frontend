@@ -222,16 +222,7 @@ const AdminReferenceDataPage = lazy(() =>
     default: m.AdminReferenceDataPage,
   }))
 );
-const AdminPackagesPage = lazy(() =>
-  import("@modules/admin/pages/AdminPackagesPage").then((m) => ({
-    default: m.AdminPackagesPage,
-  }))
-);
-const AdminPackageBuilderPage = lazy(() =>
-  import("@modules/admin/pages/AdminPackageBuilderPage").then((m) => ({
-    default: m.AdminPackageBuilderPage,
-  }))
-);
+
 const AdminPlansPage = lazy(() =>
   import("@modules/admin/pages/AdminPlansPage").then((m) => ({
     default: m.AdminPlansPage,
@@ -536,15 +527,7 @@ export const router = createBrowserRouter([
                       { index: true, element: <AdminReferenceDataPage /> },
                     ],
                   },
-                  {
-                    path: "packages",
-                    element: <PermissionGuard permission="packages.view" />,
-                    children: [
-                      { index: true, element: <AdminPackagesPage /> },
-                      { path: "builder", element: <AdminPackageBuilderPage /> },
-                      { path: "builder/:id", element: <AdminPackageBuilderPage /> },
-                    ],
-                  },
+
                   {
                     // Subscriptions Hub — consolidated container (plans + provider subscriptions)
                     path: "subscriptions",

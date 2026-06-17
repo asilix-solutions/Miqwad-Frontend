@@ -502,7 +502,7 @@ const ar = {
     reference: "البيانات المرجعية",
     categories: "البيانات المرجعية",
     cities: "المدن",
-    packages: "الباقات",
+
     plans: "خطط الاشتراك",
     subscriptions: "الاشتراكات",
   },
@@ -518,7 +518,7 @@ const ar = {
       columns: { time: "الوقت", actor: "المستخدم", action: "الإجراء", module: "الوحدة", summary: "الملخص", details: "التفاصيل" },
       filters: { allModules: "كل الوحدات", allActions: "كل الإجراءات", dateFrom: "من تاريخ", dateTo: "إلى تاريخ" },
       actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", resolve: "حسم", suspend: "علّق", restore: "استعاد", send: "أرسل", settle: "سوّى", cancel: "ألغى", login: "سجّل دخول" },
-      modules: { users: "المستخدمون", providers: "المزودون", settlements: "التسويات", disputes: "النزاعات", services: "الخدمات", packages: "الباقات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
+      modules: { users: "المستخدمون", providers: "المزودون", settlements: "التسويات", disputes: "النزاعات", services: "الخدمات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
       detail: { title: "تفاصيل الحدث", actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
     },
     ads: {
@@ -547,61 +547,7 @@ const ar = {
       },
       errors: { endBeforeStart:"تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية" }
     },
-    packages: {
-      title: "الباقات",
-      subtitle: "إدارة الباقات والميزات الإضافية",
-      add: "إضافة باقة",
-      edit: "تعديل باقة",
-      delete: "حذف الباقة",
-      builder: {
-        createTitle: "إنشاء باقة",
-        editTitle: "تعديل الباقة",
-        servicesSection: "الخدمات",
-        searchPlaceholder: "ابحث عن خدمة...",
-        nameAr: "الاسم (عربي)",
-        nameEn: "الاسم (إنجليزي)",
-        descriptionAr: "الوصف (عربي)",
-        descriptionEn: "الوصف (إنجليزي)",
-        price: "سعر الباقة",
-        isActive: "مفعّلة",
-        summary: {
-          servicesSum: "مجموع أسعار الخدمات",
-          packagePrice: "سعر الباقة",
-          savings: "التوفير للعميل",
-          priceAboveSumWarning: "سعر الباقة أعلى من مجموع الخدمات",
-        },
-        selectedCount: "{{count}} خدمات مختارة",
-        save: "حفظ",
-        cancel: "إلغاء",
-        success: {
-          created: "تمت إضافة الباقة بنجاح",
-          updated: "تم تعديل الباقة بنجاح",
-        },
-      },
-      columns: {
-        nameAr: "الاسم (عربي)",
-        nameEn: "الاسم (إنجليزي)",
-        servicesCount: "عدد الخدمات",
-        price: "سعر الباقة",
-        status: "الحالة",
-      },
-      status: {
-        active: "مفعّلة",
-        inactive: "معطّلة",
-      },
-      servicesCountLabel: "{{count}} خدمات",
-      deleteConfirm: {
-        title: "حذف الباقة",
-        description: "هل أنت متأكد من حذف الباقة {{name}}؟ لا يمكن التراجع عن هذا الإجراء.",
-        confirm: "تأكيد الحذف",
-        cancel: "إلغاء",
-      },
-      success: {
-        created: "تمت إضافة الباقة بنجاح",
-        updated: "تم تعديل الباقة بنجاح",
-        deleted: "تم حذف الباقة بنجاح",
-      },
-    },
+
     notifications: {
       title: "الإشعارات",
       subtitle: "إدارة قوالب الإشعارات وعرض سجل الإرسال",
@@ -1742,7 +1688,7 @@ const en: typeof ar = {
     reference: "Reference Data",
     categories: "Reference Data",
     cities: "Cities",
-    packages: "Packages",
+
     plans: "Subscription Plans",
     subscriptions: "Subscriptions",
   },
@@ -1758,7 +1704,7 @@ const en: typeof ar = {
       columns: { time: "Time", actor: "Actor", action: "Action", module: "Module", summary: "Summary", details: "Details" },
       filters: { allModules: "All Modules", allActions: "All Actions", dateFrom: "Date From", dateTo: "Date To" },
       actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", resolve: "Resolve", suspend: "Suspend", restore: "Restore", send: "Send", settle: "Settle", cancel: "Cancel", login: "Login" },
-      modules: { users: "Users", providers: "Providers", settlements: "Settlements", disputes: "Disputes", services: "Services", packages: "Packages", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
+      modules: { users: "Users", providers: "Providers", settlements: "Settlements", disputes: "Disputes", services: "Services", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
       detail: { title: "Event details", actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
     },
     ads: {
@@ -1787,61 +1733,7 @@ const en: typeof ar = {
       },
       errors: { endBeforeStart: "End date must be after start date" }
     },
-    packages: {
-      title: "Packages",
-      subtitle: "Manage packages and additional features",
-      add: "Add Package",
-      edit: "Edit Package",
-      delete: "Delete Package",
-      builder: {
-        createTitle: "Create Package",
-        editTitle: "Edit Package",
-        servicesSection: "Services",
-        searchPlaceholder: "Search for a service...",
-        nameAr: "Name (Arabic)",
-        nameEn: "Name (English)",
-        descriptionAr: "Description (Arabic)",
-        descriptionEn: "Description (English)",
-        price: "Package Price",
-        isActive: "Active",
-        summary: {
-          servicesSum: "Services Sum",
-          packagePrice: "Package Price",
-          savings: "Customer Savings",
-          priceAboveSumWarning: "Package price is higher than services sum",
-        },
-        selectedCount: "{{count}} services selected",
-        save: "Save",
-        cancel: "Cancel",
-        success: {
-          created: "Package created successfully",
-          updated: "Package updated successfully",
-        },
-      },
-      columns: {
-        nameAr: "Name (Arabic)",
-        nameEn: "Name (English)",
-        servicesCount: "Services Count",
-        price: "Package Price",
-        status: "Status",
-      },
-      status: {
-        active: "Active",
-        inactive: "Inactive",
-      },
-      servicesCountLabel: "{{count}} services",
-      deleteConfirm: {
-        title: "Delete Package",
-        description: "Are you sure you want to delete the package {{name}}? This action cannot be undone.",
-        confirm: "Delete",
-        cancel: "Cancel",
-      },
-      success: {
-        created: "Package added successfully",
-        updated: "Package updated successfully",
-        deleted: "Package deleted successfully",
-      },
-    },
+
     notifications: {
       title: "Notifications",
       subtitle: "Manage notification templates and view sent history",

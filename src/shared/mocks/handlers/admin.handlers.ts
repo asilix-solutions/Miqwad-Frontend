@@ -35,7 +35,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail, DashboardStats } from "@modules/admin/types";
-import type { Service, ServicePackage } from "@modules/services/types";
+import type { Service } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 
 // =============================================================================
@@ -200,13 +200,6 @@ let SEED_SERVICES: Service[] = [
   { id: 8, nameAr: "صيانة دورية", nameEn: "Periodic Maintenance", categoryId: 2, basePrice: 500, isActive: false, descriptionAr: "تشمل الفلاتر والزيوت", descriptionEn: "Includes filters and oils" },
 ];
 
-let SEED_PACKAGES: ServicePackage[] = [
-  { id: 1, nameAr: "الباقة الشاملة", nameEn: "Comprehensive Package", serviceIds: [1, 2, 8], price: 650, isActive: true, descriptionAr: "غسيل، تلميع وصيانة شاملة بسعر مخفض", descriptionEn: "Wash, detailing, and periodic maintenance at a discounted rate" },
-  { id: 2, nameAr: "باقة الفحص السريع", nameEn: "Quick Inspection Package", serviceIds: [4, 5], price: 130, isActive: true },
-  { id: 3, nameAr: "باقة الصيف", nameEn: "Summer Package", serviceIds: [1, 7], price: 180, isActive: false },
-  { id: 4, nameAr: "باقة الزيت والفلاتر", nameEn: "Oil and Filters Package", serviceIds: [3, 8], price: 650, isActive: true },
-  { id: 5, nameAr: "الباقة الأساسية", nameEn: "Basic Package", serviceIds: [1, 3], price: 230, isActive: true },
-];
 
 let SEED_PLANS: SubscriptionPlan[] = [
   {
@@ -682,72 +675,7 @@ export async function tryAdminMock(
     return ok(config, { success: true });
   }
 
-  // -- GET /admin/packages ---------------------------------------------------
-  if (url === "admin/packages" && method === "get") {
-    requireAdmin(config);
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const isActiveParam = params["isActive"] as string | undefined;
 
-    let filtered = SEED_PACKAGES;
-    if (isActiveParam !== undefined) {
-      const isActive = isActiveParam === "true";
-      filtered = filtered.filter(p => p.isActive === isActive);
-    }
-
-    return ok(config, filtered);
-  }
-
-  // -- GET /admin/packages/:id -----------------------------------------------
-  if (url.startsWith("admin/packages/") && method === "get") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const pkg = SEED_PACKAGES.find(p => p.id === id);
-    if (!pkg) throw fail(config, 404, "NOT_FOUND", "الباقة غير موجودة");
-    return ok(config, pkg);
-  }
-
-  // -- POST /admin/packages --------------------------------------------------
-  if (url === "admin/packages" && method === "post") {
-    requireAdmin(config);
-    const payload = JSON.parse(config.data || "{}");
-    const newId = Math.max(0, ...SEED_PACKAGES.map(p => p.id)) + 1;
-    const newPackage: ServicePackage = {
-      id: newId,
-      nameAr: payload.nameAr,
-      nameEn: payload.nameEn,
-      serviceIds: payload.serviceIds || [],
-      price: payload.price,
-      isActive: payload.isActive ?? true,
-      descriptionAr: payload.descriptionAr ?? null,
-      descriptionEn: payload.descriptionEn ?? null,
-      sortOrder: payload.sortOrder ?? null,
-    };
-    SEED_PACKAGES.push(newPackage);
-    return ok(config, newPackage);
-  }
-
-  // -- PUT /admin/packages/:id -----------------------------------------------
-  if (url.startsWith("admin/packages/") && method === "put") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const idx = SEED_PACKAGES.findIndex((p) => p.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الباقة غير موجودة");
-
-    const payload = JSON.parse(config.data || "{}");
-    SEED_PACKAGES[idx] = { ...SEED_PACKAGES[idx], ...payload };
-    return ok(config, SEED_PACKAGES[idx]);
-  }
-
-  // -- DELETE /admin/packages/:id --------------------------------------------
-  if (url.startsWith("admin/packages/") && method === "delete") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const idx = SEED_PACKAGES.findIndex((p) => p.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الباقة غير موجودة");
-
-    SEED_PACKAGES.splice(idx, 1);
-    return ok(config, { success: true });
-  }
 
   // -- GET /admin/plans ---------------------------------------------------
   if (url === "admin/plans" && method === "get") {

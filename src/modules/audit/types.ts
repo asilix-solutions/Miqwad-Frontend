@@ -8,7 +8,7 @@ export type AuditAction =
 
 export type AuditModule =
   | "users" | "providers" | "settlements" | "disputes" | "services"
-  | "packages" | "plans" | "subscriptions" | "notifications" | "ads"
+  | "plans" | "subscriptions" | "notifications" | "ads"
   | "settings" | "auth";
 
 export interface AuditLogEntry {

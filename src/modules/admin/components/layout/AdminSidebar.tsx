@@ -15,7 +15,7 @@ import {
   ScrollText,
   Settings,
   FolderTree,
-  Package,
+
   CreditCard,
   Bell,
   Megaphone,
@@ -35,7 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: Store },
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
-  { key: "packages",  labelPath: "adminNav.packages",  path: "/admin/packages",  icon: Package },
+
   { key: "subscriptions", labelPath: "adminNav.subscriptions", path: "/admin/subscriptions", icon: CreditCard },
   { key: "finance",   labelPath: "adminNav.finance",   path: "/admin/finance",   icon: Wallet },
   { key: "escrow",    labelPath: "adminNav.escrow",    path: "/admin/escrow",    icon: ShieldAlert },

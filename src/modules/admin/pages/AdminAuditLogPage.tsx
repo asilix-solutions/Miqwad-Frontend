@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 const AUDIT_MODULES: AuditModule[] = [
   "users", "providers", "settlements", "disputes", "services",
-  "packages", "plans", "subscriptions", "notifications", "ads",
+  "plans", "subscriptions", "notifications", "ads",
   "settings", "auth"
 ];
 
