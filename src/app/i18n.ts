@@ -1047,6 +1047,7 @@ const ar = {
       columns: {
         name: "الاسم",
         phone: "الجوال",
+        email: "البريد الإلكتروني",
         role: "الدور",
         status: "الحالة",
       },
@@ -2163,6 +2164,7 @@ const en: typeof ar = {
       columns: {
         name: "Name",
         phone: "Phone",
+        email: "Email",
         role: "Role",
         status: "Status",
       },
