@@ -1023,6 +1023,7 @@ const ar = {
         workshop: { profileTitle: "ملف الورشة", specialization: "التخصص", rating: "التقييم", photos: "الصور", location: "الموقع", viewMap: "عرض على الخريطة" },
         scrap: { specializationTitle: "التخصص", brands: "العلامات التجارية" },
         subscription: { title: "الاشتراك", plan: "الباقة", cycle: "دورة الدفع", status: "حالة الاشتراك", start: "تاريخ البدء", end: "تاريخ الانتهاء", none: "لا يوجد اشتراك" },
+        dealer: { storeSpecTitle: "تخصص المتجر", productsTitle: "المنتجات والمخزون", productsCount: "عدد المنتجات", inventoryCount: "إجمالي المخزون" },
       },
     },
     users: {
@@ -2128,6 +2129,7 @@ const en: typeof ar = {
         workshop: { profileTitle: "Workshop Profile", specialization: "Specialization", rating: "Rating", photos: "Photos", location: "Location", viewMap: "View on Map" },
         scrap: { specializationTitle: "Specialization", brands: "Brands" },
         subscription: { title: "Subscription", plan: "Plan", cycle: "Billing Cycle", status: "Subscription Status", start: "Start Date", end: "End Date", none: "No Subscription" },
+        dealer: { storeSpecTitle: "Store Specialization", productsTitle: "Products & Inventory", productsCount: "Products", inventoryCount: "Total Inventory" },
       },
     },
     users: {
