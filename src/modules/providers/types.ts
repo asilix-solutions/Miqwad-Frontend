@@ -52,6 +52,11 @@ export interface ProviderProfile {
   documents: ProviderDocument[];
   rejectionReason: string | null;
   createdAt: string;
+  commissionRate?: number;
+  photos?: string[];
+  specialization?: string;
+  brandSpecialization?: string[];
+  monthlySales?: number;
 }
 
 /**

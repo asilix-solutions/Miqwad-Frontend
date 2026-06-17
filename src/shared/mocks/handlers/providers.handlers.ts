@@ -64,7 +64,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 3;
+const MOCK_SEED_VERSION = 4;
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -256,6 +256,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "pending",
       categoryIds: [1, 4, 7],
+      specialization: "ميكانيكا/كهرباء",
+      photos: ["https://picsum.photos/seed/ws1a/400/300", "https://picsum.photos/seed/ws1b/400/300"],
       documents: [
         {
           type: "commercial",
@@ -291,6 +293,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: true,
       status: "approved",
       categoryIds: [2, 6],
+      specialization: "تكييف وتبريد/كهرباء",
+      photos: ["https://picsum.photos/seed/ws2a/400/300", "https://picsum.photos/seed/ws2b/400/300"],
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -311,6 +315,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "rejected",
       categoryIds: [8],
+      specialization: "غسيل وتلميع",
+      photos: ["https://picsum.photos/seed/ws3a/400/300", "https://picsum.photos/seed/ws3b/400/300"],
       documents: [],
       rejectionReason: "السجل التجاري غير واضح. الرجاء رفع نسخة بجودة أفضل.",
       createdAt: now,
@@ -331,6 +337,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "pending",
       categoryIds: [3, 7],
+      brandSpecialization: ["تويوتا", "نيسان"],
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -351,6 +358,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: true,
       status: "approved",
       categoryIds: [7, 9],
+      brandSpecialization: ["جي إم سي", "فورد", "شيفروليه"],
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -371,6 +379,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "rejected",
       categoryIds: [7],
+      brandSpecialization: ["هونداي", "كيا"],
       documents: [],
       rejectionReason: "صورة الهوية غير مطابقة",
       createdAt: now,
@@ -391,6 +400,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "pending",
       categoryIds: [1, 2, 6],
+      commissionRate: 5,
+      monthlySales: 15000,
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -411,6 +422,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: true,
       status: "approved",
       categoryIds: [4, 7],
+      commissionRate: 10,
+      monthlySales: 45000,
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -431,6 +444,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       isVerified: false,
       status: "rejected",
       categoryIds: [5, 2],
+      commissionRate: 7,
+      monthlySales: 22000,
       documents: [],
       rejectionReason: "نقص في مستندات الوكالة التجارية",
       createdAt: now,
