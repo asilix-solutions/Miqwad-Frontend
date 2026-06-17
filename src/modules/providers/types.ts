@@ -57,6 +57,9 @@ export interface ProviderProfile {
   specialization?: string;
   brandSpecialization?: string[];
   monthlySales?: number;
+  productCategories?: string[];
+  productsCount?: number;
+  inventoryCount?: number;
 }
 
 /**

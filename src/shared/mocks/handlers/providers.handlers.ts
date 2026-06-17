@@ -64,7 +64,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 4;
+const MOCK_SEED_VERSION = 5;
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -402,6 +402,9 @@ function seedIfEmpty(db: ProvidersDb): void {
       categoryIds: [1, 2, 6],
       commissionRate: 5,
       monthlySales: 15000,
+      productCategories: ["بطاريات", "زيوت ومرشحات", "إكسسوارات"],
+      productsCount: 132,
+      inventoryCount: 1200,
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -424,6 +427,9 @@ function seedIfEmpty(db: ProvidersDb): void {
       categoryIds: [4, 7],
       commissionRate: 10,
       monthlySales: 45000,
+      productCategories: ["قطع غيار أصلية", "إطارات"],
+      productsCount: 58,
+      inventoryCount: 340,
       documents: [],
       rejectionReason: null,
       createdAt: now,
@@ -446,6 +452,9 @@ function seedIfEmpty(db: ProvidersDb): void {
       categoryIds: [5, 2],
       commissionRate: 7,
       monthlySales: 22000,
+      productCategories: ["قطع تكييف", "إكسسوارات داخلية"],
+      productsCount: 24,
+      inventoryCount: 150,
       documents: [],
       rejectionReason: "نقص في مستندات الوكالة التجارية",
       createdAt: now,
