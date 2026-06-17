@@ -10,19 +10,19 @@ import { DataTable, type DataTableColumn } from "@modules/admin/components/share
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Pagination,
   PaginationContent,
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
 import { formatDate } from "@shared/lib/formatDate";
+
+const TYPE_TABS: { key: ProviderType | "all"; labelI18n: string }[] = [
+  { key: "all", labelI18n: "superAdmin.providers.types.all" },
+  { key: "dealer", labelI18n: "superAdmin.providers.types.dealer" },
+  { key: "workshop", labelI18n: "superAdmin.providers.types.workshop" },
+  { key: "scrap", labelI18n: "superAdmin.providers.types.scrap" },
+];
 
 export function ProvidersPanel() {
   const { t, i18n } = useTranslation();
@@ -99,26 +99,31 @@ export function ProvidersPanel() {
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const paginatedRows = filteredRows.slice((page - 1) * pageSize, page * pageSize);
 
-  // Reset page when filter changes
-  const handleTypeChange = (v: ProviderType | "all") => {
-    setTypeFilter(v);
-    setPage(1);
-  };
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2 max-w-sm">
-        <Select value={typeFilter} onValueChange={handleTypeChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("superAdmin.providers.types.all")}</SelectItem>
-            <SelectItem value="dealer">{t("superAdmin.providers.types.dealer")}</SelectItem>
-            <SelectItem value="workshop">{t("superAdmin.providers.types.workshop")}</SelectItem>
-            <SelectItem value="scrap">{t("superAdmin.providers.types.scrap")}</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex gap-2 bg-transparent overflow-x-auto">
+        {TYPE_TABS.map((tab) => {
+          const isActive = typeFilter === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => {
+                setTypeFilter(tab.key);
+                setPage(1);
+              }}
+              className={[
+                "text-[14px] py-2 px-4 rounded-full border border-transparent",
+                "cursor-pointer transition-colors duration-150 whitespace-nowrap",
+                isActive
+                  ? "bg-[var(--color-brand-orange)] text-white font-semibold"
+                  : "bg-transparent text-[var(--color-muted)] font-medium hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+              ].join(" ")}
+            >
+              {t(tab.labelI18n)}
+            </button>
+          );
+        })}
       </div>
 
       <DataTable<AdminProvider>
