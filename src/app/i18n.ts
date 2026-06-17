@@ -492,7 +492,7 @@ const ar = {
   adminNav: {
     dashboard: "لوحة التحكم",
     ads: "الإعلانات",
-    providers: "المزودون",
+    providers: "المراجعات",
     users: "المستخدمون",
     notifications: "الإشعارات",
     complaints: "الشكاوى",
@@ -957,8 +957,14 @@ const ar = {
       }
     },
     providers: {
-      title: "المزودون",
-      subtitle: "مراجعة واعتماد مزودي الخدمة",
+      title: "المراجعات والاعتمادات",
+      subtitle: "مراجعة واعتماد مزودي الخدمات بجميع أنواعها",
+      types: {
+        all: "الكل",
+        dealer: "تاجر",
+        workshop: "ورشة",
+        scrap: "تشليح",
+      },
       columns: {
         companyName: "المزود",
         phone: "الجوال",
@@ -1577,7 +1583,7 @@ const en: typeof ar = {
   adminNav: {
     dashboard: "Dashboard",
     ads: "Ads",
-    providers: "Providers",
+    providers: "Reviews",
     users: "Users",
     notifications: "Notifications",
     complaints: "Complaints",
@@ -2042,8 +2048,14 @@ const en: typeof ar = {
       }
     },
     providers: {
-      title: "Providers",
-      subtitle: "Review and approve service providers",
+      title: "Reviews & Approvals",
+      subtitle: "Review and approve provider applications of all types.",
+      types: {
+        all: "All",
+        dealer: "Dealer",
+        workshop: "Workshop",
+        scrap: "Scrap",
+      },
       columns: {
         companyName: "Provider",
         phone: "Phone",

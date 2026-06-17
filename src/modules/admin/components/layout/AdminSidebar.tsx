@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Store,
+  ClipboardCheck,
   Users,
   ScrollText,
   Settings,
@@ -31,7 +31,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", labelPath: "adminNav.dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
-  { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: Store },
+  { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: ClipboardCheck },
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
 
