@@ -352,7 +352,7 @@ export function AdminProviderDetailsPage() {
             <div className="pt-4 border-t border-neutral-100">
               <p className="text-sm text-neutral-500">{t("superAdmin.providers.detail.commission.estimatedDues")}</p>
               <p className="text-lg font-semibold mt-1">
-                {formatCurrency((provider.commissionRate ?? 0) / 100 * (provider.monthlySales ?? 0))}
+                {formatCurrency((provider.commissionRate ?? 0) / 100 * (provider.monthlySales ?? 0), i18n.language)}
               </p>
               {((provider.commissionRate ?? 0) / 100 * (provider.monthlySales ?? 0)) > 500 && (
                 <div className="mt-2 rounded-md bg-danger-50 text-danger-600 p-2 text-sm font-medium border border-danger-200">
