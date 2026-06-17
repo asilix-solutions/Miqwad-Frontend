@@ -22,6 +22,8 @@ export interface City {
 
 export type AdminProviderStatus = "pending" | "approved" | "rejected" | "all";
 
+export type SubscriberType = "workshop" | "scrap";
+
 /** Re-export so the admin module doesn't need a direct providers import. */
 export type AdminProvider = ProviderProfile;
 

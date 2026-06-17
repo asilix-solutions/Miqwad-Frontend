@@ -12,6 +12,13 @@ import { StatusBadge } from "../shared/StatusBadge";
 import { cn } from "@shared/lib/utils";
 import { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TabStatus = "active" | "all" | "expired" | "cancelled" | "pending";
 
@@ -19,12 +26,14 @@ export function SubscriptionsListPanel() {
   const { t, i18n } = useTranslation();
   
   const [activeTab, setActiveTab] = useState<TabStatus>("active");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [cancelDialogSub, setCancelDialogSub] = useState<ProviderSubscription | null>(null);
 
   const { data: response, isLoading, error } = useSubscriptionsQuery({
     page: 1,
     pageSize: 100,
     status: activeTab,
+    type: typeFilter === "all" ? undefined : typeFilter,
   });
 
   const columns = [
@@ -40,6 +49,15 @@ export function SubscriptionsListPanel() {
           </Avatar>
           <span className="font-medium">{row.providerName}</span>
         </div>
+      ),
+    },
+    {
+      key: "providerType",
+      header: t("superAdmin.subscriptions.columns.providerType"),
+      render: (row: ProviderSubscription) => (
+        <span className="inline-flex items-center rounded-full bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-medium text-[var(--color-ink-body)] border border-[var(--color-divider)]">
+          {t(`superAdmin.subscriptions.types.${row.providerType}`)}
+        </span>
       ),
     },
     {
@@ -128,21 +146,34 @@ export function SubscriptionsListPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-[var(--color-surface-2)] p-1 rounded-full w-fit">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "px-4 py-1.5 text-sm font-medium rounded-full transition-colors",
-              activeTab === tab.id
-                ? "bg-white text-[var(--color-brand-blue)] shadow-sm"
-                : "text-[var(--color-ink-lighter)] hover:text-[var(--color-ink-body)]",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between">
+        <div className="flex bg-[var(--color-surface-2)] p-1 rounded-full w-fit">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "px-4 py-1.5 text-sm font-medium rounded-full transition-colors",
+                activeTab === tab.id
+                  ? "bg-white text-[var(--color-brand-blue)] shadow-sm"
+                  : "text-[var(--color-ink-lighter)] hover:text-[var(--color-ink-body)]",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("superAdmin.subscriptions.types.all")}</SelectItem>
+            <SelectItem value="workshop">{t("superAdmin.subscriptions.types.workshop")}</SelectItem>
+            <SelectItem value="scrap">{t("superAdmin.subscriptions.types.scrap")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-md border border-[var(--color-divider)] bg-white shadow-sm">

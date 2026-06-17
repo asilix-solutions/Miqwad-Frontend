@@ -5,6 +5,8 @@
  * that providers can subscribe to.
  */
 
+import type { SubscriberType } from "@modules/admin/types";
+
 export type BillingCycle = "monthly" | "yearly";
 
 export interface PlanFeature {
@@ -32,6 +34,7 @@ export interface ProviderSubscription {
   id: number;
   providerId: number;
   providerName: string;
+  providerType: SubscriberType;
   planId: number;
   planName: string;
   price: number;

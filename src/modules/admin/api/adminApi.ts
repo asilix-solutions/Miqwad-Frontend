@@ -1,6 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, SubscriberType } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
@@ -136,7 +136,7 @@ export const adminApi = {
 
   // ── Provider Subscriptions ──────────────────────────────────────────────────
 
-  getSubscriptions: async (params: { page: number; pageSize: number; status?: string }): Promise<PaginatedResponse<ProviderSubscription>> => {
+  getSubscriptions: async (params: { page: number; pageSize: number; status?: string; type?: SubscriberType }): Promise<PaginatedResponse<ProviderSubscription>> => {
     const { data } = await apiClient.get<PaginatedResponse<ProviderSubscription>>("/admin/subscriptions", { params });
     return data;
   },

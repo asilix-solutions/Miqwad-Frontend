@@ -33,7 +33,7 @@ export const adminKeys = {
 
   plans: (params?: { isActive?: boolean }) => [...adminKeys.all, "plans", params] as const,
   plan: (id: number) => [...adminKeys.all, "plan", id] as const,
-  subscriptions: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "subscriptions", params] as const,
+  subscriptions: (params: { page: number; pageSize: number; status?: string; type?: string }) => [...adminKeys.all, "subscriptions", params] as const,
   templates: (params?: { isActive?: boolean }) => [...adminKeys.all, "templates", params] as const,
   template: (id: string) => [...adminKeys.all, "template", id] as const,
   notifications: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "notifications", params] as const,
@@ -255,10 +255,10 @@ export function useDeletePlanMutation() {
 
 // ── Provider Subscriptions ──────────────────────────────────────────────────
 
-export function useSubscriptionsQuery(params: { page: number; pageSize: number; status?: string }) {
+export function useSubscriptionsQuery(params: { page: number; pageSize: number; status?: string; type?: string }) {
   return useQuery({
     queryKey: adminKeys.subscriptions(params),
-    queryFn: () => adminApi.getSubscriptions(params),
+    queryFn: () => adminApi.getSubscriptions(params as any),
     placeholderData: keepPreviousData,
   });
 }

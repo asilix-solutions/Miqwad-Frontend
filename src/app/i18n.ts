@@ -678,6 +678,11 @@ const ar = {
     subscriptions: {
       title: "الاشتراكات",
       subtitle: "إدارة خطط الاشتراك واشتراكات المزودين الحالية",
+      types: {
+        all: "الكل",
+        workshop: "ورشة",
+        scrap: "تشليح",
+      },
       tabs: {
         all: "الكل",
         plans: "الخطط",
@@ -691,6 +696,7 @@ const ar = {
       },
       columns: {
         providerName: "مقدم الخدمة",
+        providerType: "النوع",
         planName: "الخطة",
         price: "السعر",
         billingCycle: "دورة الفوترة",
@@ -1768,7 +1774,12 @@ const en: typeof ar = {
     },
     subscriptions: {
       title: "Subscriptions",
-      subtitle: "Manage subscription plans and active provider subscriptions",
+      subtitle: "Manage subscription plans and current provider subscriptions",
+      types: {
+        all: "All",
+        workshop: "Workshop",
+        scrap: "Scrap",
+      },
       tabs: {
         all: "All",
         plans: "Plans",
@@ -1782,6 +1793,7 @@ const en: typeof ar = {
       },
       columns: {
         providerName: "Provider Name",
+        providerType: "Type",
         planName: "Plan",
         price: "Price",
         billingCycle: "Billing Cycle",

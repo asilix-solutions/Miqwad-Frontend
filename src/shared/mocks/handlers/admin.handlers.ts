@@ -194,18 +194,18 @@ let SEED_PLANS: SubscriptionPlan[] = [
 ];
 
 let SEED_PROVIDER_SUBSCRIPTIONS: ProviderSubscription[] = [
-  { id: 1, providerId: 101, providerName: "ورشة الإبداع", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-05-01T00:00:00Z", endDate: "2025-06-01T00:00:00Z", createdAt: "2025-05-01T00:00:00Z" },
-  { id: 2, providerId: 102, providerName: "مركز العناية", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "expired", startDate: "2025-04-15T00:00:00Z", endDate: "2025-05-15T00:00:00Z", createdAt: "2025-04-15T00:00:00Z" },
-  { id: 3, providerId: 103, providerName: "ورشة الصيانة السريعة", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2025-01-10T00:00:00Z", endDate: "2026-01-10T00:00:00Z", createdAt: "2025-01-10T00:00:00Z" },
-  { id: 4, providerId: 104, providerName: "مركز الفحص الشامل", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "cancelled", startDate: "2025-03-01T00:00:00Z", endDate: "2025-04-01T00:00:00Z", createdAt: "2025-03-01T00:00:00Z" },
-  { id: 5, providerId: 105, providerName: "ورشة القمة", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-06-01T00:00:00Z", endDate: "2025-07-01T00:00:00Z", createdAt: "2025-06-01T00:00:00Z" },
-  { id: 6, providerId: 106, providerName: "مركز الأمان", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "pending", startDate: "2025-06-15T00:00:00Z", endDate: "2025-07-15T00:00:00Z", createdAt: "2025-06-12T00:00:00Z" },
-  { id: 7, providerId: 107, providerName: "ورشة المحركات", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2024-08-01T00:00:00Z", endDate: "2025-08-01T00:00:00Z", createdAt: "2024-08-01T00:00:00Z" },
-  { id: 8, providerId: 108, providerName: "مركز النخبة", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "expired", startDate: "2025-02-01T00:00:00Z", endDate: "2025-03-01T00:00:00Z", createdAt: "2025-02-01T00:00:00Z" },
-  { id: 9, providerId: 109, providerName: "ورشة الاعتماد", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-05-20T00:00:00Z", endDate: "2025-06-20T00:00:00Z", createdAt: "2025-05-20T00:00:00Z" },
-  { id: 10, providerId: 110, providerName: "مركز الخبراء", planId: 4, planName: "المميزة", price: 299, billingCycle: "monthly", status: "cancelled", startDate: "2025-01-01T00:00:00Z", endDate: "2025-02-01T00:00:00Z", createdAt: "2025-01-01T00:00:00Z" },
-  { id: 11, providerId: 111, providerName: "ورشة الرواد", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-06-05T00:00:00Z", endDate: "2025-07-05T00:00:00Z", createdAt: "2025-06-05T00:00:00Z" },
-  { id: 12, providerId: 112, providerName: "مركز العاصمة", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "pending", startDate: "2025-07-01T00:00:00Z", endDate: "2026-07-01T00:00:00Z", createdAt: "2025-06-10T00:00:00Z" },
+  { id: 1, providerId: 101, providerName: "ورشة الإبداع", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-05-01T00:00:00Z", endDate: "2025-06-01T00:00:00Z", createdAt: "2025-05-01T00:00:00Z" },
+  { id: 2, providerId: 102, providerName: "مركز العناية", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "expired", startDate: "2025-04-15T00:00:00Z", endDate: "2025-05-15T00:00:00Z", createdAt: "2025-04-15T00:00:00Z" },
+  { id: 3, providerId: 103, providerName: "ورشة الصيانة السريعة", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2025-01-10T00:00:00Z", endDate: "2026-01-10T00:00:00Z", createdAt: "2025-01-10T00:00:00Z" },
+  { id: 4, providerId: 104, providerName: "تشليح العاصمة", providerType: "scrap", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "cancelled", startDate: "2025-03-01T00:00:00Z", endDate: "2025-04-01T00:00:00Z", createdAt: "2025-03-01T00:00:00Z" },
+  { id: 5, providerId: 105, providerName: "ورشة القمة", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-06-01T00:00:00Z", endDate: "2025-07-01T00:00:00Z", createdAt: "2025-06-01T00:00:00Z" },
+  { id: 6, providerId: 106, providerName: "مركز الأمان", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "pending", startDate: "2025-06-15T00:00:00Z", endDate: "2025-07-15T00:00:00Z", createdAt: "2025-06-12T00:00:00Z" },
+  { id: 7, providerId: 107, providerName: "ورشة المحركات", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2024-08-01T00:00:00Z", endDate: "2025-08-01T00:00:00Z", createdAt: "2024-08-01T00:00:00Z" },
+  { id: 8, providerId: 108, providerName: "تشليح الرواد", providerType: "scrap", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "expired", startDate: "2025-02-01T00:00:00Z", endDate: "2025-03-01T00:00:00Z", createdAt: "2025-02-01T00:00:00Z" },
+  { id: 9, providerId: 109, providerName: "ورشة الاعتماد", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-05-20T00:00:00Z", endDate: "2025-06-20T00:00:00Z", createdAt: "2025-05-20T00:00:00Z" },
+  { id: 10, providerId: 110, providerName: "مركز الخبراء", providerType: "workshop", planId: 4, planName: "المميزة", price: 299, billingCycle: "monthly", status: "cancelled", startDate: "2025-01-01T00:00:00Z", endDate: "2025-02-01T00:00:00Z", createdAt: "2025-01-01T00:00:00Z" },
+  { id: 11, providerId: 111, providerName: "ورشة الرواد", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-06-05T00:00:00Z", endDate: "2025-07-05T00:00:00Z", createdAt: "2025-06-05T00:00:00Z" },
+  { id: 12, providerId: 112, providerName: "مركز العاصمة", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "pending", startDate: "2025-07-01T00:00:00Z", endDate: "2026-07-01T00:00:00Z", createdAt: "2025-06-10T00:00:00Z" },
 ];
 
 
@@ -522,10 +522,14 @@ export async function tryAdminMock(
     const page = Math.max(1, Number(params["page"] ?? 1));
     const pageSize = Math.max(1, Math.min(100, Number(params["pageSize"] ?? 10)));
     const statusParam = params["status"] as string | undefined;
+    const typeParam = params["type"] as string | undefined;
 
     let filtered = SEED_PROVIDER_SUBSCRIPTIONS;
     if (statusParam && statusParam !== "all") {
       filtered = filtered.filter((s) => s.status === statusParam);
+    }
+    if (typeParam && typeParam !== "all") {
+      filtered = filtered.filter((s) => s.providerType === typeParam);
     }
 
     const total = filtered.length;
