@@ -10,7 +10,6 @@ import {
   LayoutDashboard,
   Store,
   Users,
-  Wallet,
   ShieldAlert,
   ScrollText,
   Settings,
@@ -37,7 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
 
   { key: "subscriptions", labelPath: "adminNav.subscriptions", path: "/admin/subscriptions", icon: CreditCard },
-  { key: "finance",   labelPath: "adminNav.finance",   path: "/admin/finance",   icon: Wallet },
+
   { key: "escrow",    labelPath: "adminNav.escrow",    path: "/admin/escrow",    icon: ShieldAlert },
   { key: "notifications", labelPath: "adminNav.notifications", path: "/admin/notifications", icon: Bell },
   { key: "ads",       labelPath: "adminNav.ads",       path: "/admin/ads",       icon: Megaphone },

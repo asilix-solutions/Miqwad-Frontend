@@ -34,7 +34,7 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { SettlementRecord, EscrowTransaction, DisputeRecord, DisputeDetail, DashboardStats } from "@modules/admin/types";
+import type { EscrowTransaction, DisputeRecord, DisputeDetail, DashboardStats } from "@modules/admin/types";
 import type { Service } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 
@@ -134,18 +134,7 @@ const MOCK_STATS: DashboardStats = {
   ],
 };
 
-const SEED_SETTLEMENTS: SettlementRecord[] = [
-  { id: "stl_1", providerId: "prv_1", providerName: "ورشة الإبداع", amount: 1500, status: "pending", requestedAt: "2025-06-10T08:00:00Z" },
-  { id: "stl_2", providerId: "prv_2", providerName: "مركز العناية", amount: 45000, status: "approved", requestedAt: "2025-06-09T08:00:00Z", processedAt: "2025-06-10T09:00:00Z" },
-  { id: "stl_3", providerId: "prv_3", providerName: "ورشة الصيانة السريعة", amount: 3200, status: "rejected", requestedAt: "2025-06-08T08:00:00Z", processedAt: "2025-06-09T10:00:00Z" },
-  { id: "stl_4", providerId: "prv_4", providerName: "مركز الفحص الشامل", amount: 12500, status: "pending", requestedAt: "2025-06-11T07:30:00Z" },
-  { id: "stl_5", providerId: "prv_5", providerName: "ورشة القمة", amount: 8900, status: "approved", requestedAt: "2025-06-05T08:00:00Z", processedAt: "2025-06-06T11:00:00Z" },
-  { id: "stl_6", providerId: "prv_6", providerName: "مركز الأمان", amount: 2100, status: "pending", requestedAt: "2025-06-10T14:00:00Z" },
-  { id: "stl_7", providerId: "prv_7", providerName: "ورشة المحركات", amount: 34000, status: "approved", requestedAt: "2025-06-01T08:00:00Z", processedAt: "2025-06-02T09:30:00Z" },
-  { id: "stl_8", providerId: "prv_8", providerName: "مركز النخبة", amount: 5600, status: "rejected", requestedAt: "2025-06-07T08:00:00Z", processedAt: "2025-06-08T12:00:00Z" },
-  { id: "stl_9", providerId: "prv_9", providerName: "ورشة الاعتماد", amount: 11200, status: "pending", requestedAt: "2025-06-11T09:00:00Z" },
-  { id: "stl_10", providerId: "prv_10", providerName: "مركز الخبراء", amount: 18000, status: "approved", requestedAt: "2025-06-03T08:00:00Z", processedAt: "2025-06-04T15:00:00Z" },
-];
+
 
 const SEED_ESCROW: EscrowTransaction[] = [
   { id: "esc_1", orderId: "ord_101", amount: 1500, status: "held", createdAt: "2025-06-01T10:00:00Z" },
@@ -439,66 +428,6 @@ export async function tryAdminMock(
     return ok(config, SEED_USERS[userIdx]);
   }
 
-  // -- GET /admin/settlements -------------------------------------------------
-  if (url === "admin/settlements" && method === "get") {
-    requireAdmin(config);
-
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const page = Math.max(1, Number(params["page"] ?? 1));
-    const pageSize = Math.max(1, Math.min(100, Number(params["pageSize"] ?? 10)));
-    const statusParam = params["status"] as string | undefined;
-
-    let filtered = SEED_SETTLEMENTS;
-    if (statusParam && statusParam !== "all") {
-      filtered = filtered.filter((s) => s.status === statusParam);
-    }
-
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    const items = filtered.slice(startIdx, startIdx + pageSize);
-
-    const response: PaginatedResponse<SettlementRecord> = {
-      items,
-      page,
-      pageSize,
-      total,
-      totalPages,
-    };
-
-    return ok(config, response);
-  }
-
-  // -- POST /admin/settlements/:id/approve ------------------------------------
-  if (url.startsWith("admin/settlements/") && url.endsWith("/approve") && method === "post") {
-    requireAdmin(config);
-    const id = url.split("/")[2];
-    const idx = SEED_SETTLEMENTS.findIndex((s) => s.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "التسوية غير موجودة");
-
-    SEED_SETTLEMENTS[idx] = {
-      ...SEED_SETTLEMENTS[idx],
-      status: "approved",
-      processedAt: new Date().toISOString(),
-    };
-    return ok(config, SEED_SETTLEMENTS[idx]);
-  }
-
-  // -- POST /admin/settlements/:id/reject -------------------------------------
-  if (url.startsWith("admin/settlements/") && url.endsWith("/reject") && method === "post") {
-    requireAdmin(config);
-    const id = url.split("/")[2];
-    const idx = SEED_SETTLEMENTS.findIndex((s) => s.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "التسوية غير موجودة");
-
-    // The user's prompt mentions accepting `{ reason: string }` but we just mutate status here.
-    SEED_SETTLEMENTS[idx] = {
-      ...SEED_SETTLEMENTS[idx],
-      status: "rejected",
-      processedAt: new Date().toISOString(),
-    };
-    return ok(config, SEED_SETTLEMENTS[idx]);
-  }
 
 
   // -- GET /admin/disputes -------------------------------------------------

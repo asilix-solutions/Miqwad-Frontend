@@ -494,7 +494,6 @@ const ar = {
     ads: "الإعلانات",
     providers: "المزودون",
     users: "المستخدمون",
-    finance: "المالية",
     escrow: "الضمان والنزاعات",
     notifications: "الإشعارات",
     audit: "التدقيق",
@@ -517,8 +516,8 @@ const ar = {
       pageOf: "صفحة {{page}} من {{total}}",
       columns: { time: "الوقت", actor: "المستخدم", action: "الإجراء", module: "الوحدة", summary: "الملخص", details: "التفاصيل" },
       filters: { allModules: "كل الوحدات", allActions: "كل الإجراءات", dateFrom: "من تاريخ", dateTo: "إلى تاريخ" },
-      actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", resolve: "حسم", suspend: "علّق", restore: "استعاد", send: "أرسل", settle: "سوّى", cancel: "ألغى", login: "سجّل دخول" },
-      modules: { users: "المستخدمون", providers: "المزودون", settlements: "التسويات", disputes: "النزاعات", services: "الخدمات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
+      actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", resolve: "حسم", suspend: "علّق", restore: "استعاد", send: "أرسل", cancel: "ألغى", login: "سجّل دخول" },
+      modules: { users: "المستخدمون", providers: "المزودون", disputes: "النزاعات", services: "الخدمات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
       detail: { title: "تفاصيل الحدث", actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
     },
     ads: {
@@ -744,7 +743,6 @@ const ar = {
         providers: "مراجعة المزودين",
         notifications: "إرسال إشعار",
         ads: "إنشاء حملة",
-        finance: "التسويات المالية",
         settings: "الإعدادات"
       },
       totalUsers: "إجمالي المستخدمين",
@@ -1036,53 +1034,7 @@ const ar = {
       empty: "لا يوجد مستخدمون",
       error: "تعذّر تحميل المستخدمين",
     },
-    finance: {
-      settlementStatus: {
-        pending: "قيد الانتظار",
-        approved: "موافق عليه",
-        rejected: "مرفوض",
-      },
-      settlements: {
-        title: "المالية — التسويات",
-        subtitle: "مراجعة واعتماد طلبات سحب الرصيد من المزودين",
-        tabs: {
-          pending: "قيد الانتظار",
-          approved: "موافق عليه",
-          rejected: "مرفوض",
-          all: "الكل",
-        },
-        columns: {
-          providerName: "المزود",
-          amount: "المبلغ",
-          status: "الحالة",
-          requestedAt: "تاريخ الطلب",
-        },
-        empty: {
-          pending: "لا توجد تسويات قيد الانتظار",
-          approved: "لا توجد تسويات معتمدة",
-          rejected: "لا توجد تسويات مرفوضة",
-          all: "لا توجد تسويات للعرض",
-        },
-        error: "تعذّر تحميل بيانات التسويات",
-        approve: "اعتماد",
-        reject: "رفض",
-        approveConfirm: {
-          title: "اعتماد تسوية",
-          description: "هل أنت متأكد من اعتماد تسوية بمبلغ {{amount}} للمزود {{provider}}؟ سيتم خصم المبلغ من الرصيد وتحويله للمزود.",
-          confirm: "اعتماد",
-          cancel: "إلغاء",
-          success: "تم اعتماد التسوية بنجاح"
-        },
-        rejectConfirm: {
-          title: "رفض تسوية",
-          reason: "سبب الرفض",
-          reasonPlaceholder: "اكتب سبب الرفض...",
-          confirm: "رفض",
-          cancel: "إلغاء",
-          success: "تم رفض التسوية بنجاح"
-        }
-      },
-    },
+
     escrow: {
       title: "الضمان والنزاعات",
       subtitle: "إدارة نزاعات الطلبات والمبالغ المحتجزة",
@@ -1680,7 +1632,6 @@ const en: typeof ar = {
     ads: "Ads",
     providers: "Providers",
     users: "Users",
-    finance: "Finance",
     escrow: "Escrow & Disputes",
     notifications: "Notifications",
     audit: "Audit Log",
@@ -1703,8 +1654,8 @@ const en: typeof ar = {
       pageOf: "Page {{page}} of {{total}}",
       columns: { time: "Time", actor: "Actor", action: "Action", module: "Module", summary: "Summary", details: "Details" },
       filters: { allModules: "All Modules", allActions: "All Actions", dateFrom: "Date From", dateTo: "Date To" },
-      actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", resolve: "Resolve", suspend: "Suspend", restore: "Restore", send: "Send", settle: "Settle", cancel: "Cancel", login: "Login" },
-      modules: { users: "Users", providers: "Providers", settlements: "Settlements", disputes: "Disputes", services: "Services", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
+      actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", resolve: "Resolve", suspend: "Suspend", restore: "Restore", send: "Send", cancel: "Cancel", login: "Login" },
+      modules: { users: "Users", providers: "Providers", disputes: "Disputes", services: "Services", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
       detail: { title: "Event details", actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
     },
     ads: {
@@ -1930,7 +1881,6 @@ const en: typeof ar = {
         providers: "Review providers",
         notifications: "Send notification",
         ads: "Create campaign",
-        finance: "Settlements",
         settings: "Settings"
       },
       totalUsers: "Total Users",
@@ -2222,53 +2172,7 @@ const en: typeof ar = {
       empty: "No users found",
       error: "Could not load users",
     },
-    finance: {
-      settlementStatus: {
-        pending: "Pending",
-        approved: "Approved",
-        rejected: "Rejected",
-      },
-      settlements: {
-        title: "Finance — Settlements",
-        subtitle: "Review and approve provider withdrawal requests",
-        tabs: {
-          pending: "Pending",
-          approved: "Approved",
-          rejected: "Rejected",
-          all: "All",
-        },
-        columns: {
-          providerName: "Provider",
-          amount: "Amount",
-          status: "Status",
-          requestedAt: "Requested At",
-        },
-        empty: {
-          pending: "No pending settlements",
-          approved: "No approved settlements",
-          rejected: "No rejected settlements",
-          all: "No settlements to display",
-        },
-        error: "Could not load settlements data",
-        approve: "Approve",
-        reject: "Reject",
-        approveConfirm: {
-          title: "Approve Settlement",
-          description: "Are you sure you want to approve a settlement of {{amount}} for {{provider}}? The amount will be deducted from escrow and transferred.",
-          confirm: "Approve",
-          cancel: "Cancel",
-          success: "Settlement approved successfully"
-        },
-        rejectConfirm: {
-          title: "Reject Settlement",
-          reason: "Rejection reason",
-          reasonPlaceholder: "Enter the rejection reason...",
-          confirm: "Reject",
-          cancel: "Cancel",
-          success: "Settlement rejected successfully"
-        }
-      },
-    },
+
     escrow: {
       title: "Escrow & Disputes",
       subtitle: "Manage order disputes and held funds",

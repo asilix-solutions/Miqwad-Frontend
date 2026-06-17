@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { adminApi } from "../api/adminApi";
-import type { AdminProviderStatus, SettlementStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
+import type { AdminProviderStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
@@ -24,7 +24,7 @@ export const adminKeys = {
     [...adminKeys.all, "providers", status ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
   user: (id: string) => [...adminKeys.all, "user", id] as const,
-  settlements: (params: { page: number; pageSize: number; status?: SettlementStatus }) => [...adminKeys.all, "settlements", params] as const,
+
   disputes: (params: { page: number; pageSize: number; status?: DisputeStatus | "all" }) => [...adminKeys.all, "disputes", params] as const,
   dispute: (id: string) => [...adminKeys.all, "dispute", id] as const,
   escrow: (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) => [...adminKeys.all, "escrow", params] as const,
@@ -120,34 +120,6 @@ export function useRestoreUserMutation() {
   });
 }
 
-export function useSettlementsQuery(params: { page: number; pageSize: number; status?: SettlementStatus }) {
-  return useQuery({
-    queryKey: adminKeys.settlements(params),
-    queryFn: () => adminApi.getSettlements(params),
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function useApproveSettlementMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => adminApi.approveSettlement(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "settlements"] });
-    },
-  });
-}
-
-export function useRejectSettlementMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { id: string; reason: string }) =>
-      adminApi.rejectSettlement(input.id, input.reason),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "settlements"] });
-    },
-  });
-}
 
 export function useDisputesQuery(params: { page: number; pageSize: number; status?: DisputeStatus | "all" }) {
   return useQuery({

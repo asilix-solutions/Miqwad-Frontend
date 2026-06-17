@@ -30,9 +30,8 @@
  *   <ApproveButton />
  * </Can>
  *
- * <Can anyOf={[PERMISSIONS.finance.view, PERMISSIONS.finance.export]}
- *      fallback={<NoAccess />}>
- *   <FinancePanel />
+ * <Can anyOf={[PERMISSIONS.users.view, PERMISSIONS.users.create]} fallback={<p>No Access</p>}>
+ *   <UsersPanel />
  * </Can>
  * ```
  *

@@ -72,17 +72,6 @@ export interface DashboardStats {
   disputeStatusBreakdown?: StatusCount[];
 }
 
-export type SettlementStatus = "pending" | "approved" | "rejected";
-
-export interface SettlementRecord {
-  id: string;
-  providerId: string;
-  providerName: string;
-  amount: number;
-  status: SettlementStatus;
-  requestedAt: string;
-  processedAt?: string | null;
-}
 
 export type EscrowStatus = "held" | "released" | "refunded" | "disputed";
 

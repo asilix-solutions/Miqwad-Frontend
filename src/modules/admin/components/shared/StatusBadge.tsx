@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "settlement" | "dispute" | "escrow" | "subscription" | "notification" | "campaign" | "audit";
+export type StatusBadgeKind = "user" | "provider" | "dispute" | "escrow" | "subscription" | "notification" | "campaign" | "audit";
 
 export interface StatusBadgeProps {
   status: string;
@@ -21,11 +21,7 @@ const PROVIDER_STATUS_TONES: Record<string, BadgeTone> = {
   rejected: "danger",
 };
 
-const SETTLEMENT_STATUS_TONES: Record<string, BadgeTone> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "danger",
-};
+
 
 const DISPUTE_STATUS_TONES: Record<string, BadgeTone> = {
   open: "warning",
@@ -64,7 +60,7 @@ const CAMPAIGN_STATUS_TONES: Record<string, BadgeTone> = {
 const AUDIT_ACTION_TONES: Record<string, BadgeTone> = {
   create: "success", update: "info", delete: "danger", approve: "success",
   reject: "danger", resolve: "success", suspend: "danger", restore: "success",
-  send: "info", settle: "success", cancel: "warning", login: "neutral",
+  send: "info", cancel: "warning", login: "neutral",
 };
 
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
@@ -73,7 +69,6 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const toneMap = 
     kind === "user" ? USER_STATUS_TONES 
     : kind === "provider" ? PROVIDER_STATUS_TONES 
-    : kind === "settlement" ? SETTLEMENT_STATUS_TONES
     : kind === "dispute" ? DISPUTE_STATUS_TONES
     : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
     : kind === "notification" ? NOTIFICATION_STATUS_TONES
@@ -88,8 +83,6 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.users.status.${status}`
       : kind === "provider"
       ? `superAdmin.providers.status.${status}`
-      : kind === "settlement"
-      ? `superAdmin.finance.settlementStatus.${status}`
       : kind === "dispute"
       ? `superAdmin.escrow.disputeStatus.${status}`
       : kind === "subscription"

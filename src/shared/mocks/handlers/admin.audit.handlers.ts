@@ -138,23 +138,7 @@ const SEED_AUDIT_LOGS: AuditLogEntry[] = [
     ipAddress: "10.0.0.5",
     createdAt: "2026-06-08T10:10:00Z",
   },
-  {
-    id: 8,
-    actorId: "admin-1",
-    actorName: "Super Admin",
-    actorRole: "super_admin",
-    action: "settle",
-    module: "settlements",
-    entityType: "Settlement",
-    entityId: "102",
-    summaryAr: "تسوية مستحقات المزود #34",
-    summaryEn: "Settled payment for provider #34",
-    metadata: {
-      amount: 1500,
-    },
-    ipAddress: "192.168.1.1",
-    createdAt: "2026-06-07T13:25:00Z",
-  },
+
 ];
 
 for (let i = 9; i <= 24; i++) {

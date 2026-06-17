@@ -202,11 +202,7 @@ const AdminUserDetailsPage = lazy(() =>
     default: m.AdminUserDetailsPage,
   }))
 );
-const AdminSettlementsPage = lazy(() =>
-  import("@modules/admin/pages/AdminSettlementsPage").then((m) => ({
-    default: m.AdminSettlementsPage,
-  }))
-);
+
 const AdminDisputesPage = lazy(() =>
   import("@modules/admin/pages/AdminDisputesPage").then((m) => ({
     default: m.AdminDisputesPage,
@@ -504,13 +500,7 @@ export const router = createBrowserRouter([
                       { path: ":id", element: <AdminProviderDetailsPage /> },
                     ],
                   },
-                  {
-                    path: "finance",
-                    element: <PermissionGuard permission="finance.view" />,
-                    children: [
-                      { index: true, element: <AdminSettlementsPage /> },
-                    ],
-                  },
+
                   {
                     path: "escrow",
                     element: <PermissionGuard permission="escrow.view" />,

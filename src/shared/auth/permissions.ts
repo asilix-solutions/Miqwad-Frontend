@@ -103,12 +103,6 @@ export const PERMISSIONS = {
     manage: "subscriptions.manage",
   },
 
-  // ── Finance ────────────────────────────────────────────────────────────────
-  finance: {
-    view: "finance.view",
-    settle: "finance.settle",
-    export: "finance.export",
-  },
 
   // ── Escrow ─────────────────────────────────────────────────────────────────
   escrow: {

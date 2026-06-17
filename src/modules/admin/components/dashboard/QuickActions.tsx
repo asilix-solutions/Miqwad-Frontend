@@ -4,7 +4,7 @@
  */
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Store, Bell, Megaphone, Wallet, Settings, ArrowLeft } from "lucide-react";
+import { Store, Bell, Megaphone, Settings, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Can } from "@shared/auth/Can";
 import type { PermissionCode } from "@shared/auth/permissions";
@@ -43,14 +43,7 @@ const ACTIONS: QuickAction[] = [
     permission: "ads.create",
     color: "var(--color-brand-orange)",
   },
-  {
-    key: "finance",
-    labelKey: "superAdmin.dashboard.quickActions.finance",
-    icon: Wallet,
-    to: "/admin/finance",
-    permission: "finance.view",
-    color: "var(--color-success-500)",
-  },
+
   {
     key: "settings",
     labelKey: "superAdmin.dashboard.quickActions.settings",

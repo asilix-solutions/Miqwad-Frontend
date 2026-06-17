@@ -4,10 +4,10 @@
 
 export type AuditAction =
   | "create" | "update" | "delete" | "approve" | "reject" | "resolve"
-  | "suspend" | "restore" | "send" | "settle" | "cancel" | "login";
+  | "suspend" | "restore" | "send" | "cancel" | "login";
 
 export type AuditModule =
-  | "users" | "providers" | "settlements" | "disputes" | "services"
+  | "users" | "providers" | "disputes" | "services"
   | "plans" | "subscriptions" | "notifications" | "ads"
   | "settings" | "auth";
 
