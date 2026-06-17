@@ -1,6 +1,7 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City } from "../types";
+import type { ProviderType } from "@modules/providers/types";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
@@ -43,9 +44,13 @@ export const adminApi = {
     return data;
   },
 
-  listProviders: async (status?: AdminProviderStatus): Promise<AdminProvider[]> => {
-    const params = status && status !== "all" ? { status } : undefined;
-    const { data } = await apiClient.get<AdminProvider[]>("/admin/providers", { params });
+  listProviders: async (status?: AdminProviderStatus, type?: ProviderType): Promise<AdminProvider[]> => {
+    const params: Record<string, string> = {};
+    if (status && status !== "all") params.status = status;
+    if (type) params.type = type;
+    const { data } = await apiClient.get<AdminProvider[]>("/admin/providers", { 
+      params: Object.keys(params).length > 0 ? params : undefined 
+    });
     return data;
   },
 

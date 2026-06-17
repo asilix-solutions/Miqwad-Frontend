@@ -23,6 +23,8 @@ export interface ProviderDocument {
   uploadedAt: string;
 }
 
+export type ProviderType = "dealer" | "workshop" | "scrap";
+
 /**
  * Profile entity returned by GET /ServiceProviders/{id}/profile.
  * Extended with `status` + `documents` so the admin review screen
@@ -30,6 +32,7 @@ export interface ProviderDocument {
  */
 export interface ProviderProfile {
   id: number;
+  type: ProviderType;
   /** Identity link to the User who owns this provider record. */
   userId: string;
   companyName: string;

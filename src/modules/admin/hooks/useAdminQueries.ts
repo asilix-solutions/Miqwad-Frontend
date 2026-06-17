@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { adminApi } from "../api/adminApi";
 import type { AdminProviderStatus } from "../types";
+import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
@@ -21,8 +22,8 @@ import { useTranslation } from "react-i18next";
 export const adminKeys = {
   all: ["admin"] as const,
   users: (params: { page: number; pageSize: number }) => [...adminKeys.all, "users", params] as const,
-  providers: (status?: AdminProviderStatus) =>
-    [...adminKeys.all, "providers", status ?? "all"] as const,
+  providers: (status?: AdminProviderStatus, type?: ProviderType) =>
+    [...adminKeys.all, "providers", status ?? "all", type ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
   user: (id: string) => [...adminKeys.all, "user", id] as const,
 
@@ -61,10 +62,10 @@ export function useUsersQuery(params: { page: number; pageSize: number }) {
   });
 }
 
-export function useAdminProvidersQuery(status: AdminProviderStatus = "pending") {
+export function useAdminProvidersQuery(status: AdminProviderStatus = "pending", type?: ProviderType) {
   return useQuery({
-    queryKey: adminKeys.providers(status),
-    queryFn: () => adminApi.listProviders(status),
+    queryKey: adminKeys.providers(status, type),
+    queryFn: () => adminApi.listProviders(status, type),
     placeholderData: keepPreviousData,
   });
 }

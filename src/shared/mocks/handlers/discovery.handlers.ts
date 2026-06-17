@@ -208,6 +208,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_1",
     companyName: "ورشة العاصمة لخدمات السيارات",
+    type: "workshop",
     email: "asma@asema-workshop.sa",
     phone: "501110010",
     lat: 24.7400,
@@ -227,6 +228,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_2",
     companyName: "مركز السرعة للزيوت",
+    type: "workshop",
     email: "support@speed-oil.sa",
     phone: "501110011",
     lat: 24.6950,
@@ -246,6 +248,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_3",
     companyName: "مغسلة برق الرياض",
+    type: "workshop",
     email: "info@barq-wash.sa",
     phone: "501110012",
     lat: 24.7800,
@@ -265,6 +268,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_4",
     companyName: "كراج النخبة للسمكرة والدهان",
+    type: "workshop",
     email: "ops@nokhba-bodyshop.sa",
     phone: "501110013",
     lat: 24.7050,
@@ -284,6 +288,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_5",
     companyName: "سطحة الراحة 24 ساعة",
+    type: "workshop",
     email: "hello@raha-towing.sa",
     phone: "501110014",
     lat: 24.7200,
@@ -303,6 +308,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_6",
     companyName: "مركز التكييف الذهبي",
+    type: "workshop",
     email: "info@gold-ac.sa",
     phone: "501110015",
     lat: 21.5400,
@@ -322,6 +328,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
   {
     userId: "seed_nearby_7",
     companyName: "ورشة الواحة للكفرات",
+    type: "workshop",
     email: "tires@waha.sa",
     phone: "501110016",
     lat: 26.4350,
