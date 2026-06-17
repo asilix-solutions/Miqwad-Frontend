@@ -31,6 +31,9 @@ export interface DataTableProps<T> {
   errorText?: string;
   getRowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
+  containerClassName?: string;
+  headerRowClassName?: string;
+  bodyRowClassName?: string;
 }
 
 /**
@@ -48,6 +51,9 @@ export function DataTable<T>({
   errorText,
   getRowKey,
   onRowClick,
+  containerClassName,
+  headerRowClassName,
+  bodyRowClassName,
 }: DataTableProps<T>) {
   // RTL logical properties: text-start aligns text correctly in RTL (right) and LTR (left).
   // onRowClick applies subtle hover states.
@@ -65,7 +71,7 @@ export function DataTable<T>({
 
   const renderHeader = () => (
     <TableHeader>
-      <TableRow className={headerRowClass}>
+      <TableRow className={`${headerRowClass} ${headerRowClassName ?? ""}`.trim()}>
         {columns.map((col) => (
           <TableHead key={col.key} className={`${headerCellClass} ${col.className ?? ""}`}>
             {col.header}
@@ -77,7 +83,7 @@ export function DataTable<T>({
 
   if (isError) {
     return (
-      <div className={containerClass}>
+      <div className={`${containerClass} ${containerClassName ?? ""}`.trim()}>
         <Table>
           {renderHeader()}
           <TableBody>
@@ -99,12 +105,12 @@ export function DataTable<T>({
 
   if (isLoading) {
     return (
-      <div className={containerClass}>
+      <div className={`${containerClass} ${containerClassName ?? ""}`.trim()}>
         <Table>
           {renderHeader()}
           <TableBody>
             {Array.from({ length: 6 }).map((_, rowIndex) => (
-              <TableRow key={`skeleton-${rowIndex}`} className={bodyRowBaseClass}>
+              <TableRow key={`skeleton-${rowIndex}`} className={`${bodyRowBaseClass} ${bodyRowClassName ?? ""}`.trim()}>
                 {columns.map((col, colIndex) => (
                   <TableCell key={col.key} className={bodyCellClass}>
                     <Skeleton className={`h-[14px] rounded ${colIndex === 0 ? "w-[60%]" : "w-[40%]"}`} />
@@ -119,7 +125,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div className={containerClass}>
+    <div className={`${containerClass} ${containerClassName ?? ""}`.trim()}>
       <Table>
         {renderHeader()}
         <TableBody>
@@ -139,7 +145,7 @@ export function DataTable<T>({
               <TableRow
                 key={getRowKey(row)}
                 onClick={() => onRowClick?.(row)}
-                className={`${bodyRowBaseClass} ${onRowClick ? "cursor-pointer" : ""}`}
+                className={`${bodyRowBaseClass} ${onRowClick ? "cursor-pointer" : ""} ${bodyRowClassName ?? ""}`.trim()}
               >
                 {columns.map((col) => {
                   // Type-safe access without `any`. We fall back to indexing the row

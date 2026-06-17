@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { useAdminProvidersQuery } from "@modules/admin/hooks/useAdminQueries";
 import type { AdminProvider } from "@modules/admin/types";
@@ -100,8 +100,8 @@ export function ProvidersPanel() {
   const paginatedRows = filteredRows.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex gap-2 bg-transparent overflow-x-auto">
+    <div className={`flex flex-col ${typeFilter === "dealer" ? "" : "gap-4"}`}>
+      <div className={`flex gap-2 bg-transparent overflow-x-auto ${typeFilter === "dealer" ? "-mb-px relative z-10" : ""}`}>
         {TYPE_TABS.map((tab) => {
           const isActive = typeFilter === tab.key;
           return (
@@ -116,14 +116,13 @@ export function ProvidersPanel() {
                 "flex items-center justify-center gap-1.5",
                 "text-[14px] py-2 px-4 rounded-full border border-transparent",
                 "cursor-pointer transition-colors duration-150 whitespace-nowrap",
-                isActive
+                isActive && tab.key === "dealer"
+                  ? "bg-[color-mix(in_srgb,var(--color-brand-orange)_12%,transparent)] text-[var(--color-brand-orange)] font-semibold rounded-b-none border border-[color-mix(in_srgb,var(--color-brand-orange)_25%,transparent)] border-b-0"
+                  : isActive
                   ? "bg-[var(--color-brand-orange)] text-white font-semibold"
-                  : tab.key === "dealer"
-                  ? "bg-[color-mix(in_srgb,var(--color-brand-orange)_8%,transparent)] text-[var(--color-brand-orange)] font-semibold hover:bg-[color-mix(in_srgb,var(--color-brand-orange)_14%,transparent)]"
                   : "bg-transparent text-[var(--color-muted)] font-medium hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
               ].join(" ")}
             >
-              {tab.key === "dealer" && <Star className="h-3 w-3" />}
               {t(tab.labelI18n)}
             </button>
           );
@@ -139,6 +138,9 @@ export function ProvidersPanel() {
         errorText={t("superAdmin.providers.error")}
         getRowKey={(row) => row.id.toString()}
         onRowClick={(row) => navigate(`/admin/providers/${row.id}`)}
+        containerClassName={typeFilter === "dealer" ? "border-[color-mix(in_srgb,var(--color-brand-orange)_25%,transparent)]" : ""}
+        headerRowClassName={typeFilter === "dealer" ? "bg-[color-mix(in_srgb,var(--color-brand-orange)_12%,transparent)] hover:bg-[color-mix(in_srgb,var(--color-brand-orange)_12%,transparent)] [&_th]:text-[var(--color-brand-orange)]" : ""}
+        bodyRowClassName={typeFilter === "dealer" ? "bg-[color-mix(in_srgb,var(--color-brand-orange)_5%,transparent)]" : ""}
       />
 
       {totalPages > 1 && (
