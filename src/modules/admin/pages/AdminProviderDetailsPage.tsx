@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, FileText, MapPin, Phone, Mail, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, FileText, MapPin, Phone, Mail, Calendar, Clock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
 import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import {
   useApproveProviderMutation,
   useRejectProviderMutation,
+  useUpdateProviderCommissionMutation,
+  useSubscriptionsQuery,
 } from "../hooks/useAdminQueries";
 import { useToast } from "@shared/components/ui/toastContext";
 import { RejectProviderDialog } from "../components/RejectProviderDialog";
@@ -21,7 +24,10 @@ import { DocumentViewerDialog } from "../components/DocumentViewerDialog";
 import { ApproveProviderDialog } from "../components/ApproveProviderDialog";
 import type { AdminProvider } from "../types";
 import type { ProviderDocument } from "@modules/providers/types";
+import type { ProviderSubscription } from "@modules/subscriptions/types";
 import { formatDate } from "@shared/lib/formatDate";
+import { formatCurrency } from "@shared/lib/formatCurrency";
+
 /**
  * /admin/providers/:id — single-provider review with approve/reject.
  *
@@ -41,9 +47,13 @@ export function AdminProviderDetailsPage() {
   const categoriesQ = useServiceCategoriesQuery();
   const approveMutation = useApproveProviderMutation();
   const rejectMutation = useRejectProviderMutation();
+  const updateCommissionMutation = useUpdateProviderCommissionMutation();
+  const subscriptionsQ = useSubscriptionsQuery({ page: 1, pageSize: 50 });
   const [showReject, setShowReject] = useState<AdminProvider | null>(null);
   const [showApprove, setShowApprove] = useState(false);
   const [viewDocument, setViewDocument] = useState<ProviderDocument | null>(null);
+  const [editingCommission, setEditingCommission] = useState(false);
+  const [tempCommission, setTempCommission] = useState("");
 
   const getInitials = (name: string) =>
     name
@@ -95,6 +105,20 @@ export function AdminProviderDetailsPage() {
   }
 
   const provider = q.data;
+  const subscription = subscriptionsQ.data?.items.find((s) => s.providerId === providerId);
+
+  const handleSaveCommission = async () => {
+    const rate = Number(tempCommission);
+    if (!isNaN(rate) && rate >= 0) {
+      try {
+        await updateCommissionMutation.mutateAsync({ providerId, rate });
+        toast.success(t("superAdmin.providers.detail.commission.save"));
+        setEditingCommission(false);
+      } catch {
+        toast.error(t("common.errorTitle"));
+      }
+    }
+  };
 
   const handleApprove = async () => {
     try {
@@ -282,6 +306,178 @@ export function AdminProviderDetailsPage() {
         </div>
       </div>
 
+      {/* Type-specific sections */}
+      {provider.type === "dealer" && (
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-neutral-800">
+              {t("superAdmin.providers.detail.commission.title")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-neutral-500">{t("superAdmin.providers.detail.commission.rate")}</p>
+                {editingCommission ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="number"
+                      value={tempCommission}
+                      onChange={(e) => setTempCommission(e.target.value)}
+                      className="w-24 h-9"
+                    />
+                    <Button size="sm" onClick={handleSaveCommission} disabled={updateCommissionMutation.isPending}>
+                      {t("superAdmin.providers.detail.commission.save")}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingCommission(false)}>
+                      {t("common.cancel")}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-lg font-semibold">{provider.commissionRate ?? 0}%</span>
+                    <Can permission="providers.approve">
+                      <Button variant="link" size="sm" onClick={() => {
+                        setTempCommission(String(provider.commissionRate ?? 0));
+                        setEditingCommission(true);
+                      }}>
+                        {t("superAdmin.providers.detail.commission.edit")}
+                      </Button>
+                    </Can>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="pt-4 border-t border-neutral-100">
+              <p className="text-sm text-neutral-500">{t("superAdmin.providers.detail.commission.estimatedDues")}</p>
+              <p className="text-lg font-semibold mt-1">
+                {formatCurrency((provider.commissionRate ?? 0) / 100 * (provider.monthlySales ?? 0))}
+              </p>
+              {((provider.commissionRate ?? 0) / 100 * (provider.monthlySales ?? 0)) > 500 && (
+                <div className="mt-2 rounded-md bg-danger-50 text-danger-600 p-2 text-sm font-medium border border-danger-200">
+                  {t("superAdmin.providers.detail.commission.debtAlert")}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {provider.type === "workshop" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-neutral-800">
+                {t("superAdmin.providers.detail.workshop.profileTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <dl className="grid grid-cols-1 gap-y-4">
+                <Field
+                  icon={<FileText className="h-4 w-4" />}
+                  label={t("superAdmin.providers.detail.workshop.specialization")}
+                  value={provider.specialization || t("common.none")}
+                />
+                <Field
+                  icon={<Star className="h-4 w-4 text-warning-500" />}
+                  label={t("superAdmin.providers.detail.workshop.rating")}
+                  value={`${provider.rating ?? 0} (${provider.totalRatings ?? 0})`}
+                />
+                <div className="space-y-1">
+                  <dt className="text-sm text-neutral-500 flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-neutral-400" />
+                    {t("superAdmin.providers.detail.workshop.location")}
+                  </dt>
+                  <dd className="text-sm font-medium text-neutral-900">
+                    {provider.lat && provider.lng ? (
+                      <a
+                        href={`https://maps.google.com/?q=${provider.lat},${provider.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:underline"
+                      >
+                        {t("superAdmin.providers.detail.workshop.viewMap")}
+                      </a>
+                    ) : (
+                      t("common.none")
+                    )}
+                  </dd>
+                </div>
+              </dl>
+              {provider.photos && provider.photos.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-neutral-500 mb-2">{t("superAdmin.providers.detail.workshop.photos")}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {provider.photos.map((photo, i) => (
+                      <img key={i} src={photo} alt="" className="rounded-md object-cover w-full h-24 border" />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          <SubscriptionCard subscription={subscription} />
+        </div>
+      )}
+
+      {provider.type === "scrap" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-neutral-800">
+                {t("superAdmin.providers.detail.scrap.specializationTitle")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <dl className="grid grid-cols-1 gap-y-4">
+                <div className="space-y-1">
+                  <dt className="text-sm text-neutral-500 flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-neutral-400" />
+                    {t("superAdmin.providers.detail.scrap.brands")}
+                  </dt>
+                  <dd className="flex flex-wrap gap-2 mt-1">
+                    {provider.brandSpecialization && provider.brandSpecialization.length > 0 ? (
+                      provider.brandSpecialization.map((brand, i) => (
+                        <Badge key={i} variant="outline" className="bg-neutral-50">{brand}</Badge>
+                      ))
+                    ) : (
+                      <span className="text-sm text-neutral-500">{t("common.none")}</span>
+                    )}
+                  </dd>
+                </div>
+                <Field
+                  icon={<Star className="h-4 w-4 text-warning-500" />}
+                  label={t("superAdmin.providers.detail.workshop.rating")}
+                  value={`${provider.rating ?? 0} (${provider.totalRatings ?? 0})`}
+                />
+                <div className="space-y-1">
+                  <dt className="text-sm text-neutral-500 flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4 text-neutral-400" />
+                    {t("superAdmin.providers.detail.workshop.location")}
+                  </dt>
+                  <dd className="text-sm font-medium text-neutral-900">
+                    {provider.lat && provider.lng ? (
+                      <a
+                        href={`https://maps.google.com/?q=${provider.lat},${provider.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:underline"
+                      >
+                        {t("superAdmin.providers.detail.workshop.viewMap")}
+                      </a>
+                    ) : (
+                      t("common.none")
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+          <SubscriptionCard subscription={subscription} />
+        </div>
+      )}
+
       {showReject != null && (
         <RejectProviderDialog
           open={showReject != null}
@@ -333,6 +529,49 @@ function Field({
   );
 }
 
-
+function SubscriptionCard({ subscription }: { subscription?: ProviderSubscription }) {
+  const { t, i18n } = useTranslation();
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold text-neutral-800">
+          {t("superAdmin.providers.detail.subscription.title")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {subscription ? (
+          <dl className="grid grid-cols-1 gap-y-4">
+            <div className="flex items-center justify-between">
+              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.plan")}</dt>
+              <dd className="text-sm font-medium">{subscription.planName}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.cycle")}</dt>
+              <dd className="text-sm font-medium">{t(`admin.plans.billingCycles.${subscription.billingCycle}`)}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.status")}</dt>
+              <dd>
+                <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
+                  {t(`superAdmin.subscriptions.status.${subscription.status}`)}
+                </Badge>
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.start")}</dt>
+              <dd className="text-sm font-medium">{formatDate(subscription.startDate, i18n.language)}</dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.end")}</dt>
+              <dd className="text-sm font-medium">{formatDate(subscription.endDate, i18n.language)}</dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.none")}</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default AdminProviderDetailsPage;

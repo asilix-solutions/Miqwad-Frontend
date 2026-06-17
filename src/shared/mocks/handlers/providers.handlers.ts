@@ -891,6 +891,23 @@ export async function tryProvidersMock(
     return ok(config, p);
   }
 
+  // -- PATCH /admin/providers/{id}/commission ---------------------------------
+  m = url.match(/^admin\/providers\/(\d+)\/commission$/);
+  if (m && method === "patch") {
+    const me = readCurrentUser();
+    if (!me || (me.role !== "admin" && me.role !== "super_admin")) throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+    const id = Number(m[1]);
+    const p = db.providers[id];
+    if (!p) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+    const body = parseBody(config.data) as { commissionRate?: number };
+    if (body.commissionRate !== undefined) {
+      p.commissionRate = Number(body.commissionRate);
+      db.providers[id] = p;
+      saveDb(db);
+    }
+    return ok(config, p);
+  }
+
   // Not ours.
   return null;
 }

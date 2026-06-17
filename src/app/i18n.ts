@@ -1019,6 +1019,10 @@ const ar = {
           cancel: "إلغاء",
           success: "تمت الموافقة بنجاح",
         },
+        commission: { title: "العمولة والمستحقات", rate: "نسبة العمولة", edit: "تعديل النسبة", save: "حفظ", estimatedDues: "مستحقات تقديرية", debtAlert: "تجاوز حد الدين 500 ر.س" },
+        workshop: { profileTitle: "ملف الورشة", specialization: "التخصص", rating: "التقييم", photos: "الصور", location: "الموقع", viewMap: "عرض على الخريطة" },
+        scrap: { specializationTitle: "التخصص", brands: "العلامات التجارية" },
+        subscription: { title: "الاشتراك", plan: "الباقة", cycle: "دورة الدفع", status: "حالة الاشتراك", start: "تاريخ البدء", end: "تاريخ الانتهاء", none: "لا يوجد اشتراك" },
       },
     },
     users: {
@@ -2120,6 +2124,10 @@ const en: typeof ar = {
           cancel: "Cancel",
           success: "Approved successfully",
         },
+        commission: { title: "Commission & Dues", rate: "Commission Rate", edit: "Edit Rate", save: "Save", estimatedDues: "Estimated Dues", debtAlert: "Debt limit exceeded 500 SAR" },
+        workshop: { profileTitle: "Workshop Profile", specialization: "Specialization", rating: "Rating", photos: "Photos", location: "Location", viewMap: "View on Map" },
+        scrap: { specializationTitle: "Specialization", brands: "Brands" },
+        subscription: { title: "Subscription", plan: "Plan", cycle: "Billing Cycle", status: "Subscription Status", start: "Start Date", end: "End Date", none: "No Subscription" },
       },
     },
     users: {

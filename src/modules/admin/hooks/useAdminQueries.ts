@@ -91,6 +91,18 @@ export function useRejectProviderMutation() {
   });
 }
 
+export function useUpdateProviderCommissionMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ providerId, rate }: { providerId: number; rate: number }) =>
+      adminApi.updateProviderCommission(providerId, rate),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: adminKeys.providers() });
+      void qc.invalidateQueries({ queryKey: ["providers", "profile", variables.providerId] });
+    },
+  });
+}
+
 export function useUserQuery(id: string) {
   return useQuery({
     queryKey: adminKeys.user(id),

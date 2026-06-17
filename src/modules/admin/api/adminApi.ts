@@ -69,6 +69,14 @@ export const adminApi = {
     return data;
   },
 
+  updateProviderCommission: async (providerId: number, commissionRate: number): Promise<AdminProvider> => {
+    const { data } = await apiClient.patch<AdminProvider>(
+      `/admin/providers/${providerId}/commission`,
+      { commissionRate },
+    );
+    return data;
+  },
+
 
 
 
