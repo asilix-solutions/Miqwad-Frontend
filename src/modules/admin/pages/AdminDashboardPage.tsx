@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Users, Store, Clock, ShieldAlert, Wallet, AlertCircle } from "lucide-react";
-import { useDashboardStatsQuery, useAuditLogsQuery, useAdminProvidersQuery, useDisputesQuery } from "../hooks/useAdminQueries";
+import { Users, Store, Clock, Wallet, AlertCircle } from "lucide-react";
+import { useDashboardStatsQuery, useAuditLogsQuery, useAdminProvidersQuery } from "../hooks/useAdminQueries";
 import { StatCard } from "../components/dashboard/StatCard";
 import { formatCurrency } from "@shared/lib/formatCurrency";
 import { AreaChart, Area, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -21,12 +21,10 @@ export function AdminDashboardPage() {
 
   const { data: auditData, isLoading: isAuditLoading } = useAuditLogsQuery({ page: 1, pageSize: 6 });
   const { data: providersData, isLoading: isProvidersLoading } = useAdminProvidersQuery("pending");
-  const { data: disputesData, isLoading: isDisputesLoading } = useDisputesQuery({ page: 1, pageSize: 5, status: "open" });
 
   const revenueSeries = data?.revenueSeries ?? [];
   const usersSeries = data?.usersSeries ?? [];
   const providerStatusBreakdown = data?.providerStatusBreakdown ?? [];
-  const disputeStatusBreakdown = data?.disputeStatusBreakdown ?? [];
 
   const formatMonth = (m: string) => {
     try {
@@ -62,7 +60,7 @@ export function AdminDashboardPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title={t("superAdmin.dashboard.totalUsers")}
           value={data?.totalUsers ?? 0}
@@ -88,15 +86,7 @@ export function AdminDashboardPage() {
           trend={data?.trends?.pendingVerifications}
           invertTrendColor
         />
-        <StatCard
-          title={t("superAdmin.dashboard.openDisputes")}
-          value={data?.openDisputes ?? 0}
-          icon={ShieldAlert}
-          tone="danger"
-          isLoading={isLoading}
-          trend={data?.trends?.openDisputes}
-          invertTrendColor
-        />
+
         <StatCard
           title={t("superAdmin.dashboard.monthlyRevenue")}
           value={isLoading ? 0 : formatCurrency(data?.monthlyRevenue, i18n.language)}
@@ -163,7 +153,7 @@ export function AdminDashboardPage() {
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] flex flex-col">
           <h2 className="font-[var(--font-main)] font-semibold text-[var(--color-ink-body)] text-base mb-4">
             {t("superAdmin.dashboard.charts.providerStatus")}
@@ -204,49 +194,11 @@ export function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] flex flex-col">
-          <h2 className="font-[var(--font-main)] font-semibold text-[var(--color-ink-body)] text-base mb-4">
-            {t("superAdmin.dashboard.charts.disputeStatus")}
-          </h2>
-          <div dir="ltr" className="h-[260px] w-full min-w-0 flex items-center justify-center">
-            {disputeStatusBreakdown.length > 0 ? (
-              <>
-                <ResponsiveContainer width="50%" height="100%" minWidth={0}>
-                  <PieChart>
-                    <Pie data={disputeStatusBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="count">
-                      {disputeStatusBreakdown.map((entry, index) => {
-                        const color = entry.status === "open" ? "#e88c1c" : entry.status === "under_review" ? "#2e7cd6" : "#1f9d55";
-                        return <Cell key={`cell-${index}`} fill={color} />;
-                      })}
-                    </Pie>
-                    <Tooltip content={<ChartTooltip formatter={(val) => nf.format(val as number)} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="flex w-[50%] flex-col gap-3 px-4" dir={i18n.dir()}>
-                  {disputeStatusBreakdown.map((entry) => (
-                    <div key={entry.status} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: entry.status === "open" ? "#e88c1c" : entry.status === "under_review" ? "#2e7cd6" : "#1f9d55" }} />
-                        <span className="text-sm text-[var(--color-ink-secondary)]">
-                          {t(`superAdmin.dashboard.disputeStatusDist.${entry.status}`)}
-                        </span>
-                      </div>
-                      <span className="font-semibold text-sm">{nf.format(entry.count)}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="flex h-full items-center justify-center text-[var(--color-muted)] text-sm">
-                {t("superAdmin.dashboard.widgets.empty")}
-              </div>
-            )}
-          </div>
-        </div>
+
       </div>
 
       {/* Widgets Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
         <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] flex flex-col">
           <div className="flex items-center justify-between mb-4">
@@ -306,36 +258,7 @@ export function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Open Disputes */}
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-5 shadow-[var(--shadow-1)] flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-[var(--font-main)] font-semibold text-[var(--color-ink-body)] text-base">
-              {t("superAdmin.dashboard.widgets.openDisputes")}
-            </h2>
-            <Link to="/admin/escrow" className="text-sm font-medium text-[var(--color-brand-blue)] hover:underline">
-              {t("superAdmin.dashboard.widgets.viewAll")}
-            </Link>
-          </div>
-          <div className="flex-1 flex flex-col gap-3">
-            {isDisputesLoading ? (
-              Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-8 bg-[var(--color-surface-2)] animate-pulse rounded" />)
-            ) : disputesData?.items?.length ? (
-              disputesData.items.slice(0, 5).map((dispute: any) => (
-                <div key={dispute.id} className="flex items-center justify-between gap-2 border-b border-[var(--color-divider)] pb-2 last:border-0 last:pb-0">
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="truncate font-medium text-sm text-[var(--color-ink-body)]">#{dispute.orderId}</span>
-                    <span className="text-xs font-semibold text-[var(--color-brand-orange)]">{formatCurrency(dispute.amount, i18n.language)}</span>
-                  </div>
-                  <StatusBadge status={dispute.status} kind="dispute" />
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-1 items-center justify-center text-[var(--color-muted)] text-sm">
-                {t("superAdmin.dashboard.widgets.empty")}
-              </div>
-            )}
-          </div>
-        </div>
+
       </div>
 
       <section className="flex flex-col gap-3">

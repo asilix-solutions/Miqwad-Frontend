@@ -6,7 +6,7 @@
  * item. Tab state is URL-synced via the `?tab=` query parameter so that
  * refresh and deep-linking work correctly.
  *
- * Tab pill style matches AdminProvidersPage / AdminDisputesPage:
+ * Tab pill style matches AdminProvidersPage:
  *   active  → bg var(--color-brand-orange) text-white
  *   inactive → transparent / muted with hover highlight
  */
@@ -65,7 +65,7 @@ export function AdminReferenceDataPage() {
         </p>
       </header>
 
-      {/* ── Pill tabs (same style as AdminProvidersPage / AdminDisputesPage) ── */}
+      {/* ── Pill tabs (same style as AdminProvidersPage) ── */}
       <div className="flex gap-2 bg-transparent overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.key;

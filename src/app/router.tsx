@@ -203,16 +203,7 @@ const AdminUserDetailsPage = lazy(() =>
   }))
 );
 
-const AdminDisputesPage = lazy(() =>
-  import("@modules/admin/pages/AdminDisputesPage").then((m) => ({
-    default: m.AdminDisputesPage,
-  }))
-);
-const AdminDisputeDetailsPage = lazy(() =>
-  import("@modules/admin/pages/AdminDisputeDetailsPage").then((m) => ({
-    default: m.AdminDisputeDetailsPage,
-  }))
-);
+
 const AdminReferenceDataPage = lazy(() =>
   import("@modules/admin/pages/AdminReferenceDataPage").then((m) => ({
     default: m.AdminReferenceDataPage,
@@ -501,14 +492,7 @@ export const router = createBrowserRouter([
                     ],
                   },
 
-                  {
-                    path: "escrow",
-                    element: <PermissionGuard permission="escrow.view" />,
-                    children: [
-                      { index: true, element: <AdminDisputesPage /> },
-                      { path: ":id", element: <AdminDisputeDetailsPage /> },
-                    ],
-                  },
+
                   {
                     // Reference Data — consolidated container (categories + cities)
                     path: "reference",

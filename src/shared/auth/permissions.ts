@@ -104,12 +104,7 @@ export const PERMISSIONS = {
   },
 
 
-  // ── Escrow ─────────────────────────────────────────────────────────────────
-  escrow: {
-    view: "escrow.view",
-    resolve: "escrow.resolve",
-    refund: "escrow.refund",
-  },
+
 
   // ── Bookings ───────────────────────────────────────────────────────────────
   bookings: {

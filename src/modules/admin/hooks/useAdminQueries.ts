@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { adminApi } from "../api/adminApi";
-import type { AdminProviderStatus, DisputeStatus, ResolveDecision, EscrowStatus } from "../types";
+import type { AdminProviderStatus } from "../types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
@@ -25,9 +25,7 @@ export const adminKeys = {
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
   user: (id: string) => [...adminKeys.all, "user", id] as const,
 
-  disputes: (params: { page: number; pageSize: number; status?: DisputeStatus | "all" }) => [...adminKeys.all, "disputes", params] as const,
-  dispute: (id: string) => [...adminKeys.all, "dispute", id] as const,
-  escrow: (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) => [...adminKeys.all, "escrow", params] as const,
+
   cities: () => [...adminKeys.all, "cities"] as const,
   services: (params?: { categoryId?: number; isActive?: boolean }) => [...adminKeys.all, "services", params] as const,
 
@@ -121,41 +119,7 @@ export function useRestoreUserMutation() {
 }
 
 
-export function useDisputesQuery(params: { page: number; pageSize: number; status?: DisputeStatus | "all" }) {
-  return useQuery({
-    queryKey: adminKeys.disputes(params),
-    queryFn: () => adminApi.getDisputes(params),
-    placeholderData: keepPreviousData,
-  });
-}
 
-export function useDisputeQuery(id: string) {
-  return useQuery({
-    queryKey: adminKeys.dispute(id),
-    queryFn: () => adminApi.getDispute(id),
-  });
-}
-
-export function useResolveDisputeMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { id: string; payload: { decision: ResolveDecision; note: string; partialAmount?: number } }) =>
-      adminApi.resolveDispute(input.id, input.payload),
-    onSuccess: (_, input) => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "disputes"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.dispute(input.id) });
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "escrow"] });
-    },
-  });
-}
-
-export function useEscrowQuery(params: { page: number; pageSize: number; status?: EscrowStatus | "all" }) {
-  return useQuery({
-    queryKey: adminKeys.escrow(params),
-    queryFn: () => adminApi.getEscrowTransactions(params),
-    placeholderData: keepPreviousData,
-  });
-}
 
 // ── Categories ─────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, DisputeRecord, DisputeDetail, EscrowTransaction, ResolveDecision, DisputeStatus, EscrowStatus, City } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City } from "../types";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
@@ -64,25 +64,7 @@ export const adminApi = {
   },
 
 
-  getDisputes: async (params: { page: number; pageSize: number; status?: DisputeStatus | "all" }): Promise<PaginatedResponse<DisputeRecord>> => {
-    const { data } = await apiClient.get<PaginatedResponse<DisputeRecord>>("/admin/disputes", { params });
-    return data;
-  },
 
-  getDispute: async (id: string): Promise<DisputeDetail> => {
-    const { data } = await apiClient.get<DisputeDetail>(`/admin/disputes/${id}`);
-    return data;
-  },
-
-  resolveDispute: async (id: string, payload: { decision: ResolveDecision; note: string; partialAmount?: number }): Promise<DisputeDetail> => {
-    const { data } = await apiClient.post<DisputeDetail>(`/admin/disputes/${id}/resolve`, payload);
-    return data;
-  },
-
-  getEscrowTransactions: async (params: { page: number; pageSize: number; status?: EscrowStatus | "all" }): Promise<PaginatedResponse<EscrowTransaction>> => {
-    const { data } = await apiClient.get<PaginatedResponse<EscrowTransaction>>("/admin/escrow", { params });
-    return data;
-  },
 
   createCategory: async (payload: Omit<ServiceCategory, "id">): Promise<ServiceCategory> => {
     const { data } = await apiClient.post<ServiceCategory>("/admin/categories", payload);

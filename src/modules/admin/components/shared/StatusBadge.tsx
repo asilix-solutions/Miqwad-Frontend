@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "dispute" | "escrow" | "subscription" | "notification" | "campaign" | "audit";
+export type StatusBadgeKind = "user" | "provider" | "subscription" | "notification" | "campaign" | "audit";
 
 export interface StatusBadgeProps {
   status: string;
@@ -22,19 +22,6 @@ const PROVIDER_STATUS_TONES: Record<string, BadgeTone> = {
 };
 
 
-
-const DISPUTE_STATUS_TONES: Record<string, BadgeTone> = {
-  open: "warning",
-  under_review: "info",
-  resolved: "success",
-};
-
-const ESCROW_STATUS_TONES: Record<string, BadgeTone> = {
-  held: "info",
-  released: "success",
-  refunded: "neutral",
-  disputed: "danger",
-};
 
 const SUBSCRIPTION_STATUS_TONES: Record<string, BadgeTone> = {
   active: "success",
@@ -69,12 +56,10 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const toneMap = 
     kind === "user" ? USER_STATUS_TONES 
     : kind === "provider" ? PROVIDER_STATUS_TONES 
-    : kind === "dispute" ? DISPUTE_STATUS_TONES
     : kind === "subscription" ? SUBSCRIPTION_STATUS_TONES
     : kind === "notification" ? NOTIFICATION_STATUS_TONES
     : kind === "campaign" ? CAMPAIGN_STATUS_TONES
-    : kind === "audit" ? AUDIT_ACTION_TONES
-    : ESCROW_STATUS_TONES;
+    : AUDIT_ACTION_TONES;
     
   const tone = toneMap[status] || "neutral";
 
@@ -83,17 +68,13 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `superAdmin.users.status.${status}`
       : kind === "provider"
       ? `superAdmin.providers.status.${status}`
-      : kind === "dispute"
-      ? `superAdmin.escrow.disputeStatus.${status}`
       : kind === "subscription"
       ? `superAdmin.subscriptions.status.${status}`
       : kind === "notification"
       ? `superAdmin.notifications.history.status.${status}`
       : kind === "campaign"
       ? `superAdmin.ads.status.${status}`
-      : kind === "audit"
-      ? `superAdmin.audit.actions.${status}`
-      : `superAdmin.escrow.escrowStatus.${status}`;
+      : `superAdmin.audit.actions.${status}`;
 
   return (
     <Badge tone={tone} className={className}>

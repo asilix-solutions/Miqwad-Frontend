@@ -34,7 +34,7 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { EscrowTransaction, DisputeRecord, DisputeDetail, DashboardStats } from "@modules/admin/types";
+import type { DashboardStats } from "@modules/admin/types";
 import type { Service } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 
@@ -105,13 +105,11 @@ const MOCK_STATS: DashboardStats = {
   totalUsers: 1_247,
   activeProviders: 83,
   pendingVerifications: 12,
-  openDisputes: 5,
   monthlyRevenue: 284_500,
   trends: {
     totalUsers: +8.2,
     activeProviders: +3.1,
     pendingVerifications: -5.0,
-    openDisputes: -12.0,
     monthlyRevenue: +15.4,
   },
   revenueSeries: last12Months.map((month, i) => ({
@@ -127,56 +125,7 @@ const MOCK_STATS: DashboardStats = {
     { status: "pending", count: 12 },
     { status: "rejected", count: 7 },
   ],
-  disputeStatusBreakdown: [
-    { status: "open", count: 5 },
-    { status: "under_review", count: 3 },
-    { status: "resolved", count: 41 },
-  ],
 };
-
-
-
-const SEED_ESCROW: EscrowTransaction[] = [
-  { id: "esc_1", orderId: "ord_101", amount: 1500, status: "held", createdAt: "2025-06-01T10:00:00Z" },
-  { id: "esc_2", orderId: "ord_102", amount: 3200, status: "disputed", createdAt: "2025-06-02T11:00:00Z" },
-  { id: "esc_3", orderId: "ord_103", amount: 800, status: "released", createdAt: "2025-06-03T09:00:00Z" },
-  { id: "esc_4", orderId: "ord_104", amount: 4500, status: "refunded", createdAt: "2025-06-04T14:00:00Z" },
-  { id: "esc_5", orderId: "ord_105", amount: 1200, status: "disputed", createdAt: "2025-06-05T16:00:00Z" },
-];
-
-const SEED_DISPUTES: DisputeDetail[] = [
-  {
-    id: "dsp_1", orderId: "ord_102", escrowTransactionId: "esc_2", openedByName: "فهد العتيبي", openedByRole: "customer", status: "open", amount: 3200, reason: "الخدمة لم تكتمل بالشكل المتفق عليه", createdAt: "2025-06-06T10:00:00Z",
-    evidence: [{ id: "ev_1", fileUrl: "/mocks/ev1.jpg", fileName: "photo1.jpg", uploadedByRole: "customer", uploadedAt: "2025-06-06T10:05:00Z" }]
-  },
-  {
-    id: "dsp_2", orderId: "ord_105", escrowTransactionId: "esc_5", openedByName: "ورشة الإبداع", openedByRole: "provider", status: "under_review", amount: 1200, reason: "العميل يرفض استلام السيارة بعد الإصلاح", createdAt: "2025-06-07T12:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_3", orderId: "ord_106", escrowTransactionId: "esc_6", openedByName: "نورة الشمري", openedByRole: "customer", status: "resolved", amount: 2500, reason: "تأخير كبير في التسليم", createdAt: "2025-06-01T09:00:00Z", resolvedAt: "2025-06-03T15:00:00Z", resolution: { decision: "refund_to_customer", note: "تم التأكد من التأخير وإرجاع المبلغ للعميل" }, evidence: []
-  },
-  {
-    id: "dsp_4", orderId: "ord_107", escrowTransactionId: "esc_7", openedByName: "خالد القحطاني", openedByRole: "customer", status: "open", amount: 500, reason: "قطعة الغيار غير أصلية", createdAt: "2025-06-08T10:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_5", orderId: "ord_108", escrowTransactionId: "esc_8", openedByName: "مركز العناية", openedByRole: "provider", status: "under_review", amount: 8500, reason: "تم إنجاز العمل والعميل لا يتجاوب", createdAt: "2025-06-09T11:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_6", orderId: "ord_109", escrowTransactionId: "esc_9", openedByName: "سارة الدوسري", openedByRole: "customer", status: "resolved", amount: 1400, reason: "اللون مختلف عن المطلوب", createdAt: "2025-05-20T10:00:00Z", resolvedAt: "2025-05-22T10:00:00Z", resolution: { decision: "partial_refund", partialAmount: 700, note: "اتفاق على نصف المبلغ" }, evidence: []
-  },
-  {
-    id: "dsp_7", orderId: "ord_110", escrowTransactionId: "esc_10", openedByName: "عبدالله المالكي", openedByRole: "customer", status: "open", amount: 2000, reason: "مشكلة مستمرة بعد الإصلاح", createdAt: "2025-06-10T09:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_8", orderId: "ord_111", escrowTransactionId: "esc_11", openedByName: "ورشة الصيانة السريعة", openedByRole: "provider", status: "open", amount: 900, reason: "العميل يطالب بأشياء خارج الاتفاق", createdAt: "2025-06-11T08:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_9", orderId: "ord_112", escrowTransactionId: "esc_12", openedByName: "ريم الحربي", openedByRole: "customer", status: "under_review", amount: 3300, reason: "صوت غريب بعد الصيانة", createdAt: "2025-06-09T14:00:00Z", evidence: []
-  },
-  {
-    id: "dsp_10", orderId: "ord_113", escrowTransactionId: "esc_13", openedByName: "محمد السبيعي", openedByRole: "customer", status: "open", amount: 4100, reason: "ضرر بالسيارة أثناء تواجدها بالورشة", createdAt: "2025-06-11T12:00:00Z", evidence: []
-  }
-];
 
 let SEED_SERVICES: Service[] = [
   { id: 1, nameAr: "غسيل خارجي", nameEn: "Exterior Wash", categoryId: 1, basePrice: 50, isActive: true },
@@ -430,116 +379,7 @@ export async function tryAdminMock(
 
 
 
-  // -- GET /admin/disputes -------------------------------------------------
-  if (url === "admin/disputes" && method === "get") {
-    requireAdmin(config);
 
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const page = Math.max(1, Number(params["page"] ?? 1));
-    const pageSize = Math.max(1, Math.min(100, Number(params["pageSize"] ?? 10)));
-    const statusParam = params["status"] as string | undefined;
-
-    let filtered = SEED_DISPUTES;
-    if (statusParam && statusParam !== "all") {
-      filtered = filtered.filter((d) => d.status === statusParam);
-    }
-
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    // Map to omit evidence for the list view
-    const items = filtered.slice(startIdx, startIdx + pageSize).map(({ evidence, ...rest }) => rest as DisputeRecord);
-
-    const response: PaginatedResponse<DisputeRecord> = {
-      items,
-      page,
-      pageSize,
-      total,
-      totalPages,
-    };
-
-    return ok(config, response);
-  }
-
-  // -- GET /admin/disputes/:id -------------------------------------------------
-  if (url.startsWith("admin/disputes/") && method === "get" && !url.includes("/resolve")) {
-    requireAdmin(config);
-    const id = url.split("/")[2];
-    const dispute = SEED_DISPUTES.find((d) => d.id === id);
-    if (!dispute) throw fail(config, 404, "NOT_FOUND", "النزاع غير موجود");
-    
-    return ok(config, dispute);
-  }
-
-  // -- POST /admin/disputes/:id/resolve -------------------------------------------------
-  if (url.startsWith("admin/disputes/") && url.endsWith("/resolve") && method === "post") {
-    requireAdmin(config);
-    const id = url.split("/")[2];
-    const idx = SEED_DISPUTES.findIndex((d) => d.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "النزاع غير موجود");
-
-    const payload = JSON.parse(config.data || "{}");
-    const { decision, note, partialAmount } = payload;
-
-    if (decision === "partial_refund") {
-      if (typeof partialAmount !== "number" || partialAmount <= 0 || partialAmount > SEED_DISPUTES[idx].amount) {
-         throw fail(config, 422, "VALIDATION_ERROR", "قيمة الاسترجاع الجزئي غير صحيحة");
-      }
-    }
-
-    SEED_DISPUTES[idx] = {
-      ...SEED_DISPUTES[idx],
-      status: "resolved",
-      resolvedAt: new Date().toISOString(),
-      resolution: {
-        decision,
-        note,
-        ...(decision === "partial_refund" ? { partialAmount } : {})
-      }
-    };
-
-    // Also update linked escrow if exists
-    const escIdx = SEED_ESCROW.findIndex((e) => e.id === SEED_DISPUTES[idx].escrowTransactionId);
-    if (escIdx !== -1) {
-      if (decision === "release_to_provider") {
-        SEED_ESCROW[escIdx] = { ...SEED_ESCROW[escIdx], status: "released" };
-      } else if (decision === "refund_to_customer" || decision === "partial_refund") {
-        SEED_ESCROW[escIdx] = { ...SEED_ESCROW[escIdx], status: "refunded" };
-      }
-    }
-
-    return ok(config, SEED_DISPUTES[idx]);
-  }
-
-  // -- GET /admin/escrow -------------------------------------------------
-  if (url === "admin/escrow" && method === "get") {
-    requireAdmin(config);
-
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const page = Math.max(1, Number(params["page"] ?? 1));
-    const pageSize = Math.max(1, Math.min(100, Number(params["pageSize"] ?? 10)));
-    const statusParam = params["status"] as string | undefined;
-
-    let filtered = SEED_ESCROW;
-    if (statusParam && statusParam !== "all") {
-      filtered = filtered.filter((e) => e.status === statusParam);
-    }
-
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    const items = filtered.slice(startIdx, startIdx + pageSize);
-
-    const response: PaginatedResponse<EscrowTransaction> = {
-      items,
-      page,
-      pageSize,
-      total,
-      totalPages,
-    };
-
-    return ok(config, response);
-  }
 
   // -- GET /admin/services ---------------------------------------------------
   if (url === "admin/services" && method === "get") {

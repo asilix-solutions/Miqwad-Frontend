@@ -21,29 +21,7 @@ export const suspendUserSchema = z.object({
 export type SuspendUserFormValues = z.infer<typeof suspendUserSchema>;
 
 
-/** Schema used by the admin resolve dispute dialog. */
-export const resolveDisputeSchema = z.object({
-  decision: z.enum(["release_to_provider", "refund_to_customer", "partial_refund"], {
-    error: "common.requiredField",
-  }),
-  note: z
-    .string()
-    .min(3, { message: "common.requiredField" })
-    .max(500),
-  partialAmount: z.number().optional(),
-}).superRefine((data, ctx) => {
-  if (data.decision === "partial_refund") {
-    if (data.partialAmount === undefined || data.partialAmount <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "common.requiredField",
-        path: ["partialAmount"],
-      });
-    }
-  }
-});
 
-export type ResolveDisputeFormValues = z.infer<typeof resolveDisputeSchema>;
 
 /** Schema used by the admin category create/edit dialog. */
 export const categorySchema = z.object({
@@ -259,12 +237,12 @@ export type FeatureFlagsFormValues = z.infer<typeof featureFlagsSchema>;
 /** Schema used by the admin audit log filter. */
 export const auditFilterSchema = z.object({
   module: z.enum([
-    "users", "providers", "disputes", "services",
+    "users", "providers", "services",
     "plans", "subscriptions", "notifications", "ads",
     "settings", "auth"
   ]).optional(),
   action: z.enum([
-    "create", "update", "delete", "approve", "reject", "resolve",
+    "create", "update", "delete", "approve", "reject",
     "suspend", "restore", "send", "cancel", "login"
   ]).optional(),
   actorId: z.string().optional(),

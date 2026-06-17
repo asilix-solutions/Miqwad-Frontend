@@ -51,7 +51,7 @@ export interface DashboardStats {
   totalUsers: number;
   activeProviders: number;
   pendingVerifications: number;
-  openDisputes: number;
+
   monthlyRevenue: number;
 
   // Trend deltas vs previous month (percentage, can be negative)
@@ -59,7 +59,7 @@ export interface DashboardStats {
     totalUsers: number;
     activeProviders: number;
     pendingVerifications: number;
-    openDisputes: number;
+
     monthlyRevenue: number;
   };
 
@@ -69,50 +69,5 @@ export interface DashboardStats {
 
   // Distributions for pie/bar charts
   providerStatusBreakdown?: StatusCount[];
-  disputeStatusBreakdown?: StatusCount[];
-}
 
-
-export type EscrowStatus = "held" | "released" | "refunded" | "disputed";
-
-export type DisputeStatus = "open" | "under_review" | "resolved";
-
-export type ResolveDecision = "release_to_provider" | "refund_to_customer" | "partial_refund";
-
-export interface EscrowTransaction {
-  id: string;
-  orderId: string;
-  amount: number;
-  status: EscrowStatus;
-  createdAt: string;
-}
-
-export interface DisputeRecord {
-  id: string;
-  orderId: string;
-  escrowTransactionId: string;
-  openedByName: string;
-  openedByRole: "customer" | "provider";
-  status: DisputeStatus;
-  amount: number;
-  reason: string;
-  createdAt: string;
-  resolvedAt?: string | null;
-  resolution?: {
-    decision: ResolveDecision;
-    note: string;
-    partialAmount?: number;
-  } | null;
-}
-
-export interface DisputeEvidence {
-  id: string;
-  fileUrl: string;
-  fileName: string;
-  uploadedByRole: "customer" | "provider";
-  uploadedAt: string;
-}
-
-export interface DisputeDetail extends DisputeRecord {
-  evidence: DisputeEvidence[];
 }

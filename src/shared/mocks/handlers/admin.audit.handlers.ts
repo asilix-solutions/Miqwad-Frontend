@@ -53,24 +53,7 @@ const SEED_AUDIT_LOGS: AuditLogEntry[] = [
     ipAddress: "192.168.1.1",
     createdAt: "2026-06-13T08:15:00Z",
   },
-  {
-    id: 3,
-    actorId: "admin-2",
-    actorName: "Support Admin",
-    actorRole: "admin",
-    action: "resolve",
-    module: "disputes",
-    entityType: "Dispute",
-    entityId: "45",
-    summaryAr: "تم حل النزاع #45 وإرجاع المبلغ للعميل",
-    summaryEn: "Resolved dispute #45 and refunded customer",
-    metadata: {
-      decision: "refund_to_customer",
-      note: "Customer provided proof",
-    },
-    ipAddress: "10.0.0.5",
-    createdAt: "2026-06-12T14:30:00Z",
-  },
+
   {
     id: 4,
     actorId: "admin-1",

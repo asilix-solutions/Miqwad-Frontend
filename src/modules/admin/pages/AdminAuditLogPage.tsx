@@ -19,13 +19,13 @@ import { AuditDetailDrawer } from "../components/audit/AuditDetailDrawer";
 import { toast } from "sonner";
 
 const AUDIT_MODULES: AuditModule[] = [
-  "users", "providers", "disputes", "services",
+  "users", "providers", "services",
   "plans", "subscriptions", "notifications", "ads",
   "settings", "auth"
 ];
 
 const AUDIT_ACTIONS: AuditAction[] = [
-  "create", "update", "delete", "approve", "reject", "resolve",
+  "create", "update", "delete", "approve", "reject",
   "suspend", "restore", "send", "cancel", "login"
 ];
 
