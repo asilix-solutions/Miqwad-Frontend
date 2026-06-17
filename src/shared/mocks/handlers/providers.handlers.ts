@@ -64,8 +64,30 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
+const MOCK_SEED_VERSION = 2;
+const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
+
 function loadDb(): ProvidersDb {
   try {
+    const storedVersionStr = localStorage.getItem(MOCK_SEED_VERSION_KEY);
+    const storedVersion = storedVersionStr ? parseInt(storedVersionStr, 10) : 0;
+
+    if (storedVersion !== MOCK_SEED_VERSION) {
+      // Version mismatch: seed shape changed. Clear all mock caches.
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("maqwad.")) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem(MOCK_SEED_VERSION_KEY, MOCK_SEED_VERSION.toString());
+
+      // Return empty DB so seedIfEmpty will re-run
+      return { providers: {}, services: {}, nextProviderId: 1, nextServiceId: 1, seeded: false };
+    }
+
     const raw = localStorage.getItem(PROVIDERS_DB_KEY);
     if (raw) return JSON.parse(raw) as ProvidersDb;
   } catch {

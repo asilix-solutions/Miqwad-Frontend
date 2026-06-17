@@ -9,8 +9,14 @@ import type { ProviderType } from "@modules/providers/types";
 import { DataTable, type DataTableColumn } from "@modules/admin/components/shared/DataTable";
 import { StatusBadge } from "@modules/admin/components/shared/StatusBadge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatDate } from "@shared/lib/formatDate";
-
 
 const TABS: ReadonlyArray<{ key: AdminProviderStatus; label: string }> = [
   { key: "pending", label: "superAdmin.providers.tabs.pending" },
@@ -99,9 +105,9 @@ export function AdminProvidersPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 mb-[20px]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-[20px]">
         {/* Status Tabs */}
-        <div className="flex gap-2 bg-transparent overflow-x-auto">
+        <div className="flex gap-2 bg-transparent overflow-x-auto w-full sm:w-auto">
           {TABS.map((tab) => {
             const isActive = status === tab.key;
             return (
@@ -123,27 +129,19 @@ export function AdminProvidersPage() {
           })}
         </div>
 
-        {/* Type Filter Tabs */}
-        <div className="flex gap-2 bg-transparent overflow-x-auto">
-          {(["all", "dealer", "workshop", "scrap"] as const).map((type) => {
-            const isActive = typeFilter === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setTypeFilter(type)}
-                className={`
-                  text-[13px] py-1.5 px-3 rounded-full border cursor-pointer transition-colors duration-150 whitespace-nowrap
-                  ${isActive 
-                    ? "bg-white text-[var(--color-brand-blue)] border-white shadow-sm font-semibold" 
-                    : "bg-[var(--color-surface-2)] text-[var(--color-muted)] border-transparent font-medium hover:text-[var(--color-ink-body)]"
-                  }
-                `}
-              >
-                {t(`superAdmin.providers.types.${type}`)}
-              </button>
-            );
-          })}
+        {/* Type Filter Dropdown */}
+        <div className="flex items-center">
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as ProviderType | "all")}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("superAdmin.providers.types.all")}</SelectItem>
+              <SelectItem value="dealer">{t("superAdmin.providers.types.dealer")}</SelectItem>
+              <SelectItem value="workshop">{t("superAdmin.providers.types.workshop")}</SelectItem>
+              <SelectItem value="scrap">{t("superAdmin.providers.types.scrap")}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
