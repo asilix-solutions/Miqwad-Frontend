@@ -109,16 +109,16 @@ export function AdminDashboardPage() {
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <AreaChart data={revenueSeries}>
                   <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#043168" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#043168" stopOpacity={0} />
+                    <linearGradient id="revenueOrangeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-brand-orange)" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="var(--color-brand-orange)" stopOpacity={0.02} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ECECF1" vertical={false} />
                   <XAxis dataKey="month" tickFormatter={formatMonth} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-muted)" }} dy={10} />
                   <YAxis tickFormatter={(val) => nf.format(val)} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-muted)" }} dx={-10} />
                   <Tooltip content={<ChartTooltip formatter={(val) => formatCurrency(val as number, i18n.language)} />} />
-                  <Area type="monotone" dataKey="value" stroke="#043168" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                  <Area type="monotone" dataKey="value" stroke="var(--color-brand-orange)" fillOpacity={1} fill="url(#revenueOrangeGradient)" strokeWidth={2} activeDot={{ r: 6, fill: "var(--color-brand-orange)" }} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
