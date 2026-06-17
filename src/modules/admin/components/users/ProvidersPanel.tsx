@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 import { useAdminProvidersQuery } from "@modules/admin/hooks/useAdminQueries";
 import type { AdminProvider } from "@modules/admin/types";
@@ -113,13 +113,17 @@ export function ProvidersPanel() {
                 setPage(1);
               }}
               className={[
+                "flex items-center justify-center gap-1.5",
                 "text-[14px] py-2 px-4 rounded-full border border-transparent",
                 "cursor-pointer transition-colors duration-150 whitespace-nowrap",
                 isActive
                   ? "bg-[var(--color-brand-orange)] text-white font-semibold"
+                  : tab.key === "dealer"
+                  ? "bg-[color-mix(in_srgb,var(--color-brand-orange)_8%,transparent)] text-[var(--color-brand-orange)] font-semibold hover:bg-[color-mix(in_srgb,var(--color-brand-orange)_14%,transparent)]"
                   : "bg-transparent text-[var(--color-muted)] font-medium hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
               ].join(" ")}
             >
+              {tab.key === "dealer" && <Star className="h-3 w-3" />}
               {t(tab.labelI18n)}
             </button>
           );
