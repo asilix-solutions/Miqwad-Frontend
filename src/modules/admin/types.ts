@@ -51,6 +51,27 @@ export interface AdminUserDetail extends AdminUserRow {
 export interface MonthlyPoint { month: string; value: number; }
 export interface StatusCount  { status: string; count: number; }
 
+export type RevenueSource = "commission" | "subscription";
+
+export interface RevenueRecord {
+  id: string;
+  source: RevenueSource;
+  providerId: number;
+  providerName: string;
+  providerType: "dealer" | "workshop" | "scrap";
+  amount: number;          // SAR, monthly
+  detail?: string;         // e.g. "5% × 45000" for commission, plan name for sub
+  periodMonth?: string;    // ISO month if relevant
+}
+
+export interface RevenueSummary {
+  totalMonthly: number;
+  commissionTotal: number;
+  subscriptionTotal: number;
+  records: RevenueRecord[];
+}
+
+
 export interface DashboardStats {
   totalUsers: number;
   activeProviders: number;

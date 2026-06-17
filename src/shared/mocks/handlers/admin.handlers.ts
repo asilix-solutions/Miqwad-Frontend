@@ -37,6 +37,8 @@ import type { PaginatedResponse } from "@shared/types/api";
 import type { DashboardStats } from "@modules/admin/types";
 import type { Service } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
+import type { ProviderProfile } from "@modules/providers/types";
+import type { RevenueSummary, RevenueRecord } from "@modules/admin/types";
 
 // =============================================================================
 // Local types — shape of the current user stored in localStorage
@@ -112,10 +114,6 @@ const MOCK_STATS: DashboardStats = {
     pendingVerifications: -5.0,
     monthlyRevenue: +15.4,
   },
-  revenueSeries: last12Months.map((month, i) => ({
-    month,
-    value: 180000 + (i * 8000) + (i % 2 === 0 ? 5000 : -2000),
-  })),
   usersSeries: last12Months.map((month, i) => ({
     month,
     value: 800 + (i * 40) + (i % 3 === 0 ? 15 : 0),
@@ -250,6 +248,67 @@ function fail(
 // Helpers
 // =============================================================================
 
+function computeRevenue(): RevenueSummary {
+  const records: RevenueRecord[] = [];
+  let commissionTotal = 0;
+  let subscriptionTotal = 0;
+
+  // 1. Commission from dealers
+  try {
+    const rawProviders = localStorage.getItem("maqwad.mockProvidersDb");
+    if (rawProviders) {
+      const db = JSON.parse(rawProviders) as { providers: Record<number, ProviderProfile> };
+      const providers = Object.values(db.providers || {});
+      const dealers = providers.filter(p => p.type === "dealer");
+      for (const d of dealers) {
+        if (d.commissionRate != null && d.monthlySales != null) {
+          const amount = d.monthlySales * (d.commissionRate / 100);
+          records.push({
+            id: `comm_${d.id}`,
+            source: "commission",
+            providerId: d.id,
+            providerName: d.companyName,
+            providerType: "dealer",
+            amount,
+            detail: `${d.commissionRate}% × ${d.monthlySales}`
+          });
+          commissionTotal += amount;
+        }
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  // 2. Subscriptions
+  for (const sub of SEED_PROVIDER_SUBSCRIPTIONS) {
+    if (sub.status === "active") {
+      let amount = sub.price;
+      if (sub.billingCycle === "yearly") {
+        // Normalize yearly to monthly
+        amount = amount / 12;
+      }
+      records.push({
+        id: `sub_${sub.id}`,
+        source: "subscription",
+        providerId: sub.providerId,
+        providerName: sub.providerName,
+        providerType: sub.providerType,
+        amount,
+        detail: sub.planName
+      });
+      subscriptionTotal += amount;
+    }
+  }
+
+  return {
+    totalMonthly: commissionTotal + subscriptionTotal,
+    commissionTotal,
+    subscriptionTotal,
+    records
+  };
+}
+
 function readCurrentUser(): CurrentUser | null {
   try {
     const raw = localStorage.getItem("maqwad.user");
@@ -305,7 +364,25 @@ export async function tryAdminMock(
   // .NET equivalent: GET /api/admin/dashboard/stats
   if (url === "admin/dashboard/stats" && method === "get") {
     requireAdmin(config);
-    return ok(config, MOCK_STATS);
+    return ok(config, {
+      ...MOCK_STATS,
+      monthlyRevenue: computeRevenue().totalMonthly
+    });
+  }
+
+  // -- GET /admin/revenues ---------------------------------------------------
+  if (url === "admin/revenues" && method === "get") {
+    requireAdmin(config);
+    const params = (config.params ?? {}) as Record<string, unknown>;
+    const sourceParam = params["source"] as string | undefined;
+
+    const summary = computeRevenue();
+    
+    if (sourceParam && (sourceParam === "commission" || sourceParam === "subscription")) {
+      summary.records = summary.records.filter(r => r.source === sourceParam);
+    }
+    
+    return ok(config, summary);
   }
 
   // -- GET /admin/users -------------------------------------------------------

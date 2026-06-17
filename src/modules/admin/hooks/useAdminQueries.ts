@@ -25,6 +25,7 @@ export const adminKeys = {
   providers: (status?: AdminProviderStatus, type?: ProviderType) =>
     [...adminKeys.all, "providers", status ?? "all", type ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
+  revenues: (source?: string) => [...adminKeys.all, "revenues", source] as const,
   user: (id: string) => [...adminKeys.all, "user", id] as const,
 
 
@@ -53,6 +54,14 @@ export function useDashboardStatsQuery() {
     queryFn: () => adminApi.getDashboardStats(),
   });
 }
+
+export function useRevenuesQuery(params?: { source?: import("../types").RevenueSource }) {
+  return useQuery({
+    queryKey: adminKeys.revenues(params?.source),
+    queryFn: () => adminApi.getRevenues(params),
+  });
+}
+
 
 export function useUsersQuery(params: { page: number; pageSize: number }) {
   return useQuery({
