@@ -35,6 +35,8 @@ export interface AdminUserRow {
   id: string;
   name: string;
   phone: string;
+  email?: string | null;
+  createdAt?: string;
   role: "customer" | "provider" | "driver" | "admin" | "super_admin";
   status: "active" | "suspended" | "pending";
 }

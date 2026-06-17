@@ -1022,6 +1022,10 @@ const ar = {
       },
     },
     users: {
+      tabs: {
+        clients: "العملاء",
+        providers: "مزودو الخدمة",
+      },
       title: "المستخدمون",
       subtitle: "إدارة المستخدمين في المنصة",
       searchPlaceholder: "ابحث بالاسم أو الجوال",
@@ -2119,6 +2123,10 @@ const en: typeof ar = {
       },
     },
     users: {
+      tabs: {
+        clients: "Clients",
+        providers: "Service Providers",
+      },
       title: "Users",
       subtitle: "Manage users in the platform",
       searchPlaceholder: "Search by name or phone",
