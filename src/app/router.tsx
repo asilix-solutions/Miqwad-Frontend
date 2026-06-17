@@ -220,6 +220,11 @@ const AdminSubscriptionsHubPage = lazy(() =>
     default: m.AdminSubscriptionsHubPage,
   }))
 );
+const AdminRevenuesPage = lazy(() =>
+  import("@modules/admin/pages/AdminRevenuesPage").then((m) => ({
+    default: m.AdminRevenuesPage,
+  }))
+);
 const AdminNotificationsHubPage = lazy(() =>
   import("@modules/admin/pages/AdminNotificationsHubPage").then((m) => ({
     default: m.AdminNotificationsHubPage,
@@ -513,6 +518,13 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="subscriptions.view" />,
                     children: [
                       { index: true, element: <AdminSubscriptionsHubPage /> },
+                    ],
+                  },
+                  {
+                    path: "revenues",
+                    element: <PermissionGuard permission="subscriptions.view" />,
+                    children: [
+                      { index: true, element: <AdminRevenuesPage /> },
                     ],
                   },
                   {

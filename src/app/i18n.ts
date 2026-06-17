@@ -504,8 +504,18 @@ const ar = {
 
     plans: "خطط الاشتراك",
     subscriptions: "الاشتراكات",
+    revenues: "الإيرادات",
   },
   superAdmin: {
+    revenues: {
+      title: "الإيرادات",
+      subtitle: "نظرة عامة على إيرادات الاشتراكات والعمولات",
+      summary: { total: "إجمالي الإيرادات", commissions: "العمولات", subscriptions: "الاشتراكات" },
+      tabs: { commissions: "عمولات التجار", subscriptions: "الاشتراكات" },
+      columns: { provider: "مقدم الخدمة", detail: "التفاصيل", amount: "المبلغ" },
+      empty: "لا توجد إيرادات مسجلة بعد",
+      error: "تعذر تحميل الإيرادات"
+    },
     complaints: {
       title: "الشكاوى",
       subtitle: "مراجعة شكاوى العملاء وحلها",
@@ -1610,8 +1620,18 @@ const en: typeof ar = {
 
     plans: "Subscription Plans",
     subscriptions: "Subscriptions",
+    revenues: "Revenues",
   },
   superAdmin: {
+    revenues: {
+      title: "Revenues",
+      subtitle: "Overview of subscription and commission revenues",
+      summary: { total: "Total Revenues", commissions: "Commissions", subscriptions: "Subscriptions" },
+      tabs: { commissions: "Commissions", subscriptions: "Subscriptions" },
+      columns: { provider: "Provider", detail: "Detail", amount: "Amount" },
+      empty: "No revenues recorded yet",
+      error: "Failed to load revenues"
+    },
     complaints: {
       title: "Complaints",
       subtitle: "Review and resolve customer complaints",

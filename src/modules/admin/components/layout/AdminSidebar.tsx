@@ -18,6 +18,7 @@ import {
   Bell,
   Megaphone,
   MessageSquareWarning,
+  TrendingUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -36,6 +37,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
 
   { key: "subscriptions", labelPath: "adminNav.subscriptions", path: "/admin/subscriptions", icon: CreditCard },
+  { key: "revenues", labelPath: "adminNav.revenues", path: "/admin/revenues", icon: TrendingUp },
 
 
   { key: "notifications", labelPath: "adminNav.notifications", path: "/admin/notifications", icon: Bell },
