@@ -364,9 +364,18 @@ export async function tryAdminMock(
   // .NET equivalent: GET /api/admin/dashboard/stats
   if (url === "admin/dashboard/stats" && method === "get") {
     requireAdmin(config);
+    const total = computeRevenue().totalMonthly;
+    
+    // TODO: backend historical.
+    const revenueSeries = last12Months.map((month, i) => ({
+      month,
+      value: Math.round(total * (0.55 + 0.45 * (i / 11)))
+    }));
+
     return ok(config, {
       ...MOCK_STATS,
-      monthlyRevenue: computeRevenue().totalMonthly
+      monthlyRevenue: total,
+      revenueSeries,
     });
   }
 

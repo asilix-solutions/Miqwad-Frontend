@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Users, Store, Clock, Wallet, AlertCircle, TrendingUp } from "lucide-react";
+import { Users, Store, Clock, Wallet, AlertCircle } from "lucide-react";
 import { useDashboardStatsQuery, useAuditLogsQuery, useAdminProvidersQuery } from "../hooks/useAdminQueries";
 import { StatCard } from "../components/dashboard/StatCard";
 import { formatCurrency } from "@shared/lib/formatCurrency";
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, AreaChart, Area } from "recharts";
 import { ChartTooltip } from "../components/dashboard/ChartTooltip";
 import { StatusBadge } from "../components/shared/StatusBadge";
 import { formatDate } from "@shared/lib/formatDate";
@@ -24,6 +24,7 @@ export function AdminDashboardPage() {
 
 
   const usersSeries = data?.usersSeries ?? [];
+  const revenueSeries = data?.revenueSeries ?? [];
   const providerStatusBreakdown = data?.providerStatusBreakdown ?? [];
 
   const formatMonth = (m: string) => {
@@ -103,11 +104,28 @@ export function AdminDashboardPage() {
           <h2 className="font-[var(--font-main)] font-semibold text-[var(--color-ink-body)] text-base mb-4">
             {t("superAdmin.dashboard.charts.revenue")}
           </h2>
-          <div className="h-[340px] w-full min-w-0 flex flex-col items-center justify-center text-center gap-3">
-            <TrendingUp className="h-10 w-10 text-[var(--color-muted)]" />
-            <p className="text-sm text-[var(--color-muted)] max-w-[250px]">
-              {t("superAdmin.dashboard.charts.revenueTrendSoon")}
-            </p>
+          <div dir="ltr" className="h-[340px] w-full min-w-0">
+            {revenueSeries.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <AreaChart data={revenueSeries}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#043168" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#043168" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ECECF1" vertical={false} />
+                  <XAxis dataKey="month" tickFormatter={formatMonth} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-muted)" }} dy={10} />
+                  <YAxis tickFormatter={(val) => nf.format(val)} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "var(--color-muted)" }} dx={-10} />
+                  <Tooltip content={<ChartTooltip formatter={(val) => formatCurrency(val as number, i18n.language)} />} />
+                  <Area type="monotone" dataKey="value" stroke="#043168" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-[var(--color-muted)] text-sm">
+                {t("superAdmin.dashboard.widgets.empty")}
+              </div>
+            )}
           </div>
         </div>
 
