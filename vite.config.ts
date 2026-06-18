@@ -17,5 +17,8 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    allowedHosts: [
+      'miqwad-frontend.onrender.com' // رابط موقعك على ريندر
+    ]
   },
 });
