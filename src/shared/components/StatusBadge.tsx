@@ -2,7 +2,7 @@
 import { useTranslation } from "react-i18next";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 
-export type StatusBadgeKind = "user" | "provider" | "subscription" | "notification" | "campaign" | "audit" | "complaint" | "order" | "shipment";
+export type StatusBadgeKind = "user" | "provider" | "subscription" | "notification" | "campaign" | "audit" | "complaint" | "order" | "shipment" | "productStatus";
 
 export interface StatusBadgeProps {
   status: string;
@@ -70,6 +70,13 @@ const SHIPMENT_STATUS_TONES: Record<string, BadgeTone> = {
   returned: "neutral",
 };
 
+const PRODUCT_STATUS_TONES: Record<string, BadgeTone> = {
+  active: "success",
+  draft: "neutral",
+  out_of_stock: "warning",
+  archived: "neutral",
+};
+
 export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
   const { t } = useTranslation();
 
@@ -82,6 +89,7 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
     : kind === "complaint" ? COMPLAINT_STATUS_TONES
     : kind === "order" ? ORDER_STATUS_TONES
     : kind === "shipment" ? SHIPMENT_STATUS_TONES
+    : kind === "productStatus" ? PRODUCT_STATUS_TONES
     : AUDIT_ACTION_TONES;
     
   const tone = toneMap[status] || "neutral";
@@ -103,6 +111,8 @@ export function StatusBadge({ status, kind, className }: StatusBadgeProps) {
       ? `dealer.status.order.${status}`
       : kind === "shipment"
       ? `dealer.status.shipment.${status}`
+      : kind === "productStatus"
+      ? `dealer.status.product.${status}`
       : `superAdmin.audit.actions.${status}`;
 
   return (

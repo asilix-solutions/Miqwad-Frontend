@@ -256,10 +256,14 @@ export async function tryDealerMock(
     path = parts[0];
     searchParams = new URLSearchParams(parts[1]);
   } else if (config.params) {
-    searchParams = new URLSearchParams(config.params);
+    searchParams = new URLSearchParams();
+    Object.entries(config.params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") searchParams.append(k, String(v));
+    });
   }
 
   if (path === "dealer/products" && method === "get") {
+    // FUTURE: filter by authenticated dealerId — backend MUST enforce per-store isolation (SRS: no cross-store visibility)
     let list = Object.values(db.products);
     const status = searchParams.get("status");
     const categoryId = searchParams.get("categoryId");

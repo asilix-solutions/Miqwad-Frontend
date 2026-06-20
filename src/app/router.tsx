@@ -473,6 +473,15 @@ export const router = createBrowserRouter([
                           return { Component: DealerDashboardPage };
                         },
                       },
+                      {
+                        path: "products",
+                        async lazy() {
+                          const { DealerProductsPage } = await import(
+                            "@modules/dealer/pages/DealerProductsPage"
+                          );
+                          return { Component: DealerProductsPage };
+                        },
+                      },
                     ],
                   },
                 ],

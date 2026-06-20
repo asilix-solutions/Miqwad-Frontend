@@ -20,7 +20,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", labelPath: "dealer.nav.dashboard", path: "/provider/dealer/dashboard", icon: LayoutDashboard },
   // FUTURE: create actual routes for these in phase 3-5
-  { key: "products",  labelPath: "dealer.nav.products",  path: "/provider/dealer/dashboard", icon: Package },
+  { key: "products",  labelPath: "dealer.nav.products",  path: "/provider/dealer/products", icon: Package },
   { key: "orders",    labelPath: "dealer.nav.orders",    path: "/provider/dealer/dashboard", icon: ShoppingCart },
   { key: "shipments", labelPath: "dealer.nav.shipments", path: "/provider/dealer/dashboard", icon: Truck },
   { key: "dues",      labelPath: "dealer.nav.dues",      path: "/provider/dealer/dashboard", icon: Wallet },
@@ -62,7 +62,7 @@ export function DealerSidebar() {
                 isActive && item.key === "dashboard"
                   ? "bg-[var(--color-brand-orange)] text-white"
                   : "text-[var(--color-ink-body)] hover:bg-[var(--color-surface-2)]",
-                item.key !== "dashboard" && "opacity-50 pointer-events-none" // FUTURE: remove when pages exist
+                item.key !== "dashboard" && item.key !== "products" && "opacity-50 pointer-events-none" // FUTURE: remove when pages exist
               )
             }
           >
