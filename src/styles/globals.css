@@ -388,3 +388,13 @@
     animation: none !important;
   }
 }
+
+/* Sidebar drawer slide transition — used by DealerSidebar (and future provider sidebars) */
+.provider-sidebar-transition {
+  transition: transform var(--dur-base) var(--ease-provider);
+}
+@media (prefers-reduced-motion: reduce) {
+  .provider-sidebar-transition {
+    transition: none !important;
+  }
+}

@@ -1179,6 +1179,9 @@ const ar = {
       kpiMonthlySales: "مبيعات الشهر",
       kpiOutstandingDues: "المستحقات",
       comingSoon: "قريباً",
+      quickActionsTitle: "وصول سريع",
+      manageProducts: "إدارة المنتجات",
+      manageProductsHint: "تصفح قائمة منتجاتك وأضف منتجات جديدة",
     },
     status: {
       product: {
@@ -2382,6 +2385,9 @@ const en: typeof ar = {
       kpiMonthlySales: "Monthly Sales",
       kpiOutstandingDues: "Outstanding Dues",
       comingSoon: "Coming Soon",
+      quickActionsTitle: "Quick Actions",
+      manageProducts: "Manage Products",
+      manageProductsHint: "Browse your product list and add new items",
     },
     status: {
       product: {
