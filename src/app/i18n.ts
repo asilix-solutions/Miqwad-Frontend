@@ -1117,6 +1117,16 @@ const ar = {
     },
   },
   dealer: {
+    products: {
+      validation: {
+        nameArRequired: "الاسم بالعربية مطلوب",
+        nameEnRequired: "الاسم بالإنجليزية مطلوب",
+        skuRequired: "رمز المنتج (SKU) مطلوب",
+        categoryRequired: "الفئة مطلوبة",
+        pricePositive: "السعر يجب أن يكون أكبر من صفر",
+        stockNonNegative: "الكمية يجب أن تكون صفراً أو أكثر",
+      },
+    },
     nav: {
       dashboard: "لوحة التحكم",
       products: "المنتجات",
@@ -2267,6 +2277,16 @@ const en: typeof ar = {
     },
   },
   dealer: {
+    products: {
+      validation: {
+        nameArRequired: "Arabic name is required",
+        nameEnRequired: "English name is required",
+        skuRequired: "SKU is required",
+        categoryRequired: "Category is required",
+        pricePositive: "Price must be greater than zero",
+        stockNonNegative: "Stock quantity cannot be negative",
+      },
+    },
     nav: {
       dashboard: "Dashboard",
       products: "Products",

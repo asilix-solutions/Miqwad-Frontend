@@ -3,7 +3,7 @@
  */
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { Product, Order, Shipment, DealerDues } from "../types";
+import type { Product, ProductStatus, Order, Shipment, DealerDues } from "../types";
 
 export const dealerApi = {
   getProducts: async (params?: Record<string, any>): Promise<PaginatedResponse<Product>> => {
@@ -12,6 +12,21 @@ export const dealerApi = {
   },
   getProduct: async (id: string): Promise<Product> => {
     const { data } = await apiClient.get<Product>(`/dealer/products/${id}`);
+    return data;
+  },
+  createProduct: async (payload: Partial<Product>): Promise<Product> => {
+    const { data } = await apiClient.post<Product>("/dealer/products", payload);
+    return data;
+  },
+  updateProduct: async (id: string, payload: Partial<Product>): Promise<Product> => {
+    const { data } = await apiClient.patch<Product>(`/dealer/products/${id}`, payload);
+    return data;
+  },
+  deleteProduct: async (id: string): Promise<void> => {
+    await apiClient.delete(`/dealer/products/${id}`);
+  },
+  updateProductStatus: async (id: string, status: ProductStatus): Promise<Product> => {
+    const { data } = await apiClient.patch<Product>(`/dealer/products/${id}/status`, { status });
     return data;
   },
   getOrders: async (params?: Record<string, any>): Promise<PaginatedResponse<Order>> => {

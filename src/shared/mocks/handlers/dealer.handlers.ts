@@ -276,6 +276,75 @@ export async function tryDealerMock(
     return ok(config, p);
   }
 
+  if (path === "dealer/products" && method === "post") {
+    const payload = JSON.parse(config.data || "{}");
+    const id = `prod_${db.nextId++}`;
+    const now = new Date().toISOString();
+    const newProduct: Product = {
+      id,
+      dealerId: DEALER_ID,
+      nameAr: payload.nameAr || "",
+      nameEn: payload.nameEn || "",
+      sku: payload.sku || "",
+      categoryId: payload.categoryId || "",
+      price: payload.price || 0,
+      condition: payload.condition || "new",
+      status: payload.status || "draft",
+      stockQty: payload.stockQty || 0,
+      images: payload.images,
+      descriptionAr: payload.descriptionAr,
+      descriptionEn: payload.descriptionEn,
+      createdAt: now,
+      updatedAt: now,
+    };
+    db.products[id] = newProduct;
+    db.inventory[id] = {
+      productId: id,
+      dealerId: DEALER_ID,
+      onHand: newProduct.stockQty,
+      reserved: 0,
+      updatedAt: now,
+    };
+    saveDb(db);
+    return ok(config, newProduct);
+  }
+
+  if (prodMatch && method === "patch" && !path.endsWith("/status")) {
+    const p = db.products[prodMatch[1]];
+    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
+    const payload = JSON.parse(config.data || "{}");
+    const now = new Date().toISOString();
+    
+    db.products[prodMatch[1]] = { ...p, ...payload, updatedAt: now };
+    
+    if (payload.stockQty !== undefined && db.inventory[prodMatch[1]]) {
+      db.inventory[prodMatch[1]].onHand = payload.stockQty;
+      db.inventory[prodMatch[1]].updatedAt = now;
+    }
+    saveDb(db);
+    return ok(config, db.products[prodMatch[1]]);
+  }
+
+  const prodStatusMatch = path.match(/^dealer\/products\/([^/]+)\/status$/);
+  if (prodStatusMatch && method === "patch") {
+    const p = db.products[prodStatusMatch[1]];
+    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
+    const payload = JSON.parse(config.data || "{}");
+    p.status = payload.status;
+    p.updatedAt = new Date().toISOString();
+    saveDb(db);
+    return ok(config, p);
+  }
+
+  if (prodMatch && method === "delete") {
+    const p = db.products[prodMatch[1]];
+    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
+    delete db.products[prodMatch[1]];
+    delete db.inventory[prodMatch[1]];
+    saveDb(db);
+    return ok(config, { success: true });
+  }
+
   if (path === "dealer/orders" && method === "get") {
     let list = Object.values(db.orders);
     const status = searchParams.get("status");
