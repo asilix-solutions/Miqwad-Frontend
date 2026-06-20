@@ -1,6 +1,16 @@
-import { useState } from "react";
+/**
+ * @file DealerProductsPage.tsx
+ *
+ * Dealer products list — provider design system re-skin.
+ * Data layer (query, mutations, filter state, debounce, dialog wiring) is
+ * functionally identical to the previous admin-flavored version.  Only the
+ * presentation has changed: ProviderPageHeader, ProviderTabs, ProviderDataView,
+ * ProviderStatusPill, and ProviderEmptyState replace the admin primitives.
+ */
+
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, Power } from "lucide-react";
+import { Plus, Pencil, Trash2, Power, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,37 +20,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DataTable } from "@shared/components/DataTable";
-import { StatusBadge } from "@shared/components/StatusBadge";
+import {
+  ProviderPageHeader,
+  ProviderTabs,
+  ProviderStatusPill,
+  ProviderDataView,
+  ProviderEmptyState,
+} from "@shared/provider-ui";
+import type { ColumnDef } from "@shared/provider-ui";
 import { useDealerProductsQuery } from "../hooks/useDealerQueries";
 import { useUpdateProductStatusMutation } from "../hooks/useDealerMutations";
 import type { Product } from "../types";
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { DeleteProductDialog } from "../components/DeleteProductDialog";
-import { useEffect } from "react";
+import type { StatusPillTone } from "@shared/provider-ui";
 
-// FUTURE: wire to backend categories. Using a small enum for now.
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+// FUTURE: wire to backend categories endpoint.
 const DUMMY_CATEGORIES = [
   { id: "cat_1", labelAr: "زيوت وشحوم", labelEn: "Oils & Lubes" },
   { id: "cat_2", labelAr: "فلاتر", labelEn: "Filters" },
   { id: "cat_3", labelAr: "قطع محرك", labelEn: "Engine Parts" },
 ];
 
+const STATUS_TONE: Record<string, StatusPillTone> = {
+  active:       "success",
+  draft:        "neutral",
+  out_of_stock: "warning",
+  archived:     "neutral",
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export function DealerProductsPage() {
   const { t, i18n } = useTranslation();
-  
+
+  // ── Filter state (identical behaviour to previous version) ───────────────
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 500);
+    const handler = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(handler);
   }, [search]);
 
+  // ── Server state ──────────────────────────────────────────────────────────
   const q = useDealerProductsQuery({
     search: debouncedSearch || undefined,
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -49,10 +76,10 @@ export function DealerProductsPage() {
 
   const updateStatusMutation = useUpdateProductStatusMutation();
 
+  // ── Dialog state ──────────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
@@ -73,17 +100,17 @@ export function DealerProductsPage() {
     setDeleteOpen(true);
   };
 
-  const toggleStatus = async (product: Product) => {
+  const toggleStatus = (product: Product) => {
     const newStatus = product.status === "active" ? "out_of_stock" : "active";
-    await updateStatusMutation.mutateAsync({ id: product.id, status: newStatus });
+    void updateStatusMutation.mutateAsync({ id: product.id, status: newStatus });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
+  // ── Formatters ────────────────────────────────────────────────────────────
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
       style: "currency",
       currency: "SAR",
     }).format(amount);
-  };
 
   const getCategoryLabel = (id: string) => {
     const cat = DUMMY_CATEGORIES.find((c) => c.id === id);
@@ -91,161 +118,232 @@ export function DealerProductsPage() {
     return i18n.language === "ar" ? cat.labelAr : cat.labelEn;
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--color-ink-900)]">
-            {t("dealer.products.title")}
-          </h1>
-          <p className="text-sm text-[var(--color-ink-secondary)]">
-            {t("dealer.products.subtitle")}
-          </p>
+  const isDimmed = (p: Product) =>
+    p.status === "archived" || p.status === "draft";
+
+  // ── Status tabs ───────────────────────────────────────────────────────────
+  const statusTabs = [
+    { value: "all",          label: t("dealer.products.filterAll") },
+    { value: "active",       label: t("dealer.status.product.active") },
+    { value: "draft",        label: t("dealer.status.product.draft") },
+    { value: "out_of_stock", label: t("dealer.status.product.out_of_stock") },
+    { value: "archived",     label: t("dealer.status.product.archived") },
+  ];
+
+  // ── Column definitions ────────────────────────────────────────────────────
+  const columns: ColumnDef<Product>[] = [
+    {
+      key: "name",
+      header: t("dealer.products.colName"),
+      primary: true,
+      render: (p) => (
+        <div
+          className={`flex items-center gap-3 ${isDimmed(p) ? "opacity-60" : ""}`}
+        >
+          {p.images?.[0] ? (
+            <img
+              src={p.images[0]}
+              alt={p.nameAr}
+              className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] object-cover border border-[var(--color-divider)]"
+            />
+          ) : (
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface-2)] text-[var(--color-muted)]"
+              aria-hidden
+            >
+              <Package className="h-4 w-4" />
+            </div>
+          )}
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium text-[var(--color-ink-body)]">
+              {i18n.language === "ar" ? p.nameAr : p.nameEn}
+            </span>
+            <span className="text-xs text-[var(--color-muted)]" dir="ltr">
+              {p.sku}
+            </span>
+          </div>
         </div>
+      ),
+    },
+    {
+      key: "category",
+      header: t("dealer.products.colCategory"),
+      hideOnMobile: true,
+      render: (p) => (
+        <span className={`text-sm ${isDimmed(p) ? "opacity-60" : ""}`}>
+          {getCategoryLabel(p.categoryId)}
+        </span>
+      ),
+    },
+    {
+      key: "price",
+      header: t("dealer.products.colPrice"),
+      align: "end",
+      hideOnMobile: true,
+      render: (p) => (
+        <span
+          className={`tabular-nums text-sm ${isDimmed(p) ? "opacity-60" : ""}`}
+        >
+          {formatCurrency(p.price)}
+        </span>
+      ),
+    },
+    {
+      key: "stockQty",
+      header: t("dealer.products.colStock"),
+      align: "end",
+      hideOnMobile: true,
+      render: (p) => (
+        <span
+          className={`tabular-nums text-sm ${
+            p.stockQty === 0
+              ? "font-medium text-[var(--color-warning-500)]"
+              : ""
+          } ${isDimmed(p) ? "opacity-60" : ""}`}
+        >
+          {p.stockQty === 0 ? t("dealer.products.outOfStock") : p.stockQty}
+        </span>
+      ),
+    },
+    {
+      key: "status",
+      header: t("dealer.products.colStatus"),
+      render: (p) => (
+        <ProviderStatusPill
+          label={t(`dealer.status.product.${p.status}`)}
+          tone={STATUS_TONE[p.status] ?? "neutral"}
+        />
+      ),
+    },
+  ];
+
+  // ── Row actions ───────────────────────────────────────────────────────────
+  const rowActions = (p: Product) => (
+    <div
+      className="flex items-center justify-end gap-0.5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        title={t("dealer.products.toggleStatusBtn")}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)] disabled:opacity-40"
+        onClick={() => toggleStatus(p)}
+        disabled={updateStatusMutation.isPending}
+      >
+        <Power className="h-4 w-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        title={t("common.edit")}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]"
+        onClick={() => openEdit(p)}
+      >
+        <Pencil className="h-4 w-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        title={t("common.delete")}
+        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger-500)] transition-colors hover:bg-[var(--color-danger-50)]"
+        onClick={() => openDelete(p)}
+      >
+        <Trash2 className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
+  );
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+  const emptyState = (
+    <ProviderEmptyState
+      icon={<Package className="h-8 w-8" aria-hidden />}
+      title={t("dealer.products.emptyTitle")}
+      description={t("dealer.products.emptyDescription")}
+      action={
         <Button
           onClick={openCreate}
-          className="bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90"
+          className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
         >
-          <Plus className="me-2 h-4 w-4" />
+          <Plus className="me-2 h-4 w-4" aria-hidden />
           {t("dealer.products.addBtn")}
         </Button>
+      }
+    />
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  return (
+    <div className="space-y-6">
+      {/* Page header ──────────────────────────────────────────────────────── */}
+      <div className="provider-fade-up">
+        <ProviderPageHeader
+          icon={<Package className="h-5 w-5" aria-hidden />}
+          title={t("dealer.products.title")}
+          subtitle={t("dealer.products.subtitle")}
+          actions={
+            <Button
+              onClick={openCreate}
+              className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
+            >
+              <Plus className="me-2 h-4 w-4" aria-hidden />
+              {t("dealer.products.addBtn")}
+            </Button>
+          }
+        />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
+      {/* Filters ──────────────────────────────────────────────────────────── */}
+      <div
+        className="provider-fade-up flex flex-col gap-3"
+        style={{ animationDelay: "40ms" }}
+      >
+        {/* Status pill tabs */}
+        <ProviderTabs
+          tabs={statusTabs}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+
+        {/* Search + category */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input
             placeholder={t("dealer.products.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
+            className="h-[var(--size-input-h)] flex-1 rounded-[var(--radius-md)] border-[var(--color-divider)] bg-[var(--color-surface)] sm:max-w-xs"
           />
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-[var(--size-input-h)] w-full rounded-[var(--radius-md)] border-[var(--color-divider)] bg-[var(--color-surface)] sm:w-[200px]">
+              <SelectValue placeholder={t("dealer.products.filterCategory")} />
+            </SelectTrigger>
+            <SelectContent dir={i18n.dir()}>
+              <SelectItem value="all">{t("dealer.products.filterAll")}</SelectItem>
+              {DUMMY_CATEGORIES.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {i18n.language === "ar" ? c.labelAr : c.labelEn}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t("dealer.products.filterStatus")} />
-          </SelectTrigger>
-          <SelectContent dir={i18n.dir()}>
-            <SelectItem value="all">{t("dealer.products.filterAll")}</SelectItem>
-            <SelectItem value="active">{t("dealer.status.product.active")}</SelectItem>
-            <SelectItem value="draft">{t("dealer.status.product.draft")}</SelectItem>
-            <SelectItem value="out_of_stock">{t("dealer.status.product.out_of_stock")}</SelectItem>
-            <SelectItem value="archived">{t("dealer.status.product.archived")}</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder={t("dealer.products.filterCategory")} />
-          </SelectTrigger>
-          <SelectContent dir={i18n.dir()}>
-            <SelectItem value="all">{t("dealer.products.filterAll")}</SelectItem>
-            {DUMMY_CATEGORIES.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {i18n.language === "ar" ? c.labelAr : c.labelEn}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
-      <div className="rounded-md border border-[var(--color-divider)] bg-white shadow-sm">
-        <DataTable<Product>
+      {/* Data view ────────────────────────────────────────────────────────── */}
+      <div
+        className="provider-fade-up"
+        style={{ animationDelay: "80ms" }}
+      >
+        <ProviderDataView<Product>
+          columns={columns}
           rows={q.data?.items ?? []}
+          getRowKey={(p) => p.id}
           isLoading={q.isLoading}
           isError={q.isError}
-          getRowKey={(p) => p.id}
-          columns={[
-            {
-              key: "name",
-              header: t("dealer.products.colName"),
-              render: (p) => (
-                <div className={`flex items-center gap-3 ${p.status === "archived" || p.status === "draft" ? "opacity-60 grayscale-[0.5]" : ""}`}>
-                  {p.images?.[0] ? (
-                    <img
-                      src={p.images[0]}
-                      alt={p.nameAr}
-                      className="h-10 w-10 rounded object-cover border border-[var(--color-divider)]"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded bg-[var(--color-surface-2)] flex items-center justify-center text-xs text-[var(--color-muted)]">
-                      N/A
-                    </div>
-                  )}
-                  <div className="flex flex-col">
-                    <span className="font-medium text-[var(--color-ink-900)]">
-                      {i18n.language === "ar" ? p.nameAr : p.nameEn}
-                    </span>
-                    <span className="text-xs text-[var(--color-ink-secondary)]" dir="ltr">
-                      {p.sku}
-                    </span>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: "category",
-              header: t("dealer.products.colCategory"),
-              render: (p) => <span className={p.status === "archived" || p.status === "draft" ? "opacity-60" : ""}>{getCategoryLabel(p.categoryId)}</span>,
-            },
-            {
-              key: "price",
-              header: t("dealer.products.colPrice"),
-              render: (p) => <span className={`tabular-nums ${p.status === "archived" || p.status === "draft" ? "opacity-60" : ""}`}>{formatCurrency(p.price)}</span>,
-            },
-            {
-              key: "stockQty",
-              header: t("dealer.products.colStock"),
-              render: (p) => (
-                <span className={`${p.stockQty === 0 ? "text-danger-500 font-medium" : ""} ${p.status === "archived" || p.status === "draft" ? "opacity-60" : ""}`}>
-                  {p.stockQty} {p.stockQty === 0 && `(${t("dealer.products.outOfStock")})`}
-                </span>
-              ),
-            },
-            {
-              key: "status",
-              header: t("dealer.products.colStatus"),
-              render: (p) => <StatusBadge status={p.status} kind="productStatus" />,
-            },
-            {
-              key: "actions",
-              header: t("common.actions"),
-              className: "text-end",
-              render: (p) => (
-                <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title={t("dealer.products.toggleStatusBtn", { defaultValue: "Toggle" })}
-                    className="h-8 w-8 text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                    onClick={() => toggleStatus(p)}
-                    disabled={updateStatusMutation.isPending}
-                  >
-                    <Power className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title={t("common.edit")}
-                    className="h-8 w-8 text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                    onClick={() => openEdit(p)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title={t("common.delete")}
-                    className="h-8 w-8 text-[var(--color-danger-500)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                    onClick={() => openDelete(p)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ),
-            },
-          ]}
+          onRetry={() => { void q.refetch(); }}
+          emptyState={emptyState}
+          rowActions={rowActions}
         />
       </div>
 
+      {/* Deferred-mount dialogs ───────────────────────────────────────────── */}
       {formOpen && (
         <ProductFormDialog
           mode={formMode}

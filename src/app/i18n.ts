@@ -1132,6 +1132,9 @@ const ar = {
       colStock: "المخزون",
       colStatus: "الحالة",
       outOfStock: "نفد",
+      toggleStatusBtn: "تبديل الحالة",
+      emptyTitle: "لا توجد منتجات بعد",
+      emptyDescription: "أضف أول منتج لتبدأ في إدارة مخزونك",
       deleteConfirmTitle: "حذف المنتج",
       deleteConfirmBody: "هل أنت متأكد من حذف المنتج {{name}}؟ لا يمكن التراجع.",
       form: {
@@ -2329,6 +2332,9 @@ const en: typeof ar = {
       colStock: "Stock",
       colStatus: "Status",
       outOfStock: "Out of Stock",
+      toggleStatusBtn: "Toggle status",
+      emptyTitle: "No products yet",
+      emptyDescription: "Add your first product to start managing your inventory",
       deleteConfirmTitle: "Delete Product",
       deleteConfirmBody: "Are you sure you want to delete the product {{name}}? This cannot be undone.",
       form: {

@@ -131,7 +131,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" dir={i18n.dir()}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-[var(--radius-lg)]" dir={i18n.dir()}>
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? t("dealer.products.form.createTitle") : t("dealer.products.form.editTitle")}

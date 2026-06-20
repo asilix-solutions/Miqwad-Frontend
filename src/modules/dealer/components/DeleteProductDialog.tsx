@@ -36,7 +36,7 @@ export function DeleteProductDialog({ product, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(val) => !deleteMutation.isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir={i18n.dir()}>
+      <DialogContent className="sm:max-w-[425px] rounded-[var(--radius-lg)]" dir={i18n.dir()}>
         <DialogHeader>
           <DialogTitle className="text-danger-500">
             {t("dealer.products.deleteConfirmTitle", { defaultValue: "Delete Product" })}
