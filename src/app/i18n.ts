@@ -1116,6 +1116,23 @@ const ar = {
         maintenanceWarn:"تفعيل هذه الميزة يوقف المنصّة عن المستخدمين", saved:"تم حفظ الميزات" }
     },
   },
+  dealer: {
+    status: {
+      order: {
+        new: "جديد",
+        preparing: "قيد التجهيز",
+        shipped: "تم الشحن",
+        delivered: "تم التوصيل",
+        cancelled: "ملغي",
+      },
+      shipment: {
+        pending: "قيد الانتظار",
+        in_transit: "في الطريق",
+        delivered: "تم التوصيل",
+        returned: "مرتجع",
+      },
+    },
+  },
 };
 
 const en: typeof ar = {
@@ -2231,6 +2248,23 @@ const en: typeof ar = {
         labelAr:"Name (Arabic)", labelEn:"Name (English)", descAr:"Description (Arabic)",
         descEn:"Description (English)", enabled:"Enabled", remove:"Remove",
         maintenanceWarn:"Enabling this feature stops the platform for users", saved:"Features saved" }
+    },
+  },
+  dealer: {
+    status: {
+      order: {
+        new: "New",
+        preparing: "Preparing",
+        shipped: "Shipped",
+        delivered: "Delivered",
+        cancelled: "Cancelled",
+      },
+      shipment: {
+        pending: "Pending",
+        in_transit: "In Transit",
+        delivered: "Delivered",
+        returned: "Returned",
+      },
     },
   },
 };
