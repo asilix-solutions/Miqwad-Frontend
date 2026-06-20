@@ -12,20 +12,14 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Pencil, Trash2, Power, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ProviderPageHeader,
   ProviderTabs,
   ProviderStatusPill,
   ProviderDataView,
   ProviderEmptyState,
+  ProviderSearchBar,
+  ProviderSelect,
 } from "@shared/provider-ui";
 import type { ColumnDef } from "@shared/provider-ui";
 import { useDealerProductsQuery } from "../hooks/useDealerQueries";
@@ -304,25 +298,27 @@ export function DealerProductsPage() {
 
         {/* Search + category */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Input
-            placeholder={t("dealer.products.search")}
+          <ProviderSearchBar
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-[var(--size-input-h)] flex-1 rounded-[var(--radius-md)] border-[var(--color-divider)] bg-[var(--color-surface)] sm:max-w-xs"
+            onChange={setSearch}
+            onClear={() => setSearch("")}
+            placeholder={t("dealer.products.search")}
+            className="flex-1 sm:max-w-xs"
           />
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="h-[var(--size-input-h)] w-full rounded-[var(--radius-md)] border-[var(--color-divider)] bg-[var(--color-surface)] sm:w-[200px]">
-              <SelectValue placeholder={t("dealer.products.filterCategory")} />
-            </SelectTrigger>
-            <SelectContent dir={i18n.dir()}>
-              <SelectItem value="all">{t("dealer.products.filterAll")}</SelectItem>
-              {DUMMY_CATEGORIES.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {i18n.language === "ar" ? c.labelAr : c.labelEn}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="w-full sm:w-[200px]">
+            <ProviderSelect
+              value={categoryFilter}
+              onValueChange={setCategoryFilter}
+              options={[
+                { value: "all", label: t("dealer.products.filterAll") },
+                ...DUMMY_CATEGORIES.map((c) => ({
+                  value: c.id,
+                  label: i18n.language === "ar" ? c.labelAr : c.labelEn,
+                })),
+              ]}
+              placeholder={t("dealer.products.filterCategory")}
+            />
+          </div>
         </div>
       </div>
 

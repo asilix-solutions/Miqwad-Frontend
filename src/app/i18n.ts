@@ -1151,6 +1151,9 @@ const ar = {
         status: "الحالة",
         descriptionAr: "الوصف (عربي)",
         descriptionEn: "الوصف (إنجليزي)",
+        images: "صور المنتج",
+        dropImage: "اسحب صورة هنا أو اضغط للتحميل",
+        imageHint: "PNG أو JPG أو WEBP، حتى 8 ميجابايت",
       },
       validation: {
         nameArRequired: "الاسم بالعربية مطلوب",
@@ -2351,6 +2354,9 @@ const en: typeof ar = {
         status: "Status",
         descriptionAr: "Description (Arabic)",
         descriptionEn: "Description (English)",
+        images: "Product Images",
+        dropImage: "Drag an image here or click to upload",
+        imageHint: "PNG, JPG or WebP — up to 8 MB",
       },
       validation: {
         nameArRequired: "Arabic name is required",
