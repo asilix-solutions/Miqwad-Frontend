@@ -182,6 +182,21 @@
   /* ── Component Sizes ──────────────────────────────────────────── */
   --size-input-h: 3rem;
   /* 48px — inputs and buttons */
+
+  /* ── Provider Shadow System ─────────────────────────────────────── */
+  /* Softer, more layered than the admin shadows.  Hover variant carries */
+  /* a faint brand-orange warmth to signal interactivity.               */
+  --shadow-provider-sm:    0 1px 2px rgba(15,18,34,0.04), 0 1px 3px rgba(15,18,34,0.06);
+  --shadow-provider-md:    0 2px 8px rgba(15,18,34,0.06), 0 4px 16px rgba(15,18,34,0.05);
+  --shadow-provider-lg:    0 8px 24px rgba(15,18,34,0.08), 0 2px 8px rgba(15,18,34,0.04);
+  --shadow-provider-hover: 0 12px 28px rgba(244,94,43,0.10), 0 4px 12px rgba(15,18,34,0.06);
+
+  /* ── Provider Motion ─────────────────────────────────────────────── */
+  /* Custom easing: fast exit, slight overshoot feel (snappy).          */
+  --ease-provider: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast:  150ms;
+  --dur-base:  220ms;
+  --dur-slow:  320ms;
 }
 
 /* ---- Base resets / global rules ---- */
@@ -319,4 +334,57 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Provider motion keyframes
+   Scoped to provider-ui primitives only.  Non-provider code continues to
+   use tw-animate-css (animate-in / animate-out) as before.
+───────────────────────────────────────────────────────────────────────────── */
+@keyframes provider-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes provider-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes provider-scale-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@layer utilities {
+  /*
+   * Provider entrance utilities — apply directly as a class name.
+   *
+   * Basic usage:
+   *   <div className="provider-fade-up">…</div>
+   *
+   * Stagger children — set --stagger-index via inline style, then use
+   * animation-delay on the element (or a child wrapper class):
+   *   items.map((item, i) => (
+   *     <div
+   *       className="provider-fade-up"
+   *       style={{ animationDelay: `calc(${i} * 60ms)` }}
+   *     >…</div>
+   *   ))
+   */
+  .provider-fade-up {
+    animation: provider-fade-up var(--dur-base) var(--ease-provider) both;
+  }
+
+  .provider-scale-in {
+    animation: provider-scale-in var(--dur-base) var(--ease-provider) both;
+  }
+}
+
+/* Reduced-motion guard — users who prefer no motion see no provider animations */
+@media (prefers-reduced-motion: reduce) {
+  .provider-fade-up,
+  .provider-scale-in {
+    animation: none !important;
+  }
 }
