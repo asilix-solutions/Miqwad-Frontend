@@ -23,3 +23,12 @@ export type { ProviderStatCardProps, StatCardTone } from "./ProviderStatCard";
 
 export { ProviderEmptyState } from "./ProviderEmptyState";
 export type { ProviderEmptyStateProps } from "./ProviderEmptyState";
+
+export { ProviderTabs } from "./ProviderTabs";
+export type { ProviderTabsProps, ProviderTabItem } from "./ProviderTabs";
+
+export { ProviderStatusPill } from "./ProviderStatusPill";
+export type { ProviderStatusPillProps, StatusPillTone } from "./ProviderStatusPill";
+
+export { ProviderDataView } from "./ProviderDataView";
+export type { ProviderDataViewProps, ColumnDef } from "./ProviderDataView";
