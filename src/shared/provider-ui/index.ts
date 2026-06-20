@@ -32,3 +32,23 @@ export type { ProviderStatusPillProps, StatusPillTone } from "./ProviderStatusPi
 
 export { ProviderDataView } from "./ProviderDataView";
 export type { ProviderDataViewProps, ColumnDef } from "./ProviderDataView";
+
+// ── Input / control layer ──────────────────────────────────────────────────────
+
+export { ProviderInput } from "./ProviderInput";
+export type { ProviderInputProps } from "./ProviderInput";
+
+export { ProviderTextarea } from "./ProviderTextarea";
+export type { ProviderTextareaProps } from "./ProviderTextarea";
+
+export { ProviderSelect } from "./ProviderSelect";
+export type { ProviderSelectProps, ProviderSelectOption } from "./ProviderSelect";
+
+export { ProviderSearchBar } from "./ProviderSearchBar";
+export type { ProviderSearchBarProps } from "./ProviderSearchBar";
+
+export { ProviderImageUpload } from "./ProviderImageUpload";
+export type { ProviderImageUploadProps } from "./ProviderImageUpload";
+
+export { ProviderDialog } from "./ProviderDialog";
+export type { ProviderDialogProps } from "./ProviderDialog";
