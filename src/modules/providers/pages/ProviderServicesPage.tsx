@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { setServicesSearch } from "../store/providersSlice";
-import { useProviderServicesQuery } from "../hooks/useProviderQueries";
+import { useProviderServicesQuery, useMyProviderProfileQuery } from "../hooks/useProviderQueries";
 import { useDeleteProviderServiceMutation } from "../hooks/useProviderMutations";
 import { ProviderServiceCard } from "../components/ProviderServiceCard";
 import { ProviderStatusBanner } from "../components/ProviderStatusBanner";
@@ -47,11 +47,22 @@ export function ProviderServicesPage() {
   const q = useProviderServicesQuery(providerId);
   const deleteMutation = useDeleteProviderServiceMutation(providerId);
 
+  const { data: myProfile, isLoading: profileLoading } = useMyProviderProfileQuery();
+
   if (!user || user.role !== "provider") {
     return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
   if (user.providerStatus !== "approved") {
     return <Navigate to="/provider/pending" replace />;
+  }
+  
+  if (profileLoading) {
+    return <LoadingState />;
+  }
+  
+  // Guard against dealers accessing the workshop services page
+  if (myProfile?.type === "dealer") {
+    return <Navigate to="/provider/dealer" replace />;
   }
 
   const filtered = (q.data ?? []).filter((s) =>

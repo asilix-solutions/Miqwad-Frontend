@@ -139,6 +139,11 @@ const ProviderServicesPage = lazy(() =>
     default: m.ProviderServicesPage,
   }))
 );
+const ProviderIndexRedirect = lazy(() =>
+  import("@modules/providers/pages/ProviderIndexRedirect").then((m) => ({
+    default: m.ProviderIndexRedirect,
+  }))
+);
 const AddProviderServicePage = lazy(() =>
   import("@modules/providers/pages/AddProviderServicePage").then((m) => ({
     default: m.AddProviderServicePage,
@@ -438,6 +443,45 @@ export const router = createBrowserRouter([
       // Provider area — any authenticated user can hit /provider/register
       // to upgrade to a provider, but /provider/services etc require role=provider.
       {
+        path: "/provider/dealer",
+        async lazy() {
+          const { DealerLayout } = await import(
+            "@modules/dealer/components/layout/DealerLayout"
+          );
+          return { Component: DealerLayout };
+        },
+        children: [
+          {
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              {
+                element: <RoleGuard allow={["provider"]} />,
+                children: [
+                  {
+                    async lazy() {
+                      const { DealerGuard } = await import("@modules/dealer/guards/DealerGuard");
+                      return { Component: DealerGuard };
+                    },
+                    children: [
+                      {
+                        path: "dashboard",
+                        async lazy() {
+                          const { DealerDashboardPage } = await import(
+                            "@modules/dealer/pages/DealerDashboardPage"
+                          );
+                          return { Component: DealerDashboardPage };
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
         path: "/provider",
         element: <AppLayout />,
         children: [
@@ -445,7 +489,7 @@ export const router = createBrowserRouter([
             // Suspense boundary for all /provider/* pages
             element: <SuspenseOutlet />,
             children: [
-              { index: true, element: <Navigate to="services" replace /> },
+              { index: true, element: <ProviderIndexRedirect /> },
               { path: "register", element: <ProviderRegisterPage /> },
               {
                 element: <RoleGuard allow={["provider"]} />,

@@ -64,7 +64,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 5;
+const MOCK_SEED_VERSION = 6;
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -397,8 +397,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       workingHours: "السبت — الخميس 9 ص — 10 م",
       rating: 0,
       totalRatings: 0,
-      isVerified: false,
-      status: "pending",
+      isVerified: true,
+      status: "approved",
       categoryIds: [1, 2, 6],
       commissionRate: 5,
       monthlySales: 15000,
@@ -914,6 +914,19 @@ export async function tryProvidersMock(
       db.providers[id] = p;
       saveDb(db);
     }
+    return ok(config, p);
+  }
+
+  // -- GET /provider/me -------------------------------------------------------
+  if (url === "provider/me" && method === "get") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "provider" && me.role !== "driver") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+    if (!me.providerId) throw fail(config, 404, "NOT_FOUND", "بيانات المزود غير موجودة");
+    
+    const p = db.providers[me.providerId];
+    if (!p) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+    
     return ok(config, p);
   }
 

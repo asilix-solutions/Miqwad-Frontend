@@ -41,6 +41,7 @@ interface MockUser {
  */
 function defaultRoleForPhone(phone: string): MockUser["role"] {
   if (phone === "500000000") return "super_admin";
+  if (phone === "501110007") return "provider";
   return "customer";
 }
 
@@ -197,17 +198,18 @@ export async function tryAuthMock(
     if (!user) {
       const role = defaultRoleForPhone(phone);
       const isAdmin = role === "admin" || role === "super_admin";
+      const isDealer = phone === "501110007";
       user = {
-        id: makeId("usr"),
+        id: isDealer ? "seed_provider_7" : makeId("usr"),
         phoneNumber: phone,
-        fullName: isAdmin ? "مسؤول النظام" : "",
-        email: null,
+        fullName: isAdmin ? "مسؤول النظام" : isDealer ? "متجر الشامل لقطع الغيار" : "",
+        email: isDealer ? "shamel@dealer.sa" : null,
         role,
         avatarUrl: null,
-        // Admin / super-admin demo accounts skip the profile-completion screen.
-        isProfileComplete: isAdmin,
-        providerId: null,
-        providerStatus: null,
+        // Admin / super-admin / dealer demo accounts skip the profile-completion screen.
+        isProfileComplete: isAdmin || isDealer,
+        providerId: isDealer ? 7 : null,
+        providerStatus: isDealer ? "approved" : null,
         providerRejectionReason: null,
         permissions: permissionsForRole(role),
       };

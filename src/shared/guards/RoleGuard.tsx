@@ -21,6 +21,15 @@ interface RoleGuardProps {
   allow: ReadonlyArray<UserRole>;
 }
 
+/** Maps a provider type to its primary dashboard. */
+export function providerHomeFor(type: import("@modules/providers/types").ProviderType | undefined): string {
+  if (type === "dealer") {
+    return "/provider/dealer/dashboard"; // Or "/provider/dealer" if it auto-redirects
+  }
+  return "/provider/services";
+}
+
+
 /** Maps a role to its primary landing route.
  *
  *  This is the **single source of truth** for post-login / redirect landing.
@@ -33,7 +42,7 @@ export function defaultHomeFor(role: UserRole): string {
     case "admin":
       return "/admin/dashboard";
     case "provider":
-      return "/provider/services";
+      return "/provider";
     case "driver":
     case "customer":
     default:

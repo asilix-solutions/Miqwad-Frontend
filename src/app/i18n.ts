@@ -1117,6 +1117,22 @@ const ar = {
     },
   },
   dealer: {
+    nav: {
+      dashboard: "لوحة التحكم",
+      products: "المنتجات",
+      orders: "الطلبات",
+      shipments: "الشحنات",
+      dues: "المستحقات",
+    },
+    dashboard: {
+      title: "نظرة عامة على أداء المتجر",
+      greeting: "مرحباً، {{name}}",
+      kpiProducts: "المنتجات",
+      kpiOpenOrders: "الطلبات المفتوحة",
+      kpiMonthlySales: "مبيعات الشهر",
+      kpiOutstandingDues: "المستحقات",
+      comingSoon: "قريباً",
+    },
     status: {
       order: {
         new: "جديد",
@@ -2251,6 +2267,22 @@ const en: typeof ar = {
     },
   },
   dealer: {
+    nav: {
+      dashboard: "Dashboard",
+      products: "Products",
+      orders: "Orders",
+      shipments: "Shipments",
+      dues: "Dues",
+    },
+    dashboard: {
+      title: "Store Performance Overview",
+      greeting: "Hello, {{name}}",
+      kpiProducts: "Products",
+      kpiOpenOrders: "Open Orders",
+      kpiMonthlySales: "Monthly Sales",
+      kpiOutstandingDues: "Outstanding Dues",
+      comingSoon: "Coming Soon",
+    },
     status: {
       order: {
         new: "New",

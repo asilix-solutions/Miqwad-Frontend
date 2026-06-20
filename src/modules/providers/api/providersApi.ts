@@ -37,6 +37,11 @@ export const providersApi = {
     return data;
   },
 
+  myProfile: async (): Promise<ProviderProfile> => {
+    const { data } = await apiClient.get<ProviderProfile>("/provider/me");
+    return data;
+  },
+
   uploadDocuments: async (
     providerId: number,
     documents: ProviderDocument[],
