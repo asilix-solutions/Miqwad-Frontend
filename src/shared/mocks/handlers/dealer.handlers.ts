@@ -8,9 +8,11 @@ import type {
   Product,
   Inventory,
   Order,
+  OrderStatus,
   Shipment,
   DealerDues,
 } from "../../../modules/dealer/types";
+import { canTransition } from "../../../modules/dealer/orderLifecycle";
 
 interface DealerDb {
   products: Record<string, Product>;
@@ -360,7 +362,85 @@ export async function tryDealerMock(
   const ordMatch = path.match(/^dealer\/orders\/([^/]+)$/);
   if (ordMatch && method === "get") {
     const o = db.orders[ordMatch[1]];
-    if (!o) throw fail(config, 404, "NOT_FOUND", "Order not found");
+    if (!o) throw fail(config, 404, "ORDER_NOT_FOUND", "Order not found");
+    return ok(config, o);
+  }
+
+  const ordStatusMatch = path.match(/^dealer\/orders\/([^/]+)\/status$/);
+  if (ordStatusMatch && method === "patch") {
+    const o = db.orders[ordStatusMatch[1]];
+    if (!o) throw fail(config, 404, "ORDER_NOT_FOUND", "Order not found");
+    const payload = JSON.parse(config.data || "{}") as { status: OrderStatus };
+    if (payload.status === "shipped") {
+      throw fail(config, 422, "USE_SHIP_ENDPOINT", "Use POST /dealer/orders/:id/ship to ship an order");
+    }
+    if (!canTransition(o.status, payload.status)) {
+      throw fail(config, 422, "INVALID_TRANSITION", `Cannot transition from '${o.status}' to '${payload.status}'`);
+    }
+    const now = new Date().toISOString();
+    o.status = payload.status;
+    o.updatedAt = now;
+    // Keep shipment in sync when order is marked delivered
+    if (payload.status === "delivered" && o.shipmentId && db.shipments[o.shipmentId]) {
+      db.shipments[o.shipmentId].status = "delivered";
+      db.shipments[o.shipmentId].deliveredAt = now;
+      db.shipments[o.shipmentId].updatedAt = now;
+    }
+    saveDb(db);
+    return ok(config, o);
+  }
+
+  const ordShipMatch = path.match(/^dealer\/orders\/([^/]+)\/ship$/);
+  if (ordShipMatch && method === "post") {
+    const o = db.orders[ordShipMatch[1]];
+    if (!o) throw fail(config, 404, "ORDER_NOT_FOUND", "Order not found");
+    if (!canTransition(o.status, "shipped")) {
+      throw fail(
+        config,
+        422,
+        "INVALID_TRANSITION",
+        `Order must be in 'preparing' status to ship (current: '${o.status}')`,
+      );
+    }
+    const payload = JSON.parse(config.data || "{}") as {
+      carrier?: string;
+      trackingNumber?: string;
+    };
+    const now = new Date().toISOString();
+    const shipmentId = `shp_${db.nextId++}`;
+    db.shipments[shipmentId] = {
+      id: shipmentId,
+      orderId: o.id,
+      dealerId: DEALER_ID,
+      carrier: payload.carrier,
+      trackingNumber: payload.trackingNumber,
+      status: "in_transit",
+      shippedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    o.status = "shipped";
+    o.shipmentId = shipmentId;
+    o.updatedAt = now;
+    saveDb(db);
+    return ok(config, o);
+  }
+
+  const ordCancelMatch = path.match(/^dealer\/orders\/([^/]+)\/cancel$/);
+  if (ordCancelMatch && method === "post") {
+    const o = db.orders[ordCancelMatch[1]];
+    if (!o) throw fail(config, 404, "ORDER_NOT_FOUND", "Order not found");
+    if (!canTransition(o.status, "cancelled")) {
+      throw fail(
+        config,
+        422,
+        "INVALID_TRANSITION",
+        `Cannot cancel order in '${o.status}' status`,
+      );
+    }
+    o.status = "cancelled";
+    o.updatedAt = new Date().toISOString();
+    saveDb(db);
     return ok(config, o);
   }
 

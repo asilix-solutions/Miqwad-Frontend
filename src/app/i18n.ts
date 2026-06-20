@@ -1204,6 +1204,12 @@ const ar = {
         returned: "مرتجع",
       },
     },
+    orders: {
+      errors: {
+        invalidTransition: "تعذّر تغيير حالة الطلب — الانتقال المطلوب غير مسموح",
+        orderNotFound: "الطلب غير موجود",
+      },
+    },
   },
 };
 
@@ -2408,6 +2414,12 @@ const en: typeof ar = {
         in_transit: "In Transit",
         delivered: "Delivered",
         returned: "Returned",
+      },
+    },
+    orders: {
+      errors: {
+        invalidTransition: "Could not update order — this status transition is not allowed",
+        orderNotFound: "Order not found",
       },
     },
   },
