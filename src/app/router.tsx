@@ -482,6 +482,24 @@ export const router = createBrowserRouter([
                           return { Component: DealerProductsPage };
                         },
                       },
+                      {
+                        path: "orders",
+                        async lazy() {
+                          const { DealerOrdersPage } = await import(
+                            "@modules/dealer/pages/DealerOrdersPage"
+                          );
+                          return { Component: DealerOrdersPage };
+                        },
+                      },
+                      {
+                        path: "orders/:id",
+                        async lazy() {
+                          const { DealerOrderDetailPage } = await import(
+                            "@modules/dealer/pages/DealerOrderDetailPage"
+                          );
+                          return { Component: DealerOrderDetailPage };
+                        },
+                      },
                     ],
                   },
                 ],
