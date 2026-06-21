@@ -1251,6 +1251,7 @@ const ar = {
         reasonPlaceholder: "أدخل سبب الإلغاء (اختياري)",
         confirm: "تأكيد الإلغاء",
       },
+      viewDetail: "عرض التفاصيل",
       emptyTitle: "لا توجد طلبات بعد",
       emptyDescription: "ستظهر طلبات عملائك هنا فور ورودها",
       toasts: {
@@ -2594,6 +2595,7 @@ const en: typeof ar = {
         reasonPlaceholder: "Enter reason (optional)",
         confirm: "Confirm Cancellation",
       },
+      viewDetail: "View Details",
       emptyTitle: "No orders yet",
       emptyDescription: "Customer orders will appear here once they arrive",
       toasts: {
