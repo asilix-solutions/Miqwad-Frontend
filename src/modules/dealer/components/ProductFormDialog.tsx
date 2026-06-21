@@ -141,6 +141,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
     <ProviderDialog
       open={open}
       onOpenChange={(val) => !isPending && onOpenChange(val)}
+      blurBackdrop
       title={
         mode === "create"
           ? t("dealer.products.form.createTitle")

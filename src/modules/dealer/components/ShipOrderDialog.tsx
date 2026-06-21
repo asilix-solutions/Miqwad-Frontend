@@ -55,6 +55,7 @@ export function ShipOrderDialog({ orderId, open, onOpenChange }: Props) {
       title={t("dealer.orders.ship.title")}
       description={t("dealer.orders.ship.description")}
       size="sm"
+      blurBackdrop
       footer={
         <>
           <Button

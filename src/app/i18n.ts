@@ -1163,6 +1163,16 @@ const ar = {
         pricePositive: "السعر يجب أن يكون أكبر من صفر",
         stockNonNegative: "الكمية يجب أن تكون صفراً أو أكثر",
       },
+      view: {
+        grid: "عرض شبكي",
+        list: "عرض قائمة",
+      },
+      detail: {
+        title: "تفاصيل المنتج",
+        condition: "حالة المنتج",
+        conditionNew: "جديد",
+        noDescription: "لا يوجد وصف",
+      },
     },
     nav: {
       dashboard: "لوحة التحكم",
@@ -2459,6 +2469,16 @@ const en: typeof ar = {
         categoryRequired: "Category is required",
         pricePositive: "Price must be greater than zero",
         stockNonNegative: "Stock quantity cannot be negative",
+      },
+      view: {
+        grid: "Grid view",
+        list: "List view",
+      },
+      detail: {
+        title: "Product Details",
+        condition: "Condition",
+        conditionNew: "New",
+        noDescription: "No description",
       },
     },
     nav: {

@@ -1,33 +1,31 @@
 /**
  * @file DealerProductsPage.tsx
  *
- * Dealer products list — provider design system re-skin.
+ * Dealer products — card grid (default) / row-list toggle view.
  * Data layer (query, mutations, filter state, debounce, dialog wiring) is
- * functionally identical to the previous admin-flavored version.  Only the
- * presentation has changed: ProviderPageHeader, ProviderTabs, ProviderDataView,
- * ProviderStatusPill, and ProviderEmptyState replace the admin primitives.
+ * functionally identical to the previous version. The presentation is now
+ * ProductGrid / ProductListView (dealer-specific components) with a view toggle,
+ * replacing the shared ProviderDataView table.
  */
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, Power, Package } from "lucide-react";
+import { LayoutGrid, List, Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ProviderPageHeader,
   ProviderTabs,
-  ProviderStatusPill,
-  ProviderDataView,
-  ProviderEmptyState,
   ProviderSearchBar,
   ProviderSelect,
 } from "@shared/provider-ui";
-import type { ColumnDef } from "@shared/provider-ui";
 import { useDealerProductsQuery } from "../hooks/useDealerQueries";
 import { useUpdateProductStatusMutation } from "../hooks/useDealerMutations";
 import type { Product } from "../types";
 import { ProductFormDialog } from "../components/ProductFormDialog";
 import { DeleteProductDialog } from "../components/DeleteProductDialog";
-import type { StatusPillTone } from "@shared/provider-ui";
+import { ProductGrid } from "../components/ProductGrid";
+import { ProductListView } from "../components/ProductListView";
+import { ProductDetailDialog } from "../components/ProductDetailDialog";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -38,19 +36,12 @@ const DUMMY_CATEGORIES = [
   { id: "cat_3", labelAr: "قطع محرك", labelEn: "Engine Parts" },
 ];
 
-const STATUS_TONE: Record<string, StatusPillTone> = {
-  active:       "success",
-  draft:        "neutral",
-  out_of_stock: "warning",
-  archived:     "neutral",
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DealerProductsPage() {
   const { t, i18n } = useTranslation();
 
-  // ── Filter state (identical behaviour to previous version) ───────────────
+  // ── Filter state ──────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -61,6 +52,9 @@ export function DealerProductsPage() {
     return () => clearTimeout(handler);
   }, [search]);
 
+  // ── View mode — FUTURE: persist to localStorage ───────────────────────────
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
   // ── Server state ──────────────────────────────────────────────────────────
   const q = useDealerProductsQuery({
     search: debouncedSearch || undefined,
@@ -70,13 +64,20 @@ export function DealerProductsPage() {
 
   const updateStatusMutation = useUpdateProductStatusMutation();
 
-  // ── Dialog state ──────────────────────────────────────────────────────────
+  // ── Dialog state: create/edit form ────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>();
+
+  // ── Dialog state: delete confirmation ────────────────────────────────────
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
+  // ── Dialog state: product detail ──────────────────────────────────────────
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const openCreate = () => {
     setFormMode("create");
     setSelectedProduct(undefined);
@@ -94,26 +95,33 @@ export function DealerProductsPage() {
     setDeleteOpen(true);
   };
 
+  const openDetail = (product: Product) => {
+    setDetailProduct(product);
+    setDetailOpen(true);
+  };
+
   const toggleStatus = (product: Product) => {
     const newStatus = product.status === "active" ? "out_of_stock" : "active";
     void updateStatusMutation.mutateAsync({ id: product.id, status: newStatus });
   };
 
-  // ── Formatters ────────────────────────────────────────────────────────────
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
-      style: "currency",
-      currency: "SAR",
-    }).format(amount);
+  // Detail dialog actions: close detail first, then open the respective dialog.
+  const handleDetailEdit = (product: Product) => {
+    setDetailOpen(false);
+    openEdit(product);
+  };
 
+  const handleDetailDelete = (product: Product) => {
+    setDetailOpen(false);
+    openDelete(product);
+  };
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const getCategoryLabel = (id: string) => {
     const cat = DUMMY_CATEGORIES.find((c) => c.id === id);
     if (!cat) return id;
     return i18n.language === "ar" ? cat.labelAr : cat.labelEn;
   };
-
-  const isDimmed = (p: Product) =>
-    p.status === "archived" || p.status === "draft";
 
   // ── Status tabs ───────────────────────────────────────────────────────────
   const statusTabs = [
@@ -124,144 +132,20 @@ export function DealerProductsPage() {
     { value: "archived",     label: t("dealer.status.product.archived") },
   ];
 
-  // ── Column definitions ────────────────────────────────────────────────────
-  const columns: ColumnDef<Product>[] = [
-    {
-      key: "name",
-      header: t("dealer.products.colName"),
-      primary: true,
-      render: (p) => (
-        <div
-          className={`flex items-center gap-3 ${isDimmed(p) ? "opacity-60" : ""}`}
-        >
-          {p.images?.[0] ? (
-            <img
-              src={p.images[0]}
-              alt={p.nameAr}
-              className="h-10 w-10 shrink-0 rounded-[var(--radius-sm)] object-cover border border-[var(--color-divider)]"
-            />
-          ) : (
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface-2)] text-[var(--color-muted)]"
-              aria-hidden
-            >
-              <Package className="h-4 w-4" />
-            </div>
-          )}
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-medium text-[var(--color-ink-body)]">
-              {i18n.language === "ar" ? p.nameAr : p.nameEn}
-            </span>
-            <span className="text-xs text-[var(--color-muted)]" dir="ltr">
-              {p.sku}
-            </span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: "category",
-      header: t("dealer.products.colCategory"),
-      hideOnMobile: true,
-      render: (p) => (
-        <span className={`text-sm ${isDimmed(p) ? "opacity-60" : ""}`}>
-          {getCategoryLabel(p.categoryId)}
-        </span>
-      ),
-    },
-    {
-      key: "price",
-      header: t("dealer.products.colPrice"),
-      align: "end",
-      hideOnMobile: true,
-      render: (p) => (
-        <span
-          className={`tabular-nums text-sm ${isDimmed(p) ? "opacity-60" : ""}`}
-        >
-          {formatCurrency(p.price)}
-        </span>
-      ),
-    },
-    {
-      key: "stockQty",
-      header: t("dealer.products.colStock"),
-      align: "end",
-      hideOnMobile: true,
-      render: (p) => (
-        <span
-          className={`tabular-nums text-sm ${
-            p.stockQty === 0
-              ? "font-medium text-[var(--color-warning-500)]"
-              : ""
-          } ${isDimmed(p) ? "opacity-60" : ""}`}
-        >
-          {p.stockQty === 0 ? t("dealer.products.outOfStock") : p.stockQty}
-        </span>
-      ),
-    },
-    {
-      key: "status",
-      header: t("dealer.products.colStatus"),
-      render: (p) => (
-        <ProviderStatusPill
-          label={t(`dealer.status.product.${p.status}`)}
-          tone={STATUS_TONE[p.status] ?? "neutral"}
-        />
-      ),
-    },
-  ];
-
-  // ── Row actions ───────────────────────────────────────────────────────────
-  const rowActions = (p: Product) => (
-    <div
-      className="flex items-center justify-end gap-0.5"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        type="button"
-        title={t("dealer.products.toggleStatusBtn")}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)] disabled:opacity-40"
-        onClick={() => toggleStatus(p)}
-        disabled={updateStatusMutation.isPending}
-      >
-        <Power className="h-4 w-4" aria-hidden />
-      </button>
-      <button
-        type="button"
-        title={t("common.edit")}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]"
-        onClick={() => openEdit(p)}
-      >
-        <Pencil className="h-4 w-4" aria-hidden />
-      </button>
-      <button
-        type="button"
-        title={t("common.delete")}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger-500)] transition-colors hover:bg-[var(--color-danger-50)]"
-        onClick={() => openDelete(p)}
-      >
-        <Trash2 className="h-4 w-4" aria-hidden />
-      </button>
-    </div>
-  );
-
-  // ── Empty state ───────────────────────────────────────────────────────────
-  const emptyState = (
-    <ProviderEmptyState
-      icon={<Package className="h-8 w-8" aria-hidden />}
-      title={t("dealer.products.emptyTitle")}
-      description={t("dealer.products.emptyDescription")}
-      action={
-        <Button
-          onClick={openCreate}
-          className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-        >
-          <Plus className="me-2 h-4 w-4" aria-hidden />
-          {t("dealer.products.addBtn")}
-        </Button>
-      }
-    />
-  );
+  // ── Shared props for grid and list ────────────────────────────────────────
+  const sharedViewProps = {
+    products: q.data?.items ?? [],
+    isLoading: q.isLoading,
+    isError: q.isError,
+    onRetry: () => { void q.refetch(); },
+    getCategoryLabel,
+    onEdit: openEdit,
+    onToggleStatus: toggleStatus,
+    onDelete: openDelete,
+    onCardClick: openDetail,
+    isTogglePending: updateStatusMutation.isPending,
+    onAddProduct: openCreate,
+  };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -273,10 +157,7 @@ export function DealerProductsPage() {
           title={t("dealer.products.title")}
           subtitle={t("dealer.products.subtitle")}
           actions={
-            <Button
-              onClick={openCreate}
-              className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-            >
+            <Button onClick={openCreate}>
               <Plus className="me-2 h-4 w-4" aria-hidden />
               {t("dealer.products.addBtn")}
             </Button>
@@ -322,21 +203,49 @@ export function DealerProductsPage() {
         </div>
       </div>
 
-      {/* Data view ────────────────────────────────────────────────────────── */}
+      {/* View toggle + data ────────────────────────────────────────────────── */}
       <div
-        className="provider-fade-up"
+        className="provider-fade-up space-y-4"
         style={{ animationDelay: "80ms" }}
       >
-        <ProviderDataView<Product>
-          columns={columns}
-          rows={q.data?.items ?? []}
-          getRowKey={(p) => p.id}
-          isLoading={q.isLoading}
-          isError={q.isError}
-          onRetry={() => { void q.refetch(); }}
-          emptyState={emptyState}
-          rowActions={rowActions}
-        />
+        {/* Toggle buttons — inline-end */}
+        <div className="flex justify-end gap-1">
+          <button
+            type="button"
+            title={t("dealer.products.view.grid")}
+            onClick={() => setViewMode("grid")}
+            className={[
+              "inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)]",
+              "transition-colors duration-[var(--dur-fast)]",
+              viewMode === "grid"
+                ? "bg-[var(--color-brand-orange)] text-white"
+                : "text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+            ].join(" ")}
+          >
+            <LayoutGrid className="h-4 w-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            title={t("dealer.products.view.list")}
+            onClick={() => setViewMode("list")}
+            className={[
+              "inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)]",
+              "transition-colors duration-[var(--dur-fast)]",
+              viewMode === "list"
+                ? "bg-[var(--color-brand-orange)] text-white"
+                : "text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+            ].join(" ")}
+          >
+            <List className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+
+        {/* Product data */}
+        {viewMode === "grid" ? (
+          <ProductGrid {...sharedViewProps} />
+        ) : (
+          <ProductListView {...sharedViewProps} />
+        )}
       </div>
 
       {/* Deferred-mount dialogs ───────────────────────────────────────────── */}
@@ -355,6 +264,19 @@ export function DealerProductsPage() {
           product={productToDelete}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+        />
+      )}
+
+      {detailOpen && detailProduct && (
+        <ProductDetailDialog
+          product={detailProduct}
+          open={detailOpen}
+          onOpenChange={setDetailOpen}
+          categoryLabel={getCategoryLabel(detailProduct.categoryId)}
+          onEdit={handleDetailEdit}
+          onToggleStatus={toggleStatus}
+          onDelete={handleDetailDelete}
+          isTogglePending={updateStatusMutation.isPending}
         />
       )}
     </div>

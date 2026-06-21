@@ -49,6 +49,7 @@ export function CancelOrderDialog({ orderId, open, onOpenChange }: Props) {
       onOpenChange={(val) => !cancelMutation.isPending && onOpenChange(val)}
       title={t("dealer.orders.cancel.title")}
       size="sm"
+      blurBackdrop
       footer={
         <>
           <Button

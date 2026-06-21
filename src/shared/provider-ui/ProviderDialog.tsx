@@ -39,6 +39,13 @@ export interface ProviderDialogProps {
   footer?: ReactNode;
   /** Controls the maximum width of the dialog panel. @default "md" */
   size?: "sm" | "md" | "lg";
+  /**
+   * Adds `backdrop-blur-sm` to the overlay so the page content blurs behind
+   * the dialog, creating a frosted-glass floating effect.
+   * Additive and non-breaking — existing dialogs are unaffected (default false).
+   * @default false
+   */
+  blurBackdrop?: boolean;
 }
 
 // ── Style maps ────────────────────────────────────────────────────────────────
@@ -84,6 +91,7 @@ export function ProviderDialog({
   children,
   footer,
   size = "md",
+  blurBackdrop = false,
 }: ProviderDialogProps) {
   // Per-instance unique ID to tie description to content for a11y.
   const uid = useId();
@@ -96,6 +104,7 @@ export function ProviderDialog({
         <DialogPrimitive.Overlay
           className={cn(
             "fixed inset-0 z-50 bg-black/40",
+            blurBackdrop && "backdrop-blur-sm",
             "data-[state=open]:animate-in data-[state=open]:fade-in-0",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
           )}

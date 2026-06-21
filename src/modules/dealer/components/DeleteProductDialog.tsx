@@ -43,6 +43,7 @@ export function DeleteProductDialog({ product, open, onOpenChange }: Props) {
       onOpenChange={(val) => !deleteMutation.isPending && onOpenChange(val)}
       title={t("dealer.products.deleteConfirmTitle")}
       size="sm"
+      blurBackdrop
       footer={
         <>
           <Button
