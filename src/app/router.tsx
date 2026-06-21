@@ -500,6 +500,15 @@ export const router = createBrowserRouter([
                           return { Component: DealerOrderDetailPage };
                         },
                       },
+                      {
+                        path: "dues",
+                        async lazy() {
+                          const { DealerDuesPage } = await import(
+                            "@modules/dealer/pages/DealerDuesPage"
+                          );
+                          return { Component: DealerDuesPage };
+                        },
+                      },
                     ],
                   },
                 ],

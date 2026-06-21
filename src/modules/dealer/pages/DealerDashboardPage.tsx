@@ -24,17 +24,25 @@ import {
   ProviderStatCard,
   ProviderCard,
 } from "@shared/provider-ui";
-import { useDealerProductsQuery } from "../hooks/useDealerQueries";
+import { useDealerProductsQuery, useDealerDuesQuery } from "../hooks/useDealerQueries";
 import { useMyProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
 import { useAppSelector } from "@app/store";
 
 export function DealerDashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const user = useAppSelector((s) => s.auth.user);
   const { data: profile } = useMyProviderProfileQuery();
   const productsQuery = useDealerProductsQuery();
+  const duesQuery = useDealerDuesQuery();
 
   const companyName = profile?.companyName || user?.fullName || "";
+
+  const fmtDebt = (amount: number) =>
+    new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
+      style: "currency",
+      currency: "SAR",
+      maximumFractionDigits: 0,
+    }).format(amount);
 
   return (
     <div className="space-y-8">
@@ -80,10 +88,14 @@ export function DealerDashboardPage() {
         />
         <ProviderStatCard
           label={t("dealer.dashboard.kpiOutstandingDues")}
-          value="—"
+          value={
+            duesQuery.isLoading
+              ? ""
+              : fmtDebt(duesQuery.data?.outstandingDebt ?? 0)
+          }
           icon={<Wallet className="h-5 w-5" aria-hidden />}
-          tone="warning"
-          trend={t("dealer.dashboard.comingSoon")}
+          tone={duesQuery.data?.debtAlert ? "danger" : "warning"}
+          loading={duesQuery.isLoading}
         />
       </div>
 

@@ -453,7 +453,25 @@ export async function tryDealerMock(
   }
 
   if (path === "dealer/dues" && method === "get") {
-    return ok(config, db.dues[DEALER_ID]);
+    // Compute dynamically from current orders so dues reflect real activity.
+    // FUTURE: real settlement/debt ledger from backend.
+    const allOrders = Object.values(db.orders);
+    const delivered = allOrders.filter((o) => o.status === "delivered");
+    const grossSales = delivered.reduce((sum, o) => sum + o.subtotal, 0);
+    const totalCommission = delivered.reduce((sum, o) => sum + o.commissionAmount, 0);
+    const netEarnings = grossSales - totalCommission;
+    const outstandingDebt = db.dues[DEALER_ID]?.outstandingDebt ?? 650.50;
+    const computed: DealerDues = {
+      dealerId: DEALER_ID,
+      commissionRate: COMMISSION_RATE,
+      grossSales,
+      totalCommission,
+      netEarnings,
+      outstandingDebt,
+      debtAlert: outstandingDebt > 500,
+      updatedAt: new Date().toISOString(),
+    };
+    return ok(config, computed);
   }
 
   return null;

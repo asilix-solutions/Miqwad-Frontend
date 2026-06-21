@@ -1,1 +1,1 @@
-export {};
+export { DealerDuesPage } from "./DealerDuesPage";

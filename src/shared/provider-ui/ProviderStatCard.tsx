@@ -28,7 +28,7 @@ import { ProviderSkeleton } from "./ProviderSkeleton";
  * Colour tone that tints the icon container and top-border accent.
  * Maps to the semantic colour scale declared in globals.css `@theme`.
  */
-export type StatCardTone = "brand" | "success" | "warning" | "info" | "neutral";
+export type StatCardTone = "brand" | "success" | "warning" | "danger" | "info" | "neutral";
 
 /** Props for {@link ProviderStatCard}. */
 export interface ProviderStatCardProps {
@@ -63,6 +63,7 @@ const ICON_CLASSES: Record<StatCardTone, string> = {
   brand:   "bg-[var(--color-brand-50)]   text-[var(--color-brand-500)]",
   success: "bg-[var(--color-success-50)] text-[var(--color-success-500)]",
   warning: "bg-[var(--color-warning-50)] text-[var(--color-warning-500)]",
+  danger:  "bg-[var(--color-danger-50)]  text-[var(--color-danger-500)]",
   info:    "bg-[var(--color-info-50)]    text-[var(--color-info-500)]",
   neutral: "bg-[var(--color-surface-2)]  text-[var(--color-muted)]",
 };
@@ -73,6 +74,7 @@ const ACCENT_COLOR: Record<StatCardTone, string> = {
   brand:   "var(--color-brand-500)",
   success: "var(--color-success-500)",
   warning: "var(--color-warning-500)",
+  danger:  "var(--color-danger-500)",
   info:    "var(--color-info-500)",
   neutral: "var(--color-divider)",
 };
