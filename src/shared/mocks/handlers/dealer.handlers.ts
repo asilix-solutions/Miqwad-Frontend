@@ -10,9 +10,11 @@ import type {
   Order,
   OrderStatus,
   Shipment,
+  ShipmentStatus,
   DealerDues,
 } from "../../../modules/dealer/types";
 import { canTransition } from "../../../modules/dealer/orderLifecycle";
+import { canTransitionShipment } from "../../../modules/dealer/shipmentLifecycle";
 
 interface DealerDb {
   products: Record<string, Product>;
@@ -448,8 +450,32 @@ export async function tryDealerMock(
     let list = Object.values(db.shipments);
     const status = searchParams.get("status");
     if (status) list = list.filter(s => s.status === status);
-    
+
     return ok(config, paginate(list, searchParams.get("page") ?? undefined, searchParams.get("pageSize") ?? undefined));
+  }
+
+  const shpStatusMatch = path.match(/^dealer\/shipments\/([^/]+)\/status$/);
+  if (shpStatusMatch && method === "patch") {
+    const s = db.shipments[shpStatusMatch[1]];
+    if (!s) throw fail(config, 404, "NOT_FOUND", "Shipment not found");
+    const payload = JSON.parse(config.data || "{}") as { status: ShipmentStatus };
+    if (!canTransitionShipment(s.status, payload.status)) {
+      throw fail(config, 422, "INVALID_TRANSITION", `Cannot transition from '${s.status}' to '${payload.status}'`);
+    }
+    const now = new Date().toISOString();
+    s.status = payload.status;
+    s.updatedAt = now;
+    if (payload.status === "delivered") {
+      s.deliveredAt = now;
+      // Sync linked order to "delivered" — fulfillment represents the same event
+      const linkedOrder = Object.values(db.orders).find(o => o.id === s.orderId);
+      if (linkedOrder && linkedOrder.status !== "delivered") {
+        linkedOrder.status = "delivered";
+        linkedOrder.updatedAt = now;
+      }
+    }
+    saveDb(db);
+    return ok(config, s);
   }
 
   if (path === "dealer/dues" && method === "get") {

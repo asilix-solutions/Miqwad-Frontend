@@ -19,6 +19,7 @@ export const dealerKeys = {
   shipments: {
     all: () => [...dealerKeys.all, "shipments"] as const,
     list: (params?: Record<string, any>) => [...dealerKeys.shipments.all(), "list", params] as const,
+    detail: (id: string) => [...dealerKeys.shipments.all(), "detail", id] as const,
   },
   dues: () => [...dealerKeys.all, "dues"] as const,
 };

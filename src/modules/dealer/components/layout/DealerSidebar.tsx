@@ -44,7 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "products",  labelPath: "dealer.nav.products",  path: "/provider/dealer/products",  icon: Package },
   // FUTURE: create actual routes for these in phase 3-5
   { key: "orders",    labelPath: "dealer.nav.orders",    path: "/provider/dealer/orders",    icon: ShoppingCart },
-  { key: "shipments", labelPath: "dealer.nav.shipments", path: "/provider/dealer/dashboard", icon: Truck },
+  { key: "shipments", labelPath: "dealer.nav.shipments", path: "/provider/dealer/shipments", icon: Truck },
   { key: "dues",      labelPath: "dealer.nav.dues",      path: "/provider/dealer/dues",      icon: Wallet },
 ];
 
@@ -113,11 +113,9 @@ export function DealerSidebar({ open, onClose }: Props) {
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] transition-colors text-sm font-medium",
-                isActive && (item.key === "dashboard" || item.key === "orders" || item.key === "dues")
+                isActive && (item.key === "dashboard" || item.key === "orders" || item.key === "shipments" || item.key === "dues")
                   ? "bg-[var(--color-brand-orange)] text-white"
                   : "text-[var(--color-ink-body)] hover:bg-[var(--color-surface-2)]",
-                // FUTURE: remove pointer-events-none when pages are built
-                item.key !== "dashboard" && item.key !== "products" && item.key !== "orders" && item.key !== "dues" && "opacity-50 pointer-events-none",
               )
             }
           >

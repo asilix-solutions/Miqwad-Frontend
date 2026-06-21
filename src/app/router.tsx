@@ -501,6 +501,15 @@ export const router = createBrowserRouter([
                         },
                       },
                       {
+                        path: "shipments",
+                        async lazy() {
+                          const { DealerShipmentsPage } = await import(
+                            "@modules/dealer/pages/DealerShipmentsPage"
+                          );
+                          return { Component: DealerShipmentsPage };
+                        },
+                      },
+                      {
                         path: "dues",
                         async lazy() {
                           const { DealerDuesPage } = await import(

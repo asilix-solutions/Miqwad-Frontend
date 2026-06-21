@@ -94,6 +94,11 @@ export interface ProviderDataViewProps<T> {
    * in the auto mobile card it appears at the top inline-end of the card.
    */
   rowActions?: (row: T) => ReactNode;
+  /**
+   * Called when the user clicks anywhere on a data row.
+   * Adds `cursor-pointer` to each row when provided.
+   */
+  onRowClick?: (row: T) => void;
   /** Extra Tailwind / CSS classes on the root wrapper `<div>`. */
   className?: string;
 }
@@ -187,6 +192,7 @@ export function ProviderDataView<T extends object>({
   emptyState,
   renderMobileCard,
   rowActions,
+  onRowClick,
   className,
 }: ProviderDataViewProps<T>) {
   const hasActions = Boolean(rowActions);
@@ -266,8 +272,10 @@ export function ProviderDataView<T extends object>({
                 "border-b border-[var(--color-divider)] last:border-0",
                 "transition-colors hover:bg-[var(--color-surface-2)]",
                 index < STAGGER_CAP && "provider-fade-up",
+                onRowClick && "cursor-pointer",
               )}
               style={staggerStyle(index)}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
             >
               {columns.map((col) => (
                 <td
@@ -328,8 +336,9 @@ export function ProviderDataView<T extends object>({
           <ProviderCard
             key={getRowKey(row)}
             interactive
-            className={cn(fadeClass)}
+            className={cn(fadeClass, onRowClick && "cursor-pointer")}
             style={delay}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
           >
             <div className="flex items-start justify-between gap-4">
               {/* Primary + secondary fields ─────────────────────── */}

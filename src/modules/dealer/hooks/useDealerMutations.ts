@@ -4,7 +4,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { dealerApi } from "../api/dealerApi";
 import { dealerKeys } from "./useDealerQueries";
-import type { Product, ProductStatus, OrderStatus } from "../types";
+import type { Product, ProductStatus, OrderStatus, ShipmentStatus } from "../types";
 
 export function useCreateProductMutation() {
   const qc = useQueryClient();
@@ -88,6 +88,19 @@ export function useCancelOrderMutation() {
     onSuccess: (_, variables) => {
       void qc.invalidateQueries({ queryKey: dealerKeys.orders.all() });
       void qc.invalidateQueries({ queryKey: dealerKeys.orders.detail(variables.id) });
+    },
+  });
+}
+
+export function useUpdateShipmentStatusMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: ShipmentStatus }) =>
+      dealerApi.updateShipmentStatus(id, status),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: dealerKeys.shipments.all() });
+      // Delivering a shipment also marks the linked order delivered — invalidate orders too
+      void qc.invalidateQueries({ queryKey: dealerKeys.orders.all() });
     },
   });
 }
