@@ -527,6 +527,72 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: "/provider/workshop",
+        async lazy() {
+          const { WorkshopLayout } = await import(
+            "@modules/workshop/components/layout/WorkshopLayout"
+          );
+          return { Component: WorkshopLayout };
+        },
+        children: [
+          {
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              {
+                element: <RoleGuard allow={["provider"]} />,
+                children: [
+                  {
+                    async lazy() {
+                      const { WorkshopGuard } = await import("@modules/workshop/guards/WorkshopGuard");
+                      return { Component: WorkshopGuard };
+                    },
+                    children: [
+                      {
+                        path: "dashboard",
+                        async lazy() {
+                          const { WorkshopDashboardPage } = await import(
+                            "@modules/workshop/pages/WorkshopDashboardPage"
+                          );
+                          return { Component: WorkshopDashboardPage };
+                        },
+                      },
+                      {
+                        path: "conversations",
+                        async lazy() {
+                          const { WorkshopConversationsPage } = await import(
+                            "@modules/workshop/pages/WorkshopConversationsPage"
+                          );
+                          return { Component: WorkshopConversationsPage };
+                        },
+                      },
+                      {
+                        path: "subscription",
+                        async lazy() {
+                          const { WorkshopSubscriptionPage } = await import(
+                            "@modules/workshop/pages/WorkshopSubscriptionPage"
+                          );
+                          return { Component: WorkshopSubscriptionPage };
+                        },
+                      },
+                      {
+                        path: "profile",
+                        async lazy() {
+                          const { WorkshopProfilePage } = await import(
+                            "@modules/workshop/pages/WorkshopProfilePage"
+                          );
+                          return { Component: WorkshopProfilePage };
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
         path: "/provider",
         element: <AppLayout />,
         children: [

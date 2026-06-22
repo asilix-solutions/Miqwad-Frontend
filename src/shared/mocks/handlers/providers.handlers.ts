@@ -64,7 +64,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 6;
+const MOCK_SEED_VERSION = 7;
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -411,9 +411,9 @@ function seedIfEmpty(db: ProvidersDb): void {
     },
     {
       userId: "seed_provider_8",
-      companyName: "موزع قطع تويوتا المعتمد",
-      type: "dealer",
-      email: "toyota@dealer.sa",
+      companyName: "ورشة الخليج للسيارات - جدة",
+      type: "workshop",
+      email: "toyota@workshop.sa",
       phone: "501110008",
       lat: 21.5433,
       lng: 39.1728,
@@ -424,12 +424,8 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 320,
       isVerified: true,
       status: "approved",
-      categoryIds: [4, 7],
-      commissionRate: 10,
-      monthlySales: 45000,
-      productCategories: ["قطع غيار أصلية", "إطارات"],
-      productsCount: 58,
-      inventoryCount: 340,
+      categoryIds: [1, 4, 7],
+      specialization: "ميكانيكا/كهرباء/صيانة دورية",
       documents: [],
       rejectionReason: null,
       createdAt: now,

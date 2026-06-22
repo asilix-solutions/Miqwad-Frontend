@@ -42,6 +42,7 @@ interface MockUser {
 function defaultRoleForPhone(phone: string): MockUser["role"] {
   if (phone === "500000000") return "super_admin";
   if (phone === "501110007") return "provider";
+  if (phone === "501110008") return "provider";
   return "customer";
 }
 
@@ -199,17 +200,23 @@ export async function tryAuthMock(
       const role = defaultRoleForPhone(phone);
       const isAdmin = role === "admin" || role === "super_admin";
       const isDealer = phone === "501110007";
+      const isWorkshop = phone === "501110008";
       user = {
-        id: isDealer ? "seed_provider_7" : makeId("usr"),
+        id: isDealer ? "seed_provider_7" : isWorkshop ? "seed_provider_8" : makeId("usr"),
         phoneNumber: phone,
-        fullName: isAdmin ? "مسؤول النظام" : isDealer ? "متجر الشامل لقطع الغيار" : "",
-        email: isDealer ? "shamel@dealer.sa" : null,
+        fullName: isAdmin
+          ? "مسؤول النظام"
+          : isDealer
+          ? "متجر الشامل لقطع الغيار"
+          : isWorkshop
+          ? "ورشة الخليج للسيارات - جدة"
+          : "",
+        email: isDealer ? "shamel@dealer.sa" : isWorkshop ? "toyota@workshop.sa" : null,
         role,
         avatarUrl: null,
-        // Admin / super-admin / dealer demo accounts skip the profile-completion screen.
-        isProfileComplete: isAdmin || isDealer,
-        providerId: isDealer ? 7 : null,
-        providerStatus: isDealer ? "approved" : null,
+        isProfileComplete: isAdmin || isDealer || isWorkshop,
+        providerId: isDealer ? 7 : isWorkshop ? 8 : null,
+        providerStatus: isDealer || isWorkshop ? "approved" : null,
         providerRejectionReason: null,
         permissions: permissionsForRole(role),
       };

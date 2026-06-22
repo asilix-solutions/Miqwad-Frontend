@@ -23,9 +23,8 @@ interface RoleGuardProps {
 
 /** Maps a provider type to its primary dashboard. */
 export function providerHomeFor(type: import("@modules/providers/types").ProviderType | undefined): string {
-  if (type === "dealer") {
-    return "/provider/dealer/dashboard"; // Or "/provider/dealer" if it auto-redirects
-  }
+  if (type === "dealer") return "/provider/dealer/dashboard";
+  if (type === "workshop") return "/provider/workshop/dashboard";
   return "/provider/services";
 }
 
