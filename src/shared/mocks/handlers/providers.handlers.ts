@@ -64,7 +64,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 7;
+const MOCK_SEED_VERSION = 9;
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -239,8 +239,9 @@ function seedIfEmpty(db: ProvidersDb): void {
   if (db.seeded) return;
   const now = new Date().toISOString();
 
-  const seeds: Array<Omit<ProviderProfile, "id">> = [
+  const seeds: Array<ProviderProfile> = [
     {
+      id: 1,
       userId: "seed_provider_1",
       companyName: "ورشة الخليج للسيارات",
       type: "workshop",
@@ -278,6 +279,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 2,
       userId: "seed_provider_2",
       companyName: "مركز الإتقان للكهرباء",
       type: "workshop",
@@ -300,6 +302,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 3,
       userId: "seed_provider_3",
       companyName: "مغسلة النخبة",
       type: "workshop",
@@ -322,6 +325,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 4,
       userId: "seed_provider_4",
       companyName: "تشليح الرياض لقطع الغيار",
       type: "scrap",
@@ -343,6 +347,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 5,
       userId: "seed_provider_5",
       companyName: "تشليح السعادة للسيارات",
       type: "scrap",
@@ -364,6 +369,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 6,
       userId: "seed_provider_6",
       companyName: "تشليح المدينة للسيارات",
       type: "scrap",
@@ -385,6 +391,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 7,
       userId: "seed_provider_7",
       companyName: "متجر الشامل لقطع الغيار",
       type: "dealer",
@@ -410,6 +417,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 8,
       userId: "seed_provider_8",
       companyName: "ورشة الخليج للسيارات - جدة",
       type: "workshop",
@@ -431,6 +439,29 @@ function seedIfEmpty(db: ProvidersDb): void {
       createdAt: now,
     },
     {
+      id: 11,
+      userId: "seed_provider_10",
+      companyName: "تشليح السلام",
+      type: "scrap",
+      email: "salam@scrap.sa",
+      phone: "501110010",
+      lat: 24.7136,
+      lng: 46.6753,
+      address: "المنطقة الصناعية الثانية، الرياض",
+      city: "الرياض",
+      workingHours: "السبت — الخميس 8 ص — 6 م",
+      rating: 4.5,
+      totalRatings: 178,
+      isVerified: true,
+      status: "approved",
+      categoryIds: [3, 7],
+      brandSpecialization: ["تويوتا", "نيسان", "بي إم دبليو", "مرسيدس"],
+      documents: [],
+      rejectionReason: null,
+      createdAt: now,
+    },
+    {
+      id: 9,
       userId: "seed_provider_9",
       companyName: "شركة الأجزاء الحديثة",
       type: "dealer",
@@ -457,10 +488,12 @@ function seedIfEmpty(db: ProvidersDb): void {
     },
   ];
 
+  let maxId = 0;
   for (const seed of seeds) {
-    const id = db.nextProviderId++;
-    db.providers[id] = { id, ...seed };
+    db.providers[seed.id] = seed;
+    if (seed.id > maxId) maxId = seed.id;
   }
+  db.nextProviderId = maxId + 1;
 
   // Demo services for the approved provider (so /provider/services has data when reviewed by admin).
   const approvedProviderId = Object.values(db.providers).find((p) => p.status === "approved")?.id;

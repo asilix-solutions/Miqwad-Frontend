@@ -593,6 +593,90 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        path: "/provider/scrap",
+        async lazy() {
+          const { ScrapLayout } = await import(
+            "@modules/scrap/components/layout/ScrapLayout"
+          );
+          return { Component: ScrapLayout };
+        },
+        children: [
+          {
+            element: <SuspenseOutlet />,
+            children: [
+              { index: true, element: <Navigate to="dashboard" replace /> },
+              {
+                element: <RoleGuard allow={["provider"]} />,
+                children: [
+                  {
+                    async lazy() {
+                      const { ScrapGuard } = await import("@modules/scrap/guards/ScrapGuard");
+                      return { Component: ScrapGuard };
+                    },
+                    children: [
+                      {
+                        path: "dashboard",
+                        async lazy() {
+                          const { ScrapDashboardPage } = await import(
+                            "@modules/scrap/pages/ScrapDashboardPage"
+                          );
+                          return { Component: ScrapDashboardPage };
+                        },
+                      },
+                      {
+                        path: "part-requests",
+                        async lazy() {
+                          const { ScrapPartRequestsPage } = await import(
+                            "@modules/scrap/pages/ScrapPartRequestsPage"
+                          );
+                          return { Component: ScrapPartRequestsPage };
+                        },
+                      },
+                      {
+                        path: "part-requests/:id",
+                        async lazy() {
+                          const { ScrapPartRequestDetailPage } = await import(
+                            "@modules/scrap/pages/ScrapPartRequestDetailPage"
+                          );
+                          return { Component: ScrapPartRequestDetailPage };
+                        },
+                      },
+                      {
+                        path: "conversations",
+                        async lazy() {
+                          const { ScrapConversationsPage } = await import(
+                            "@modules/scrap/pages/ScrapConversationsPage"
+                          );
+                          return { Component: ScrapConversationsPage };
+                        },
+                      },
+                      {
+                        path: "subscription",
+                        async lazy() {
+                          const { ScrapSubscriptionPage } = await import(
+                            "@modules/scrap/pages/ScrapSubscriptionPage"
+                          );
+                          return { Component: ScrapSubscriptionPage };
+                        },
+                      },
+                      {
+                        path: "profile",
+                        async lazy() {
+                          const { ScrapProfilePage } = await import(
+                            "@modules/scrap/pages/ScrapProfilePage"
+                          );
+                          return { Component: ScrapProfilePage };
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
         path: "/provider",
         element: <AppLayout />,
         children: [

@@ -25,6 +25,7 @@ interface RoleGuardProps {
 export function providerHomeFor(type: import("@modules/providers/types").ProviderType | undefined): string {
   if (type === "dealer") return "/provider/dealer/dashboard";
   if (type === "workshop") return "/provider/workshop/dashboard";
+  if (type === "scrap") return "/provider/scrap/dashboard";
   return "/provider/services";
 }
 
