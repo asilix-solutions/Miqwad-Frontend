@@ -33,6 +33,7 @@ import {
   useWorkshopSubscriptionQuery,
 } from "../hooks/useWorkshopQueries";
 import { computeProfileCompleteness } from "../lib/profileCompleteness";
+import { computeSubscriptionDaysLeft, subscriptionTone } from "../lib/subscriptionDaysLeft";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -46,9 +47,7 @@ export function WorkshopDashboardPage() {
   const profile = profileQuery.data;
   const sub     = subscriptionQuery.data;
 
-  const daysLeft = sub
-    ? Math.ceil((new Date(sub.endDate).getTime() - Date.now()) / 86_400_000)
-    : null;
+  const daysLeft = sub ? computeSubscriptionDaysLeft(sub.endDate) : null;
 
   const subValue =
     subscriptionQuery.isLoading ? "" : daysLeft === null ? "—" : String(Math.max(0, daysLeft));
@@ -61,13 +60,7 @@ export function WorkshopDashboardPage() {
       : undefined;
 
   const subTone: StatusPillTone =
-    sub?.status === "expired" || (daysLeft !== null && daysLeft <= 0)
-      ? "danger"
-      : daysLeft !== null && daysLeft > 0 && daysLeft <= 7
-      ? "warning"
-      : daysLeft !== null && daysLeft > 7
-      ? "success"
-      : "info";
+    sub ? subscriptionTone(sub.status, daysLeft!) : "info";
 
   const pct = computeProfileCompleteness(profile);
   const pctTone: StatusPillTone = pct < 50 ? "danger" : pct < 80 ? "warning" : "success";
