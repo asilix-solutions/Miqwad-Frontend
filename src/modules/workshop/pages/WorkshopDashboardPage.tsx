@@ -126,10 +126,10 @@ export function WorkshopDashboardPage() {
                       {profile.city}
                     </span>
                   )}
-                  {profile.specialization && (
+                  {profile.specializationLabel && (
                     <span className="flex items-center gap-1">
                       <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {profile.specialization}
+                      {profile.specializationLabel}
                     </span>
                   )}
                 </div>
@@ -147,10 +147,10 @@ export function WorkshopDashboardPage() {
                       </span>
                     )}
                   </span>
-                  {profile.workingHours && (
+                  {profile.workingHoursLabel && (
                     <span className="flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {profile.workingHours}
+                      {profile.workingHoursLabel}
                     </span>
                   )}
                 </div>

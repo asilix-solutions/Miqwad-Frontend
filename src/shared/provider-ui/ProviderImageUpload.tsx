@@ -23,7 +23,8 @@ import {
   type ChangeEvent,
   type DragEvent,
 } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { ImagePlus, ImageUp, X } from "lucide-react";
 import { cn } from "@shared/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -58,6 +59,11 @@ export interface ProviderImageUploadProps {
    * Must be translated by the consumer before passing.
    */
   dropLabel?: string;
+  /**
+   * In single-image mode, display the selected image as a wide banner-ratio preview
+   * instead of a square thumbnail. Has no effect when `multiple` is true.
+   */
+  widePreview?: boolean;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -105,7 +111,9 @@ export function ProviderImageUpload({
   hint,
   error: externalError,
   dropLabel,
+  widePreview = false,
 }: ProviderImageUploadProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -224,38 +232,91 @@ export function ProviderImageUpload({
         </div>
       )}
 
-      {/* ── Preview thumbnails ─────────────────────────────────────────────── */}
+      {/* ── Preview thumbnails / wide banner preview ──────────────────────── */}
       {previews.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {previews.map((src, i) => (
+        widePreview && !multiple ? (
+          <div
+            className="group relative w-full overflow-hidden rounded-[var(--radius-lg)] shadow-[var(--shadow-provider-sm)]"
+            style={{ aspectRatio: "16 / 4" }}
+          >
+            <img
+              src={previews[0]}
+              alt=""
+              aria-hidden
+              className="h-full w-full object-cover"
+            />
+            {/* Action overlay — always focusable, visible on hover/focus */}
             <div
-              key={i}
-              className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] shadow-[var(--shadow-provider-sm)]"
+              className={cn(
+                "absolute inset-0 flex items-center justify-center gap-3",
+                "bg-[var(--color-ink-body)]/40 opacity-0",
+                "transition-opacity duration-[var(--dur-fast)]",
+                "group-hover:opacity-100",
+                "focus-within:opacity-100",
+              )}
             >
-              <img
-                src={src}
-                alt=""
-                aria-hidden
-                className="h-full w-full object-cover"
-              />
-              {/* Remove overlay — appears on hover */}
               <button
                 type="button"
-                onClick={() => removeAt(i)}
-                aria-label="Remove image"
+                onClick={() => inputRef.current?.click()}
+                aria-label={t("providerUi.imageUpload.change")}
                 className={cn(
-                  "absolute inset-0 flex items-center justify-center",
-                  "bg-[var(--color-ink-body)]/50 opacity-0",
-                  "transition-opacity duration-[var(--dur-fast)]",
-                  "group-hover:opacity-100",
-                  "focus-visible:opacity-100 focus-visible:outline-none",
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5",
+                  "bg-white/90 text-[var(--color-ink-body)] text-xs font-medium",
+                  "hover:bg-white transition-colors duration-[var(--dur-fast)]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
                 )}
               >
-                <X className="h-5 w-5 text-white" aria-hidden />
+                <ImageUp className="h-3.5 w-3.5" aria-hidden />
+                {t("providerUi.imageUpload.change")}
+              </button>
+              <button
+                type="button"
+                onClick={() => removeAt(0)}
+                aria-label={t("providerUi.imageUpload.remove")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5",
+                  "bg-white/20 text-white text-xs font-medium",
+                  "hover:bg-white/30 transition-colors duration-[var(--dur-fast)]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
+                )}
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+                {t("providerUi.imageUpload.remove")}
               </button>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {previews.map((src, i) => (
+              <div
+                key={i}
+                className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-[var(--radius-md)] shadow-[var(--shadow-provider-sm)]"
+              >
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden
+                  className="h-full w-full object-cover"
+                />
+                {/* Remove overlay — appears on hover */}
+                <button
+                  type="button"
+                  onClick={() => removeAt(i)}
+                  aria-label="Remove image"
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center",
+                    "bg-[var(--color-ink-body)]/50 opacity-0",
+                    "transition-opacity duration-[var(--dur-fast)]",
+                    "group-hover:opacity-100",
+                    "focus-visible:opacity-100 focus-visible:outline-none",
+                  )}
+                >
+                  <X className="h-5 w-5 text-white" aria-hidden />
+                </button>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* Hidden file input */}

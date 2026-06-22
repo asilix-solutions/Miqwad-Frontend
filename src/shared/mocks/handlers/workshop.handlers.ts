@@ -10,6 +10,7 @@ import { AxiosHeaders } from "axios";
 import type {
   WorkshopProfile,
   WorkshopSubscription,
+  WeeklyHours,
 } from "../../../modules/workshop/types";
 
 // ── DB shape ──────────────────────────────────────────────────────────────────
@@ -23,7 +24,7 @@ interface WorkshopDb {
 // ── Storage keys / constants ──────────────────────────────────────────────────
 
 const WORKSHOP_DB_KEY = "maqwad.workshop.mockDb";
-const MOCK_SEED_VERSION = 2;
+const MOCK_SEED_VERSION = 5;
 const MOCK_SEED_VERSION_KEY = "maqwad.workshop.mockSeedVersion";
 const WORKSHOP_ID = 8; // matches seed_provider_8 numeric id
 
@@ -102,7 +103,33 @@ function parseBody(data: unknown): Record<string, unknown> {
   return {};
 }
 
+// ── Offline image assets ──────────────────────────────────────────────────────
+
+function svgDataUri(markup: string): string {
+  return `data:image/svg+xml;base64,${btoa(markup)}`;
+}
+
+const BANNER_DATA_URI = svgDataUri(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#032d60"/><stop offset="100%" stop-color="#0a4a96"/></linearGradient></defs><rect width="1200" height="300" fill="url(#bg)"/><circle cx="1100" cy="30" r="180" fill="#fff" fill-opacity=".04"/><circle cx="100" cy="290" r="120" fill="#fff" fill-opacity=".03"/><circle cx="600" cy="360" r="240" fill="#fff" fill-opacity=".02"/></svg>`,
+);
+
+const PHOTO_DATA_URIS = [1, 2, 3].map((n) =>
+  svgDataUri(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="#e2e8f0"/><rect x="220" y="140" width="160" height="110" rx="10" fill="#cbd5e1"/><polygon points="220,250 280,195 340,235 375,195 380,250" fill="#94a3b8"/><circle cx="355" cy="168" r="16" fill="#94a3b8"/><text x="300" y="325" text-anchor="middle" font-size="48" font-family="Arial,sans-serif" fill="#94a3b8" font-weight="bold">${n}</text></svg>`,
+  ),
+);
+
 // ── Seed ─────────────────────────────────────────────────────────────────────
+
+const SEED_WORKING_HOURS: WeeklyHours = {
+  sat: { isClosed: false, open: "09:00", close: "21:00" },
+  sun: { isClosed: false, open: "09:00", close: "21:00" },
+  mon: { isClosed: false, open: "09:00", close: "21:00" },
+  tue: { isClosed: false, open: "09:00", close: "21:00" },
+  wed: { isClosed: false, open: "09:00", close: "21:00" },
+  thu: { isClosed: false, open: "09:00", close: "21:00" },
+  fri: { isClosed: true },
+};
 
 function seedIfEmpty(db: WorkshopDb): void {
   if (db.seeded) return;
@@ -114,11 +141,34 @@ function seedIfEmpty(db: WorkshopDb): void {
     workshopId: WORKSHOP_ID,
     companyName: "ورشة الخليج للسيارات - جدة",
     email: "toyota@workshop.sa",
+
+    // Legacy flat fields
     phone: "501110008",
-    address: "طريق المدينة، جدة",
+    address: "طريق الملك عبدالعزيز، حي النزهة، جدة",
     city: "جدة",
-    workingHours: "السبت — الخميس 9 ص — 9 م",
-    specialization: "ميكانيكا/كهرباء/صيانة دورية",
+    workingHoursLabel: "السبت — الخميس 9 ص — 9 م",
+    specializationLabel: "ميكانيكا / كهرباء / صيانة دورية",
+
+    // Structured fields
+    bannerUrl: BANNER_DATA_URI,
+    photos: PHOTO_DATA_URIS,
+    location: {
+      lat: 21.5433,
+      lng: 39.1728,
+      address: "طريق الملك عبدالعزيز، حي النزهة",
+      city: "جدة",
+    },
+    workingHours: SEED_WORKING_HOURS,
+    specializations: {
+      serviceTypes: ["mechanical", "electrical", "periodicMaintenance"],
+      vehicleBrands: ["toyota", "hyundai"],
+    },
+    contact: {
+      phone: "501110008",
+      whatsapp: "966501110008",
+    },
+
+    // Meta
     rating: 4.8,
     totalRatings: 320,
     isVerified: true,
@@ -186,8 +236,20 @@ export async function tryWorkshopMock(
       ...(payload.phone !== undefined ? { phone: payload.phone } : {}),
       ...(payload.address !== undefined ? { address: payload.address } : {}),
       ...(payload.city !== undefined ? { city: payload.city } : {}),
+      ...(payload.workingHoursLabel !== undefined
+        ? { workingHoursLabel: payload.workingHoursLabel }
+        : {}),
+      ...(payload.specializationLabel !== undefined
+        ? { specializationLabel: payload.specializationLabel }
+        : {}),
+      ...(payload.bannerUrl !== undefined ? { bannerUrl: payload.bannerUrl } : {}),
+      ...(payload.photos !== undefined ? { photos: payload.photos } : {}),
+      ...(payload.location !== undefined ? { location: payload.location } : {}),
       ...(payload.workingHours !== undefined ? { workingHours: payload.workingHours } : {}),
-      ...(payload.specialization !== undefined ? { specialization: payload.specialization } : {}),
+      ...(payload.specializations !== undefined
+        ? { specializations: payload.specializations }
+        : {}),
+      ...(payload.contact !== undefined ? { contact: payload.contact } : {}),
       updatedAt: now,
     };
     saveDb(db);
