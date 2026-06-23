@@ -13,17 +13,11 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Shield, ChevronRight } from "lucide-react";
 import { ProviderStatusPill } from "@shared/provider-ui";
-import type { StatusPillTone } from "@shared/provider-ui";
 import { useEscrowQuery } from "../../hooks/useScrapQueries";
 import { partRequestStatusTone } from "../../lib/partRequestLifecycle";
 import { escrowStatusTone } from "../../lib/escrowLifecycle";
-import type { ToneVariant } from "../../lib/escrowLifecycle";
+import { toPillTone } from "../../lib/toPillTone";
 import type { PartRequest } from "../../types";
-
-// ToneVariant includes "muted"; ProviderStatusPill uses "neutral" for that slot.
-function toPillTone(tone: ToneVariant): StatusPillTone {
-  return tone === "muted" ? "neutral" : tone;
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
