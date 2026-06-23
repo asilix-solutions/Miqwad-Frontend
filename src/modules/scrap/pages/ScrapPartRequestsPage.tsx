@@ -19,6 +19,7 @@ import {
 import type { ProviderTabItem } from "@shared/provider-ui";
 import { usePartRequestsQuery } from "../hooks/useScrapQueries";
 import { ScrapPartRequestCard } from "../components/ScrapPartRequestCard";
+import { ScrapPartRequestDetailDialog } from "../components/ScrapPartRequestDetailDialog";
 import type { PartRequestStatus } from "../types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ export function ScrapPartRequestsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Debounce search input 300 ms; also reset to page 1
   useEffect(() => {
@@ -191,7 +193,11 @@ export function ScrapPartRequestsPage() {
         <>
           <div className="flex flex-col gap-3">
             {data.items.map((request) => (
-              <ScrapPartRequestCard key={request.id} request={request} />
+              <ScrapPartRequestCard
+                key={request.id}
+                request={request}
+                onSelect={(id) => setSelectedId(id)}
+              />
             ))}
           </div>
 
@@ -243,6 +249,15 @@ export function ScrapPartRequestsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Detail dialog — defer-mounted */}
+      {selectedId && (
+        <ScrapPartRequestDetailDialog
+          requestId={selectedId}
+          open={true}
+          onClose={() => setSelectedId(null)}
+        />
       )}
     </div>
   );

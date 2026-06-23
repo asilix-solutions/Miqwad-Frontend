@@ -1,20 +1,22 @@
 /**
  * @file ScrapPartRequestDetailPage.tsx
  *
- * Scrap provider part-request detail — placeholder pending full implementation.
+ * Full-page route for a single part request detail (/part-requests/:id).
+ * Renders the same PartRequestDetailContent used by the list-page dialog.
  */
 
-import { useTranslation } from "react-i18next";
-import { ClipboardList } from "lucide-react";
-import { ProviderEmptyState } from "@shared/provider-ui/ProviderEmptyState";
+import { useParams } from "react-router-dom";
+import { PartRequestDetailContent } from "../components/PartRequestDetailContent";
 
+/** Full-page wrapper for part request detail — mirrors the dialog content. */
 export function ScrapPartRequestDetailPage() {
-  const { t } = useTranslation();
+  const { id } = useParams<{ id: string }>();
+
+  if (!id) return null;
+
   return (
-    <ProviderEmptyState
-      icon={<ClipboardList className="h-8 w-8" />}
-      title={t("scrap.partRequests.detailTitle")}
-      description={t("scrap.comingSoon")}
-    />
+    <div className="mx-auto max-w-2xl provider-fade-up">
+      <PartRequestDetailContent requestId={id} />
+    </div>
   );
 }

@@ -88,6 +88,7 @@ export function useSubmitOfferMutation() {
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequest(id) });
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequests() });
       void qc.invalidateQueries({ queryKey: scrapKeys.stats() });
+      void qc.invalidateQueries({ queryKey: scrapKeys.escrow(id) });
     },
   });
 }
@@ -101,6 +102,7 @@ export function useUpdatePartRequestStatusMutation() {
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequest(id) });
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequests() });
       void qc.invalidateQueries({ queryKey: scrapKeys.stats() });
+      void qc.invalidateQueries({ queryKey: scrapKeys.escrow(id) });
     },
   });
 }

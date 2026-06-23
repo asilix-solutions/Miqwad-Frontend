@@ -74,12 +74,14 @@ function PartThumb({ src }: { src: string | undefined }) {
 
 export interface ScrapPartRequestCardProps {
   request: PartRequest;
+  /** When provided, clicking the card calls this instead of navigating to the route. */
+  onSelect?: (id: string) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 /** Premium inbox-style card for a single part request. */
-export function ScrapPartRequestCard({ request }: ScrapPartRequestCardProps) {
+export function ScrapPartRequestCard({ request, onSelect }: ScrapPartRequestCardProps) {
   const { t, i18n } = useTranslation();
 
   const { data: escrow } = useEscrowQuery(request.escrowId ? request.id : "");
@@ -90,25 +92,24 @@ export function ScrapPartRequestCard({ request }: ScrapPartRequestCardProps) {
 
   const timeAgo = formatTimeAgo(request.createdAt, i18n.language);
 
-  return (
-    <Link
-      to={`/provider/scrap/part-requests/${request.id}`}
-      style={{
-        transition: [
-          "transform var(--dur-base) var(--ease-provider)",
-          "box-shadow var(--dur-base) var(--ease-provider)",
-        ].join(", "),
-      }}
-      className={[
-        "flex items-start gap-4 p-4 sm:p-5",
-        "bg-[var(--color-surface)] rounded-[var(--radius-lg)]",
-        "shadow-[var(--shadow-provider-sm)]",
-        "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
-        "focus-visible:outline-none focus-visible:ring-2",
-        "focus-visible:ring-[var(--color-brand-orange)]/40",
-        "cursor-pointer",
-      ].join(" ")}
-    >
+  const sharedStyle = {
+    transition: [
+      "transform var(--dur-base) var(--ease-provider)",
+      "box-shadow var(--dur-base) var(--ease-provider)",
+    ].join(", "),
+  };
+  const sharedClass = [
+    "flex items-start gap-4 p-4 sm:p-5",
+    "bg-[var(--color-surface)] rounded-[var(--radius-lg)]",
+    "shadow-[var(--shadow-provider-sm)]",
+    "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
+    "focus-visible:outline-none focus-visible:ring-2",
+    "focus-visible:ring-[var(--color-brand-orange)]/40",
+    "cursor-pointer",
+  ].join(" ");
+
+  const inner = (
+    <>
       {/* Part thumbnail ─────────────────────────────────────────────────── */}
       <PartThumb src={request.photos[0]} />
 
@@ -164,6 +165,29 @@ export function ScrapPartRequestCard({ request }: ScrapPartRequestCardProps) {
           </div>
         </div>
       </div>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(request.id)}
+        style={sharedStyle}
+        className={`w-full text-start ${sharedClass}`}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      to={`/provider/scrap/part-requests/${request.id}`}
+      style={sharedStyle}
+      className={sharedClass}
+    >
+      {inner}
     </Link>
   );
 }
