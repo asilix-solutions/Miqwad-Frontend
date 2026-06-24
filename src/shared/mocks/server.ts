@@ -14,6 +14,7 @@ import { tryAdminAuditMock } from "./handlers/admin.audit.handlers";
 import { tryAdminComplaintsMock } from "./handlers/admin.complaints.handlers";
 import { tryDealerMock } from "./handlers/dealer.handlers";
 import { tryWorkshopMock } from "./handlers/workshop.handlers";
+import { tryScrapMock } from "./handlers/scrap.handlers";
 
 /**
  * Conditionally enable the in-process mock adapter.
@@ -65,6 +66,7 @@ export function installMocks(): void {
     tryProvidersMock,
     tryDealerMock,
     tryWorkshopMock,
+    tryScrapMock,
     tryDiscoveryMock,
   ]);
   console.info("%c[maqwad] mock API enabled", "color:#F45E2B;font-weight:600");
