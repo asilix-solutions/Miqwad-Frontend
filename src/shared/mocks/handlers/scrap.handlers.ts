@@ -36,7 +36,7 @@ interface ScrapDb {
 // ── Storage keys ──────────────────────────────────────────────────────────────
 
 const SCRAP_DB_KEY = "maqwad.scrap.mockDb";
-const MOCK_SEED_VERSION = 3;
+const MOCK_SEED_VERSION = 5;
 const MOCK_SEED_VERSION_KEY = "maqwad.scrap.mockSeedVersion";
 const SCRAP_ID = 11; // explicit id for seed_provider_10 (تشليح السلام)
 
@@ -147,6 +147,8 @@ interface SeedRequest {
   daysAgo: number;
   escrowStatus?: EscrowStatus;
   escrowAmount?: number;
+  /** Denormalized offer price — present on all non-"new" requests. */
+  offerPrice?: number;
 }
 
 const SEED_REQUESTS: SeedRequest[] = [
@@ -171,6 +173,7 @@ const SEED_REQUESTS: SeedRequest[] = [
     description: "مضخة ماء أصلية للمحرك VK56",
     status: "quoted",
     daysAgo: 1,
+    offerPrice: 450,
   },
   {
     id: "pr_003",
@@ -184,6 +187,7 @@ const SEED_REQUESTS: SeedRequest[] = [
     daysAgo: 2,
     escrowStatus: "held",
     escrowAmount: 2800,
+    offerPrice: 2800,
   },
   {
     id: "pr_004",
@@ -196,6 +200,7 @@ const SEED_REQUESTS: SeedRequest[] = [
     daysAgo: 3,
     escrowStatus: "held",
     escrowAmount: 3500,
+    offerPrice: 3500,
   },
   {
     id: "pr_005",
@@ -209,6 +214,7 @@ const SEED_REQUESTS: SeedRequest[] = [
     daysAgo: 5,
     escrowStatus: "released",
     escrowAmount: 950,
+    offerPrice: 950,
   },
   {
     id: "pr_006",
@@ -220,6 +226,7 @@ const SEED_REQUESTS: SeedRequest[] = [
     description: "الهيكل الأمامي كامل",
     status: "cancelled",
     daysAgo: 7,
+    offerPrice: 1200,
   },
 ];
 
@@ -281,6 +288,11 @@ function seedIfEmpty(db: ScrapDb): void {
 
     const escrowId = seed.escrowStatus ? `esc_${seed.id}` : undefined;
 
+    const offeredAt =
+      seed.offerPrice !== undefined
+        ? new Date(Date.now() - seed.daysAgo * dayMs).toISOString()
+        : undefined;
+
     const pr: PartRequest = {
       id: seed.id,
       requestNumber: seed.requestNumber,
@@ -293,6 +305,7 @@ function seedIfEmpty(db: ScrapDb): void {
       status: seed.status,
       createdAt,
       escrowId,
+      ...(seed.offerPrice !== undefined ? { offerPrice: seed.offerPrice, offeredAt } : {}),
     };
     db.partRequests[seed.id] = pr;
 
@@ -489,8 +502,15 @@ export async function tryScrapMock(
     }
     const payload = parseBody(config.data) as unknown as SubmitOfferPayload;
     const escrowId = `esc_${id}`;
+    const now = new Date().toISOString();
 
-    db.partRequests[id] = { ...pr, status: "quoted", escrowId };
+    db.partRequests[id] = {
+      ...pr,
+      status: "quoted",
+      escrowId,
+      offerPrice: payload.price,
+      offeredAt: now,
+    };
     db.escrows[escrowId] = {
       id: escrowId,
       partRequestId: id,

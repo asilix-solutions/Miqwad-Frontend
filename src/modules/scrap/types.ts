@@ -97,6 +97,32 @@ export interface PartRequest {
   status: PartRequestStatus;
   createdAt: string;
   escrowId?: string;
+  /** Denormalized from the submitted offer for N+1-free reads. */
+  offerPrice?: number;
+  /** ISO-8601 timestamp when the scrap provider submitted the offer. */
+  offeredAt?: string;
+}
+
+// ── My Offers (derived view) ──────────────────────────────────────────────────
+
+/**
+ * Semantic offer statuses from the scrap provider's perspective.
+ * Collapsed from PartRequestStatus: quoted→pending, accepted+shipped→accepted,
+ * completed→completed, cancelled→rejected.
+ */
+export type OfferStatus = "pending" | "accepted" | "completed" | "rejected";
+
+/** Derived offer entity — mapped from a PartRequest where status !== "new". */
+export interface MyOffer {
+  partRequestId: string;
+  requestNumber: string;
+  customerName: string;
+  vehicle: PartRequest["vehicle"];
+  partName: string;
+  offerPrice: number;
+  offeredAt: string;
+  status: OfferStatus;
+  escrowId?: string;
 }
 
 // ── Escrow ────────────────────────────────────────────────────────────────────

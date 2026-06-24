@@ -8,7 +8,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { scrapApi } from "../api/scrapApi";
 import type { PartRequestsParams } from "../api/scrapApi";
-import type { PartRequestStatus, SubmitOfferPayload } from "../types";
+import type { PartRequestStatus, SubmitOfferPayload, MyOffer } from "../types";
+import { toOfferStatus } from "../lib/offerStatus";
 
 export const scrapKeys = {
   all: ["scrap"] as const,
@@ -20,6 +21,7 @@ export const scrapKeys = {
   partRequest: (id: string) => [...scrapKeys.all, "part-requests", id] as const,
   escrow: (partRequestId: string) =>
     [...scrapKeys.all, "escrow", partRequestId] as const,
+  myOffers: () => [...scrapKeys.all, "my-offers"] as const,
 };
 
 export function useScrapProfileQuery() {
@@ -79,6 +81,28 @@ export function usePartRequestQuery(id: string) {
   });
 }
 
+export function useMyOffersQuery() {
+  return useQuery({
+    queryKey: scrapKeys.myOffers(),
+    queryFn: async (): Promise<MyOffer[]> => {
+      const result = await scrapApi.getPartRequests({ status: "all", pageSize: 100 });
+      return result.items
+        .filter((pr) => toOfferStatus(pr.status) !== null)
+        .map((pr) => ({
+          partRequestId: pr.id,
+          requestNumber: pr.requestNumber,
+          customerName: pr.customerName,
+          vehicle: pr.vehicle,
+          partName: pr.partName,
+          offerPrice: pr.offerPrice ?? 0,
+          offeredAt: pr.offeredAt ?? pr.createdAt,
+          status: toOfferStatus(pr.status)!,
+          escrowId: pr.escrowId,
+        }));
+    },
+  });
+}
+
 export function useSubmitOfferMutation() {
   const qc = useQueryClient();
   return useMutation({
@@ -89,6 +113,7 @@ export function useSubmitOfferMutation() {
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequests() });
       void qc.invalidateQueries({ queryKey: scrapKeys.stats() });
       void qc.invalidateQueries({ queryKey: scrapKeys.escrow(id) });
+      void qc.invalidateQueries({ queryKey: scrapKeys.myOffers() });
     },
   });
 }
@@ -103,6 +128,7 @@ export function useUpdatePartRequestStatusMutation() {
       void qc.invalidateQueries({ queryKey: scrapKeys.partRequests() });
       void qc.invalidateQueries({ queryKey: scrapKeys.stats() });
       void qc.invalidateQueries({ queryKey: scrapKeys.escrow(id) });
+      void qc.invalidateQueries({ queryKey: scrapKeys.myOffers() });
     },
   });
 }

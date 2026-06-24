@@ -13,6 +13,7 @@ import {
   X,
   LayoutDashboard,
   ClipboardList,
+  Tag,
   MessageSquare,
   CreditCard,
   UserCircle,
@@ -39,6 +40,12 @@ const NAV_ITEMS: NavItem[] = [
     labelPath: "scrap.nav.partRequests",
     path: "/provider/scrap/part-requests",
     icon: ClipboardList,
+  },
+  {
+    key: "myOffers",
+    labelPath: "scrap.nav.myOffers",
+    path: "/provider/scrap/my-offers",
+    icon: Tag,
   },
   {
     key: "conversations",
