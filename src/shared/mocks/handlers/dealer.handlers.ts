@@ -106,16 +106,16 @@ function seedIfEmpty(db: DealerDb): void {
 
   // 1. Products
   const productsSeed: Partial<Product>[] = [
-    { nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", categoryId: "6", price: 350, condition: "new", status: "active", stockQty: 100 },
-    { nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", categoryId: "6", price: 450, condition: "new", status: "active", stockQty: 45 },
-    { nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", categoryId: "1", price: 120, condition: "new", status: "active", stockQty: 200 },
-    { nameAr: "زيت محرك 10W-40", nameEn: "10W-40 Engine Oil", sku: "OIL-10W40", categoryId: "1", price: 100, condition: "new", status: "active", stockQty: 150 },
-    { nameAr: "فلتر زيت", nameEn: "Oil Filter", sku: "FLT-OIL", categoryId: "1", price: 40, condition: "new", status: "active", stockQty: 300 },
-    { nameAr: "فلتر هواء", nameEn: "Air Filter", sku: "FLT-AIR", categoryId: "1", price: 50, condition: "new", status: "active", stockQty: 250 },
-    { nameAr: "سائل تبريد أحمر", nameEn: "Red Coolant", sku: "COOL-RED", categoryId: "2", price: 60, condition: "new", status: "active", stockQty: 180 },
-    { nameAr: "سائل تبريد أخضر", nameEn: "Green Coolant", sku: "COOL-GRN", categoryId: "2", price: 55, condition: "new", status: "out_of_stock", stockQty: 0 },
-    { nameAr: "مساحات زجاج أمامية", nameEn: "Windshield Wipers", sku: "ACC-WIPER", categoryId: "2", price: 80, condition: "new", status: "active", stockQty: 120 },
-    { nameAr: "معطر سيارة", nameEn: "Car Air Freshener", sku: "ACC-FRESH", categoryId: "2", price: 15, condition: "new", status: "draft", stockQty: 50 },
+    { nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", categoryId: "202", price: 350, condition: "new", status: "active", stockQty: 100 },
+    { nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", categoryId: "202", price: 450, condition: "new", status: "active", stockQty: 45 },
+    { nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", categoryId: "201", price: 120, condition: "new", status: "active", stockQty: 200 },
+    { nameAr: "زيت محرك 10W-40", nameEn: "10W-40 Engine Oil", sku: "OIL-10W40", categoryId: "201", price: 100, condition: "new", status: "active", stockQty: 150 },
+    { nameAr: "فلتر زيت", nameEn: "Oil Filter", sku: "FLT-OIL", categoryId: "201", price: 40, condition: "new", status: "active", stockQty: 300 },
+    { nameAr: "فلتر هواء", nameEn: "Air Filter", sku: "FLT-AIR", categoryId: "201", price: 50, condition: "new", status: "active", stockQty: 250 },
+    { nameAr: "سائل تبريد أحمر", nameEn: "Red Coolant", sku: "COOL-RED", categoryId: "207", price: 60, condition: "new", status: "active", stockQty: 180 },
+    { nameAr: "سائل تبريد أخضر", nameEn: "Green Coolant", sku: "COOL-GRN", categoryId: "207", price: 55, condition: "new", status: "out_of_stock", stockQty: 0 },
+    { nameAr: "مساحات زجاج أمامية", nameEn: "Windshield Wipers", sku: "ACC-WIPER", categoryId: "208", price: 80, condition: "new", status: "active", stockQty: 120 },
+    { nameAr: "معطر سيارة", nameEn: "Car Air Freshener", sku: "ACC-FRESH", categoryId: "208", price: 15, condition: "new", status: "draft", stockQty: 50 },
   ];
 
   for (const p of productsSeed) {

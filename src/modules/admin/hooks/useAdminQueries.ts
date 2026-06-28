@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi } from "../api/adminApi";
+import { adminApi, type CreateCategoryPayload } from "../api/adminApi";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
@@ -156,7 +156,7 @@ export function useAdminCategoriesQuery() {
 export function useCreateCategoryMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<ServiceCategory, "id">) => adminApi.createCategory(payload),
+    mutationFn: (payload: CreateCategoryPayload) => adminApi.createCategory(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
     },
