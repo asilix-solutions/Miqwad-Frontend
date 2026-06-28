@@ -148,8 +148,6 @@ export function useRestoreUserMutation() {
 // ── Categories ─────────────────────────────────────────────────────────────
 
 export function useAdminCategoriesQuery() {
-  // We wrap the client query because the client GET /categories returns all 
-  // categories which is exactly what the admin needs to list them.
   return useServiceCategoriesQuery();
 }
 
@@ -178,6 +176,17 @@ export function useDeleteCategoryMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => adminApi.deleteCategory(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+export function usePatchCategoryActiveMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
+      adminApi.patchCategoryActive(id, isActive),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
     },

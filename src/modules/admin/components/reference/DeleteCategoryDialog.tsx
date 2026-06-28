@@ -1,4 +1,14 @@
+/**
+ * @file DeleteCategoryDialog.tsx
+ * @description Smart-guard delete dialog for categories.
+ * On a 409 Conflict response (children or references exist) the dialog explains
+ * the block and offers "تعطيل بدل الحذف" (deactivate instead of delete) as a
+ * safe alternative. On a clean leaf category, it confirms and deletes normally.
+ */
+
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,62 +18,146 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useDeleteCategoryMutation } from "../../hooks/useAdminQueries";
+import {
+  useDeleteCategoryMutation,
+  usePatchCategoryActiveMutation,
+} from "../../hooks/useAdminQueries";
 import type { ServiceCategory } from "@modules/services/types";
 import { useToast } from "@shared/components/ui/toastContext";
+
+interface ConflictInfo {
+  childCount: number;
+  referenceCount: number;
+}
 
 interface Props {
   category: ServiceCategory | null;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (v: boolean) => void;
+}
+
+function is409(err: unknown): err is { response: { status: number; data: ConflictInfo & { error: string } } } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "response" in err &&
+    (err as { response: { status: number } }).response?.status === 409
+  );
 }
 
 export function DeleteCategoryDialog({ category, open, onOpenChange }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
-  const deleteMutation = useDeleteCategoryMutation();
 
-  const handleConfirm = async () => {
+  const deleteMutation = useDeleteCategoryMutation();
+  const patchActiveMutation = usePatchCategoryActiveMutation();
+  const isPending = deleteMutation.isPending || patchActiveMutation.isPending;
+
+  const [conflict, setConflict] = useState<ConflictInfo | null>(null);
+
+  // Reset conflict state when dialog opens/closes
+  useEffect(() => {
+    if (!open) setConflict(null);
+  }, [open]);
+
+  const handleDelete = async () => {
     if (!category) return;
     try {
       await deleteMutation.mutateAsync(category.id);
       toast.success(t("superAdmin.categories.success.deleted"));
       onOpenChange(false);
-    } catch {
-      toast.error(t("common.deleteFailed"));
+    } catch (err) {
+      if (is409(err)) {
+        setConflict({
+          childCount: err.response.data.childCount ?? 0,
+          referenceCount: err.response.data.referenceCount ?? 0,
+        });
+      } else {
+        toast.error(t("common.deleteFailed"));
+      }
     }
   };
 
+  const handleDeactivate = async () => {
+    if (!category) return;
+    try {
+      await patchActiveMutation.mutateAsync({ id: category.id, isActive: false });
+      toast.success(t("superAdmin.categories.success.deactivated"));
+      onOpenChange(false);
+    } catch {
+      toast.error(t("common.saveFailed"));
+    }
+  };
+
+  const categoryName = category?.nameAr ?? "";
+
   return (
-    <Dialog open={open} onOpenChange={(val) => !deleteMutation.isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+    <Dialog open={open} onOpenChange={(v) => !isPending && onOpenChange(v)}>
+      <DialogContent className="sm:max-w-[440px]" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-danger-500">
+          <DialogTitle className={conflict ? "text-[var(--color-warning-500)]" : "text-[var(--color-danger-500)]"}>
             {t("superAdmin.categories.deleteConfirm.title")}
           </DialogTitle>
-          <DialogDescription className="pt-2">
-            {t("superAdmin.categories.deleteConfirm.description", {
-              name: category?.nameAr ?? "",
-            })}
-          </DialogDescription>
+
+          {conflict ? (
+            /* 409 block: explain and offer deactivate instead */
+            <div className="pt-2 space-y-3">
+              <div className="flex gap-2 p-3 rounded-[var(--radius-md)] bg-[var(--color-warning-50,#FFFBEB)] border border-[var(--color-warning-200,#FDE68A)]">
+                <AlertTriangle className="h-4 w-4 text-[var(--color-warning-500)] shrink-0 mt-0.5" />
+                <div className="space-y-1 text-sm text-[var(--color-ink-body)]">
+                  {conflict.childCount > 0 && (
+                    <p>{t("superAdmin.categories.tree.deleteBlockedChildren", { count: conflict.childCount })}</p>
+                  )}
+                  {conflict.referenceCount > 0 && (
+                    <p>{t("superAdmin.categories.tree.deleteBlockedInUse", { count: conflict.referenceCount })}</p>
+                  )}
+                </div>
+              </div>
+              <DialogDescription className="text-sm text-[var(--color-muted)]">
+                {t("superAdmin.categories.tree.deactivateInstead")} —{" "}
+                {categoryName}
+              </DialogDescription>
+            </div>
+          ) : (
+            <DialogDescription className="pt-2">
+              {t("superAdmin.categories.deleteConfirm.description", {
+                name: categoryName,
+              })}
+            </DialogDescription>
+          )}
         </DialogHeader>
-        <DialogFooter className="pt-4">
+
+        <DialogFooter className="pt-4 gap-2 flex-wrap">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={deleteMutation.isPending}
+            disabled={isPending}
           >
             {t("superAdmin.categories.deleteConfirm.cancel")}
           </Button>
-          <Button
-            variant="destructive"
-            onClick={handleConfirm}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending
-              ? t("common.loading")
-              : t("superAdmin.categories.deleteConfirm.confirm")}
-          </Button>
+
+          {conflict ? (
+            /* Offer deactivate as the safe path */
+            <Button
+              onClick={handleDeactivate}
+              disabled={isPending}
+              className="bg-[var(--color-warning-500,#F59E0B)] hover:bg-[var(--color-warning-600,#D97706)] text-white"
+            >
+              {patchActiveMutation.isPending
+                ? t("common.loading")
+                : t("superAdmin.categories.tree.deactivateInstead")}
+            </Button>
+          ) : (
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isPending}
+            >
+              {deleteMutation.isPending
+                ? t("common.loading")
+                : t("superAdmin.categories.deleteConfirm.confirm")}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

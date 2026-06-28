@@ -110,6 +110,11 @@ export const adminApi = {
     await apiClient.delete(`/admin/categories/${id}`);
   },
 
+  patchCategoryActive: async (id: number, isActive: boolean): Promise<ServiceCategory> => {
+    const { data } = await apiClient.patch<ServiceCategory>(`/admin/categories/${id}`, { isActive });
+    return data;
+  },
+
   // ── Services ─────────────────────────────────────────────────────────────
 
   getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<Service[]> => {
