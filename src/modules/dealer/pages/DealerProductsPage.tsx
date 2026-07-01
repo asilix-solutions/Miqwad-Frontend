@@ -2,13 +2,14 @@
  * @file DealerProductsPage.tsx
  *
  * Dealer products — card grid (default) / row-list toggle view.
+ * Category display uses getCategoryPath for full L1 › L2 › L3 path strings.
  * Data layer (query, mutations, filter state, debounce, dialog wiring) is
  * functionally identical to the previous version. The presentation is now
  * ProductGrid / ProductListView (dealer-specific components) with a view toggle,
  * replacing the shared ProviderDataView table.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { LayoutGrid, List, Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,10 @@ import {
   ProviderSearchBar,
   ProviderSelect,
 } from "@shared/provider-ui";
+import type { ProviderSelectOption } from "@shared/provider-ui";
+import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
+import { getCategoryPath } from "@modules/services/lib/categoryTree";
+import type { ServiceCategory } from "@modules/services/types";
 import { useDealerProductsQuery } from "../hooks/useDealerQueries";
 import { useUpdateProductStatusMutation } from "../hooks/useDealerMutations";
 import type { Product } from "../types";
@@ -27,19 +32,23 @@ import { ProductGrid } from "../components/ProductGrid";
 import { ProductListView } from "../components/ProductListView";
 import { ProductDetailDialog } from "../components/ProductDetailDialog";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-// FUTURE: wire to backend categories endpoint.
-const DUMMY_CATEGORIES = [
-  { id: "cat_1", labelAr: "زيوت وشحوم", labelEn: "Oils & Lubes" },
-  { id: "cat_2", labelAr: "فلاتر", labelEn: "Filters" },
-  { id: "cat_3", labelAr: "قطع محرك", labelEn: "Engine Parts" },
-];
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function DealerProductsPage() {
   const { t, i18n } = useTranslation();
+
+  // ── Category data ─────────────────────────────────────────────────────────
+  const categoriesQuery = useServiceCategoriesQuery();
+  const allCategories: ServiceCategory[] = categoriesQuery.data ?? [];
+
+  // Dealer L2 nodes — used to populate the category filter dropdown
+  const dealerL2Categories = useMemo(
+    () =>
+      allCategories.filter(
+        (c) => c.level === 2 && c.providerTypeScope === "dealer" && c.isActive,
+      ),
+    [allCategories],
+  );
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -117,10 +126,19 @@ export function DealerProductsPage() {
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  const getCategoryLabel = (id: string) => {
-    const cat = DUMMY_CATEGORIES.find((c) => c.id === id);
-    if (!cat) return id;
-    return i18n.language === "ar" ? cat.labelAr : cat.labelEn;
+  /**
+   * Returns the full L1 › L2 › L3 path label for a product's categoryId string.
+   * Falls back to the raw id when the category cannot be resolved.
+   */
+  const getCategoryLabel = (id: string): string => {
+    if (!id || allCategories.length === 0) return id;
+    const { l1, l2, l3 } = getCategoryPath(allCategories, Number(id));
+    if (!l1) return id;
+    const nameOf = (c: ServiceCategory) =>
+      i18n.language === "ar" ? c.nameAr : c.nameEn;
+    if (!l2) return nameOf(l1);
+    if (!l3) return `${nameOf(l1)} › ${nameOf(l2)}`;
+    return `${nameOf(l1)} › ${nameOf(l2)} › ${nameOf(l3)}`;
   };
 
   // ── Status tabs ───────────────────────────────────────────────────────────
@@ -130,6 +148,15 @@ export function DealerProductsPage() {
     { value: "draft",        label: t("dealer.status.product.draft") },
     { value: "out_of_stock", label: t("dealer.status.product.out_of_stock") },
     { value: "archived",     label: t("dealer.status.product.archived") },
+  ];
+
+  // ── Category filter options (L2 dealer nodes) ─────────────────────────────
+  const categoryFilterOptions: ProviderSelectOption[] = [
+    { value: "all", label: t("dealer.products.filterAll") },
+    ...dealerL2Categories.map((c) => ({
+      value: String(c.id),
+      label: i18n.language === "ar" ? c.nameAr : c.nameEn,
+    })),
   ];
 
   // ── Shared props for grid and list ────────────────────────────────────────
@@ -190,13 +217,7 @@ export function DealerProductsPage() {
             <ProviderSelect
               value={categoryFilter}
               onValueChange={setCategoryFilter}
-              options={[
-                { value: "all", label: t("dealer.products.filterAll") },
-                ...DUMMY_CATEGORIES.map((c) => ({
-                  value: c.id,
-                  label: i18n.language === "ar" ? c.labelAr : c.labelEn,
-                })),
-              ]}
+              options={categoryFilterOptions}
               placeholder={t("dealer.products.filterCategory")}
             />
           </div>
@@ -255,7 +276,7 @@ export function DealerProductsPage() {
           product={selectedProduct}
           open={formOpen}
           onOpenChange={setFormOpen}
-          categories={DUMMY_CATEGORIES}
+          categories={allCategories}
         />
       )}
 

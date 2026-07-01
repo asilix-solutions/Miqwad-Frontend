@@ -27,7 +27,7 @@ interface DealerDb {
 }
 
 const DEALER_DB_KEY = "maqwad.dealer.mockDb";
-const MOCK_SEED_VERSION = 1;
+const MOCK_SEED_VERSION = 2;
 const MOCK_SEED_VERSION_KEY = "maqwad.dealer.mockSeedVersion";
 const DEALER_ID = "7"; // Matches seed_provider_7's numeric ID (which is used as providerId in FE state)
 const COMMISSION_RATE = 5;
@@ -106,16 +106,20 @@ function seedIfEmpty(db: DealerDb): void {
 
   // 1. Products
   const productsSeed: Partial<Product>[] = [
-    { nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", categoryId: "202", price: 350, condition: "new", status: "active", stockQty: 100 },
-    { nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", categoryId: "202", price: 450, condition: "new", status: "active", stockQty: 45 },
-    { nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", categoryId: "201", price: 120, condition: "new", status: "active", stockQty: 200 },
-    { nameAr: "زيت محرك 10W-40", nameEn: "10W-40 Engine Oil", sku: "OIL-10W40", categoryId: "201", price: 100, condition: "new", status: "active", stockQty: 150 },
-    { nameAr: "فلتر زيت", nameEn: "Oil Filter", sku: "FLT-OIL", categoryId: "201", price: 40, condition: "new", status: "active", stockQty: 300 },
-    { nameAr: "فلتر هواء", nameEn: "Air Filter", sku: "FLT-AIR", categoryId: "201", price: 50, condition: "new", status: "active", stockQty: 250 },
-    { nameAr: "سائل تبريد أحمر", nameEn: "Red Coolant", sku: "COOL-RED", categoryId: "207", price: 60, condition: "new", status: "active", stockQty: 180 },
-    { nameAr: "سائل تبريد أخضر", nameEn: "Green Coolant", sku: "COOL-GRN", categoryId: "207", price: 55, condition: "new", status: "out_of_stock", stockQty: 0 },
-    { nameAr: "مساحات زجاج أمامية", nameEn: "Windshield Wipers", sku: "ACC-WIPER", categoryId: "208", price: 80, condition: "new", status: "active", stockQty: 120 },
-    { nameAr: "معطر سيارة", nameEn: "Car Air Freshener", sku: "ACC-FRESH", categoryId: "208", price: 15, condition: "new", status: "draft", stockQty: 50 },
+    // categoryId re-pointed from L2 → L3 leaves so getCategoryPath resolves full path.
+    // OLD→NEW: "202"→"215"/"216" (بطاريات L2 → 60/80 Ah L3), "201"→"211"/"212"/"213"
+    // (زيوت وفلاتر L2 → زيت محرك/فلتر زيت/فلتر هواء L3), "207"→"225" (تبريد L2 → ريديتر L3),
+    // "208"→"227"/"228" (إكسسوارات L2 → مساحات/معطر L3).
+    { nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", categoryId: "215", price: 350, condition: "new", status: "active", stockQty: 100 },
+    { nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", categoryId: "216", price: 450, condition: "new", status: "active", stockQty: 45 },
+    { nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", categoryId: "211", price: 120, condition: "new", status: "active", stockQty: 200 },
+    { nameAr: "زيت محرك 10W-40", nameEn: "10W-40 Engine Oil", sku: "OIL-10W40", categoryId: "211", price: 100, condition: "new", status: "active", stockQty: 150 },
+    { nameAr: "فلتر زيت", nameEn: "Oil Filter", sku: "FLT-OIL", categoryId: "212", price: 40, condition: "new", status: "active", stockQty: 300 },
+    { nameAr: "فلتر هواء", nameEn: "Air Filter", sku: "FLT-AIR", categoryId: "213", price: 50, condition: "new", status: "active", stockQty: 250 },
+    { nameAr: "سائل تبريد أحمر", nameEn: "Red Coolant", sku: "COOL-RED", categoryId: "225", price: 60, condition: "new", status: "active", stockQty: 180 },
+    { nameAr: "سائل تبريد أخضر", nameEn: "Green Coolant", sku: "COOL-GRN", categoryId: "225", price: 55, condition: "new", status: "out_of_stock", stockQty: 0 },
+    { nameAr: "مساحات زجاج أمامية", nameEn: "Windshield Wipers", sku: "ACC-WIPER", categoryId: "227", price: 80, condition: "new", status: "active", stockQty: 120 },
+    { nameAr: "معطر سيارة", nameEn: "Car Air Freshener", sku: "ACC-FRESH", categoryId: "228", price: 15, condition: "new", status: "draft", stockQty: 50 },
   ];
 
   for (const p of productsSeed) {

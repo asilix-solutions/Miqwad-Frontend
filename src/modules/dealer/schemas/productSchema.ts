@@ -7,7 +7,7 @@ export const productSchema = z.object({
   nameAr: z.string().min(1, "dealer.products.validation.nameArRequired"),
   nameEn: z.string().min(1, "dealer.products.validation.nameEnRequired"),
   sku: z.string().min(1, "dealer.products.validation.skuRequired"),
-  categoryId: z.string().min(1, "dealer.products.validation.categoryRequired"),
+  categoryId: z.string().min(1, "dealer.products.validation.categoryL3Required"),
   price: z.number().positive("dealer.products.validation.pricePositive"),
   condition: z.enum(["new"]),
   status: z.enum(["active", "draft", "out_of_stock", "archived"]),
