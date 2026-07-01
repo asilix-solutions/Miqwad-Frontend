@@ -50,6 +50,34 @@ export function getCategoryTree(
 }
 
 /**
+ * Collect a node's id plus all descendant ids (BFS, any depth).
+ * Useful for expanding an L1/L2 branch filter to the full set of matching ids.
+ */
+export function collectDescendantIds(
+  categories: ServiceCategory[],
+  nodeId: number,
+): number[] {
+  // parent → [child ids]
+  const childrenOf = new Map<number, number[]>();
+  for (const c of categories) {
+    if (c.parentId !== null) {
+      const arr = childrenOf.get(c.parentId) ?? [];
+      arr.push(c.id);
+      childrenOf.set(c.parentId, arr);
+    }
+  }
+  const result: number[] = [];
+  const stack: number[] = [nodeId];
+  while (stack.length > 0) {
+    const id = stack.pop()!;
+    result.push(id);
+    const kids = childrenOf.get(id);
+    if (kids) stack.push(...kids);
+  }
+  return result;
+}
+
+/**
  * Resolve a leaf category id up to its L1 / L2 / L3 ancestors.
  * Any slot may be null if the id is not found or the tree is shallower than expected.
  */

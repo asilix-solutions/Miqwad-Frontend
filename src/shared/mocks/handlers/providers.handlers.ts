@@ -63,7 +63,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 10;
+const MOCK_SEED_VERSION = 11; // bumped: nearby seed categoryIds migrated to hierarchical IDs
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -303,6 +303,11 @@ let CATEGORIES: ServiceCategory[] = [
   { id: 324, nameAr: "جنط حديد",     nameEn: "Steel Rim",   iconUrl: null, colorHint: undefined, parentId: 307, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
   { id: 325, nameAr: "جنط ألومنيوم", nameEn: "Alloy Rim",   iconUrl: null, colorHint: undefined, parentId: 307, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
 ];
+
+/** Returns a snapshot of the in-memory categories list for use by other mock handlers. */
+export function getCategoriesSnapshot(): ServiceCategory[] {
+  return [...CATEGORIES];
+}
 
 let CITIES: City[] = [...KSA_CITIES].map((c) => ({
   id: c.key,

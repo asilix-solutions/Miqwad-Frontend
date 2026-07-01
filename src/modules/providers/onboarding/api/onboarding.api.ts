@@ -17,6 +17,8 @@ export async function getAccountSummary(): Promise<AccountSummary> {
     ownerName: "خالد الدوسري",
     email: "khalid@example.com",
     phone: "512345678",
+    // TODO: derive from registration payload once backend exposes it
+    providerType: "workshop",
   };
 }
 

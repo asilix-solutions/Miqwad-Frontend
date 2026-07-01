@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, SlidersHorizontal, X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,38 @@ export function NearbyFilters({
   const f = useAppSelector((s) => s.discovery.filters);
   const categoriesQ = useServiceCategoriesQuery();
 
+  const allCats = categoriesQ.data ?? [];
+
+  // Derive L1 id from the stored categoryId (which may be L1 or L2)
+  const activeL1Id = useMemo(() => {
+    if (f.categoryId == null) return null;
+    const cat = allCats.find((c) => c.id === f.categoryId);
+    if (!cat) return null;
+    if (cat.level === 1) return cat.id;
+    if (cat.level === 2) return cat.parentId;
+    return null;
+  }, [f.categoryId, allCats]);
+
+  // Derive L2 id: only set when the stored categoryId IS an L2 node
+  const activeL2Id = useMemo(() => {
+    if (f.categoryId == null) return null;
+    const cat = allCats.find((c) => c.id === f.categoryId);
+    return cat?.level === 2 ? cat.id : null;
+  }, [f.categoryId, allCats]);
+
+  const l1Options = useMemo(
+    () => allCats.filter((c) => c.level === 1 && c.isActive),
+    [allCats],
+  );
+
+  const l2Options = useMemo(
+    () =>
+      activeL1Id != null
+        ? allCats.filter((c) => c.level === 2 && c.parentId === activeL1Id && c.isActive)
+        : [],
+    [allCats, activeL1Id],
+  );
+
   const handleReset = () => {
     dispatch(resetFilters());
   };
@@ -91,26 +124,51 @@ export function NearbyFilters({
         </div>
       </FilterBlock>
 
-      {/* Category */}
+      {/* Category — L1 → optional L2 chained selects */}
       <FilterBlock label={t("discovery.filters.category")}>
-        <Select
-          value={f.categoryId == null ? "all" : String(f.categoryId)}
-          onValueChange={(val) =>
-            dispatch(setCategory(val === "all" ? null : Number(val)))
-          }
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={t("discovery.filters.anyCategory")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("discovery.filters.anyCategory")}</SelectItem>
-            {(categoriesQ.data ?? []).map((c) => (
-              <SelectItem key={c.id} value={String(c.id)}>
-                {isAr ? c.nameAr : c.nameEn}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          {/* L1 main category */}
+          <Select
+            value={activeL1Id == null ? "all" : String(activeL1Id)}
+            onValueChange={(val) =>
+              dispatch(setCategory(val === "all" ? null : Number(val)))
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t("discovery.filters.anyCategory")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("discovery.filters.anyCategory")}</SelectItem>
+              {l1Options.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {isAr ? c.nameAr : c.nameEn}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* L2 subcategory — shown only when an L1 is selected and has children */}
+          {activeL1Id != null && l2Options.length > 0 && (
+            <Select
+              value={activeL2Id == null ? "all" : String(activeL2Id)}
+              onValueChange={(val) =>
+                dispatch(setCategory(val === "all" ? activeL1Id : Number(val)))
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("discovery.filters.anyL2")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("discovery.filters.anyL2")}</SelectItem>
+                {l2Options.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)}>
+                    {isAr ? c.nameAr : c.nameEn}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </FilterBlock>
 
       {/* Radius */}

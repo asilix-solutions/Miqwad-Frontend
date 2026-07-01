@@ -336,6 +336,13 @@ const ar = {
         saveLater: "حفظ ومتابعة لاحقاً",
         backToInfo: "الرجوع لمعلومات الحساب",
       },
+      services: {
+        title: "تخصصات خدماتك",
+        subtitle: "اختر التصنيفات التي تقدّمها منشأتك — يمكنك اختيار أكثر من تصنيف",
+        continue: "تابع لرفع المستندات",
+        back: "الرجوع لمعلومات الحساب",
+        noneSelected: "اختر تصنيفاً واحداً على الأقل",
+      },
       review: {
         title: "طلبك قيد المراجعة",
         subtitle: "شكراً لإرسال مستنداتك. فريقنا يراجع طلبك خلال 12 إلى 24 ساعة عادةً. ستصلك رسالة فور صدور القرار.",
@@ -421,6 +428,7 @@ const ar = {
       queryPlaceholder: "ابحث باسم الورشة أو المركز…",
       category: "الفئة",
       anyCategory: "كل الفئات",
+      anyL2: "كل الفئات الفرعية",
       radius: "نصف القطر",
       radiusValueKm: "{{km}} كم",
       minRating: "أدنى تقييم",
@@ -1814,6 +1822,9 @@ const ar = {
       pickL2First: "اختر التصنيف الفرعي أولاً",
       pathLabel: "المسار المختار",
     },
+    categoryMultiTree: {
+      emptyState: "لا توجد تصنيفات متاحة",
+    },
   },
 };
 
@@ -2152,6 +2163,13 @@ const en: typeof ar = {
         saveLater: "Save and continue later",
         backToInfo: "Back to account info",
       },
+      services: {
+        title: "Your Service Specialisations",
+        subtitle: "Select the categories your business covers — you may choose more than one",
+        continue: "Continue to Documents",
+        back: "Back to Account Info",
+        noneSelected: "Please select at least one category",
+      },
       review: {
         title: "Your request is under review",
         subtitle: "Thanks for submitting your documents. Our team typically reviews within 12–24 hours. You will be notified once a decision is made.",
@@ -2237,6 +2255,7 @@ const en: typeof ar = {
       queryPlaceholder: "Search by company name…",
       category: "Category",
       anyCategory: "All categories",
+      anyL2: "All subcategories",
       radius: "Radius",
       radiusValueKm: "{{km}} km",
       minRating: "Minimum rating",
@@ -3629,6 +3648,9 @@ const en: typeof ar = {
       pickL1First: "Select a main category first",
       pickL2First: "Select a subcategory first",
       pathLabel: "Selected path",
+    },
+    categoryMultiTree: {
+      emptyState: "No categories available",
     },
   },
 };

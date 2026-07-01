@@ -52,3 +52,6 @@ export type { ProviderImageUploadProps } from "./ProviderImageUpload";
 
 export { ProviderDialog } from "./ProviderDialog";
 export type { ProviderDialogProps } from "./ProviderDialog";
+
+export { CategoryMultiSelectTree } from "./CategoryMultiSelectTree";
+export type { CategoryMultiSelectTreeProps } from "./CategoryMultiSelectTree";

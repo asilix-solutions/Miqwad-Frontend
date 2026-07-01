@@ -25,8 +25,9 @@ import type { OnboardingStepKey } from "../types";
 
 const STEP_KEYS: readonly OnboardingStepKey[] = [
   "account",   // step 1 (right-most in RTL)
-  "documents", // step 2
-  "review",    // step 3
+  "services",  // step 2
+  "documents", // step 3
+  "review",    // step 4
 ] as const;
 
 /** Maps a step key to a 1-based step number (1 = first / right-most). */
@@ -36,7 +37,7 @@ function stepKeyToIndex(key: OnboardingStepKey): OnboardingStep {
   return (idx + 1) as OnboardingStep;
 }
 
-export type OnboardingStep = 0 | 1 | 2 | 3;
+export type OnboardingStep = 0 | 1 | 2 | 3 | 4;
 
 export interface OnboardingStepperProps {
   /** Current active step — either as a numeric index or a typed step key. */
@@ -51,11 +52,10 @@ export function OnboardingStepper({ currentStep }: OnboardingStepperProps) {
   const activeIndex: OnboardingStep =
     typeof currentStep === "number" ? currentStep : stepKeyToIndex(currentStep);
 
-  // Render 3 nodes interspersed with 2 connectors.
-  // Nodes are in natural order [1, 2, 3]. The container uses dir="rtl"
-  // so flex-direction:row lays them out right-to-left — step 1 appears
-  // at inline-start (right side in RTL), matching designer screenshots.
-  const nodes = [1, 2, 3] as const;
+  // Render 4 nodes interspersed with 3 connectors.
+  // The container uses dir="rtl" so flex-direction:row lays them out
+  // right-to-left — step 1 appears at inline-start (right side in RTL).
+  const nodes = [1, 2, 3, 4] as const;
 
   return (
     <div
