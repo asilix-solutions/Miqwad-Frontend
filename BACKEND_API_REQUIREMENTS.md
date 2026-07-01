@@ -17,10 +17,10 @@ The existing .NET backend (`miquad-api`) is **customer-facing**. It covers the c
 | Dealer Dashboard | 14 | 0 | 14 MISSING |
 | Workshop Dashboard | 4 | 0 | 4 MISSING |
 | Scrap Dashboard | 10 | 0 | 10 MISSING |
-| Admin Panel | 49 | 3 PARTIAL | 46 MISSING |
+| Admin Panel | 51 | 3 PARTIAL | 48 MISSING |
 | Discovery (customer) | 5 | 0 | 5 MISSING |
 | Services / Lookups | 5 | 3 EXISTS | 2 MISSING |
-| **TOTAL** | **105** | **~17 (16%)** | **~88 (84%)** |
+| **TOTAL** | **107** | **~17 (16%)** | **~90 (84%)** |
 
 **Core gap:** The backend is customer-facing. The 84% of missing endpoints are entirely provider- and admin-domain. The three provider types (dealer/workshop/scrap) each need their own namespaced endpoint family. The Scrap module introduces a net-new **Escrow** domain that does not exist anywhere in the current backend. The Admin panel requires ~49 endpoints spanning users, providers, subscriptions, revenues, ads, audit logs, complaints, notifications, and system settings.
 
@@ -506,16 +506,20 @@ interface AdminUserDetail extends AdminUserRow {
 
 #### 3.6.4 Services & Categories
 
+> **⚠ CATEGORY HIERARCHY:** Categories are now a 3-level tree (L1 Parent → L2 Child → L3 Sub-child), provider-type scoped, with `isActive` / `sortOrder` and guarded deletes. See **Section 8** for the complete data model, validation rules, 409 contract, and migration notes. The endpoints below supersede the original flat category spec.
+
 | # | Method | Path | Purpose | Request | Response | Screen | Status |
 |---|--------|------|---------|---------|---------|--------|--------|
-| AS1 | GET | `/admin/categories` | List service categories | — | `ServiceCategory[]` | إدارة الخدمات | **MISSING** |
-| AS2 | POST | `/admin/categories` | Create category | `{ nameAr, nameEn, iconUrl?, colorHint? }` | `ServiceCategory` | Add category | **MISSING** |
-| AS3 | PUT | `/admin/categories/{id}` | Update category | `Partial<ServiceCategory>` | `ServiceCategory` | Edit category | **MISSING** |
-| AS4 | DELETE | `/admin/categories/{id}` | Delete category | — | `void` | Category list | **MISSING** |
-| AS5 | GET | `/admin/services` | List services | `?categoryId?, isActive?` | `Service[]` | Service list | **MISSING** |
-| AS6 | POST | `/admin/services` | Create service | `{ nameAr, nameEn, categoryId, basePrice, estimatedDuration?, isActive, descriptionAr?, descriptionEn?, sortOrder? }` | `Service` | Add service | **MISSING** |
-| AS7 | PUT | `/admin/services/{id}` | Update service | `Partial<Service>` | `Service` | Edit service | **MISSING** |
-| AS8 | DELETE | `/admin/services/{id}` | Delete service | — | `void` | Service list | **MISSING** |
+| AS1 | GET | `/admin/categories` | List all categories (flat, all fields); client builds tree via `getCategoryTree` | `?providerType?, parentId?, level?, isActive?` | `ServiceCategory[]` | Admin tree UI; CategoryCascader; provider onboarding; discovery L1→L2 filter | **MISSING** |
+| AS2 | GET | `/admin/categories/{id}` | Get single category | — | `ServiceCategory` | Edit category dialog | **MISSING** |
+| AS3 | POST | `/admin/categories` | Create L1/L2/L3 category | `{ parentId: number\|null, nameAr, nameEn, colorHint?, iconUrl?, providerTypeScope?, sortOrder? }` | `ServiceCategory` | Add category form | **MISSING** |
+| AS4 | PUT | `/admin/categories/{id}` | Update name / colorHint / iconUrl / sortOrder / isActive (node re-parenting out of scope v1) | `{ nameAr?, nameEn?, colorHint?, iconUrl?, sortOrder?, isActive? }` | `ServiceCategory` | Edit category form | **MISSING** |
+| AS5 | PATCH | `/admin/categories/{id}/active` | Toggle `isActive`; always permitted — safe alternative to delete | `{ isActive: boolean }` | `ServiceCategory` | Deactivate button in tree | **MISSING** |
+| AS6 | DELETE | `/admin/categories/{id}` | Delete leaf category — **must return 409** `{ error: "in_use", childCount, referenceCount, message }` if node has children or is referenced (see Section 8) | — | `void` or `409 ConflictResponse` | Delete action in tree | **MISSING** |
+| AS7 | GET | `/admin/services` | List services | `?categoryId?, isActive?` | `Service[]` | Service list | **MISSING** |
+| AS8 | POST | `/admin/services` | Create service; `categoryId` **must reference a level-3 leaf** | `{ nameAr, nameEn, categoryId, basePrice, estimatedDuration?, isActive, descriptionAr?, descriptionEn?, sortOrder? }` | `Service` | Add service | **MISSING** |
+| AS9 | PUT | `/admin/services/{id}` | Update service | `Partial<Service>` | `Service` | Edit service | **MISSING** |
+| AS10 | DELETE | `/admin/services/{id}` | Delete service | — | `void` | Service list | **MISSING** |
 
 #### 3.6.5 Subscription Plans & Provider Subscriptions
 
@@ -777,13 +781,15 @@ Copy this into your task tracker. Each line is one backend endpoint to build.
 - [ ] `GET /admin/providers` — list providers with optional filters (`?status?, type?`)
 - [ ] `PATCH /admin/providers/{id}/commission` — set commission rate; body `{ commissionRate }`
 
-### ADMIN — SERVICES & CATEGORIES
-- [ ] `GET    /admin/categories` — list service categories
-- [ ] `POST   /admin/categories` — create category
-- [ ] `PUT    /admin/categories/{id}` — update category
-- [ ] `DELETE /admin/categories/{id}` — delete category
+### ADMIN — SERVICES & CATEGORIES (Hierarchical — see Section 8)
+- [ ] `GET    /admin/categories` — list categories flat (all levels); params: `?providerType?, parentId?, level?, isActive?`; client calls `getCategoryTree` to build tree
+- [ ] `GET    /admin/categories/{id}` — get single category *(new — required by hierarchy)*
+- [ ] `POST   /admin/categories` — create L1/L2/L3 node; body: `{ parentId: number|null, nameAr, nameEn, colorHint?, iconUrl?, providerTypeScope?, sortOrder? }`; server derives `level = parent.level + 1` (reject `level > 3`)
+- [ ] `PUT    /admin/categories/{id}` — update `nameAr / nameEn / colorHint / iconUrl / sortOrder / isActive`; node re-parenting out of scope v1
+- [ ] `PATCH  /admin/categories/{id}/active` — toggle `isActive`; always permitted; the safe deactivation path *(new)*
+- [ ] `DELETE /admin/categories/{id}` — guarded delete; **must return 409** `{ error: "in_use", childCount: number, referenceCount: number, message: string }` if node has children OR is referenced by any provider-service / product / provider-profile *(new guard contract — see Section 8)*
 - [ ] `GET    /admin/services` — list services (`?categoryId?, isActive?`)
-- [ ] `POST   /admin/services` — create service
+- [ ] `POST   /admin/services` — create service; `categoryId` **must be a level-3 leaf** (backend should validate)
 - [ ] `PUT    /admin/services/{id}` — update service
 - [ ] `DELETE /admin/services/{id}` — delete service
 
@@ -974,6 +980,27 @@ Customer-submitted complaint visible in admin panel. Source of submission not sp
 
 Template defines bilingual content + channel + variable placeholders. SentNotification records a broadcast event with delivery status and recipient count.
 
+### 5.15 ServiceCategory (Hierarchical)
+
+Three-level classification tree scoped per provider type. Previously a flat list; now carries a parent/child relationship with a maximum depth of 3. Full specification in **Section 8**.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `number` (mock) → `string` (UUID, backend) | See OQ11 — id type to be confirmed |
+| `parentId` | `number\|null` | `null` = L1 root node |
+| `level` | `1\|2\|3` | Derivable from parent chain; backend may store or compute |
+| `nameAr` | `string` | Arabic display name |
+| `nameEn` | `string` | English display name |
+| `colorHint` | `"blue"\|"green"\|"orange"\|"purple"\|"red"\|"navy"\|undefined` | Optional UI tint |
+| `iconUrl` | `string\|null` | Optional icon URL |
+| `providerTypeScope` | `"dealer"\|"workshop"\|"scrap"\|null` | `null` = visible to all provider types; maps to backend `ProviderType` enum |
+| `isActive` | `boolean` | Soft-disable; inherited by children at render time (frontend responsibility) |
+| `sortOrder` | `number` | Display order within same parent |
+
+**Key rule:** Services and products must reference a **level-3 leaf** `categoryId`. Provider onboarding stores `categoryIds[]` which may include L2 or L3 nodes (multi-specialization).
+
+---
+
 ### 5.14 WorkshopProfile & ScrapProfile
 
 Both are **extended provider profiles** layered on top of the base `ProviderProfile`. Design choices:
@@ -1029,3 +1056,220 @@ Both are **extended provider profiles** layered on top of the base `ProviderProf
 | OQ8 | **Dealer `commissionRate` at order time:** The frontend snapshots `commissionRate` into each `Order` at creation. Does the backend store this on the order row, or compute it dynamically? The `DealerDues` computation depends on this snapshot being immutable. | Dealer orders and dues |
 | OQ9 | **`customerPhoneMasked` in PartRequest:** The backend must mask the customer phone before returning it to the scrap provider. What is the masking format — `05XXXXX004` (last 3 digits visible)? Is this a backend-computed field or a frontend concern? | Scrap part requests |
 | OQ10 | **OutstandingDebt settlement cycle in `DealerDues`:** What business rule defines when `outstandingDebt` resets — monthly invoice cycle, per-order settlement, or manual admin clearing? The `debtAlert` threshold (500 SAR) is defined in the SRS (FR-MKT-07). | Dealer dues endpoint |
+| OQ11 | **`ServiceCategory.id` type — `int` or `uuid`?** The frontend mock uses `number`; new domain entities use `string` (UUID). If the backend uses UUID PKs for categories, the `parentId` and `categoryId` FKs in products/services must also become `string`. The parent/child relationship and all FK references must remain consistent regardless of chosen type. | All category endpoints; `Product.categoryId`; `ProviderProfile.categoryIds` |
+| OQ12 | **Does the backend store `level` or derive it from the `parentId` chain?** Storing it (denormalized) simplifies queries; deriving it at read time keeps the schema cleaner. Either is acceptable — the frontend only reads `level` and does not write it. The backend must enforce `max level = 3` on writes regardless of approach. | `POST /admin/categories` validation |
+| OQ13 | **Is `providerTypeScope` on `ServiceCategory` the same enum as `ProviderType`?** The frontend maps `"dealer" \| "workshop" \| "scrap"` (Section 2.7). If the backend stores `ProviderType` as `PartsVendor / Workshop / ScrapYard`, the category scope field must use the same enum and be serialized to camelCase strings matching the frontend values, or an explicit mapping contract is needed. | `GET /admin/categories?providerType=` filter; cascader scope filtering |
+| OQ14 | **Leaf-only enforcement for service/product classification — backend or frontend?** The frontend already restricts the `CategoryCascader` to require a level-3 selection before enabling submit. Should the backend also validate that `ProviderService.categoryId` and `Product.categoryId` point to a `level = 3` node and reject `level < 3` with a 422? Recommended: backend validates to enforce the constraint at the API layer regardless of client. | `POST /admin/services`; `POST /dealer/products`; onboarding `categoryIds[]` (multi-select — may include L2 or L3) |
+
+---
+
+## 8. Hierarchical Categories (Reference Data)
+
+> **Context:** The frontend migrated from a flat `ServiceCategory` list to a 3-level tree in Phase 2 of the category hierarchy feature. This section is the authoritative contract for everything the backend must implement to support that tree.
+
+### 8.1 Data Model — `ServiceCategory` Entity
+
+Sourced from `src/modules/services/types.ts` (quoted verbatim):
+
+```typescript
+export interface ServiceCategory {
+  id: number;                  // Mock uses number; backend will likely use UUID (see OQ11)
+  nameAr: string;
+  nameEn: string;
+  iconUrl: string | null;      // Backend-issued URL or null
+  colorHint?: "blue" | "green" | "orange" | "purple" | "red" | "navy";
+  parentId: number | null;     // null = L1 root node
+  level: 1 | 2 | 3;           // 1 = parent, 2 = child, 3 = sub-child (max depth)
+  providerTypeScope: ProviderType | null;  // "dealer" | "workshop" | "scrap" | null
+  isActive: boolean;
+  sortOrder: number;
+}
+```
+
+**Field notes:**
+
+| Field | Backend mapping |
+|-------|----------------|
+| `parentId` | FK to `ServiceCategory.id`; `null` = root L1 node |
+| `level` | Backend may store (denormalized for query performance) or compute from parent chain. Either is acceptable — see OQ12. Max depth = 3; `POST` with a level-3 parent must be rejected with `422`. |
+| `providerTypeScope` | Maps to backend `ProviderType` enum. Frontend values: `"dealer"` → `PartsVendor` (or `Dealer`), `"workshop"` → `Workshop`, `"scrap"` → `ScrapYard`. See Section 2.7 and OQ13. `null` = category visible to all provider types. |
+| `id` type | Frontend mock uses `number`; backend will likely use UUID (`string`). The `parentId`, `Product.categoryId`, `ProviderService.categoryId`, and `ProviderProfile.categoryIds[]` FKs must use the same type. See OQ11. |
+
+**Helper used by frontend** (client-side only — no backend endpoint needed):
+
+```typescript
+// Builds CategoryTreeNode[] from the flat ServiceCategory[] returned by GET /admin/categories
+getCategoryTree(flat: ServiceCategory[]): CategoryTreeNode[]
+```
+
+---
+
+### 8.2 Endpoints
+
+#### `GET /admin/categories`
+
+List all categories as a flat array; the frontend assembles the tree.
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Query params** | `providerType?: "dealer"\|"workshop"\|"scrap"` — filter by scope (returns matching + global `null` records); `parentId?: number\|string` — return only direct children of a node; `level?: 1\|2\|3` — filter by depth; `isActive?: boolean` — omit to return all |
+| **Response** | `ServiceCategory[]` (all fields) |
+| **Consumed by** | Admin category tree UI; `CategoryCascader` (services tab, dealer products); provider onboarding multi-select tree; discovery L1→L2 filter |
+
+> **Note:** The frontend fetches the full list once and builds the tree client-side via `getCategoryTree`. No nested/recursive endpoint is needed.
+
+---
+
+#### `GET /admin/categories/{id}`
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Response** | `ServiceCategory` |
+| **Used by** | Edit category dialog (pre-fill form) |
+
+---
+
+#### `POST /admin/categories`
+
+Create a new category node at any level.
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Request body** | See below |
+| **Response** | `ServiceCategory` (full, server-populated) |
+| **Used by** | Add category form (admin tree UI, all three levels) |
+
+```typescript
+interface CreateCategoryRequest {
+  parentId: number | null;      // null = create L1 root
+  nameAr: string;
+  nameEn: string;
+  colorHint?: "blue" | "green" | "orange" | "purple" | "red" | "navy";
+  iconUrl?: string | null;
+  providerTypeScope?: "dealer" | "workshop" | "scrap" | null;  // null = global
+  sortOrder?: number;           // defaults to next available
+}
+```
+
+**Server-side derivation:**
+- `level = (parentId === null) ? 1 : parent.level + 1`
+- **Reject with `422`** if `parent.level >= 3` (would create a level-4 node)
+- **Reject with `404`** if `parentId` is provided but does not exist
+- `providerTypeScope` inheritance: if omitted and `parentId` is set, inherit from parent's scope. If `parentId` is null (L1), scope defaults to `null` (global) unless explicitly set.
+
+---
+
+#### `PUT /admin/categories/{id}`
+
+Update mutable fields. **Node re-parenting (changing `parentId`) is out of scope for v1** — return `422` if `parentId` is included in the body.
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Request body** | `{ nameAr?, nameEn?, colorHint?, iconUrl?, sortOrder?, isActive? }` |
+| **Response** | `ServiceCategory` (updated) |
+| **Used by** | Edit category dialog |
+
+---
+
+#### `PATCH /admin/categories/{id}/active`
+
+Toggle `isActive`. This is **always permitted** — it is the safe alternative to delete when a category is in use or has children.
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Request body** | `{ isActive: boolean }` |
+| **Response** | `ServiceCategory` (updated) |
+| **Used by** | Deactivate / Reactivate button in admin category tree |
+
+> **Note:** The frontend renders inactive categories as dimmed but still shows them in the tree for admin management. Active/inactive filtering on `GET /admin/categories?isActive=true` is used by consumer-facing screens (cascader, onboarding) to hide inactive nodes.
+
+---
+
+#### `DELETE /admin/categories/{id}`
+
+Permanently delete a category node. **Must be guarded.** Only leaf nodes that are not referenced anywhere may be deleted.
+
+| | |
+|--|--|
+| **Auth** | `admin` or `super_admin` |
+| **Response (success)** | `204 No Content` |
+| **Response (blocked)** | `409 Conflict` (see contract below) |
+| **Used by** | Delete action in admin category tree |
+
+**409 Conflict contract** — return this body whenever deletion is blocked:
+
+```typescript
+interface CategoryDeleteConflictResponse {
+  error: "in_use";
+  childCount: number;       // number of direct children; > 0 means node is not a leaf
+  referenceCount: number;   // total references across provider-services + products + provider-profiles
+  message: string;          // human-readable; e.g. "Cannot delete: 3 children and 12 references exist"
+}
+```
+
+**Guard conditions (ANY is sufficient to block deletion):**
+1. `childCount > 0` — node has child categories (L1 with L2 children, or L2 with L3 children)
+2. `referenceCount > 0` — category `id` appears in any of:
+   - `ProviderService.categoryId`
+   - `Product.categoryId` (dealer products)
+   - `ProviderProfile.categoryIds[]` (onboarding specializations)
+
+The admin UI surfaces the 409 body to the operator and offers "Deactivate instead" (`PATCH /active`) as an alternative.
+
+---
+
+### 8.3 Validation Rules
+
+| Rule | Detail |
+|------|--------|
+| **Max depth = 3** | `level > 3` is always rejected. Enforced on `POST` by checking `parent.level`. |
+| **Parent must exist** | `parentId` pointing to a non-existent category → `404`. |
+| **Scope inheritance** | If `providerTypeScope` is omitted on create and a parent exists, the child inherits the parent's scope. L1 nodes default to `null` (global) unless explicitly scoped. |
+| **Leaf-only classification (services/products)** | `ProviderService.categoryId` and `Product.categoryId` must reference a `level = 3` leaf. Backend should validate on create/update and return `422` with a clear message if a non-leaf is supplied. (See OQ14.) |
+| **Onboarding `categoryIds[]`** | Provider onboarding stores an array of category IDs representing the provider's specializations. These may be L2 **or** L3 nodes (the admin multi-select tree allows selecting at any level). Backend should **not** enforce leaf-only here. |
+
+---
+
+### 8.4 Migration Note — Flat → Hierarchical
+
+The existing Swagger assumes a **flat** `ServiceCategory` with a single `categoryId` field:
+
+```
+// BEFORE (flat, Swagger assumption)
+CreateProviderServiceDto { categoryId: uuid }   // any category, no depth constraint
+
+// BEFORE (flat, ProviderProfile onboarding)
+RegisterProviderRequest { categoryIds: number[] }  // arbitrary flat category ids
+```
+
+**After this change:**
+
+| Usage | New rule |
+|-------|----------|
+| `CreateProviderServiceDto.categoryId` | Must reference a **level-3 leaf** `ServiceCategory.id` |
+| `Product.categoryId` (dealer) | Must reference a **level-3 leaf** `ServiceCategory.id` |
+| `ProviderProfile.categoryIds[]` (onboarding) | May reference L2 or L3 nodes (provider specialization multi-select; no leaf restriction) |
+
+**Recommended migration path for backend:**
+1. Add `parent_id`, `level`, `provider_type_scope`, `is_active`, `sort_order` columns to the `ServiceCategories` table (or equivalent).
+2. Backfill existing flat categories as L1 roots (`parentId = null`, `level = 1`).
+3. Create L2 and L3 seed data to match the frontend mock tree (`src/shared/mocks/handlers/services.ts` — the 3-level mock tree is the reference).
+4. Add a DB constraint or application-layer check: `ProviderService.categoryId` must point to `level = 3`.
+5. Update `GET /admin/categories` (and `GET /Services/categories` if it exists) to return the new fields.
+
+---
+
+### 8.5 Frontend Consumption Map
+
+| Frontend screen | Endpoint called | How it uses categories |
+|----------------|----------------|----------------------|
+| Admin category tree (services tab) | `GET /admin/categories` (no filter) | Full tree for CRUD management |
+| `CategoryCascader` — admin services tab | `GET /admin/categories?providerType=workshop` (or relevant type) | 3-step L1→L2→L3 picker; requires L3 leaf selection |
+| `CategoryCascader` — dealer product form | `GET /admin/categories?providerType=dealer` | Same cascader; L3 leaf required for `Product.categoryId` |
+| Provider onboarding multi-select | `GET /admin/categories?providerType=<type>` | Tree rendered as checkbox tree; L2 or L3 selections allowed; stored as `categoryIds[]` |
+| Discovery filter (customer) | `GET /admin/categories?isActive=true&level=1` then `?parentId=<l1Id>` | L1 tabs → L2 filter chips; descendant-aware matching on backend search |
