@@ -1003,7 +1003,10 @@ const ar = {
         created: "تمت إضافة الخدمة بنجاح",
         updated: "تم تعديل الخدمة بنجاح",
         deleted: "تم حذف الخدمة بنجاح",
-      }
+      },
+      errors: {
+        pickLeafCategory: "اختر تصنيفًا حتى مستوى البند",
+      },
     },
     providers: {
       title: "المراجعات والاعتمادات",
@@ -1798,6 +1801,17 @@ const ar = {
     imageUpload: {
       change: "تغيير الصورة",
       remove: "حذف الصورة",
+    },
+    categoryCascader: {
+      l1Label: "التصنيف الرئيسي",
+      l2Label: "التصنيف الفرعي",
+      l3Label: "البند",
+      l1Placeholder: "اختر التصنيف الرئيسي",
+      l2Placeholder: "اختر التصنيف الفرعي",
+      l3Placeholder: "اختر البند",
+      pickL1First: "اختر التصنيف الرئيسي أولاً",
+      pickL2First: "اختر التصنيف الفرعي أولاً",
+      pathLabel: "المسار المختار",
     },
   },
 };
@@ -2804,7 +2818,10 @@ const en: typeof ar = {
         created: "Service created successfully",
         updated: "Service updated successfully",
         deleted: "Service deleted successfully",
-      }
+      },
+      errors: {
+        pickLeafCategory: "Select a category down to the item level",
+      },
     },
     providers: {
       title: "Reviews & Approvals",
@@ -3599,6 +3616,17 @@ const en: typeof ar = {
     imageUpload: {
       change: "Change image",
       remove: "Remove image",
+    },
+    categoryCascader: {
+      l1Label: "Main Category",
+      l2Label: "Subcategory",
+      l3Label: "Item",
+      l1Placeholder: "Select main category",
+      l2Placeholder: "Select subcategory",
+      l3Placeholder: "Select item",
+      pickL1First: "Select a main category first",
+      pickL2First: "Select a subcategory first",
+      pathLabel: "Selected path",
     },
   },
 };

@@ -1,7 +1,8 @@
 /**
- * Category tree builder.
- * Converts a flat ServiceCategory list into a nested CategoryTreeNode tree.
- * Used by admin category management (Phase 3) and provider service cascaders.
+ * Category tree builder and path resolver.
+ * Converts a flat ServiceCategory list into a nested CategoryTreeNode tree,
+ * and resolves a leaf node back up to its L1/L2/L3 ancestors.
+ * Used by admin category management and provider CategoryCascader.
  */
 
 import type { ServiceCategory, CategoryTreeNode } from "@modules/services/types";
@@ -46,4 +47,28 @@ export function getCategoryTree(
   sortNodes(roots);
 
   return roots;
+}
+
+/**
+ * Resolve a leaf category id up to its L1 / L2 / L3 ancestors.
+ * Any slot may be null if the id is not found or the tree is shallower than expected.
+ */
+export function getCategoryPath(
+  categories: ServiceCategory[],
+  leafId: number,
+): { l1: ServiceCategory | null; l2: ServiceCategory | null; l3: ServiceCategory | null } {
+  const byId = new Map<number, ServiceCategory>(categories.map((c) => [c.id, c]));
+  const leaf = byId.get(leafId) ?? null;
+  if (!leaf) return { l1: null, l2: null, l3: null };
+
+  if (leaf.level === 3) {
+    const l2 = leaf.parentId != null ? (byId.get(leaf.parentId) ?? null) : null;
+    const l1 = l2?.parentId != null ? (byId.get(l2.parentId) ?? null) : null;
+    return { l1, l2, l3: leaf };
+  }
+  if (leaf.level === 2) {
+    const l1 = leaf.parentId != null ? (byId.get(leaf.parentId) ?? null) : null;
+    return { l1, l2: leaf, l3: null };
+  }
+  return { l1: leaf, l2: null, l3: null };
 }

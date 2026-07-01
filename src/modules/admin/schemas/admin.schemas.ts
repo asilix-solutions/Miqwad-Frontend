@@ -98,7 +98,7 @@ export const serviceSchema = z.object({
     .string()
     .min(2, { message: "common.requiredField" })
     .max(100),
-  categoryId: z.number().positive({ message: "common.requiredField" }),
+  categoryId: z.number().positive({ message: "superAdmin.services.errors.pickLeafCategory" }),
   basePrice: z.number().min(0, { message: "common.requiredField" }),
   estimatedDuration: z.number().nullable().optional(),
   descriptionAr: z.string().nullable().optional(),

@@ -126,14 +126,14 @@ const MOCK_STATS: DashboardStats = {
 };
 
 let SEED_SERVICES: Service[] = [
-  { id: 1, nameAr: "غسيل خارجي", nameEn: "Exterior Wash", categoryId: 1, basePrice: 50, isActive: true },
-  { id: 2, nameAr: "تلميع داخلي", nameEn: "Interior Detailing", categoryId: 1, basePrice: 150, isActive: true },
-  { id: 3, nameAr: "تغيير زيت المحرك", nameEn: "Engine Oil Change", categoryId: 2, basePrice: 200, isActive: true, estimatedDuration: 30 },
-  { id: 4, nameAr: "فحص كمبيوتر", nameEn: "Computer Diagnostics", categoryId: 3, basePrice: 100, isActive: true },
-  { id: 5, nameAr: "تبديل بطارية", nameEn: "Battery Replacement", categoryId: 4, basePrice: 50, isActive: true },
-  { id: 6, nameAr: "وزن أذرعة", nameEn: "Wheel Alignment", categoryId: 5, basePrice: 120, isActive: true },
-  { id: 7, nameAr: "تعبئة فريون", nameEn: "AC Freon Recharge", categoryId: 6, basePrice: 150, isActive: false },
-  { id: 8, nameAr: "صيانة دورية", nameEn: "Periodic Maintenance", categoryId: 2, basePrice: 500, isActive: false, descriptionAr: "تشمل الفلاتر والزيوت", descriptionEn: "Includes filters and oils" },
+  { id: 1, nameAr: "غسيل خارجي",       nameEn: "Exterior Wash",          categoryId: 126, basePrice: 50,  isActive: true },
+  { id: 2, nameAr: "تلميع داخلي",       nameEn: "Interior Detailing",      categoryId: 127, basePrice: 150, isActive: true },
+  { id: 3, nameAr: "تغيير زيت المحرك",  nameEn: "Engine Oil Change",       categoryId: 111, basePrice: 200, isActive: true,  estimatedDuration: 30 },
+  { id: 4, nameAr: "فحص كمبيوتر",       nameEn: "Computer Diagnostics",    categoryId: 116, basePrice: 100, isActive: true },
+  { id: 5, nameAr: "تبديل بطارية",      nameEn: "Battery Replacement",     categoryId: 117, basePrice: 50,  isActive: true },
+  { id: 6, nameAr: "وزن أذرعة",         nameEn: "Wheel Alignment",         categoryId: 123, basePrice: 120, isActive: true },
+  { id: 7, nameAr: "تعبئة فريون",       nameEn: "AC Freon Recharge",       categoryId: 118, basePrice: 150, isActive: false },
+  { id: 8, nameAr: "صيانة دورية",       nameEn: "Periodic Maintenance",    categoryId: 112, basePrice: 500, isActive: false, descriptionAr: "تشمل الفلاتر والزيوت", descriptionEn: "Includes filters and oils" },
 ];
 
 
