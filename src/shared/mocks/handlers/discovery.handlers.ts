@@ -8,6 +8,8 @@ import type {
   ProviderReviewsResponse,
 } from "@modules/discovery/types";
 import type { ProviderProfile, ProviderService } from "@modules/providers/types";
+import { collectDescendantIds } from "@modules/services/lib/categoryTree";
+import { getCategoriesSnapshot } from "./providers.handlers";
 
 /**
  * In-process mock for Sprint 4 — Discover Nearby Services.
@@ -220,7 +222,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 215,
     isVerified: true,
     status: "approved",
-    categoryIds: [1, 4, 7],
+    categoryIds: [100, 101, 102, 104],
     specialization: "ميكانيكا/صيانة عامة",
     photos: ["https://picsum.photos/seed/nb1a/400/300", "https://picsum.photos/seed/nb1b/400/300"],
     documents: [],
@@ -242,7 +244,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 89,
     isVerified: true,
     status: "approved",
-    categoryIds: [1, 6],
+    categoryIds: [100, 101, 103],
     specialization: "تغيير زيت/بطاريات",
     photos: ["https://picsum.photos/seed/nb2a/400/300"],
     documents: [],
@@ -264,7 +266,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 56,
     isVerified: true,
     status: "approved",
-    categoryIds: [8],
+    categoryIds: [100, 108],
     specialization: "غسيل وتلميع",
     photos: ["https://picsum.photos/seed/nb3a/400/300"],
     documents: [],
@@ -286,7 +288,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 312,
     isVerified: true,
     status: "approved",
-    categoryIds: [9, 7],
+    categoryIds: [100, 107],
     specialization: "سمكرة/دهان",
     photos: ["https://picsum.photos/seed/nb4a/400/300", "https://picsum.photos/seed/nb4b/400/300"],
     documents: [],
@@ -308,7 +310,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 174,
     isVerified: true,
     status: "approved",
-    categoryIds: [10],
+    categoryIds: [100],
     specialization: "سحب/خدمات طريق",
     photos: ["https://picsum.photos/seed/nb5a/400/300"],
     documents: [],
@@ -330,7 +332,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 142,
     isVerified: true,
     status: "approved",
-    categoryIds: [5, 2],
+    categoryIds: [100, 103, 104],
     specialization: "تكييف/كهرباء",
     photos: ["https://picsum.photos/seed/nb6a/400/300"],
     documents: [],
@@ -352,7 +354,7 @@ const NEARBY_SEEDS: Array<Omit<ProviderProfile, "id">> = [
     totalRatings: 67,
     isVerified: true,
     status: "approved",
-    categoryIds: [3],
+    categoryIds: [100, 106],
     specialization: "كفرات/ميزانية",
     photos: ["https://picsum.photos/seed/nb7a/400/300"],
     documents: [],
@@ -656,8 +658,12 @@ export async function tryDiscoveryMock(
       })
       // Radius
       .filter((p) => p.distanceKm <= radiusKm)
-      // Category
-      .filter((p) => (categoryId == null ? true : p.categoryIds.includes(categoryId)))
+      // Category — match the selected id OR any of its descendants
+      .filter((p) => {
+        if (categoryId == null) return true;
+        const validIds = new Set(collectDescendantIds(getCategoriesSnapshot(), categoryId));
+        return p.categoryIds.some((id) => validIds.has(id));
+      })
       // Rating
       .filter((p) => p.rating >= minRating)
       // Price band

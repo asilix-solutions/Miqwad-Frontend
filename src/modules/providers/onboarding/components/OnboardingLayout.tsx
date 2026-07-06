@@ -53,8 +53,9 @@ function isOnboardingHandle(handle: unknown): handle is OnboardingRouteHandle {
 const STEP_INDEX_MAP: Record<OnboardingStepKey, OnboardingStep> = {
   loading: 0,
   account: 1,
-  documents: 2,
-  review: 3,
+  services: 2,
+  documents: 3,
+  review: 4,
 };
 
 // ---------------------------------------------------------------------------

@@ -7,6 +7,10 @@ import { AxiosHeaders } from "axios";
  * Endpoints mocked:
  *   GET    /Services/categories
  *   GET    /Services/categories/{id}/subcategories
+ *   GET    /admin/categories?providerType=&parentId=&level=   (Phase 2+)
+ *   POST   /admin/categories
+ *   PUT    /admin/categories/{id}
+ *   DELETE /admin/categories/{id}   (409 if children or references exist)
  *   POST   /ServiceProviders/register
  *   GET    /ServiceProviders/{id}/profile
  *   GET    /providers/{providerId}/services
@@ -14,17 +18,11 @@ import { AxiosHeaders } from "axios";
  *   PUT    /providers/{providerId}/services/{serviceId}
  *   DELETE /providers/{providerId}/services/{serviceId}
  *   POST   /ServiceProviders/{id}/documents
- *
- * Admin endpoints (not yet in the Swagger but required by the MVP plan;
- * shapes follow the same conventions so the BE can adopt them later):
  *   GET    /admin/providers?status=pending|approved|rejected
  *   PATCH  /admin/providers/{id}/approve
  *   PATCH  /admin/providers/{id}/reject  body: { reason: string }
  *
  * State persists in localStorage so the demo survives reloads.
- * The mock also mutates the `maqwad.user` blob (the FE source of truth
- * for the current user) when a customer becomes a provider, so the
- * sidebar instantly switches to the provider variant.
  */
 
 import type {
@@ -32,6 +30,7 @@ import type {
   ProviderDocument,
   ProviderProfile,
   ProviderService,
+  ProviderType,
 } from "@modules/providers/types";
 import type {
   ServiceCategory,
@@ -64,7 +63,7 @@ interface ProvidersDb {
 
 const PROVIDERS_DB_KEY = "maqwad.mockProvidersDb";
 
-const MOCK_SEED_VERSION = 9;
+const MOCK_SEED_VERSION = 11; // bumped: nearby seed categoryIds migrated to hierarchical IDs
 const MOCK_SEED_VERSION_KEY = "maqwad.mockSeedVersion";
 
 function loadDb(): ProvidersDb {
@@ -155,27 +154,160 @@ function parseBody(data: unknown): Record<string, unknown> {
 }
 
 // =============================================================================
-// Lookup data
+// Lookup data — 3-level category tree
+//
+// ID ranges:
+//   100–199  Workshop (ورشة)
+//   200–299  Dealer / parts vendor (تاجر)
+//   300–399  Scrap yard (تشليح)
+//   400+     Dynamically created via POST /admin/categories
 // =============================================================================
 
-/**
- * Hard-coded service categories. These ids/names match what the backend
- * will eventually seed — replace by the real `GET /Services/categories`
- * response shape once the API is live.
- */
-let nextCategoryId = 11;
+let nextCategoryId = 400;
+
 let CATEGORIES: ServiceCategory[] = [
-  { id: 1, nameAr: "تغيير الزيت", nameEn: "Oil change", iconUrl: null, colorHint: "orange" },
-  { id: 2, nameAr: "الكهرباء", nameEn: "Electrical", iconUrl: null, colorHint: "blue" },
-  { id: 3, nameAr: "الكفرات", nameEn: "Tires", iconUrl: null, colorHint: "navy" },
-  { id: 4, nameAr: "الصيانة الدورية", nameEn: "Periodic maintenance", iconUrl: null, colorHint: "green" },
-  { id: 5, nameAr: "تكييف وتبريد", nameEn: "AC & cooling", iconUrl: null, colorHint: "blue" },
-  { id: 6, nameAr: "البطاريات", nameEn: "Batteries", iconUrl: null, colorHint: "red" },
-  { id: 7, nameAr: "الميكانيكا العامة", nameEn: "General mechanics", iconUrl: null, colorHint: "purple" },
-  { id: 8, nameAr: "غسيل وتلميع", nameEn: "Wash & detailing", iconUrl: null, colorHint: "green" },
-  { id: 9, nameAr: "السمكرة والدهان", nameEn: "Body & paint", iconUrl: null, colorHint: "red" },
-  { id: 10, nameAr: "النقل والاستلام", nameEn: "Pickup & delivery", iconUrl: null, colorHint: "navy" },
+  // ── Workshop ────────────────────────────────────────────────────────────────
+  // Level 1 – root
+  { id: 100, nameAr: "الصيانة والإصلاح", nameEn: "Maintenance & Repair", iconUrl: null, colorHint: "orange", parentId: null, level: 1, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+
+  // Level 2 – children of 100
+  { id: 101, nameAr: "صيانة عامة",       nameEn: "General Maintenance",  iconUrl: null, colorHint: "green",  parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 102, nameAr: "ميكانيكا",          nameEn: "Mechanics",            iconUrl: null, colorHint: "orange", parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+  { id: 103, nameAr: "كهرباء سيارات",    nameEn: "Auto Electrical",      iconUrl: null, colorHint: "blue",   parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 3 },
+  { id: 104, nameAr: "تبريد وتكييف",     nameEn: "AC & Cooling",         iconUrl: null, colorHint: "blue",   parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 4 },
+  { id: 105, nameAr: "فرامل وتعليق",     nameEn: "Brakes & Suspension",  iconUrl: null, colorHint: "red",    parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 5 },
+  { id: 106, nameAr: "إطارات وميزان",    nameEn: "Tires & Alignment",    iconUrl: null, colorHint: "navy",   parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 6 },
+  { id: 107, nameAr: "سمكرة ودهان",      nameEn: "Body & Paint",         iconUrl: null, colorHint: "red",    parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 7 },
+  { id: 108, nameAr: "غسيل وتلميع",      nameEn: "Wash & Detailing",     iconUrl: null, colorHint: "green",  parentId: 100, level: 2, providerTypeScope: "workshop", isActive: true, sortOrder: 8 },
+
+  // Level 3 – sub-children of 101 (صيانة عامة)
+  { id: 111, nameAr: "تغيير زيت ومرشحات",     nameEn: "Oil & Filter Change",  iconUrl: null, colorHint: undefined, parentId: 101, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 112, nameAr: "صيانة دورية 10,000 كم",  nameEn: "10k km Service",       iconUrl: null, colorHint: undefined, parentId: 101, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 102 (ميكانيكا)
+  { id: 113, nameAr: "إصلاح المحرك",         nameEn: "Engine Repair",          iconUrl: null, colorHint: undefined, parentId: 102, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 114, nameAr: "إصلاح ناقل الحركة",    nameEn: "Gearbox Repair",         iconUrl: null, colorHint: undefined, parentId: 102, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+  { id: 115, nameAr: "تغيير بواجي",          nameEn: "Spark Plug Replacement", iconUrl: null, colorHint: undefined, parentId: 102, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 3 },
+
+  // Level 3 – sub-children of 103 (كهرباء سيارات)
+  { id: 116, nameAr: "فحص كمبيوتر",   nameEn: "Computer Diagnostics", iconUrl: null, colorHint: undefined, parentId: 103, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 117, nameAr: "تركيب دينمو",   nameEn: "Alternator Install",   iconUrl: null, colorHint: undefined, parentId: 103, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 104 (تبريد وتكييف)
+  { id: 118, nameAr: "تعبئة فريون",  nameEn: "Refrigerant Top-up",   iconUrl: null, colorHint: undefined, parentId: 104, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 119, nameAr: "تنظيف مكيف",   nameEn: "AC Cleaning",          iconUrl: null, colorHint: undefined, parentId: 104, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 105 (فرامل وتعليق)
+  { id: 120, nameAr: "تغيير فرامل",    nameEn: "Brake Replacement",  iconUrl: null, colorHint: undefined, parentId: 105, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 121, nameAr: "إصلاح التعليق",  nameEn: "Suspension Repair",  iconUrl: null, colorHint: undefined, parentId: 105, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 106 (إطارات وميزان)
+  { id: 122, nameAr: "تغيير إطار",      nameEn: "Tire Replacement",          iconUrl: null, colorHint: undefined, parentId: 106, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 123, nameAr: "ميزانية وعدلية",  nameEn: "Wheel Alignment & Balance", iconUrl: null, colorHint: undefined, parentId: 106, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 107 (سمكرة ودهان)
+  { id: 124, nameAr: "سمكرة قطعة",  nameEn: "Body Panel Repair",    iconUrl: null, colorHint: undefined, parentId: 107, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 125, nameAr: "دهان قطعة",   nameEn: "Single Panel Paint",   iconUrl: null, colorHint: undefined, parentId: 107, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 108 (غسيل وتلميع)
+  { id: 126, nameAr: "غسيل خارجي",  nameEn: "Exterior Wash",  iconUrl: null, colorHint: undefined, parentId: 108, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 1 },
+  { id: 127, nameAr: "تلميع شامل",  nameEn: "Full Detailing", iconUrl: null, colorHint: undefined, parentId: 108, level: 3, providerTypeScope: "workshop", isActive: true, sortOrder: 2 },
+
+  // ── Dealer / Parts Vendor ────────────────────────────────────────────────────
+  // Level 1 – root
+  { id: 200, nameAr: "قطع غيار جديدة", nameEn: "New Spare Parts", iconUrl: null, colorHint: "orange", parentId: null, level: 1, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+
+  // Level 2 – children of 200
+  { id: 201, nameAr: "زيوت وفلاتر",         nameEn: "Oils & Filters",       iconUrl: null, colorHint: "orange", parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 202, nameAr: "بطاريات",              nameEn: "Batteries",            iconUrl: null, colorHint: "red",    parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+  { id: 203, nameAr: "فرامل",               nameEn: "Brakes",               iconUrl: null, colorHint: "red",    parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 3 },
+  { id: 204, nameAr: "مكونات المحرك",       nameEn: "Engine Components",    iconUrl: null, colorHint: "orange", parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 4 },
+  { id: 205, nameAr: "كهرباء وإلكترونيات", nameEn: "Electrical & Electronics", iconUrl: null, colorHint: "blue", parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 5 },
+  { id: 206, nameAr: "عفشة وتعليق",         nameEn: "Chassis & Suspension", iconUrl: null, colorHint: "navy",   parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 6 },
+  { id: 207, nameAr: "تبريد ومكيف",         nameEn: "Cooling & AC Parts",   iconUrl: null, colorHint: "blue",   parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 7 },
+  { id: 208, nameAr: "إكسسوارات",           nameEn: "Accessories",          iconUrl: null, colorHint: "green",  parentId: 200, level: 2, providerTypeScope: "dealer", isActive: true, sortOrder: 8 },
+
+  // Level 3 – sub-children of 201 (زيوت وفلاتر)
+  { id: 211, nameAr: "زيت محرك",   nameEn: "Engine Oil",  iconUrl: null, colorHint: undefined, parentId: 201, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 212, nameAr: "فلتر زيت",   nameEn: "Oil Filter",  iconUrl: null, colorHint: undefined, parentId: 201, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+  { id: 213, nameAr: "فلتر هواء",  nameEn: "Air Filter",  iconUrl: null, colorHint: undefined, parentId: 201, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 3 },
+
+  // Level 3 – sub-children of 202 (بطاريات)
+  { id: 214, nameAr: "بطارية 45 أمبير",  nameEn: "45 Ah Battery",  iconUrl: null, colorHint: undefined, parentId: 202, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 215, nameAr: "بطارية 60 أمبير",  nameEn: "60 Ah Battery",  iconUrl: null, colorHint: undefined, parentId: 202, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+  { id: 216, nameAr: "بطارية 80 أمبير",  nameEn: "80 Ah Battery",  iconUrl: null, colorHint: undefined, parentId: 202, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 3 },
+
+  // Level 3 – sub-children of 203 (فرامل)
+  { id: 217, nameAr: "تيل فرامل",  nameEn: "Brake Pads",  iconUrl: null, colorHint: undefined, parentId: 203, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 218, nameAr: "قرص فرامل",  nameEn: "Brake Disc",  iconUrl: null, colorHint: undefined, parentId: 203, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 204 (مكونات المحرك)
+  { id: 219, nameAr: "بواجي",         nameEn: "Spark Plugs",   iconUrl: null, colorHint: undefined, parentId: 204, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 220, nameAr: "حزام توقيت",    nameEn: "Timing Belt",   iconUrl: null, colorHint: undefined, parentId: 204, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 205 (كهرباء وإلكترونيات)
+  { id: 221, nameAr: "شمعات إشعال",  nameEn: "Ignition Coils", iconUrl: null, colorHint: undefined, parentId: 205, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 222, nameAr: "سيلينويد",     nameEn: "Solenoid",        iconUrl: null, colorHint: undefined, parentId: 205, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 206 (عفشة وتعليق)
+  { id: 223, nameAr: "مساعدات أمامية",  nameEn: "Front Shock Absorbers", iconUrl: null, colorHint: undefined, parentId: 206, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 224, nameAr: "مساعدات خلفية",   nameEn: "Rear Shock Absorbers",  iconUrl: null, colorHint: undefined, parentId: 206, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 207 (تبريد ومكيف)
+  { id: 225, nameAr: "ريديتر",         nameEn: "Radiator",       iconUrl: null, colorHint: undefined, parentId: 207, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 226, nameAr: "كمبروسر مكيف",   nameEn: "AC Compressor",  iconUrl: null, colorHint: undefined, parentId: 207, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 208 (إكسسوارات)
+  { id: 227, nameAr: "مساحات زجاج",  nameEn: "Windshield Wipers",  iconUrl: null, colorHint: undefined, parentId: 208, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 1 },
+  { id: 228, nameAr: "معطر سيارة",    nameEn: "Car Air Freshener",  iconUrl: null, colorHint: undefined, parentId: 208, level: 3, providerTypeScope: "dealer", isActive: true, sortOrder: 2 },
+
+  // ── Scrap Yard ──────────────────────────────────────────────────────────────
+  // Level 1 – root
+  { id: 300, nameAr: "قطع غيار مستعملة", nameEn: "Used Spare Parts", iconUrl: null, colorHint: "purple", parentId: null, level: 1, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+
+  // Level 2 – children of 300
+  { id: 301, nameAr: "مكائن وقيرات",    nameEn: "Engines & Gearboxes", iconUrl: null, colorHint: "orange", parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 302, nameAr: "بودي خارجي",      nameEn: "Exterior Body Parts", iconUrl: null, colorHint: "navy",   parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+  { id: 303, nameAr: "أنوار ومرايا",    nameEn: "Lights & Mirrors",    iconUrl: null, colorHint: "blue",   parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 3 },
+  { id: 304, nameAr: "داخلي",           nameEn: "Interior",            iconUrl: null, colorHint: "green",  parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 4 },
+  { id: 305, nameAr: "كهرباء مستعملة", nameEn: "Used Electrical",     iconUrl: null, colorHint: "blue",   parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 5 },
+  { id: 306, nameAr: "نظام التعليق",    nameEn: "Suspension System",   iconUrl: null, colorHint: "red",    parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 6 },
+  { id: 307, nameAr: "جنوط وإطارات",   nameEn: "Rims & Tires",        iconUrl: null, colorHint: "navy",   parentId: 300, level: 2, providerTypeScope: "scrap", isActive: true, sortOrder: 7 },
+
+  // Level 3 – sub-children of 301 (مكائن وقيرات)
+  { id: 311, nameAr: "مكينة كاملة",    nameEn: "Complete Engine",    iconUrl: null, colorHint: undefined, parentId: 301, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 312, nameAr: "قير أوتوماتيك",  nameEn: "Automatic Gearbox",  iconUrl: null, colorHint: undefined, parentId: 301, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+  { id: 313, nameAr: "قير عادي",       nameEn: "Manual Gearbox",     iconUrl: null, colorHint: undefined, parentId: 301, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 3 },
+
+  // Level 3 – sub-children of 302 (بودي خارجي)
+  { id: 314, nameAr: "كبوت",  nameEn: "Bonnet / Hood", iconUrl: null, colorHint: undefined, parentId: 302, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 315, nameAr: "باب",   nameEn: "Door",           iconUrl: null, colorHint: undefined, parentId: 302, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 303 (أنوار ومرايا)
+  { id: 316, nameAr: "شبكة أمامية",   nameEn: "Headlights",    iconUrl: null, colorHint: undefined, parentId: 303, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 317, nameAr: "مرايا جانبية",  nameEn: "Side Mirrors",  iconUrl: null, colorHint: undefined, parentId: 303, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 304 (داخلي)
+  { id: 318, nameAr: "لوح قيادة",  nameEn: "Dashboard Panel",  iconUrl: null, colorHint: undefined, parentId: 304, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 319, nameAr: "كراسي",      nameEn: "Seats",             iconUrl: null, colorHint: undefined, parentId: 304, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 305 (كهرباء مستعملة)
+  { id: 320, nameAr: "وحدة تحكم ECU", nameEn: "ECU / Control Unit",  iconUrl: null, colorHint: undefined, parentId: 305, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 321, nameAr: "كابلات كهرباء", nameEn: "Wiring Harness",      iconUrl: null, colorHint: undefined, parentId: 305, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 306 (نظام التعليق)
+  { id: 322, nameAr: "رفرف",       nameEn: "Fender",       iconUrl: null, colorHint: undefined, parentId: 306, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 323, nameAr: "ذراع عفشة", nameEn: "Control Arm",  iconUrl: null, colorHint: undefined, parentId: 306, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
+
+  // Level 3 – sub-children of 307 (جنوط وإطارات)
+  { id: 324, nameAr: "جنط حديد",     nameEn: "Steel Rim",   iconUrl: null, colorHint: undefined, parentId: 307, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 1 },
+  { id: 325, nameAr: "جنط ألومنيوم", nameEn: "Alloy Rim",   iconUrl: null, colorHint: undefined, parentId: 307, level: 3, providerTypeScope: "scrap", isActive: true, sortOrder: 2 },
 ];
+
+/** Returns a snapshot of the in-memory categories list for use by other mock handlers. */
+export function getCategoriesSnapshot(): ServiceCategory[] {
+  return [...CATEGORIES];
+}
 
 let CITIES: City[] = [...KSA_CITIES].map((c) => ({
   id: c.key,
@@ -185,45 +317,37 @@ let CITIES: City[] = [...KSA_CITIES].map((c) => ({
 
 
 const SUBCATEGORIES: Record<number, ServiceSubcategory[]> = {
-  1: [
-    { id: 101, categoryId: 1, nameAr: "تغيير زيت محرك", nameEn: "Engine oil change", averagePrice: 180 },
-    { id: 102, categoryId: 1, nameAr: "تغيير فلتر زيت", nameEn: "Oil filter replacement", averagePrice: 60 },
+  101: [
+    { id: 101101, categoryId: 101, nameAr: "تغيير زيت محرك", nameEn: "Engine oil change", averagePrice: 180 },
+    { id: 101102, categoryId: 101, nameAr: "تغيير فلتر زيت", nameEn: "Oil filter replacement", averagePrice: 60 },
   ],
-  2: [
-    { id: 201, categoryId: 2, nameAr: "فحص كهربائي شامل", nameEn: "Full electrical check", averagePrice: 250 },
-    { id: 202, categoryId: 2, nameAr: "تركيب دينمو", nameEn: "Alternator installation", averagePrice: 450 },
+  103: [
+    { id: 103201, categoryId: 103, nameAr: "فحص كهربائي شامل", nameEn: "Full electrical check", averagePrice: 250 },
+    { id: 103202, categoryId: 103, nameAr: "تركيب دينمو", nameEn: "Alternator installation", averagePrice: 450 },
   ],
-  3: [
-    { id: 301, categoryId: 3, nameAr: "تغيير إطار", nameEn: "Tire replacement", averagePrice: 350 },
-    { id: 302, categoryId: 3, nameAr: "ميزانية وعدلية", nameEn: "Wheel alignment & balancing", averagePrice: 150 },
+  106: [
+    { id: 106301, categoryId: 106, nameAr: "تغيير إطار", nameEn: "Tire replacement", averagePrice: 350 },
+    { id: 106302, categoryId: 106, nameAr: "ميزانية وعدلية", nameEn: "Wheel alignment & balancing", averagePrice: 150 },
   ],
-  4: [
-    { id: 401, categoryId: 4, nameAr: "صيانة 10,000 كم", nameEn: "10k km service", averagePrice: 400 },
-    { id: 402, categoryId: 4, nameAr: "صيانة 50,000 كم", nameEn: "50k km service", averagePrice: 950 },
+  104: [
+    { id: 104501, categoryId: 104, nameAr: "تعبئة فريون", nameEn: "Refrigerant top-up", averagePrice: 200 },
+    { id: 104502, categoryId: 104, nameAr: "تنظيف كمبروسر", nameEn: "Compressor cleaning", averagePrice: 320 },
   ],
-  5: [
-    { id: 501, categoryId: 5, nameAr: "تعبئة فريون", nameEn: "Refrigerant top-up", averagePrice: 200 },
-    { id: 502, categoryId: 5, nameAr: "تنظيف كمبروسر", nameEn: "Compressor cleaning", averagePrice: 320 },
+  202: [
+    { id: 202601, categoryId: 202, nameAr: "بطارية 60 أمبير", nameEn: "60Ah battery", averagePrice: 320 },
+    { id: 202602, categoryId: 202, nameAr: "بطارية 100 أمبير", nameEn: "100Ah battery", averagePrice: 550 },
   ],
-  6: [
-    { id: 601, categoryId: 6, nameAr: "بطارية 60 أمبير", nameEn: "60Ah battery", averagePrice: 320 },
-    { id: 602, categoryId: 6, nameAr: "بطارية 100 أمبير", nameEn: "100Ah battery", averagePrice: 550 },
+  102: [
+    { id: 102701, categoryId: 102, nameAr: "كشف عطل عام", nameEn: "General diagnostics", averagePrice: 180 },
+    { id: 102702, categoryId: 102, nameAr: "إصلاح ناقل الحركة", nameEn: "Gearbox repair", averagePrice: 1500 },
   ],
-  7: [
-    { id: 701, categoryId: 7, nameAr: "كشف عطل عام", nameEn: "General diagnostics", averagePrice: 180 },
-    { id: 702, categoryId: 7, nameAr: "إصلاح ناقل الحركة", nameEn: "Gearbox repair", averagePrice: 1500 },
+  108: [
+    { id: 108801, categoryId: 108, nameAr: "غسيل خارجي", nameEn: "Exterior wash", averagePrice: 40 },
+    { id: 108802, categoryId: 108, nameAr: "تلميع شامل", nameEn: "Full detailing", averagePrice: 350 },
   ],
-  8: [
-    { id: 801, categoryId: 8, nameAr: "غسيل خارجي", nameEn: "Exterior wash", averagePrice: 40 },
-    { id: 802, categoryId: 8, nameAr: "تلميع شامل", nameEn: "Full detailing", averagePrice: 350 },
-  ],
-  9: [
-    { id: 901, categoryId: 9, nameAr: "سمكرة قطعة", nameEn: "Body panel repair", averagePrice: 600 },
-    { id: 902, categoryId: 9, nameAr: "دهان قطعة", nameEn: "Single panel paint", averagePrice: 450 },
-  ],
-  10: [
-    { id: 1001, categoryId: 10, nameAr: "سحب سيارة معطّلة", nameEn: "Tow truck", averagePrice: 250 },
-    { id: 1002, categoryId: 10, nameAr: "استلام للصيانة", nameEn: "Pickup for service", averagePrice: 150 },
+  107: [
+    { id: 107901, categoryId: 107, nameAr: "سمكرة قطعة", nameEn: "Body panel repair", averagePrice: 600 },
+    { id: 107902, categoryId: 107, nameAr: "دهان قطعة", nameEn: "Single panel paint", averagePrice: 450 },
   ],
 };
 
@@ -234,6 +358,11 @@ const SUBCATEGORIES: Record<number, ServiceSubcategory[]> = {
 /**
  * Seed a few demo providers so the Admin Review screen has data
  * when an admin signs in for the first time.
+ *
+ * categoryIds are re-pointed to valid level-2 IDs in the new tree:
+ *   Workshop  → 100s
+ *   Dealer    → 200s
+ *   Scrap     → 300s
  */
 function seedIfEmpty(db: ProvidersDb): void {
   if (db.seeded) return;
@@ -256,7 +385,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: false,
       status: "pending",
-      categoryIds: [1, 4, 7],
+      categoryIds: [102, 101, 103], // ميكانيكا, صيانة عامة, كهرباء سيارات
       specialization: "ميكانيكا/كهرباء",
       photos: ["https://picsum.photos/seed/ws1a/400/300", "https://picsum.photos/seed/ws1b/400/300"],
       documents: [
@@ -294,7 +423,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 132,
       isVerified: true,
       status: "approved",
-      categoryIds: [2, 6],
+      categoryIds: [103, 104], // كهرباء سيارات, تبريد وتكييف
       specialization: "تكييف وتبريد/كهرباء",
       photos: ["https://picsum.photos/seed/ws2a/400/300", "https://picsum.photos/seed/ws2b/400/300"],
       documents: [],
@@ -317,7 +446,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: false,
       status: "rejected",
-      categoryIds: [8],
+      categoryIds: [108], // غسيل وتلميع
       specialization: "غسيل وتلميع",
       photos: ["https://picsum.photos/seed/ws3a/400/300", "https://picsum.photos/seed/ws3b/400/300"],
       documents: [],
@@ -340,7 +469,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: false,
       status: "pending",
-      categoryIds: [3, 7],
+      categoryIds: [307, 301], // جنوط وإطارات, مكائن وقيرات
       brandSpecialization: ["تويوتا", "نيسان"],
       documents: [],
       rejectionReason: null,
@@ -362,7 +491,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 85,
       isVerified: true,
       status: "approved",
-      categoryIds: [7, 9],
+      categoryIds: [301, 302], // مكائن وقيرات, بودي خارجي
       brandSpecialization: ["جي إم سي", "فورد", "شيفروليه"],
       documents: [],
       rejectionReason: null,
@@ -384,7 +513,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: false,
       status: "rejected",
-      categoryIds: [7],
+      categoryIds: [301], // مكائن وقيرات
       brandSpecialization: ["هونداي", "كيا"],
       documents: [],
       rejectionReason: "صورة الهوية غير مطابقة",
@@ -406,7 +535,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: true,
       status: "approved",
-      categoryIds: [1, 2, 6],
+      categoryIds: [201, 208, 202], // زيوت وفلاتر, إكسسوارات, بطاريات
       commissionRate: 5,
       monthlySales: 15000,
       productCategories: ["بطاريات", "زيوت ومرشحات", "إكسسوارات"],
@@ -432,7 +561,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 320,
       isVerified: true,
       status: "approved",
-      categoryIds: [1, 4, 7],
+      categoryIds: [102, 101, 103], // ميكانيكا, صيانة عامة, كهرباء سيارات
       specialization: "ميكانيكا/كهرباء/صيانة دورية",
       documents: [],
       rejectionReason: null,
@@ -454,7 +583,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 178,
       isVerified: true,
       status: "approved",
-      categoryIds: [3, 7],
+      categoryIds: [307, 301], // جنوط وإطارات, مكائن وقيرات
       brandSpecialization: ["تويوتا", "نيسان", "بي إم دبليو", "مرسيدس"],
       documents: [],
       rejectionReason: null,
@@ -476,7 +605,7 @@ function seedIfEmpty(db: ProvidersDb): void {
       totalRatings: 0,
       isVerified: false,
       status: "rejected",
-      categoryIds: [5, 2],
+      categoryIds: [207, 208], // تبريد ومكيف, إكسسوارات
       commissionRate: 7,
       monthlySales: 22000,
       productCategories: ["قطع تكييف", "إكسسوارات داخلية"],
@@ -495,7 +624,7 @@ function seedIfEmpty(db: ProvidersDb): void {
   }
   db.nextProviderId = maxId + 1;
 
-  // Demo services for the approved provider (so /provider/services has data when reviewed by admin).
+  // Demo services for the first approved provider (workshop id=2).
   const approvedProviderId = Object.values(db.providers).find((p) => p.status === "approved")?.id;
   if (approvedProviderId) {
     const demoSvcs: Array<Omit<ProviderService, "id" | "providerId">> = [
@@ -504,20 +633,20 @@ function seedIfEmpty(db: ProvidersDb): void {
         description: "كشف الأعطال الكهربائية بأحدث الأجهزة",
         price: 220,
         estimatedDuration: 45,
-        categoryId: 2,
-        subcategoryId: 201,
-        categoryName: "الكهرباء",
-        subcategoryName: "فحص كهربائي شامل",
+        categoryId: 103, // كهرباء سيارات
+        subcategoryId: null,
+        categoryName: "كهرباء سيارات",
+        subcategoryName: null,
       },
       {
         name: "تركيب بطارية 60 أمبير",
         description: "تركيب وفحص دائرة الشحن",
         price: 380,
         estimatedDuration: 20,
-        categoryId: 6,
-        subcategoryId: 601,
-        categoryName: "البطاريات",
-        subcategoryName: "بطارية 60 أمبير",
+        categoryId: 103, // كهرباء سيارات (battery install = electrical work)
+        subcategoryId: null,
+        categoryName: "كهرباء سيارات",
+        subcategoryName: null,
       },
     ];
     for (const svc of demoSvcs) {
@@ -590,6 +719,28 @@ export async function tryProvidersMock(
   if (m && method === "get") {
     const categoryId = Number(m[1]);
     return ok(config, SUBCATEGORIES[categoryId] ?? []);
+  }
+
+  // -- GET /admin/categories --------------------------------------------------
+  if (url === "admin/categories" && method === "get") {
+    const providerType = (config.params as { providerType?: string } | undefined)?.providerType;
+    const parentIdParam = (config.params as { parentId?: string } | undefined)?.parentId;
+    const levelParam = (config.params as { level?: string } | undefined)?.level;
+
+    let filtered = [...CATEGORIES];
+    if (providerType) {
+      filtered = filtered.filter(
+        (c) => c.providerTypeScope === null || c.providerTypeScope === providerType,
+      );
+    }
+    if (parentIdParam !== undefined) {
+      const pid = parentIdParam === "null" ? null : Number(parentIdParam);
+      filtered = filtered.filter((c) => c.parentId === pid);
+    }
+    if (levelParam !== undefined) {
+      filtered = filtered.filter((c) => c.level === Number(levelParam));
+    }
+    return ok(config, filtered);
   }
 
   // -- POST /ServiceProviders/register ----------------------------------------
@@ -760,9 +911,37 @@ export async function tryProvidersMock(
     if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
     if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
 
-    const body = parseBody(config.data) as Partial<ServiceCategory>;
+    const body = parseBody(config.data) as {
+      nameAr?: string;
+      nameEn?: string;
+      iconUrl?: string | null;
+      colorHint?: ServiceCategory["colorHint"];
+      parentId?: number | null;
+      providerTypeScope?: ProviderType | null;
+      isActive?: boolean;
+      sortOrder?: number;
+    };
+
     if (!body.nameAr || !body.nameEn) {
       throw fail(config, 400, "VALIDATION", "بيانات ناقصة");
+    }
+
+    // Resolve parentId, level, and inherited providerTypeScope
+    const parentId: number | null = body.parentId !== undefined ? body.parentId : null;
+    let level: 1 | 2 | 3 = 1;
+    let providerTypeScope: ProviderType | null = body.providerTypeScope ?? null;
+
+    if (parentId !== null) {
+      const parent = CATEGORIES.find((c) => c.id === parentId);
+      if (!parent) throw fail(config, 400, "VALIDATION", "الصنف الأب غير موجود");
+      if (parent.level >= 3) {
+        throw fail(config, 400, "VALIDATION", "لا يمكن إضافة مستوى رابع — الحد الأقصى 3 مستويات");
+      }
+      level = (parent.level + 1) as 1 | 2 | 3;
+      // Inherit scope from parent when caller does not supply one
+      if (providerTypeScope === null) {
+        providerTypeScope = parent.providerTypeScope;
+      }
     }
 
     const id = nextCategoryId++;
@@ -772,6 +951,11 @@ export async function tryProvidersMock(
       nameEn: String(body.nameEn),
       iconUrl: body.iconUrl ? String(body.iconUrl) : null,
       colorHint: body.colorHint as ServiceCategory["colorHint"],
+      parentId,
+      level,
+      providerTypeScope,
+      isActive: body.isActive !== false,
+      sortOrder: typeof body.sortOrder === "number" ? body.sortOrder : 0,
     };
     CATEGORIES.push(newCat);
     return ok(config, newCat, 201);
@@ -789,12 +973,16 @@ export async function tryProvidersMock(
     if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
 
     const body = parseBody(config.data) as Partial<ServiceCategory>;
+    const existing = CATEGORIES[index];
     const updated: ServiceCategory = {
-      ...CATEGORIES[index],
-      nameAr: body.nameAr ? String(body.nameAr) : CATEGORIES[index].nameAr,
-      nameEn: body.nameEn ? String(body.nameEn) : CATEGORIES[index].nameEn,
-      iconUrl: body.iconUrl !== undefined ? (body.iconUrl ? String(body.iconUrl) : null) : CATEGORIES[index].iconUrl,
-      colorHint: body.colorHint !== undefined ? body.colorHint as ServiceCategory["colorHint"] : CATEGORIES[index].colorHint,
+      ...existing,
+      nameAr: body.nameAr ? String(body.nameAr) : existing.nameAr,
+      nameEn: body.nameEn ? String(body.nameEn) : existing.nameEn,
+      iconUrl: body.iconUrl !== undefined ? (body.iconUrl ? String(body.iconUrl) : null) : existing.iconUrl,
+      colorHint: body.colorHint !== undefined ? body.colorHint as ServiceCategory["colorHint"] : existing.colorHint,
+      // Allowed mutable fields — level/parentId move is out of scope Phase 2
+      isActive: body.isActive !== undefined ? Boolean(body.isActive) : existing.isActive,
+      sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : existing.sortOrder,
     };
     CATEGORIES[index] = updated;
     return ok(config, updated);
@@ -810,8 +998,64 @@ export async function tryProvidersMock(
     const index = CATEGORIES.findIndex((c) => c.id === id);
     if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
 
+    // Guard: children
+    const childCount = CATEGORIES.filter((c) => c.parentId === id).length;
+
+    // Guard: references in ProviderProfile.categoryIds and ProviderService.categoryId
+    const refProviders = Object.values(db.providers).filter((p) =>
+      p.categoryIds.includes(id),
+    ).length;
+    const refProviderServices = Object.values(db.services).filter(
+      (s) => s.categoryId === id,
+    ).length;
+    const referenceCount = refProviders + refProviderServices;
+
+    if (childCount > 0 || referenceCount > 0) {
+      const conflictErr = new Error("لا يمكن الحذف — الصنف قيد الاستخدام") as Error & {
+        isAxiosError: boolean;
+        response: AxiosResponse;
+        config: InternalAxiosRequestConfig;
+      };
+      conflictErr.isAxiosError = true;
+      conflictErr.config = config;
+      conflictErr.response = {
+        data: {
+          error: "in_use",
+          childCount,
+          referenceCount,
+          message: childCount > 0
+            ? `لا يمكن الحذف: يوجد ${childCount} فئة فرعية. احذفها أولاً أو استخدم التعطيل.`
+            : `لا يمكن الحذف: الصنف مرتبط بـ ${referenceCount} سجل. استخدم التعطيل بدلاً من الحذف.`,
+        },
+        status: 409,
+        statusText: "Conflict",
+        headers: new AxiosHeaders(),
+        config,
+      };
+      throw conflictErr;
+    }
+
     CATEGORIES.splice(index, 1);
     return ok(config, { success: true });
+  }
+
+  // -- PATCH /admin/categories/{id} (deactivate) ──────────────────────────────
+  // Allows toggling isActive without deleting — safe alternative to DELETE.
+  m = url.match(/^admin\/categories\/(\d+)$/);
+  if (m && method === "patch") {
+    const me = readCurrentUser();
+    if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
+    if (me.role !== "admin" && me.role !== "super_admin") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
+
+    const id = Number(m[1]);
+    const index = CATEGORIES.findIndex((c) => c.id === id);
+    if (index === -1) throw fail(config, 404, "NOT_FOUND", "غير موجود");
+
+    const body = parseBody(config.data) as { isActive?: boolean };
+    if (body.isActive !== undefined) {
+      CATEGORIES[index] = { ...CATEGORIES[index], isActive: Boolean(body.isActive) };
+    }
+    return ok(config, CATEGORIES[index]);
   }
 
   // -- GET /admin/cities ------------------------------------------------------
@@ -885,7 +1129,7 @@ export async function tryProvidersMock(
     const all = Object.values(db.providers);
     let filtered =
       !status || status === "all" ? all : all.filter((p) => p.status === status);
-    
+
     if (type) {
       filtered = filtered.filter((p) => p.type === type);
     }
@@ -952,10 +1196,10 @@ export async function tryProvidersMock(
     if (!me) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
     if (me.role !== "provider" && me.role !== "driver") throw fail(config, 403, "FORBIDDEN", "غير مسموح");
     if (!me.providerId) throw fail(config, 404, "NOT_FOUND", "بيانات المزود غير موجودة");
-    
+
     const p = db.providers[me.providerId];
     if (!p) throw fail(config, 404, "NOT_FOUND", "غير موجود");
-    
+
     return ok(config, p);
   }
 

@@ -35,6 +35,13 @@ export const categorySchema = z.object({
     .max(100),
   iconUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
   colorHint: z.enum(["blue", "green", "orange", "purple", "red", "navy"]).optional(),
+
+  // Hierarchy fields (Phase 3 form will populate these; optional here so Phase 2 compiles)
+  parentId: z.number().nullable().optional(),
+  level: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  providerTypeScope: z.enum(["dealer", "workshop", "scrap"]).nullable().optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().optional(),
 });
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -91,7 +98,7 @@ export const serviceSchema = z.object({
     .string()
     .min(2, { message: "common.requiredField" })
     .max(100),
-  categoryId: z.number().positive({ message: "common.requiredField" }),
+  categoryId: z.number().positive({ message: "superAdmin.services.errors.pickLeafCategory" }),
   basePrice: z.number().min(0, { message: "common.requiredField" }),
   estimatedDuration: z.number().nullable().optional(),
   descriptionAr: z.string().nullable().optional(),

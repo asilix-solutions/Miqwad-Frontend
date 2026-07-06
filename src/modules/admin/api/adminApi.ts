@@ -3,6 +3,16 @@ import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, SubscriberType, RevenueSummary, RevenueSource } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import type { Service, ServiceCategory } from "@modules/services/types";
+
+/**
+ * Payload for creating a category.
+ * The hierarchy fields (parentId, level, providerTypeScope, isActive, sortOrder)
+ * are optional here so the Phase-2 admin form (which only knows nameAr/nameEn/colorHint)
+ * continues to compile. Phase-3 will pass all fields.
+ */
+export type CreateCategoryPayload =
+  Pick<ServiceCategory, "nameAr" | "nameEn" | "iconUrl" | "colorHint"> &
+  Partial<Pick<ServiceCategory, "parentId" | "level" | "providerTypeScope" | "isActive" | "sortOrder">>;
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
@@ -86,7 +96,7 @@ export const adminApi = {
 
 
 
-  createCategory: async (payload: Omit<ServiceCategory, "id">): Promise<ServiceCategory> => {
+  createCategory: async (payload: CreateCategoryPayload): Promise<ServiceCategory> => {
     const { data } = await apiClient.post<ServiceCategory>("/admin/categories", payload);
     return data;
   },
@@ -98,6 +108,11 @@ export const adminApi = {
 
   deleteCategory: async (id: number): Promise<void> => {
     await apiClient.delete(`/admin/categories/${id}`);
+  },
+
+  patchCategoryActive: async (id: number, isActive: boolean): Promise<ServiceCategory> => {
+    const { data } = await apiClient.patch<ServiceCategory>(`/admin/categories/${id}`, { isActive });
+    return data;
   },
 
   // ── Services ─────────────────────────────────────────────────────────────

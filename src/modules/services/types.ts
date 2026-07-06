@@ -3,6 +3,8 @@
  * Mirrors Swagger ServiceCategory and ServiceSubcategory.
  */
 
+import type { ProviderType } from "@modules/providers/types";
+
 export interface ServiceCategory {
   id: number;
   nameAr: string;
@@ -11,6 +13,21 @@ export interface ServiceCategory {
   iconUrl: string | null;
   /** Optional brand-aligned tint used as card background tone. */
   colorHint?: "blue" | "green" | "orange" | "purple" | "red" | "navy";
+
+  // ── Hierarchy fields (Phase 2) ─────────────────────────────────────────────
+  /** null for root (level-1) categories. */
+  parentId: number | null;
+  /** 1 = root / parent, 2 = child, 3 = sub-child (max depth). */
+  level: 1 | 2 | 3;
+  /** Limits visibility to one provider type; null = visible to all types. */
+  providerTypeScope: ProviderType | null;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+/** Tree node – ServiceCategory with resolved children attached. */
+export interface CategoryTreeNode extends ServiceCategory {
+  children: CategoryTreeNode[];
 }
 
 export interface ServiceSubcategory {

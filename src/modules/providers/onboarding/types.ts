@@ -5,12 +5,14 @@
  * and review-timeline item model used by the provider onboarding module.
  */
 
+import type { ProviderType } from "@modules/providers/types";
+
 // ---------------------------------------------------------------------------
 // Step keys
 // ---------------------------------------------------------------------------
 
 /** Discriminated step identifier for the onboarding wizard. */
-export type OnboardingStepKey = "loading" | "account" | "documents" | "review";
+export type OnboardingStepKey = "loading" | "account" | "services" | "documents" | "review";
 
 // ---------------------------------------------------------------------------
 // Account summary (returned after initial registration)
@@ -21,6 +23,8 @@ export interface AccountSummary {
   ownerName: string;
   email: string;
   phone: string;
+  /** Provider type known at registration time; used to scope category tree. */
+  providerType?: ProviderType | null;
 }
 
 // ---------------------------------------------------------------------------

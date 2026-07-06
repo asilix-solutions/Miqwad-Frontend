@@ -166,6 +166,11 @@ const OnboardingAccountPage = lazy(() =>
     (m) => ({ default: m.OnboardingAccountPage }),
   )
 );
+const OnboardingServicesPage = lazy(() =>
+  import("@modules/providers/onboarding/components/RegisterStepServices").then(
+    (m) => ({ default: m.RegisterStepServices }),
+  )
+);
 const OnboardingDocumentsPage = lazy(() =>
   import("@modules/providers/onboarding/pages/OnboardingDocumentsPage").then(
     (m) => ({ default: m.OnboardingDocumentsPage }),
@@ -424,6 +429,11 @@ export const router = createBrowserRouter([
                 path: "account",
                 element: <OnboardingAccountPage />,
                 handle: { onboardingStep: "account" },
+              },
+              {
+                path: "services",
+                element: <OnboardingServicesPage />,
+                handle: { onboardingStep: "services" },
               },
               {
                 path: "documents",

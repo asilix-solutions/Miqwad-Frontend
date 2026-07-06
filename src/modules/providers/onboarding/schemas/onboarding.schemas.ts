@@ -1,12 +1,22 @@
 /**
- * @file Onboarding Zod schemas (placeholder).
+ * @file Onboarding Zod schemas.
  *
- * Will contain validation schemas for the optional-documents step
- * once the documents UI is implemented. Kept as a placeholder to
- * maintain the module directory structure.
+ * Validation schemas for the provider onboarding wizard steps.
  */
 
 import { z } from "zod";
+
+/**
+ * Services step — provider picks which category branches they serve.
+ * At least one category must be selected.
+ */
+export const servicesStepSchema = z.object({
+  categoryIds: z
+    .array(z.number().int().positive())
+    .min(1, "providers.onboarding.services.noneSelected"),
+});
+
+export type ServicesStepValues = z.infer<typeof servicesStepSchema>;
 
 /**
  * Placeholder schema for the optional documents step.

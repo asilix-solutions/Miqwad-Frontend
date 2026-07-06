@@ -1,5 +1,13 @@
+/**
+ * @file ServiceFormDialog.tsx
+ *
+ * Admin dialog for creating or editing a Service.
+ * Uses CategoryCascader (three-level) instead of a flat category select,
+ * so the admin must choose a valid level-3 leaf before saving.
+ */
+
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,13 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CategoryCascader } from "@shared/provider-ui/CategoryCascader";
 import { useCreateServiceMutation, useUpdateServiceMutation } from "../../hooks/useAdminQueries";
 import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import { serviceSchema, type ServiceFormValues } from "../../schemas/admin.schemas";
@@ -47,6 +49,7 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
   const {
     register,
     handleSubmit,
+    control,
     setValue,
     watch,
     reset,
@@ -66,7 +69,6 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
     },
   });
 
-  const selectedCategoryId = watch("categoryId");
   const isActive = watch("isActive");
 
   useEffect(() => {
@@ -156,7 +158,7 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
                 <p className="text-sm text-danger-500">{t(errors.nameAr.message as string)}</p>
               )}
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="nameEn">
                 {t("superAdmin.services.form.nameEn")} <span className="text-danger-500">*</span>
@@ -168,30 +170,30 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="categoryId">
-                {t("superAdmin.services.form.category")} <span className="text-danger-500">*</span>
-              </Label>
-              <Select
-                disabled={isPending || categoriesQ.isLoading}
-                value={selectedCategoryId?.toString() ?? ""}
-                onValueChange={(val) => setValue("categoryId", Number(val), { shouldValidate: true })}
-              >
-                <SelectTrigger id="categoryId">
-                  <SelectValue placeholder={t("common.select")} />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {categoriesQ.data?.map(cat => (
-                    <SelectItem key={cat.id} value={cat.id.toString()}>{cat.nameAr}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.categoryId && (
-                <p className="text-sm text-danger-500">{t(errors.categoryId.message as string)}</p>
+          {/* Three-level category cascader */}
+          <div className="space-y-1">
+            <Label>
+              {t("superAdmin.services.form.category")} <span className="text-danger-500">*</span>
+            </Label>
+            <Controller
+              name="categoryId"
+              control={control}
+              render={({ field }) => (
+                <CategoryCascader
+                  categories={categoriesQ.data ?? []}
+                  value={field.value ?? null}
+                  onChange={(id) => {
+                    field.onChange(id);
+                    setValue("categoryId", id, { shouldValidate: true });
+                  }}
+                  disabled={isPending || categoriesQ.isLoading}
+                  error={errors.categoryId ? t(errors.categoryId.message as string) : undefined}
+                />
               )}
-            </div>
+            />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="basePrice">
                 {t("superAdmin.services.form.basePrice")} <span className="text-danger-500">*</span>
@@ -201,9 +203,7 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
                 <p className="text-sm text-danger-500">{t(errors.basePrice.message as string)}</p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="estimatedDuration">
                 {t("superAdmin.services.form.duration")} ({t("common.optional")})
@@ -213,16 +213,16 @@ export function ServiceFormDialog({ mode, service, open, onOpenChange }: Props) 
                 <p className="text-sm text-danger-500">{t(errors.estimatedDuration.message as string)}</p>
               )}
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="sortOrder">
-                {t("superAdmin.services.form.sortOrder")} ({t("common.optional")})
-              </Label>
-              <Input id="sortOrder" type="number" {...register("sortOrder", { valueAsNumber: true, setValueAs: v => v === "" || isNaN(v) ? undefined : v })} disabled={isPending} />
-              {errors.sortOrder && (
-                <p className="text-sm text-danger-500">{t(errors.sortOrder.message as string)}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="sortOrder">
+              {t("superAdmin.services.form.sortOrder")} ({t("common.optional")})
+            </Label>
+            <Input id="sortOrder" type="number" {...register("sortOrder", { valueAsNumber: true, setValueAs: v => v === "" || isNaN(v) ? undefined : v })} disabled={isPending} />
+            {errors.sortOrder && (
+              <p className="text-sm text-danger-500">{t(errors.sortOrder.message as string)}</p>
+            )}
           </div>
 
           <div className="space-y-2">

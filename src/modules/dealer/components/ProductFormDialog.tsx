@@ -4,6 +4,7 @@
  * Product create / edit dialog using the provider design system.
  * ProviderDialog shell, ProviderInput / ProviderTextarea / ProviderSelect /
  * ProviderImageUpload replace the old admin-flavoured controls.
+ * Category selection uses CategoryCascader (3-level L1→L2→L3) instead of a flat select.
  * Form logic (react-hook-form + zod, mutations, reset-on-open) is unchanged.
  */
 
@@ -21,23 +22,20 @@ import {
   ProviderImageUpload,
 } from "@shared/provider-ui";
 import type { ProviderSelectOption } from "@shared/provider-ui";
+import { CategoryCascader } from "@shared/provider-ui/CategoryCascader";
+import type { ServiceCategory } from "@modules/services/types";
 import { useCreateProductMutation, useUpdateProductMutation } from "../hooks/useDealerMutations";
 import { productSchema, type ProductFormValues } from "../schemas/productSchema";
 import type { Product } from "../types";
 import { useToast } from "@shared/components/ui/toastContext";
-
-interface CategoryOption {
-  id: string;
-  labelAr: string;
-  labelEn: string;
-}
 
 interface Props {
   mode: "create" | "edit";
   product?: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: CategoryOption[];
+  /** Full flat list of ServiceCategory records for the cascader. */
+  categories: ServiceCategory[];
 }
 
 export function ProductFormDialog({ mode, product, open, onOpenChange, categories }: Props) {
@@ -125,11 +123,6 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
     }
   };
 
-  const categoryOptions: ProviderSelectOption[] = categories.map((c) => ({
-    value: c.id,
-    label: i18n.language === "ar" ? c.labelAr : c.labelEn,
-  }));
-
   const statusOptions: ProviderSelectOption[] = [
     { value: "active",       label: t("dealer.status.product.active") },
     { value: "draft",        label: t("dealer.status.product.draft") },
@@ -202,7 +195,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
           />
         </div>
 
-        {/* SKU + Category row */}
+        {/* SKU row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ProviderInput
             id="sku"
@@ -214,13 +207,27 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
             disabled={isPending}
             {...register("sku")}
           />
-          <ProviderSelect
-            id="categoryId"
-            label={`${t("dealer.products.form.category")} *`}
-            value={categoryId ?? ""}
-            onValueChange={(val) => setValue("categoryId", val, { shouldValidate: true })}
-            options={categoryOptions}
-            placeholder={t("common.select")}
+        </div>
+
+        {/* Category — three-level cascader (dealer providerType scope) */}
+        {/*
+         * String↔number bridge: Product.categoryId is stored as a string (e.g. "215").
+         * CategoryCascader works with numeric ids internally.
+         * value:    convert stored string → number | null at the cascader boundary.
+         * onChange: convert selected number back → string before storing in form state.
+         * The form's zod schema validates categoryId as a non-empty string; since the
+         * cascader only fires onChange when L3 is chosen, an empty string means no leaf
+         * was selected and validation will fail with categoryL3Required.
+         */}
+        <div>
+          <p className="mb-2 text-sm font-medium text-[var(--color-ink-body)]">
+            {t("dealer.products.form.category")} *
+          </p>
+          <CategoryCascader
+            categories={categories}
+            providerType="dealer"
+            value={categoryId ? Number(categoryId) : null}
+            onChange={(id) => setValue("categoryId", String(id), { shouldValidate: true })}
             error={errors.categoryId ? t(errors.categoryId.message!) : undefined}
             disabled={isPending}
           />

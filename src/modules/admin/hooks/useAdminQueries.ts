@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi } from "../api/adminApi";
+import { adminApi, type CreateCategoryPayload } from "../api/adminApi";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
@@ -148,15 +148,13 @@ export function useRestoreUserMutation() {
 // ── Categories ─────────────────────────────────────────────────────────────
 
 export function useAdminCategoriesQuery() {
-  // We wrap the client query because the client GET /categories returns all 
-  // categories which is exactly what the admin needs to list them.
   return useServiceCategoriesQuery();
 }
 
 export function useCreateCategoryMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<ServiceCategory, "id">) => adminApi.createCategory(payload),
+    mutationFn: (payload: CreateCategoryPayload) => adminApi.createCategory(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
     },
@@ -178,6 +176,17 @@ export function useDeleteCategoryMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => adminApi.deleteCategory(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+export function usePatchCategoryActiveMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, isActive }: { id: number; isActive: boolean }) =>
+      adminApi.patchCategoryActive(id, isActive),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
     },
