@@ -14,6 +14,7 @@
  * | GET    | `/admin/me/permissions`    | Current mock user's permission codes     |
  * | GET    | `/admin/dashboard/stats`   | Stub KPI numbers for the dashboard       |
  * | GET    | `/admin/users`             | Paginated list of mock users             |
+ * | POST   | `/admin/users`             | Create a client or provider account      |
  *
  * ## .NET swap plan
  *
@@ -71,6 +72,14 @@ interface AdminUserRecord {
   phone: string;
   role: CurrentUser["role"];
   status: "active" | "suspended" | "pending";
+  /** Provider subtype ("workshop" | "dealer" | "scrapyard") when role === "provider". */
+  providerType?: string;
+  /** workshop/dealer/scrapyard: categories picked via CategoryMultiSelectTree, scoped by providerType. */
+  categoryIds?: number[];
+  /** workshop: free-text specialization (SRS: mechanics/bodywork, no closed list). */
+  specialization?: string;
+  /** scrapyard: closed set of ScrapVehicleBrand values (vehicle makes, orthogonal to categoryIds part categories). */
+  brandSpecialization?: string[];
 }
 
 /**
@@ -437,6 +446,52 @@ export async function tryAdminMock(
       ordersCount: Math.floor(Math.random() * 50),
     };
     return ok(config, detail);
+  }
+
+  // -- POST /admin/users -------------------------------------------------------
+  // Creates a user (client) or a provider account (workshop/dealer/scrapyard).
+  // .NET equivalent: POST /api/admin/users
+  if (url === "admin/users" && method === "post") {
+    requireAdmin(config);
+    const payload = JSON.parse(config.data || "{}") as { type: string; [key: string]: unknown };
+    const id = `usr_${Math.random().toString(36).slice(2, 10)}`;
+
+    const newUser: AdminUserRecord =
+      payload.type === "client"
+        ? {
+            id,
+            name: String(payload.name ?? ""),
+            phone: String(payload.phoneNumber ?? ""),
+            role: "customer",
+            status: "active",
+          }
+        : {
+            // workshop | dealer | scrapyard — all map to the "provider" role
+            id,
+            name: String(payload.companyName ?? ""),
+            phone: String(payload.phoneNumber ?? ""),
+            role: "provider",
+            status: "pending",
+            providerType: payload.type,
+            ...(payload.type === "workshop"
+              ? {
+                  categoryIds: (payload.categoryIds as number[] | undefined) ?? [],
+                  specialization: String(payload.specialization ?? ""),
+                }
+              : {}),
+            ...(payload.type === "dealer"
+              ? { categoryIds: (payload.categoryIds as number[] | undefined) ?? [] }
+              : {}),
+            ...(payload.type === "scrapyard"
+              ? {
+                  categoryIds: (payload.categoryIds as number[] | undefined) ?? [],
+                  brandSpecialization: (payload.brandSpecialization as string[] | undefined) ?? [],
+                }
+              : {}),
+          };
+
+    SEED_USERS.push(newUser);
+    return ok(config, newUser, 201);
   }
 
   // -- POST /admin/users/:id/suspend ------------------------------------------

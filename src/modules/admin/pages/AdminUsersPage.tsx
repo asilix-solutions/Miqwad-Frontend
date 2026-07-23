@@ -1,15 +1,20 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { cn } from "@shared/lib/utils";
+import { Button } from "@/components/ui/button";
 
 import { ClientsPanel } from "../components/users/ClientsPanel";
 import { ProvidersPanel } from "../components/users/ProvidersPanel";
+import { AddUserDialog } from "../components/users/AddUserDialog";
 
 type TabValue = "clients" | "providers";
 
 export function AdminUsersPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [addUserOpen, setAddUserOpen] = useState(false);
 
   const currentTab = (searchParams.get("tab") as TabValue) || "clients";
 
@@ -24,14 +29,27 @@ export function AdminUsersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink-body)]">
-          {t("superAdmin.users.title")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t("superAdmin.users.subtitle")}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink-body)]">
+            {t("superAdmin.users.title")}
+          </h1>
+          <p className="text-muted-foreground">
+            {t("superAdmin.users.subtitle")}
+          </p>
+        </div>
+        <Button
+          onClick={() => setAddUserOpen(true)}
+          className="gap-2 bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
+        >
+          <Plus className="h-4 w-4" aria-hidden />
+          {t("superAdmin.users.create.trigger")}
+        </Button>
       </div>
+
+      {addUserOpen && (
+        <AddUserDialog open={addUserOpen} onOpenChange={setAddUserOpen} />
+      )}
 
       {/* URL-synced Pill Tabs */}
       <div className="flex bg-[var(--color-surface-2)] p-1 rounded-full w-fit">
