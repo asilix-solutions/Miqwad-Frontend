@@ -25,6 +25,19 @@ export const otpSchema = z.object({
 });
 export type OtpFormValues = z.infer<typeof otpSchema>;
 
+export const emailLoginSchema = z.object({
+  identifier: z
+    .string()
+    .trim()
+    .min(1, { message: "هذا الحقل مطلوب" })
+    .email({ message: "البريد الإلكتروني غير صحيح" }),
+  password: z
+    .string()
+    .trim()
+    .min(6, { message: "كلمة المرور يجب ألا تقل عن 6 أحرف" }),
+});
+export type EmailLoginFormValues = z.infer<typeof emailLoginSchema>;
+
 export const completeProfileSchema = z.object({
   fullName: z.string().trim().min(3, { message: "هذا الحقل مطلوب" }),
   email: z

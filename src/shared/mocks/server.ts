@@ -1,4 +1,4 @@
-import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import axios, { type AxiosAdapter, type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
 import { apiClient } from "@shared/lib/axios";
 import { sleep } from "@shared/lib/utils";
 import { tryAuthMock } from "./handlers/auth.handlers";
@@ -47,14 +47,23 @@ export function installMocks(): void {
   if (!import.meta.env.VITE_USE_MOCKS || import.meta.env.VITE_USE_MOCKS === "false") {
     return;
   }
-  const previous = apiClient.defaults.adapter as
-    | import("axios").AxiosAdapter
-    | undefined;
+  const previous = apiClient.defaults.adapter;
   if (!previous) {
     console.warn("[mocks] No previous adapter found; mocks disabled");
     return;
   }
-  apiClient.defaults.adapter = createMockAdapter(previous, [
+  // axios.defaults.adapter is a name/array of names (e.g. "xhr" or
+  // ["xhr","http","fetch"]) in axios v1, not necessarily a callable
+  // function — resolve it once via axios's own adapter registry so the
+  // fallthrough call below always has a real AxiosAdapter to invoke.
+  let realAdapter: AxiosAdapter;
+  try {
+    realAdapter = axios.getAdapter(previous);
+  } catch (error) {
+    console.error("[maqwad] mock: could not resolve real axios adapter for fallthrough", error);
+    return;
+  }
+  apiClient.defaults.adapter = createMockAdapter(realAdapter, [
     tryAdminMock,
     tryAdminAuditMock,
     tryAdminComplaintsMock,

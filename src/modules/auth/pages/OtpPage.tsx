@@ -15,7 +15,8 @@ import { useRegisterMutation, useVerifyOtpMutation } from "../hooks/useAuthMutat
  * Sprint 1 — OTP verification.
  * - Reads pendingVerification from the auth slice.
  * - Renders six-digit input + resend timer.
- * - On success, navigates by user.isProfileComplete.
+ * - On success, sends an incomplete provider profile to onboarding;
+ *   everyone else goes to their role's default home.
  */
 export function OtpPage() {
   const { t } = useTranslation();
@@ -49,8 +50,8 @@ export function OtpPage() {
         verificationId: pending.verificationId,
         code: finalCode,
       });
-      if (!res.user.isProfileComplete) {
-        navigate("/complete-profile", { replace: true });
+      if (res.user.role === "provider" && !res.user.isProfileComplete) {
+        navigate("/provider/onboarding", { replace: true });
       } else {
         navigate(defaultHomeFor(res.user.role), { replace: true });
       }

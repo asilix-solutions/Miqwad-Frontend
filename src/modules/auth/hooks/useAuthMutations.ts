@@ -8,6 +8,8 @@ import {
   setUser,
 } from "../store/authSlice";
 import type {
+  LoginRequest,
+  RegisterProviderPayload,
   RegisterRequest,
   UpdateProfileRequest,
   VerifyOtpRequest,
@@ -38,6 +40,43 @@ export function useVerifyOtpMutation() {
   const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (req: VerifyOtpRequest) => authApi.verifyOtp(req),
+    onSuccess: (res) => {
+      dispatch(
+        setCredentials({
+          user: res.user,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        }),
+      );
+      dispatch(clearPendingVerification());
+    },
+  });
+}
+
+// PROVISIONAL CONTRACT — pending backend OQ1 (BACKEND_API_REQUIREMENTS.md:1049).
+// Response shape mirrors verifyOtp so session wiring is reused. Confirm with backend before .NET wiring.
+export function useLoginMutation() {
+  const dispatch = useAppDispatch();
+  return useMutation({
+    mutationFn: (req: LoginRequest) => authApi.login(req),
+    onSuccess: (res) => {
+      dispatch(
+        setCredentials({
+          user: res.user,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        }),
+      );
+      dispatch(clearPendingVerification());
+    },
+  });
+}
+
+// Provider signup engine: create → auto-login in one round trip (no OTP).
+export function useRegisterProviderMutation() {
+  const dispatch = useAppDispatch();
+  return useMutation({
+    mutationFn: (req: RegisterProviderPayload) => authApi.registerProvider(req),
     onSuccess: (res) => {
       dispatch(
         setCredentials({
