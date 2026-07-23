@@ -266,6 +266,13 @@ const AdminComplaintsPage = lazy(() =>
   }))
 );
 
+// ─── Reference Data Playground (temporary NHTSA verification page) ────────────
+const ReferencePlaygroundPage = lazy(() =>
+  import("@modules/reference/pages/ReferencePlaygroundPage").then((m) => ({
+    default: m.ReferencePlaygroundPage,
+  }))
+);
+
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
 /**
@@ -394,6 +401,18 @@ export const router = createBrowserRouter([
       //   ],
       // },
       // ===== END FROZEN =====
+
+      // Reference data playground — temporary verification page for NHTSA-backed data.
+      {
+        path: "/playground/reference",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <ReferencePlaygroundPage />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
 
       // Admin-only notice page — non-admin roles land here while client routes are frozen
       {
