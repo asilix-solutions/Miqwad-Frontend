@@ -660,6 +660,53 @@ function seedIfEmpty(db: ProvidersDb): void {
 }
 
 // =============================================================================
+// Cross-mock helpers
+// =============================================================================
+
+/**
+ * Creates a pending provider-profile record (mirrors the seeded shape) for
+ * a brand-new provider signup, so `providerType` is readable pre-approval
+ * (e.g. by onboarding.api.ts's getAccountSummary). Called from
+ * auth.handlers.ts's `POST /auth/register-provider`.
+ */
+export function createPendingProviderProfile(params: {
+  userId: string;
+  type: ProviderType;
+  companyName: string;
+  email: string;
+  phone: string;
+}): ProviderProfile {
+  const db = loadDb();
+  seedIfEmpty(db);
+
+  const id = db.nextProviderId++;
+  const profile: ProviderProfile = {
+    id,
+    userId: params.userId,
+    type: params.type,
+    companyName: params.companyName,
+    email: params.email,
+    phone: params.phone,
+    lat: null,
+    lng: null,
+    address: null,
+    city: null,
+    workingHours: null,
+    rating: 0,
+    totalRatings: 0,
+    isVerified: false,
+    status: "pending",
+    categoryIds: [],
+    documents: [],
+    rejectionReason: null,
+    createdAt: new Date().toISOString(),
+  };
+  db.providers[id] = profile;
+  saveDb(db);
+  return profile;
+}
+
+// =============================================================================
 // Helpers
 // =============================================================================
 

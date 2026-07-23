@@ -51,9 +51,9 @@ const RegisterPage = lazy(() =>
     default: m.RegisterPage,
   }))
 );
-const CompleteProfilePage = lazy(() =>
-  import("@modules/auth/pages/CompleteProfilePage").then((m) => ({
-    default: m.CompleteProfilePage,
+const RegisterProviderPage = lazy(() =>
+  import("@modules/auth/pages/RegisterProviderPage").then((m) => ({
+    default: m.RegisterProviderPage,
   }))
 );
 // ===== FROZEN: client/EndUser lazy imports — re-enable when client web app is needed =====
@@ -310,10 +310,10 @@ function RootRedirect() {
  * Public (guest-only):
  *   /login              - phone entry
  *   /verify-otp         - 6-digit verification
+ *   /register           - provider-type chooser
+ *   /register/:type     - per-type provider signup (email/password)
  *
  * Authenticated:
- *   /complete-profile   - one-off, gated by user.isProfileComplete
- *
  *   /app/*              - customer (or any logged-in user) area
  *     /app/dashboard
  *     /app/vehicles[...]
@@ -345,6 +345,7 @@ export const router = createBrowserRouter([
           { path: "/login", element: <LoginPage /> },
           { path: "/verify-otp", element: <OtpPage /> },
           { path: "/register", element: <RegisterPage /> },
+          { path: "/register/:type", element: <RegisterProviderPage /> },
         ],
       },
     ],
@@ -354,18 +355,6 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      // complete-profile sits outside AppLayout — gets its own Suspense
-      {
-        path: "/complete-profile",
-        element: (
-          <ErrorBoundary>
-            <Suspense fallback={<PageLoader />}>
-              <CompleteProfilePage />
-            </Suspense>
-          </ErrorBoundary>
-        ),
-      },
-
       // ===== FROZEN: client/EndUser routes — re-enable when client web app is needed =====
       // Customer / general authenticated area
       // {
