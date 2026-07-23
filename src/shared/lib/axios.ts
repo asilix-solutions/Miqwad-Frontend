@@ -17,7 +17,10 @@ import { storage, StorageKeys } from "./storage";
  *  The refresh endpoint is decoupled (no interceptor recursion).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+// Fallback is the absolute production URL (production truth). A local .env
+// may temporarily override this to "/api" to route through the Vite dev
+// proxy while the backend lacks CORS — see vite.config.ts.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://miqwad-test.runasp.net/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -89,6 +92,21 @@ apiClient.interceptors.response.use(
     // 401 → try to refresh once, then retry original request.
     if (status === 401 && original && !original._retry && !original.url?.includes("/auth/")) {
       original._retry = true;
+
+      // Backend gap: the real API has no /auth/refresh-token endpoint yet
+      // (single ~60min access token, no refresh). Without a stored
+      // refreshToken there is nothing to attempt — skip straight to
+      // clearing the session instead of calling an endpoint that doesn't
+      // exist. Remove this guard once refresh is added for providers/admins.
+      const refreshToken = storage.get<string>(StorageKeys.refreshToken);
+      if (!refreshToken) {
+        storage.clearAuth();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+          window.location.assign("/login");
+        }
+        return Promise.reject(normaliseError(error));
+      }
+
       try {
         const newToken = await refreshAccessToken();
         original.headers.set?.("Authorization", `Bearer ${newToken}`);
