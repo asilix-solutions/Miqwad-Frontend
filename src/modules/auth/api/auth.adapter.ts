@@ -13,8 +13,30 @@
  */
 import { z } from "zod";
 import type { LoginResponse, UserRole } from "../types";
+import type { ProviderType } from "@modules/providers/types";
+import { AppError } from "@shared/types/api";
 
 const MS_ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+/** Backend numeric UserRole enum → frontend UserRole. Single swap point. */
+const NUMERIC_ROLE_MAP: Record<number, UserRole> = {
+  1: "admin",
+  2: "provider",
+  3: "provider",
+  4: "provider",
+  5: "driver",
+  6: "customer",
+};
+
+/**
+ * Backend numeric UserRole → ProviderType (only for provider sub-roles 2/3/4).
+ * TEMPORARY source of truth until GET /provider/me exists on the backend.
+ */
+const NUMERIC_PROVIDER_TYPE_MAP: Record<number, ProviderType> = {
+  2: "dealer",
+  3: "workshop",
+  4: "scrap",
+};
 
 /**
  * Unwraps the backend's inconsistent envelope in one place: most endpoints
@@ -85,6 +107,7 @@ const rawLoginResponseSchema = z.object({
   email: z.string().nullable().optional(),
   phoneNumber: z.string().nullable().optional(),
   token: z.string(),
+  role: z.number().optional(),
 });
 
 const loginResponseSchema = z.object({
@@ -96,6 +119,7 @@ const loginResponseSchema = z.object({
     email: z.string().nullable(),
     phoneNumber: z.string(),
     role: z.enum(["customer", "provider", "driver", "admin", "super_admin"]),
+    providerType: z.enum(["dealer", "workshop", "scrap"]).nullable(),
     avatarUrl: z.null(),
     isProfileComplete: z.boolean(),
   }),
@@ -111,6 +135,14 @@ export function adaptLoginResponse(raw: unknown): LoginResponse {
   const unwrapped = unwrapEnvelope<unknown>(raw);
   const parsed = rawLoginResponseSchema.parse(unwrapped);
 
+  const numericRole = typeof parsed.role === "number" ? parsed.role : undefined;
+  const role: UserRole =
+    numericRole !== undefined
+      ? (NUMERIC_ROLE_MAP[numericRole] ?? decodeJwtRole(parsed.token))
+      : decodeJwtRole(parsed.token);
+  const providerType: ProviderType | null =
+    numericRole !== undefined ? (NUMERIC_PROVIDER_TYPE_MAP[numericRole] ?? null) : null;
+
   const adapted: LoginResponse = {
     accessToken: parsed.token,
     refreshToken: "",
@@ -119,11 +151,23 @@ export function adaptLoginResponse(raw: unknown): LoginResponse {
       fullName: parsed.fullName,
       email: parsed.email ?? null,
       phoneNumber: parsed.phoneNumber ?? "",
-      role: decodeJwtRole(parsed.token),
+      role,
+      providerType,
       avatarUrl: null,
       isProfileComplete: true,
     },
   };
 
   return loginResponseSchema.parse(adapted);
+}
+
+/**
+ * True if a login error is the backend's "email not verified" case.
+ * FRAGILE: matches message text — backend exposes no stable code yet.
+ * TODO: switch to err.code once backend returns EMAIL_NOT_VERIFIED.
+ */
+export function isEmailNotVerifiedError(err: unknown): boolean {
+  return (
+    err instanceof AppError && err.status === 400 && /email is not verified/i.test(err.message)
+  );
 }

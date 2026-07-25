@@ -25,6 +25,8 @@ export interface User {
   /** Populated only when role === "provider". */
   providerId?: number | null;
   providerStatus?: ProviderStatus | null;
+  /** Provider sub-type, populated only when role === "provider". */
+  providerType?: ProviderType | null;
   /** Optional rejection reason set by an admin. */
   providerRejectionReason?: string | null;
   /**

@@ -25,7 +25,7 @@ export default defineConfig({
       // Remove once the backend enables CORS for the dev origin.
       // See BACKEND_API_REQUIREMENTS.md → CORS gap.
       "/api": {
-        target: "http://miqwad-test.runasp.net",
+        target: "https://miqwad-test.runasp.net",
         changeOrigin: true,
         secure: false,
       },

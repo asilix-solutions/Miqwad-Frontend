@@ -25,7 +25,8 @@ import {
 } from "../schemas/auth.schemas";
 import { useLoginMutation, useRegisterMutation } from "../hooks/useAuthMutations";
 import { useAppSelector } from "@app/store";
-import { defaultHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, providerHomeFor } from "@shared/guards/RoleGuard";
+import { isEmailNotVerifiedError } from "../api/auth.adapter";
 
 type LoginMode = "phone" | "email";
 
@@ -75,10 +76,21 @@ export function LoginPage() {
   const onEmailSubmit = emailForm.handleSubmit(async (values) => {
     try {
       const res = await loginMutation.mutateAsync(values);
-      navigate(defaultHomeFor(res.user.role));
+      const { role, providerType } = res.user;
+      if (role === "provider") {
+        navigate(providerHomeFor(providerType ?? undefined));
+      } else {
+        navigate(defaultHomeFor(role));
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : undefined;
-      toast.error(t("auth.login.invalidCredentials"), message);
+      if (isEmailNotVerifiedError(err)) {
+        toast.error(t("auth.login.emailNotVerified"));
+        // TODO: wire to backend — add resend-OTP-by-email + activation route,
+        //       then link "activate account" here. Blocked: no such endpoint yet.
+      } else {
+        const message = err instanceof Error ? err.message : undefined;
+        toast.error(t("auth.login.invalidCredentials"), message);
+      }
     }
   });
 
