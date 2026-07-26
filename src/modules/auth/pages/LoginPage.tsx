@@ -11,7 +11,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
@@ -33,6 +33,7 @@ type LoginMode = "phone" | "email";
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const pending = useAppSelector((s) => s.auth.pendingVerification);
 
@@ -62,6 +63,18 @@ export function LoginPage() {
       navigate("/verify-otp", { replace: true });
     }
   }, [pending, navigate]);
+
+  // Coming back from provider signup: prefill the email/password mode with
+  // the address just registered (backend issues no token — user must log
+  // in manually once their email is verified).
+  useEffect(() => {
+    const state = location.state as { registeredEmail?: string } | null;
+    if (state?.registeredEmail) {
+      setMode("email");
+      emailForm.setValue("identifier", state.registeredEmail);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const onPhoneSubmit = phoneForm.handleSubmit(async (values) => {
     try {
@@ -197,13 +210,21 @@ export function LoginPage() {
             </p>
           )}
 
-          {/* Password label */}
-          <label
-            htmlFor="password"
-            className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right mb-[var(--space-1)] mt-[var(--space-4)]"
-          >
-            {t("auth.login.passwordLabel")}
-          </label>
+          {/* Password label + forgot-password link */}
+          <div className="flex items-center justify-between mt-[var(--space-4)] mb-[var(--space-1)]">
+            <label
+              htmlFor="password"
+              className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right"
+            >
+              {t("auth.login.passwordLabel")}
+            </label>
+            <Link
+              to="/forgot-password"
+              className="txt-caption font-main text-[var(--color-brand-orange)] font-[var(--fw-ibm-semibold)] hover:underline"
+            >
+              {t("auth.login.forgotPassword")}
+            </Link>
+          </div>
           <div className="flex items-center bg-white border-0 rounded-[var(--radius-md)] h-[var(--size-input-h)] px-[var(--space-4)] gap-3 focus-within:ring-2 focus-within:ring-[var(--color-brand-orange)]/20 transition-all duration-200">
             <input
               id="password"

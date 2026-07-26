@@ -87,8 +87,9 @@ export interface UpdateProfileRequest {
 }
 
 /**
- * Payload for the per-type provider signup engine (email/password,
- * no OTP). `providerType` is captured from the /register/{type} route.
+ * Payload for the per-type provider signup engine. `providerType` is
+ * captured from the /register/{type} route and mapped to the backend's
+ * numeric role in the api layer (see `register/providerRole.ts`).
  */
 export interface RegisterProviderPayload {
   providerType: ProviderType;
@@ -96,8 +97,43 @@ export interface RegisterProviderPayload {
   email: string;
   phone: string;
   password: string;
+  confirmPassword: string;
+  termsOfServiceAccepted: boolean;
 }
 
-export interface RegisterProviderResponse extends AuthTokens {
-  user: User;
+/**
+ * REAL CONTRACT (confirmed live): POST /api/auth/register returns NO
+ * token — the account still needs email verification before it can log
+ * in. `message` is the backend's enveloped top-level message (e.g.
+ * "...verify your email").
+ */
+export interface RegisterProviderResponse {
+  id: string;
+  fullName: string;
+  email: string;
+  userRole: number;
+  message: string;
+}
+
+/** Session-less mutation — verifies the OTP emailed after provider registration. */
+export interface VerifyEmailOtpRequest {
+  email: string;
+  otp: string;
+}
+
+/** Session-less mutation — sends a reset link if the email exists. */
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+/** Session-less mutation — sets a new password from an emailed token. */
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/** Shared shape for the enveloped `{ success, message }` mutations above. */
+export interface MessageResponse {
+  message: string;
 }

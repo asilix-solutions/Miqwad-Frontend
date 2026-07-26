@@ -16,6 +16,8 @@ export interface ProviderRegisterFormValues {
   email: string;
   phone: string;
   password: string;
+  confirmPassword: string;
+  termsOfServiceAccepted: boolean;
 }
 
 export interface ProviderRegisterConfig {

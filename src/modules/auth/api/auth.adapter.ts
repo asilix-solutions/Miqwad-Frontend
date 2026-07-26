@@ -171,3 +171,38 @@ export function isEmailNotVerifiedError(err: unknown): boolean {
     err instanceof AppError && err.status === 400 && /email is not verified/i.test(err.message)
   );
 }
+
+/**
+ * True if a reset-password error is the backend's "invalid or expired
+ * token" case. FRAGILE: matches message text — backend exposes no stable
+ * code yet, same gap as `isEmailNotVerifiedError`.
+ */
+export function isInvalidResetTokenError(err: unknown): boolean {
+  return (
+    err instanceof AppError &&
+    err.status === 400 &&
+    /invalid or expired password reset token/i.test(err.message)
+  );
+}
+
+/**
+ * True if a verify-email-otp error is the backend's "wrong or expired code"
+ * case. FRAGILE: matches by status only — backend exposes no stable code
+ * yet, same gap as `isEmailNotVerifiedError` / `isInvalidResetTokenError`.
+ */
+export function isInvalidOtpError(err: unknown): boolean {
+  return err instanceof AppError && err.status === 400;
+}
+
+/**
+ * Reads the enveloped `{ success, message, data, errors }` response's
+ * top-level `message`, falling back to a generic string if the shape
+ * drifts (defensive — never throw from a fire-and-toast mutation).
+ */
+export function unwrapEnvelopeMessage(raw: unknown): string {
+  if (raw && typeof raw === "object" && "message" in (raw as Record<string, unknown>)) {
+    const message = (raw as Record<string, unknown>).message;
+    if (typeof message === "string") return message;
+  }
+  return "";
+}

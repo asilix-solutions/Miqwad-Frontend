@@ -2,15 +2,11 @@
  * @file Dealer (تاجر) provider signup config — Layer 2 of the register engine.
  */
 
-import { z } from "zod";
 import { Store } from "lucide-react";
-import { providerRegisterBaseFields } from "../schemas/providerRegisterBase";
+import { createProviderRegisterSchema } from "../schemas/providerRegisterBase";
 import type { ProviderRegisterConfig } from "./types";
 
-export const dealerRegisterSchema = z.object({
-  type: z.literal("dealer"),
-  ...providerRegisterBaseFields,
-});
+export const dealerRegisterSchema = createProviderRegisterSchema("dealer");
 
 export const dealerRegisterConfig: ProviderRegisterConfig = {
   type: "dealer",

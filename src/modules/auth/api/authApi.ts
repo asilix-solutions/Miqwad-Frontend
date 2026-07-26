@@ -1,14 +1,19 @@
 import { apiClient } from "@shared/lib/axios";
-import { adaptLoginResponse } from "./auth.adapter";
+import { adaptLoginResponse, unwrapEnvelope, unwrapEnvelopeMessage } from "./auth.adapter";
+import { PROVIDER_TYPE_TO_ROLE } from "../register/providerRole";
 import type {
+  ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
+  MessageResponse,
   RegisterProviderPayload,
   RegisterProviderResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
   UpdateProfileRequest,
   User,
+  VerifyEmailOtpRequest,
   VerifyOtpRequest,
   VerifyOtpResponse,
 } from "../types";
@@ -36,14 +41,31 @@ export const authApi = {
     return data;
   },
 
-  // Provider signup engine (email/password, no OTP). Single .NET swap point
-  // for per-type provider registration — see src/modules/auth/register/.
+  // REAL CONTRACT (confirmed live): POST /auth/register — single .NET swap
+  // point for per-type provider registration (see src/modules/auth/register/).
+  // Backend rejects role 1 (Admin) and 6 (Customer); PROVIDER_TYPE_TO_ROLE
+  // only ever produces 2/3/4. Response is enveloped and carries NO token —
+  // the account must verify its email before it can log in.
   registerProvider: async (payload: RegisterProviderPayload): Promise<RegisterProviderResponse> => {
-    const { data } = await apiClient.post<RegisterProviderResponse>(
-      "/auth/register-provider",
-      payload,
+    const { data } = await apiClient.post<unknown>("/auth/register", {
+      fullName: payload.companyName,
+      email: payload.email,
+      phoneNumber: payload.phone,
+      password: payload.password,
+      confirmPassword: payload.confirmPassword,
+      termsOfServiceAccepted: payload.termsOfServiceAccepted,
+      role: PROVIDER_TYPE_TO_ROLE[payload.providerType],
+    });
+    const result = unwrapEnvelope<{ id: string | number; fullName: string; email: string; userRole: number }>(
+      data,
     );
-    return data;
+    return {
+      id: String(result.id),
+      fullName: result.fullName,
+      email: result.email,
+      userRole: result.userRole,
+      message: unwrapEnvelopeMessage(data),
+    };
   },
 
   // REAL CONTRACT (confirmed live): POST /auth/login expects { email, password }
@@ -58,6 +80,29 @@ export const authApi = {
       password: payload.password,
     });
     return adaptLoginResponse(data);
+  },
+
+  // REAL CONTRACT (confirmed live, enveloped {success,message}): verifies the
+  // OTP emailed after provider registration. Wrong/expired otp → 400.
+  // Already a passthrough on the mock server — do not add a mock handler.
+  verifyEmailOtp: async (payload: VerifyEmailOtpRequest): Promise<MessageResponse> => {
+    const { data } = await apiClient.post<unknown>("/auth/verify-email-otp", payload);
+    return { message: unwrapEnvelopeMessage(data) };
+  },
+
+  // REAL CONTRACT (confirmed live, enveloped {success,message,data,errors}):
+  // always 200 — never reveals whether the email exists (security requirement).
+  forgotPassword: async (payload: ForgotPasswordRequest): Promise<MessageResponse> => {
+    const { data } = await apiClient.post<unknown>("/auth/forgot-password", payload);
+    return { message: unwrapEnvelopeMessage(data) };
+  },
+
+  // REAL CONTRACT (confirmed live): invalid/expired token → 400 with
+  // message "Invalid or expired password reset token." (see auth.adapter.ts
+  // isInvalidResetTokenError). Password mismatch is caught client-side.
+  resetPassword: async (payload: ResetPasswordRequest): Promise<MessageResponse> => {
+    const { data } = await apiClient.post<unknown>("/auth/reset-password", payload);
+    return { message: unwrapEnvelopeMessage(data) };
   },
 
   logout: async (): Promise<void> => {

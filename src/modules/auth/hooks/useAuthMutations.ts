@@ -8,10 +8,13 @@ import {
   setUser,
 } from "../store/authSlice";
 import type {
+  ForgotPasswordRequest,
   LoginRequest,
   RegisterProviderPayload,
   RegisterRequest,
+  ResetPasswordRequest,
   UpdateProfileRequest,
+  VerifyEmailOtpRequest,
   VerifyOtpRequest,
 } from "../types";
 
@@ -72,21 +75,33 @@ export function useLoginMutation() {
   });
 }
 
-// Provider signup engine: create → auto-login in one round trip (no OTP).
+// Provider signup engine. The backend issues NO token on register (the
+// account must verify its email first), so this is a session-less,
+// fire-and-toast mutation — no Redux dispatch. Login happens separately.
 export function useRegisterProviderMutation() {
-  const dispatch = useAppDispatch();
   return useMutation({
     mutationFn: (req: RegisterProviderPayload) => authApi.registerProvider(req),
-    onSuccess: (res) => {
-      dispatch(
-        setCredentials({
-          user: res.user,
-          accessToken: res.accessToken,
-          refreshToken: res.refreshToken,
-        }),
-      );
-      dispatch(clearPendingVerification());
-    },
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useVerifyEmailOtpMutation() {
+  return useMutation({
+    mutationFn: (req: VerifyEmailOtpRequest) => authApi.verifyEmailOtp(req),
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: (req: ForgotPasswordRequest) => authApi.forgotPassword(req),
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: (req: ResetPasswordRequest) => authApi.resetPassword(req),
   });
 }
 

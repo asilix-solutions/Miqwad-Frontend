@@ -56,6 +56,16 @@ const RegisterProviderPage = lazy(() =>
     default: m.RegisterProviderPage,
   }))
 );
+const ForgotPasswordPage = lazy(() =>
+  import("@modules/auth/pages/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  }))
+);
+const ResetPasswordPage = lazy(() =>
+  import("@modules/auth/pages/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  }))
+);
 // ===== FROZEN: client/EndUser lazy imports — re-enable when client web app is needed =====
 // const DashboardPlaceholderPage = lazy(() =>
 //   import("@modules/auth/pages/DashboardPlaceholderPage").then((m) => ({
@@ -346,6 +356,8 @@ export const router = createBrowserRouter([
           { path: "/verify-otp", element: <OtpPage /> },
           { path: "/register", element: <RegisterPage /> },
           { path: "/register/:type", element: <RegisterProviderPage /> },
+          { path: "/forgot-password", element: <ForgotPasswordPage /> },
+          { path: "/reset-password", element: <ResetPasswordPage /> },
         ],
       },
     ],

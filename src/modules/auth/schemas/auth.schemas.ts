@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordStrengthScore } from "@shared/components/ui/PasswordStrengthMeter";
 
 /**
  * Validation schemas for the auth flow.
@@ -59,3 +60,28 @@ export const registerSchema = z.object({
   }),
 });
 export type RegisterFormData = z.infer<typeof registerSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, { message: "auth.forgotPassword.errors.required" })
+    .email({ message: "auth.forgotPassword.errors.invalidEmail" }),
+});
+export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(8, { message: "auth.resetPassword.errors.tooShort" })
+      .refine((pw) => passwordStrengthScore(pw) >= 2, {
+        message: "auth.resetPassword.errors.weak",
+      }),
+    confirmPassword: z.string().min(1, { message: "auth.resetPassword.errors.confirmRequired" }),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: "auth.resetPassword.errors.mismatch",
+    path: ["confirmPassword"],
+  });
+export type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;

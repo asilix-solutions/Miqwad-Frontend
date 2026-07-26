@@ -2,15 +2,11 @@
  * @file Workshop (ورشة) provider signup config — Layer 2 of the register engine.
  */
 
-import { z } from "zod";
 import { Wrench } from "lucide-react";
-import { providerRegisterBaseFields } from "../schemas/providerRegisterBase";
+import { createProviderRegisterSchema } from "../schemas/providerRegisterBase";
 import type { ProviderRegisterConfig } from "./types";
 
-export const workshopRegisterSchema = z.object({
-  type: z.literal("workshop"),
-  ...providerRegisterBaseFields,
-});
+export const workshopRegisterSchema = createProviderRegisterSchema("workshop");
 
 export const workshopRegisterConfig: ProviderRegisterConfig = {
   type: "workshop",
