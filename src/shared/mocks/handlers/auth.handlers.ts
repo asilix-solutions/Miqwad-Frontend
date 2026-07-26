@@ -185,8 +185,20 @@ export async function tryAuthMock(
   const method = (config.method ?? "get").toLowerCase();
 
   // -- POST /auth/register --------------------------------------------------
+  // PARTIALLY PEELED — this URL is shared by two unrelated flows:
+  //   1. authApi.registerProvider (per-type provider signup) sends
+  //      { fullName, email, phoneNumber, password, confirmPassword,
+  //      termsOfServiceAccepted, role }. The real backend is confirmed
+  //      live for this shape (see authApi.ts), so it falls through (null).
+  //   2. authApi.register (legacy phone-only OTP flow, still used by
+  //      LoginPage/OtpPage) sends only { phoneNumber }. That endpoint
+  //      isn't built on the backend yet, so it stays mocked below.
+  // Discriminate on `email`/`password`, which only the provider payload has.
   if (url === "auth/register" && method === "post") {
     const body = parseBody(config.data);
+    if (body.email != null && body.password != null) {
+      return null;
+    }
     const phone = String(body.phoneNumber ?? "");
     if (!/^5\d{8}$/.test(phone)) {
       throw fail(config, 400, "INVALID_PHONE", "رقم الجوال غير صحيح");
