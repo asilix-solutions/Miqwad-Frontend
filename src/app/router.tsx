@@ -51,9 +51,19 @@ const RegisterPage = lazy(() =>
     default: m.RegisterPage,
   }))
 );
-const CompleteProfilePage = lazy(() =>
-  import("@modules/auth/pages/CompleteProfilePage").then((m) => ({
-    default: m.CompleteProfilePage,
+const RegisterProviderPage = lazy(() =>
+  import("@modules/auth/pages/RegisterProviderPage").then((m) => ({
+    default: m.RegisterProviderPage,
+  }))
+);
+const ForgotPasswordPage = lazy(() =>
+  import("@modules/auth/pages/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  }))
+);
+const ResetPasswordPage = lazy(() =>
+  import("@modules/auth/pages/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
   }))
 );
 // ===== FROZEN: client/EndUser lazy imports — re-enable when client web app is needed =====
@@ -266,6 +276,13 @@ const AdminComplaintsPage = lazy(() =>
   }))
 );
 
+// ─── Reference Data Playground (temporary NHTSA verification page) ────────────
+const ReferencePlaygroundPage = lazy(() =>
+  import("@modules/reference/pages/ReferencePlaygroundPage").then((m) => ({
+    default: m.ReferencePlaygroundPage,
+  }))
+);
+
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
 
 /**
@@ -303,10 +320,10 @@ function RootRedirect() {
  * Public (guest-only):
  *   /login              - phone entry
  *   /verify-otp         - 6-digit verification
+ *   /register           - provider-type chooser
+ *   /register/:type     - per-type provider signup (email/password)
  *
  * Authenticated:
- *   /complete-profile   - one-off, gated by user.isProfileComplete
- *
  *   /app/*              - customer (or any logged-in user) area
  *     /app/dashboard
  *     /app/vehicles[...]
@@ -338,6 +355,9 @@ export const router = createBrowserRouter([
           { path: "/login", element: <LoginPage /> },
           { path: "/verify-otp", element: <OtpPage /> },
           { path: "/register", element: <RegisterPage /> },
+          { path: "/register/:type", element: <RegisterProviderPage /> },
+          { path: "/forgot-password", element: <ForgotPasswordPage /> },
+          { path: "/reset-password", element: <ResetPasswordPage /> },
         ],
       },
     ],
@@ -347,18 +367,6 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      // complete-profile sits outside AppLayout — gets its own Suspense
-      {
-        path: "/complete-profile",
-        element: (
-          <ErrorBoundary>
-            <Suspense fallback={<PageLoader />}>
-              <CompleteProfilePage />
-            </Suspense>
-          </ErrorBoundary>
-        ),
-      },
-
       // ===== FROZEN: client/EndUser routes — re-enable when client web app is needed =====
       // Customer / general authenticated area
       // {
@@ -394,6 +402,18 @@ export const router = createBrowserRouter([
       //   ],
       // },
       // ===== END FROZEN =====
+
+      // Reference data playground — temporary verification page for NHTSA-backed data.
+      {
+        path: "/playground/reference",
+        element: (
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoader />}>
+              <ReferencePlaygroundPage />
+            </Suspense>
+          </ErrorBoundary>
+        ),
+      },
 
       // Admin-only notice page — non-admin roles land here while client routes are frozen
       {

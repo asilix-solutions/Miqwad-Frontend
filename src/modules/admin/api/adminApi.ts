@@ -20,6 +20,7 @@ import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
 import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/complaints/types";
+import type { UserFormValues } from "../schemas/userSchema";
 
 /**
  * Admin transport layer.
@@ -57,6 +58,14 @@ export const adminApi = {
 
   restoreUser: async (id: string): Promise<AdminUserRow> => {
     const { data } = await apiClient.post<AdminUserRow>(`/admin/users/${id}/restore`);
+    return data;
+  },
+
+  // TODO: wire to backend — POST /admin/users (.NET). Single swap point for
+  // the admin "Add User" flow; the `type` discriminator in the payload lets
+  // the backend branch between client and provider-subtype registration.
+  createUser: async (payload: UserFormValues): Promise<AdminUserRow> => {
+    const { data } = await apiClient.post<AdminUserRow>("/admin/users", payload);
     return data;
   },
 

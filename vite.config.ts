@@ -19,6 +19,16 @@ export default defineConfig({
     host: true,
     allowedHosts: [
       'miqwad-frontend.onrender.com' // رابط موقعك على ريندر
-    ]
+    ],
+    proxy: {
+      // TEMPORARY (dev only): bypasses the backend's missing CORS headers.
+      // Remove once the backend enables CORS for the dev origin.
+      // See BACKEND_API_REQUIREMENTS.md → CORS gap.
+      "/api": {
+        target: "https://miqwad-test.runasp.net",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

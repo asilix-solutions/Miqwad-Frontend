@@ -116,6 +116,14 @@ The `User.role` values `"customer" | "provider" | "driver" | "admin" | "super_ad
 
 The workshop dashboard (`WorkshopStats`) has only two KPIs today (`rating`, `activeServicesCount`) — conversations KPI is deferred. No dedicated stats endpoint was added to `workshopApi.ts` yet; the dashboard reads these from the profile. **However**, the scrap module has a dedicated `GET /scrap/stats` returning `ScrapStats`. The dealer module currently has no stats endpoint (the dashboard uses product/order counts from paginated responses). This is consistent with each module's current implementation.
 
+### 2.9 CORS — Missing (blocks all real-backend calls from the browser)
+
+CORS is not enabled on the backend. `OPTIONS /api/auth/login` returns `405 Method Not Allowed` with `Allow: POST` and no `Access-Control-Allow-Origin` header, so the browser blocks the preflight before the real request is ever sent. This affects every real (non-mocked) endpoint called from the dev origin (`http://localhost:5173`), not just login.
+
+**Backend fix needed (ASP.NET Core):** register a CORS policy allowing the dev origin with `AllowAnyHeader().AllowAnyMethod()`, and place `app.UseCors(...)` **before** `UseAuthorization()` / `MapControllers()` in the middleware pipeline.
+
+**Frontend workaround (temporary, dev-only):** a Vite dev-server proxy (`vite.config.ts` → `server.proxy["/api"]`) forwards `/api/*` to the backend server-side, so the browser only talks to `localhost:5173` (same-origin, no preflight) and Vite relays server-to-server (no CORS involved). This is opted into locally via `.env` (`VITE_API_BASE_URL=/api`) and **will not help in production** — it only works because the Vite dev server sits in between. Remove the proxy and revert `.env` once the backend enables CORS.
+
 ---
 
 ## 3. Per-Module Endpoint Tables
