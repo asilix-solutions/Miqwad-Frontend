@@ -1,5 +1,7 @@
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
+import { createPendingProviderProfile } from "./providers.handlers";
+import type { ProviderType } from "@modules/providers/types";
 
 /**
  * In-process mock for /auth/* and /users/me endpoints.
@@ -56,6 +58,17 @@ function permissionsForRole(role: MockUser["role"]): string[] {
   if (role === "super_admin") return ["*"];
   return [];
 }
+
+/**
+ * Maps the seed provider emails to their phone numbers so `POST /auth/login`
+ * can bootstrap the same demo users the OTP flow seeds, when signing in
+ * with an email that hasn't been seen by `readCurrentUser()`'s DB yet.
+ */
+const SEED_EMAILS: Record<string, string> = {
+  "shamel@dealer.sa": "501110007",
+  "toyota@workshop.sa": "501110008",
+  "salam@scrap.sa": "501110010",
+};
 
 interface MockDB {
   users: Record<string, MockUser>;
@@ -172,8 +185,20 @@ export async function tryAuthMock(
   const method = (config.method ?? "get").toLowerCase();
 
   // -- POST /auth/register --------------------------------------------------
+  // PARTIALLY PEELED — this URL is shared by two unrelated flows:
+  //   1. authApi.registerProvider (per-type provider signup) sends
+  //      { fullName, email, phoneNumber, password, confirmPassword,
+  //      termsOfServiceAccepted, role }. The real backend is confirmed
+  //      live for this shape (see authApi.ts), so it falls through (null).
+  //   2. authApi.register (legacy phone-only OTP flow, still used by
+  //      LoginPage/OtpPage) sends only { phoneNumber }. That endpoint
+  //      isn't built on the backend yet, so it stays mocked below.
+  // Discriminate on `email`/`password`, which only the provider payload has.
   if (url === "auth/register" && method === "post") {
     const body = parseBody(config.data);
+    if (body.email != null && body.password != null) {
+      return null;
+    }
     const phone = String(body.phoneNumber ?? "");
     if (!/^5\d{8}$/.test(phone)) {
       throw fail(config, 400, "INVALID_PHONE", "رقم الجوال غير صحيح");
@@ -243,6 +268,88 @@ export async function tryAuthMock(
 
     const tokens = makeTokens();
     return ok(config, { ...tokens, user });
+  }
+
+  // -- POST /auth/register-provider ------------------------------------------
+  // Provider signup engine: create account + provider-profile record, then
+  // auto-login (no OTP). See src/modules/auth/register/.
+  if (url === "auth/register-provider" && method === "post") {
+    const body = parseBody(config.data) as {
+      providerType?: string;
+      companyName?: string;
+      email?: string;
+      phone?: string;
+      password?: string;
+    };
+
+    const providerType = body.providerType;
+    const companyName = String(body.companyName ?? "").trim();
+    const email = String(body.email ?? "").trim();
+    const phone = String(body.phone ?? "").trim();
+    const password = String(body.password ?? "");
+
+    if (providerType !== "workshop" && providerType !== "dealer" && providerType !== "scrap") {
+      throw fail(config, 400, "VALIDATION", "نوع مقدّم الخدمة غير صحيح");
+    }
+    if (!companyName || companyName.length < 2) {
+      throw fail(config, 400, "VALIDATION", "اسم المنشأة مطلوب");
+    }
+    if (!/^5\d{8}$/.test(phone)) {
+      throw fail(config, 400, "VALIDATION", "رقم الجوال غير صحيح");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw fail(config, 400, "VALIDATION", "البريد الإلكتروني غير صحيح");
+    }
+    if (password.length < 6) {
+      throw fail(config, 400, "VALIDATION", "كلمة المرور يجب ألا تقل عن 6 أحرف");
+    }
+
+    const db = loadDb();
+    const emailTaken =
+      Object.values(db.users).some((u) => u.email === email) ||
+      Object.keys(SEED_EMAILS).includes(email);
+    if (emailTaken) {
+      throw fail(config, 409, "EMAIL_TAKEN", "هذا البريد الإلكتروني مستخدم بالفعل");
+    }
+
+    const userId = makeId("usr");
+    const profile = createPendingProviderProfile({
+      userId,
+      type: providerType as ProviderType,
+      companyName,
+      email,
+      phone,
+    });
+
+    const user: MockUser = {
+      id: userId,
+      phoneNumber: phone,
+      fullName: companyName,
+      email,
+      role: "provider",
+      avatarUrl: null,
+      isProfileComplete: true,
+      providerId: profile.id,
+      providerStatus: "pending",
+      providerRejectionReason: null,
+      permissions: permissionsForRole("provider"),
+    };
+    db.users[user.id] = user;
+    saveDb(db);
+    localStorage.setItem("maqwad.user", JSON.stringify(user));
+
+    const tokens = makeTokens();
+    return ok(config, { ...tokens, user }, 201);
+  }
+
+  // -- POST /auth/login -------------------------------------------------
+  // PEELED — the real backend's /auth/login is confirmed live and wired
+  // via authApi.login + auth.adapter.ts. Returning null here falls through
+  // to the real backend instead of the mock DB. Every other handler in
+  // this file stays mocked (register-provider, OTP, users/me, ...) since
+  // those endpoints aren't built/confirmed on the backend yet.
+  if (url === "auth/login" && method === "post") {
+    return null;
   }
 
   // -- POST /auth/refresh-token --------------------------------------------

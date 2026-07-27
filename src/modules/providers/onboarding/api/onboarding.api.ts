@@ -8,17 +8,48 @@
 
 import { sleep } from "@shared/lib/utils";
 import type { AccountSummary, ReviewTimelineItem } from "../types";
+import type { ProviderType } from "@modules/providers/types";
+
+interface StoredUser {
+  fullName?: string;
+  email?: string | null;
+  phoneNumber?: string;
+  providerId?: number | null;
+}
+
+interface StoredProvidersDb {
+  providers?: Record<string, { type?: ProviderType }>;
+}
 
 // TODO: wire to backend — GET /onboarding/account-summary
 export async function getAccountSummary(): Promise<AccountSummary> {
   await sleep(800);
+
+  let user: StoredUser | null;
+  try {
+    const raw = localStorage.getItem("maqwad.user");
+    user = raw ? (JSON.parse(raw) as StoredUser) : null;
+  } catch {
+    user = null;
+  }
+
+  let providerType: ProviderType | null = null;
+  if (user?.providerId != null) {
+    try {
+      const raw = localStorage.getItem("maqwad.mockProvidersDb");
+      const db = raw ? (JSON.parse(raw) as StoredProvidersDb) : null;
+      providerType = db?.providers?.[String(user.providerId)]?.type ?? null;
+    } catch {
+      providerType = null;
+    }
+  }
+
   return {
     accountType: "provider",
-    ownerName: "خالد الدوسري",
-    email: "khalid@example.com",
-    phone: "512345678",
-    // TODO: derive from registration payload once backend exposes it
-    providerType: "workshop",
+    ownerName: user?.fullName ?? "",
+    email: user?.email ?? "",
+    phone: user?.phoneNumber ?? "",
+    providerType,
   };
 }
 

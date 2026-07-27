@@ -8,8 +8,13 @@ import {
   setUser,
 } from "../store/authSlice";
 import type {
+  ForgotPasswordRequest,
+  LoginRequest,
+  RegisterProviderPayload,
   RegisterRequest,
+  ResetPasswordRequest,
   UpdateProfileRequest,
+  VerifyEmailOtpRequest,
   VerifyOtpRequest,
 } from "../types";
 
@@ -48,6 +53,55 @@ export function useVerifyOtpMutation() {
       );
       dispatch(clearPendingVerification());
     },
+  });
+}
+
+// PROVISIONAL CONTRACT — pending backend OQ1 (BACKEND_API_REQUIREMENTS.md:1049).
+// Response shape mirrors verifyOtp so session wiring is reused. Confirm with backend before .NET wiring.
+export function useLoginMutation() {
+  const dispatch = useAppDispatch();
+  return useMutation({
+    mutationFn: (req: LoginRequest) => authApi.login(req),
+    onSuccess: (res) => {
+      dispatch(
+        setCredentials({
+          user: res.user,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        }),
+      );
+      dispatch(clearPendingVerification());
+    },
+  });
+}
+
+// Provider signup engine. The backend issues NO token on register (the
+// account must verify its email first), so this is a session-less,
+// fire-and-toast mutation — no Redux dispatch. Login happens separately.
+export function useRegisterProviderMutation() {
+  return useMutation({
+    mutationFn: (req: RegisterProviderPayload) => authApi.registerProvider(req),
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useVerifyEmailOtpMutation() {
+  return useMutation({
+    mutationFn: (req: VerifyEmailOtpRequest) => authApi.verifyEmailOtp(req),
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: (req: ForgotPasswordRequest) => authApi.forgotPassword(req),
+  });
+}
+
+// Session-less: no Redux dispatch, no credential change — fire-and-toast only.
+export function useResetPasswordMutation() {
+  return useMutation({
+    mutationFn: (req: ResetPasswordRequest) => authApi.resetPassword(req),
   });
 }
 

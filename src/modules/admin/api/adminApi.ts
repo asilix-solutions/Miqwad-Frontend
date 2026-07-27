@@ -20,6 +20,31 @@ import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
 import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/complaints/types";
+import type { UserFormValues } from "../schemas/userSchema";
+import { unwrapEnvelope } from "@modules/auth/api/auth.adapter";
+
+/**
+ * Payload for the dedicated, elevated-privilege "Add Admin" action.
+ * No password — the backend emails the new admin an activation OTP and
+ * they set their own password via the existing reset-password flow.
+ */
+export interface AdminCreateRequest {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  role: 1;
+}
+
+/** Shape of the `data` field inside the backend's create-admin envelope. */
+export interface AdminCreateResponseData {
+  id: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  [key: string]: unknown;
+}
 
 /**
  * Admin transport layer.
@@ -58,6 +83,23 @@ export const adminApi = {
   restoreUser: async (id: string): Promise<AdminUserRow> => {
     const { data } = await apiClient.post<AdminUserRow>(`/admin/users/${id}/restore`);
     return data;
+  },
+
+  // TODO: wire to backend — POST /admin/users (.NET). Single swap point for
+  // the admin "Add User" flow; the `type` discriminator in the payload lets
+  // the backend branch between client and provider-subtype registration.
+  createUser: async (payload: UserFormValues): Promise<AdminUserRow> => {
+    const { data } = await apiClient.post<AdminUserRow>("/admin/users", payload);
+    return data;
+  },
+
+  // SECURITY: admin-only creation must be enforced server-side ([Authorize]
+  // on POST /api/Users). The frontend attaches the current admin's bearer
+  // token via apiClient's request interceptor but cannot secure this
+  // endpoint alone — server-side role authorization is the real gate.
+  createAdmin: async (payload: AdminCreateRequest): Promise<AdminCreateResponseData> => {
+    const { data } = await apiClient.post("/Users", payload);
+    return unwrapEnvelope<AdminCreateResponseData>(data);
   },
 
   listProviders: async (status?: AdminProviderStatus, type?: ProviderType): Promise<AdminProvider[]> => {
