@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi, type CreateCategoryPayload } from "../api/adminApi";
+import { adminApi, type CreateCategoryPayload, type AdminCreateRequest } from "../api/adminApi";
 import type { UserFormValues } from "../schemas/userSchema";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
@@ -152,6 +152,17 @@ export function useCreateUserMutation() {
       if (payload.type !== "client") {
         void qc.invalidateQueries({ queryKey: adminKeys.providers() });
       }
+    },
+  });
+}
+
+/** Dedicated mutation for the elevated-privilege "Add Admin" action. */
+export function useCreateAdminMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AdminCreateRequest) => adminApi.createAdmin(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
     },
   });
 }
