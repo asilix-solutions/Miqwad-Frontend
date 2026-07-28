@@ -23,6 +23,7 @@ import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/compl
 import type { UserFormValues } from "../schemas/userSchema";
 import { unwrapEnvelope } from "@modules/auth/api/auth.adapter";
 import { isAdminRole } from "../config/roleRegistry";
+import { adaptAuditLogsResponse, type RawAuditLogPage } from "./audit.adapter";
 
 /**
  * Server-sortable fields on `GET /api/Users` (verified live, casing matters).
@@ -463,18 +464,22 @@ export const adminApi = {
   },
 
   // ── Audit Logs ─────────────────────────────────────────────────────────────
+  // Real endpoint is GET /api/auditlogs (only PageNumber/PageSize/SortBy/
+  // SortDescending/FilterBy/FilterValue exist server-side) — module/action/
+  // date/search filtering happens client-side in audit.adapter.ts. There is
+  // no export endpoint; CSV export is generated client-side from the
+  // currently-loaded page in AdminAuditLogPage.
 
   getAuditLogs: async (params: AuditLogQuery): Promise<PaginatedResponse<AuditLogEntry>> => {
-    const { data } = await apiClient.get<PaginatedResponse<AuditLogEntry>>("/admin/audit-logs", { params });
-    return data;
-  },
-
-  exportAuditLogs: async (params: Omit<AuditLogQuery, "page" | "pageSize">): Promise<Blob> => {
-    const { data } = await apiClient.get<Blob>("/admin/audit-logs/export", {
-      params,
-      responseType: "blob",
+    const { data } = await apiClient.get("/auditlogs", {
+      params: {
+        PageNumber: params.page,
+        PageSize: params.pageSize,
+        SortBy: "CreatedAt",
+        SortDescending: true,
+      },
     });
-    return data;
+    return adaptAuditLogsResponse(unwrapEnvelope<RawAuditLogPage>(data), params);
   },
 
   // ── Complaints ─────────────────────────────────────────────────────────────

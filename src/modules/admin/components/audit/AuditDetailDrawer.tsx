@@ -23,9 +23,7 @@ export function AuditDetailDrawer({ entry, open, onOpenChange }: AuditDetailDraw
               <DialogTitle>{t("superAdmin.audit.detail.title")}</DialogTitle>
               <div className="flex items-center gap-3 pt-2">
                 <StatusBadge kind="audit" status={entry.action} />
-                <span className="text-sm font-medium">
-                  {t(`superAdmin.audit.modules.${entry.module}`)}
-                </span>
+                <span className="text-sm font-medium">{entry.module}</span>
                 <span className="text-sm text-[var(--color-muted)] flex-1 text-end" dir="ltr">
                   {formatDate(entry.createdAt, i18n.language)}
                 </span>
@@ -36,7 +34,8 @@ export function AuditDetailDrawer({ entry, open, onOpenChange }: AuditDetailDraw
               <div>
                 <div className="text-xs text-[var(--color-muted)]">{t("superAdmin.audit.detail.actor")}</div>
                 <div className="text-sm text-[var(--color-ink-body)]">
-                  {entry.actorName} · {entry.actorRole}
+                  {entry.actorName}
+                  {entry.actorRole ? ` · ${entry.actorRole}` : ""}
                 </div>
               </div>
 
