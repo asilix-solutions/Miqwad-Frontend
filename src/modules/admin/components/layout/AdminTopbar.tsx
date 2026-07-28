@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@app/store";
-import { logout } from "@modules/auth/store/authSlice";
-import { authApi } from "@modules/auth/api/authApi";
+import { useAppSelector } from "@app/store";
+import { useLogout } from "@modules/auth/hooks/useLogout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AdminTopbarProps {
@@ -13,19 +11,8 @@ interface AdminTopbarProps {
 
 export function AdminTopbar({ children }: AdminTopbarProps) {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Best-effort logout
-    }
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
+  const { logout: handleLogout } = useLogout();
 
   return (
     <header
