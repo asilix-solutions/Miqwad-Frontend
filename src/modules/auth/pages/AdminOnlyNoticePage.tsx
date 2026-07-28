@@ -15,15 +15,12 @@
  * Uses shadcn Card + Button, full RTL support, i18n translation keys.
  */
 
-import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldAlert, LogOut } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
-import { useAppDispatch } from "@app/store";
-import { logout } from "@modules/auth/store/authSlice";
-import { authApi } from "@modules/auth/api/authApi";
+import { useLogout } from "@modules/auth/hooks/useLogout";
 
 /**
  * A minimal notice page that tells non-admin users the web app is
@@ -33,18 +30,7 @@ import { authApi } from "@modules/auth/api/authApi";
  */
 export function AdminOnlyNoticePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Best-effort: clear locally even if the server call fails.
-    }
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
+  const { logout: handleLogout } = useLogout();
 
   return (
     <AuthLayout>

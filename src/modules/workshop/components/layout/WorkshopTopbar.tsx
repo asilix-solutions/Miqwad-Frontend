@@ -8,10 +8,8 @@
 import type { ReactNode } from "react";
 import { LogOut, Languages } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "@app/store";
-import { logout } from "@modules/auth/store/authSlice";
-import { authApi } from "@modules/auth/api/authApi";
+import { useAppSelector } from "@app/store";
+import { useLogout } from "@modules/auth/hooks/useLogout";
 import i18n from "@app/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -21,19 +19,8 @@ interface WorkshopTopbarProps {
 
 export function WorkshopTopbar({ children }: WorkshopTopbarProps) {
   const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Best-effort logout
-    }
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
+  const { logout: handleLogout } = useLogout();
 
   const toggleLang = () => {
     void i18n.changeLanguage(i18n.language === "ar" ? "en" : "ar");
