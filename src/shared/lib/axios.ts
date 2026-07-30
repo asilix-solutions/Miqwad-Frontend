@@ -17,10 +17,13 @@ import { storage, StorageKeys } from "./storage";
  *  The refresh endpoint is decoupled (no interceptor recursion).
  */
 
-// Fallback is the absolute production URL (production truth). A local .env
-// may temporarily override this to "/api" to route through the Vite dev
-// proxy while the backend lacks CORS — see vite.config.ts.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://miqwad-test.runasp.net/api";
+// Fallback is the relative "/api" (matching the Vite dev proxy), NOT the
+// absolute backend URL. An absolute http:// fallback would bypass the proxy
+// entirely, hit the backend directly, and get 307-redirected to https by the
+// backend — which the browser then blocks as a cross-origin redirect with no
+// CORS headers. A missing env var must therefore degrade safely through the
+// proxy, not around it. See vite.config.ts for the proxy target.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
