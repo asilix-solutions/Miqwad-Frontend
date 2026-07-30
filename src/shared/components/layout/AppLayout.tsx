@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Car,
@@ -17,9 +17,8 @@ import {
   Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch, useAppSelector } from "@app/store";
-import { logout } from "@modules/auth/store/authSlice";
-import { authApi } from "@modules/auth/api/authApi";
+import { useAppSelector } from "@app/store";
+import { useLogout } from "@modules/auth/hooks/useLogout";
 import i18n from "@app/i18n";
 import { cn } from "@shared/lib/utils";
 import type { UserRole } from "@modules/auth/types";
@@ -40,19 +39,8 @@ import type { UserRole } from "@modules/auth/types";
 export function AppLayout() {
   const { t } = useTranslation();
   const user = useAppSelector((s) => s.auth.user);
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const { logout: handleLogout } = useLogout();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Best-effort: clear locally even if the server call fails.
-    }
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
 
   const toggleLang = () => {
     void i18n.changeLanguage(i18n.language === "ar" ? "en" : "ar");
