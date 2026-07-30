@@ -221,3 +221,51 @@ export function hasPermission(
   }
   return userPermissions.includes(required);
 }
+
+// =============================================================================
+// Role → permissions fallback (INTERIM RBAC source of truth)
+// =============================================================================
+
+/**
+ * Derives a permission set from a user's role.
+ *
+ * **This map is an interim shim, not the long-term contract.** The backend
+ * currently has no permissions system at all — authorization there is
+ * role-only (a numeric role enum). Until/unless the backend starts sending
+ * real, non-empty `permissions` for a user, this map is the sole source of
+ * truth for what each role may do in the UI.
+ *
+ * Precedence is enforced by the caller ({@link usePermissions}): a
+ * non-empty `user.permissions` from the backend always wins over this map.
+ * If the backend ever ships real permissions, this map simply stops being
+ * consulted for those users — safe to delete entirely at that point.
+ *
+ * `admin` / `super_admin` receive the {@link WILDCARD} because every
+ * permission code currently defined in `PERMISSIONS` gates an admin-only
+ * surface; granting anything less would regress admin functionality that
+ * already exists today. Provider/driver/customer roles are gated by
+ * `RoleGuard` (and provider-type guards), not by permission codes, so they
+ * receive no codes here.
+ */
+const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
+  admin: [WILDCARD],
+  super_admin: [WILDCARD],
+  provider: [],
+  driver: [],
+  customer: [],
+};
+
+/**
+ * Returns the fallback permission set for a given role.
+ *
+ * Used only when the authenticated user has no (or an empty) `permissions`
+ * array from the backend — see {@link usePermissions} for the precedence
+ * rule. Unknown/undefined roles fail safe to an empty array.
+ *
+ * @param role - The user's role, or `undefined` for an unauthenticated user.
+ * @returns The role's fallback permission codes (may include {@link WILDCARD}).
+ */
+export function getRolePermissions(role: string | undefined | null): string[] {
+  if (!role) return [];
+  return [...(ROLE_PERMISSIONS[role] ?? [])];
+}
