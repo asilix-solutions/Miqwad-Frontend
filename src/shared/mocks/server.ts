@@ -130,6 +130,14 @@ function createMockAdapter(realAdapter: AxiosAdapter, mocksEnabled: boolean): Ax
 }
 
 export function installMocks(): void {
+  // Production-safety gate: mocks must NEVER run in a production build, no
+  // matter what VITE_USE_MOCKS or ALWAYS_MOCKED_PREFIXES say — those only
+  // control behavior *within* dev. import.meta.env.DEV is set by Vite based
+  // on the build command (`vite` vs `vite build`), not by any .env file, so
+  // it can't be misconfigured. To re-enable mocks in production, remove this
+  // guard — nothing else needs to change (all handlers/prefixes stay intact).
+  if (!import.meta.env.DEV) return;
+
   const previous = apiClient.defaults.adapter;
   if (!previous) {
     console.warn("[mocks] No previous adapter found; mocks disabled");
