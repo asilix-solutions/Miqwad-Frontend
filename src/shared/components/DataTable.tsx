@@ -19,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export interface DataTableColumn<T> {
   key: Extract<keyof T, string> | (string & {});
-  header: string;
+  header: ReactNode;
   render?: (row: T) => ReactNode;
   className?: string;
 }
