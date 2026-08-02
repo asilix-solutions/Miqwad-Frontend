@@ -53,6 +53,18 @@ import { tryScrapMock } from "./handlers/scrap.handlers";
  * /ServiceProviders/register, /Vehicles CRUD) — those stay gated by
  * VITE_USE_MOCKS via `otherHandlers`, unaffected by this list.
  *
+ * Provider-area prefixes (same always-mocked mechanism, same rationale —
+ * these areas have no real backend controllers at all yet):
+ *   - `workshop/`  → workshop profile, subscription.
+ *   - `scrap/`     → scrap profile, subscription, stats, part-requests,
+ *                     escrow.
+ *   - `dealer/`    → dealer products, orders, shipments, dues (profile to
+ *                     follow). Covers banner/photos/rating/hours/
+ *                     specializations/location once those ship per area.
+ * As with admin/, this is a TEMPORARY bridge: as each real provider
+ * endpoint ships, its handler should return null so that route falls
+ * through to the real backend, shrinking this list one endpoint at a time.
+ *
  * The mock chain tries each handler in order; the first one to
  * return a non-null response wins. Anything unmatched falls through
  * to the real adapter, so a partially-implemented backend can be
@@ -70,6 +82,9 @@ const alwaysMockHandlers: Handler[] = [
   tryAdminSettingsMock,
   tryProvidersMock,
   tryVehiclesMock,
+  tryDealerMock,
+  tryWorkshopMock,
+  tryScrapMock,
 ];
 
 const otherHandlers: Handler[] = [
@@ -82,7 +97,14 @@ const otherHandlers: Handler[] = [
   tryDiscoveryMock,
 ];
 
-const ALWAYS_MOCKED_PREFIXES = ["admin/", "services/categories", "lookups/brands"];
+const ALWAYS_MOCKED_PREFIXES = [
+  "admin/",
+  "services/categories",
+  "lookups/brands",
+  "workshop/",
+  "scrap/",
+  "dealer/",
+];
 
 function isAlwaysMockedRequest(config: InternalAxiosRequestConfig): boolean {
   const url = (config.url ?? "").replace(/^\/+/, "").toLowerCase();
@@ -127,7 +149,7 @@ export function installMocks(): void {
   const mocksEnabled = Boolean(import.meta.env.VITE_USE_MOCKS) && import.meta.env.VITE_USE_MOCKS !== "false";
   apiClient.defaults.adapter = createMockAdapter(realAdapter, mocksEnabled);
   console.info(
-    "%c[maqwad] mock bridge installed — admin/*, services/categories, lookups/brands mocked always, rest mocked=%s",
+    "%c[maqwad] mock bridge installed — admin/*, services/categories, lookups/brands, workshop/*, scrap/*, dealer/* mocked always, rest mocked=%s",
     "color:#F45E2B;font-weight:600",
     mocksEnabled,
   );
