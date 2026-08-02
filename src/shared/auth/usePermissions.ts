@@ -19,7 +19,7 @@
 
 import { useMemo } from "react";
 import { useAppSelector } from "@app/store";
-import { hasPermission, WILDCARD } from "@shared/auth/permissions";
+import { getRolePermissions, hasPermission, WILDCARD } from "@shared/auth/permissions";
 import type { PermissionCode } from "@shared/auth/permissions";
 
 /** Shape returned by {@link usePermissions}. */
@@ -71,7 +71,14 @@ export function usePermissions(): UsePermissionsResult {
 
   // Stabilise the permissions reference so downstream memos / effects
   // don't re-run unless the actual array instance changes.
-  const permissions: string[] = user?.permissions ?? [];
+  //
+  // Precedence: a non-empty `user.permissions` from the backend always
+  // wins. The backend has no permissions system today (role-only auth), so
+  // real logins arrive with `permissions` absent — fall back to the
+  // interim role→permissions map in that case. See getRolePermissions().
+  const permissions: string[] = user?.permissions?.length
+    ? user.permissions
+    : getRolePermissions(user?.role);
 
   return useMemo<UsePermissionsResult>(() => {
     const can = (permission: PermissionCode): boolean =>

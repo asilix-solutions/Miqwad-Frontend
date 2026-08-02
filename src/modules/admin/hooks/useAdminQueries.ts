@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi, type CreateCategoryPayload } from "../api/adminApi";
+import { adminApi, type CreateCategoryPayload, type AdminCreateRequest, type UsersSortField } from "../api/adminApi";
+import type { UserFormValues } from "../schemas/userSchema";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
@@ -21,7 +22,7 @@ import { useTranslation } from "react-i18next";
  */
 export const adminKeys = {
   all: ["admin"] as const,
-  users: (params: { page: number; pageSize: number }) => [...adminKeys.all, "users", params] as const,
+  users: (params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) => [...adminKeys.all, "users", params] as const,
   providers: (status?: AdminProviderStatus, type?: ProviderType) =>
     [...adminKeys.all, "providers", status ?? "all", type ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
@@ -63,7 +64,7 @@ export function useRevenuesQuery(params?: { source?: import("../types").RevenueS
 }
 
 
-export function useUsersQuery(params: { page: number; pageSize: number }) {
+export function useUsersQuery(params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) {
   return useQuery({
     queryKey: adminKeys.users(params),
     queryFn: () => adminApi.getUsers(params),
@@ -138,6 +139,30 @@ export function useRestoreUserMutation() {
     onSuccess: (_, userId) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
       void qc.invalidateQueries({ queryKey: adminKeys.user(userId) });
+    },
+  });
+}
+
+export function useCreateUserMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UserFormValues) => adminApi.createUser(payload),
+    onSuccess: (_, payload) => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
+      if (payload.type !== "client") {
+        void qc.invalidateQueries({ queryKey: adminKeys.providers() });
+      }
+    },
+  });
+}
+
+/** Dedicated mutation for the elevated-privilege "Add Admin" action. */
+export function useCreateAdminMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AdminCreateRequest) => adminApi.createAdmin(payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
     },
   });
 }

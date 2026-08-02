@@ -1,39 +1,52 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, User, Mail, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronRight, Wrench, Store, Recycle, type LucideIcon } from "lucide-react";
 import { AuthLayout } from "@shared/components/layout/AuthLayout";
-import { Button } from "@/components/ui/button";
-import { registerSchema, type RegisterFormData } from "../schemas/auth.schemas";
+import { cn } from "@shared/lib/utils";
+import type { ProviderType } from "@modules/providers/types";
 
 /**
- * Register page — new account request.
- * Fields: name, phone, email, account type.
- * On submit: placeholder (no backend endpoint yet).
+ * /register — provider-type chooser. Web signup is providers-only (customers
+ * are app-only); this page just routes to /register/{type}, which renders
+ * the actual per-type signup form (see @modules/auth/register/).
  */
 export function RegisterPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const form = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      fullName: "",
-      phoneNumber: "",
-      email: "",
-      accountType: "provider",
+  const options: Array<{
+    type: ProviderType;
+    icon: LucideIcon;
+    accentClass: string;
+    accentBgClass: string;
+    labelKey: string;
+    descKey: string;
+  }> = [
+    {
+      type: "workshop",
+      icon: Wrench,
+      accentClass: "text-[var(--color-brand-blue)]",
+      accentBgClass: "bg-[var(--color-brand-blue)]/10",
+      labelKey: "providers.choose.workshopLabel",
+      descKey: "providers.choose.workshopDesc",
     },
-    mode: "onSubmit",
-  });
-
-  const isSubmitting = form.formState.isSubmitting;
-  const errors = form.formState.errors;
-
-  const onSubmit = form.handleSubmit(async (values) => {
-    // TODO: wire to POST /auth/register
-    console.log("Register form submitted:", values);
-  });
+    {
+      type: "dealer",
+      icon: Store,
+      accentClass: "text-[var(--color-brand-orange)]",
+      accentBgClass: "bg-[var(--color-brand-orange)]/10",
+      labelKey: "providers.choose.dealerLabel",
+      descKey: "providers.choose.dealerDesc",
+    },
+    {
+      type: "scrap",
+      icon: Recycle,
+      accentClass: "text-emerald-600",
+      accentBgClass: "bg-emerald-600/10",
+      labelKey: "providers.choose.scrapLabel",
+      descKey: "providers.choose.scrapDesc",
+    },
+  ];
 
   return (
     <AuthLayout>
@@ -48,141 +61,49 @@ export function RegisterPage() {
 
       {/* Title + subtitle */}
       <h2 className="txt-display-m font-main font-[var(--fw-ibm-bold)] text-[#0F1222] text-right">
-        {t("auth.register.title")}
+        {t("providers.choose.title")}
       </h2>
       <p className="txt-subtitle font-main text-[#7A7E95] text-right mt-[var(--space-2)]">
-        {t("auth.register.subtitle")}
+        {t("providers.choose.subtitle")}
       </p>
 
-      {/* Form */}
-      <form onSubmit={onSubmit} className="mt-[var(--space-8)] space-y-[var(--space-4)]" noValidate>
-        {/* ── Full Name ────────────────────────────────────────── */}
-        <div>
-          <label className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right mb-[var(--space-1)]">
-            {t("auth.register.fullNameLabel")}
-          </label>
-          <div className="relative">
-            <User
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7A7E95]"
-            />
-            <input
-              type="text"
-              placeholder={t("auth.register.fullNamePlaceholder")}
-              className="bg-white border-0 rounded-[var(--radius-md)] h-[var(--size-input-h)] px-[var(--space-4)] pl-10 txt-body font-main text-[#0F1222] placeholder:text-[#7A7E95] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)]/20 transition-all duration-200 w-full"
-              {...form.register("fullName")}
-            />
-          </div>
-          {errors.fullName && (
-            <p className="txt-caption font-main text-[#E3460F] text-right mt-[var(--space-1)]">
-              {errors.fullName.message}
-            </p>
-          )}
-        </div>
-
-        {/* ── Phone ────────────────────────────────────────────── */}
-        <div>
-          <label className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right mb-[var(--space-1)]">
-            {t("auth.phoneLabel")}
-          </label>
-          <div className="flex items-center bg-white border-0 rounded-[var(--radius-md)] h-[var(--size-input-h)] px-[var(--space-4)] gap-3 focus-within:ring-2 focus-within:ring-[var(--color-brand-orange)]/20 transition-all duration-200">
-            <span className="txt-body font-main font-[var(--fw-ibm-medium)] text-[#0F1222] shrink-0">
-              {t("auth.countryCode")}
-            </span>
-            <span className="w-px h-6 bg-[#ECECF1] shrink-0" />
-            <input
-              type="text"
-              inputMode="numeric"
-              autoComplete="tel"
-              placeholder={t("auth.phonePlaceholder")}
-              className="flex-1 txt-body font-main placeholder:text-[#7A7E95] border-0 outline-none bg-transparent text-[#0F1222]"
-              {...form.register("phoneNumber")}
-            />
-          </div>
-          {errors.phoneNumber && (
-            <p className="txt-caption font-main text-[#E3460F] text-right mt-[var(--space-1)]">
-              {errors.phoneNumber.message}
-            </p>
-          )}
-        </div>
-
-        {/* ── Email ────────────────────────────────────────────── */}
-        <div>
-          <label className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right mb-[var(--space-1)]">
-            {t("auth.register.emailLabel")}
-          </label>
-          <div className="relative">
-            <Mail
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7A7E95]"
-            />
-            <input
-              type="email"
-              placeholder={t("auth.register.emailPlaceholder")}
-              className="bg-white border-0 rounded-[var(--radius-md)] h-[var(--size-input-h)] px-[var(--space-4)] pl-10 txt-body font-main text-[#0F1222] placeholder:text-[#7A7E95] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)]/20 transition-all duration-200 w-full"
-              {...form.register("email")}
-            />
-          </div>
-          {errors.email && (
-            <p className="txt-caption font-main text-[#E3460F] text-right mt-[var(--space-1)]">
-              {errors.email.message}
-            </p>
-          )}
-        </div>
-
-        {/* ── Account Type ─────────────────────────────────────── */}
-        <div>
-          <label className="block txt-caption font-main font-[var(--fw-ibm-medium)] text-[#0F1222] text-right mb-[var(--space-1)]">
-            {t("auth.register.accountTypeLabel")}
-          </label>
-          <div className="relative">
-            <User
-              size={16}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#7A7E95] pointer-events-none"
-            />
-            <ChevronDown
-              size={16}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#7A7E95] pointer-events-none"
-            />
-            <select
-              className="appearance-none w-full h-[var(--size-input-h)] rounded-[var(--radius-md)] border-0 bg-white px-[var(--space-4)] pl-10 pr-10 txt-body font-main text-[#0F1222] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)]/20 transition-all duration-200"
-              {...form.register("accountType")}
+      {/* Type options */}
+      <div className="mt-[var(--space-8)] space-y-[var(--space-3)]">
+        {options.map(({ type, icon: Icon, accentClass, accentBgClass, labelKey, descKey }) => (
+          <Link
+            key={type}
+            to={`/register/${type}`}
+            className="flex items-center gap-4 rounded-[var(--radius-md)] bg-white p-[var(--space-4)] shadow-[var(--shadow-card)] hover:shadow-md transition-shadow duration-200"
+          >
+            <span
+              className={cn(
+                "flex items-center justify-center w-12 h-12 rounded-[var(--radius-lg)] shrink-0",
+                accentBgClass,
+              )}
             >
-              <option value="provider">
-                {t("auth.register.providerOption")}
-              </option>
-              <option value="customer">
-                {t("auth.register.customerOption")}
-              </option>
-            </select>
-          </div>
-          {errors.accountType && (
-            <p className="txt-caption font-main text-[#E3460F] text-right mt-[var(--space-1)]">
-              {errors.accountType.message}
-            </p>
-          )}
-        </div>
-
-        {/* Submit button */}
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          block
-          className="mt-[var(--space-10)]"
-        >
-          {isSubmitting && <Loader2 size={18} className="animate-spin" />}
-          {t("auth.register.submitButton")}
-        </Button>
-      </form>
+              <Icon size={22} className={accentClass} />
+            </span>
+            <span className="flex-1 text-right">
+              <span className="block txt-body font-main font-[var(--fw-ibm-semibold)] text-[#0F1222]">
+                {t(labelKey)}
+              </span>
+              <span className="block txt-caption font-main text-[#7A7E95] mt-0.5">
+                {t(descKey)}
+              </span>
+            </span>
+            <ChevronRight size={18} className="text-[#7A7E95] rotate-180 shrink-0" />
+          </Link>
+        ))}
+      </div>
 
       {/* Bottom link */}
-      <p className="text-center txt-caption font-main mt-[var(--space-4)]">
-        <span className="text-[#7A7E95]">{t("auth.register.hasAccount")} </span>
+      <p className="text-center txt-caption font-main mt-[var(--space-6)]">
+        <span className="text-[#7A7E95]">{t("providers.choose.hasAccount")} </span>
         <Link
           to="/login"
           className="text-[var(--color-brand-orange)] font-[var(--fw-ibm-semibold)] hover:underline"
         >
-          {t("auth.register.signInLink")}
+          {t("providers.choose.signInLink")}
         </Link>
       </p>
     </AuthLayout>

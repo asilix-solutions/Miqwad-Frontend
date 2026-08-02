@@ -6,19 +6,17 @@ import { useAppSelector } from "@app/store";
  * Unauth users are bounced to /login; once they log in,
  * the original URL is restored via location.state.from.
  *
- * If the user is authenticated but has not yet completed
- * their profile, force them through /complete-profile.
+ * Profile completeness is captured at signup time now (password + type
+ * collected by /register/{type}), so there is no separate complete-profile
+ * gate here — see OtpPage for the one remaining incomplete-profile case
+ * (a provider verified via the phone/OTP flow who hasn't onboarded yet).
  */
 export function ProtectedRoute() {
-  const { accessToken, user } = useAppSelector((s) => s.auth);
+  const { accessToken } = useAppSelector((s) => s.auth);
   const location = useLocation();
 
   if (!accessToken) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
-  if (user && !user.isProfileComplete && location.pathname !== "/complete-profile") {
-    return <Navigate to="/complete-profile" replace />;
   }
 
   return <Outlet />;

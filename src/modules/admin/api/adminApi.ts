@@ -20,6 +20,95 @@ import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
 import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/complaints/types";
+import type { UserFormValues } from "../schemas/userSchema";
+import { unwrapEnvelope } from "@modules/auth/api/auth.adapter";
+import { isAdminRole } from "../config/roleRegistry";
+
+/**
+ * Server-sortable fields on `GET /api/Users` (verified live, casing matters).
+ * `isActive` is accepted (200, no error) but its actual ordering could not be
+ * visually confirmed against real data — the test dataset only had active
+ * users.
+ */
+export type UsersSortField = "fullName" | "createdAt" | "isActive";
+
+/** Raw `GET /api/Users` / `GET /api/Users/{id}` record — verbatim backend field names. */
+interface RawAdminUser {
+  id: string | number;
+  fullName: string;
+  email: string | null;
+  phoneNumber: string;
+  address: string | null;
+  city: string | null;
+  idenityNumber: string | null;
+  isActive: boolean;
+  createdAt: string;
+  roleId?: number;
+}
+
+interface RawUsersListData {
+  items: RawAdminUser[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+function adaptUser(raw: RawAdminUser): AdminUserRow {
+  return {
+    id: String(raw.id),
+    fullName: raw.fullName,
+    email: raw.email ?? null,
+    phoneNumber: raw.phoneNumber,
+    address: raw.address ?? null,
+    city: raw.city ?? null,
+    idenityNumber: raw.idenityNumber ?? null,
+    isActive: raw.isActive,
+    createdAt: raw.createdAt,
+    // Wire key is `roleId`; the app model exposes it as `role` for
+    // roleRegistry compatibility (see config/roleRegistry.ts).
+    role: typeof raw.roleId === "number" ? raw.roleId : undefined,
+  };
+}
+
+/**
+ * Unwraps the envelope, maps every row, and excludes admin accounts
+ * (role === 1, resolved via roleRegistry's isAdminRole).
+ */
+function adaptUserList(raw: unknown): PaginatedResponse<AdminUserRow> {
+  const data = unwrapEnvelope<RawUsersListData>(raw);
+  const items = data.items.map(adaptUser).filter((user) => !isAdminRole(user.role));
+  return {
+    items,
+    page: data.pageNumber,
+    pageSize: data.pageSize,
+    total: data.totalCount,
+    totalPages: data.totalPages,
+  };
+}
+
+/**
+ * Payload for the dedicated, elevated-privilege "Add Admin" action.
+ * No password — the backend emails the new admin an activation OTP and
+ * they set their own password via the existing reset-password flow.
+ */
+export interface AdminCreateRequest {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  city: string;
+  role: 1;
+}
+
+/** Shape of the `data` field inside the backend's create-admin envelope. */
+export interface AdminCreateResponseData {
+  id: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  [key: string]: unknown;
+}
 
 /**
  * Admin transport layer.
@@ -40,14 +129,51 @@ export const adminApi = {
   },
 
 
-  getUsers: async (params: { page: number; pageSize: number }): Promise<PaginatedResponse<AdminUserRow>> => {
-    const { data } = await apiClient.get<PaginatedResponse<AdminUserRow>>("/admin/users", { params });
-    return data;
+  // Bare `/Users` (no `admin/` prefix) bypasses the always-mocked bridge and
+  // hits the real .NET backend — same pattern as createAdmin below.
+  // NOTE: `FilterBy` accepts exactly ONE field (verified live: sending two
+  // FilterBy/FilterValue pairs silently drops the second one). Role tab,
+  // status filter and search are therefore mutually exclusive server-side —
+  // the UI (UsersPanel) enforces that only one is ever set at a time, and
+  // this precedence order (roleId > isActive > search) is a defensive
+  // fallback, not something the UI should ever actually rely on.
+  // `isActive` must be sent as the literal string "true"/"false" — "1"/"0"
+  // returns a 400 ("was not recognized as a valid Boolean").
+  // `SortBy`/`SortDescending` are independent of FilterBy and verified to
+  // work alongside any single filter above.
+  getUsers: async (params: {
+    page: number;
+    pageSize: number;
+    search?: string;
+    roleId?: number;
+    isActive?: boolean;
+    sortBy?: UsersSortField;
+    sortDescending?: boolean;
+  }): Promise<PaginatedResponse<AdminUserRow>> => {
+    const filter = params.roleId !== undefined
+      ? { FilterBy: "roleId", FilterValue: params.roleId }
+      : params.isActive !== undefined
+        ? { FilterBy: "isActive", FilterValue: params.isActive ? "true" : "false" }
+        : params.search
+          ? { FilterBy: "fullName", FilterValue: params.search }
+          : {};
+    const sort = params.sortBy
+      ? { SortBy: params.sortBy, SortDescending: !!params.sortDescending }
+      : {};
+    const { data } = await apiClient.get("/Users", {
+      params: {
+        PageNumber: params.page,
+        PageSize: params.pageSize,
+        ...filter,
+        ...sort,
+      },
+    });
+    return adaptUserList(data);
   },
 
   getUser: async (id: string): Promise<AdminUserDetail> => {
-    const { data } = await apiClient.get<AdminUserDetail>(`/admin/users/${id}`);
-    return data;
+    const { data } = await apiClient.get(`/Users/${id}`);
+    return adaptUser(unwrapEnvelope<RawAdminUser>(data));
   },
 
   suspendUser: async (id: string, reason: string): Promise<AdminUserRow> => {
@@ -58,6 +184,23 @@ export const adminApi = {
   restoreUser: async (id: string): Promise<AdminUserRow> => {
     const { data } = await apiClient.post<AdminUserRow>(`/admin/users/${id}/restore`);
     return data;
+  },
+
+  // TODO: wire to backend — POST /admin/users (.NET). Single swap point for
+  // the admin "Add User" flow; the `type` discriminator in the payload lets
+  // the backend branch between client and provider-subtype registration.
+  createUser: async (payload: UserFormValues): Promise<AdminUserRow> => {
+    const { data } = await apiClient.post<AdminUserRow>("/admin/users", payload);
+    return data;
+  },
+
+  // SECURITY: admin-only creation must be enforced server-side ([Authorize]
+  // on POST /api/Users). The frontend attaches the current admin's bearer
+  // token via apiClient's request interceptor but cannot secure this
+  // endpoint alone — server-side role authorization is the real gate.
+  createAdmin: async (payload: AdminCreateRequest): Promise<AdminCreateResponseData> => {
+    const { data } = await apiClient.post("/Users", payload);
+    return unwrapEnvelope<AdminCreateResponseData>(data);
   },
 
   listProviders: async (status?: AdminProviderStatus, type?: ProviderType): Promise<AdminProvider[]> => {

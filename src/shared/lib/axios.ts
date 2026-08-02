@@ -17,7 +17,13 @@ import { storage, StorageKeys } from "./storage";
  *  The refresh endpoint is decoupled (no interceptor recursion).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
+// Fallback is the relative "/api" (matching the Vite dev proxy), NOT the
+// absolute backend URL. An absolute http:// fallback would bypass the proxy
+// entirely, hit the backend directly, and get 307-redirected to https by the
+// backend — which the browser then blocks as a cross-origin redirect with no
+// CORS headers. A missing env var must therefore degrade safely through the
+// proxy, not around it. See vite.config.ts for the proxy target.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -89,6 +95,21 @@ apiClient.interceptors.response.use(
     // 401 → try to refresh once, then retry original request.
     if (status === 401 && original && !original._retry && !original.url?.includes("/auth/")) {
       original._retry = true;
+
+      // Backend gap: the real API has no /auth/refresh-token endpoint yet
+      // (single ~60min access token, no refresh). Without a stored
+      // refreshToken there is nothing to attempt — skip straight to
+      // clearing the session instead of calling an endpoint that doesn't
+      // exist. Remove this guard once refresh is added for providers/admins.
+      const refreshToken = storage.get<string>(StorageKeys.refreshToken);
+      if (!refreshToken) {
+        storage.clearAuth();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+          window.location.assign("/login");
+        }
+        return Promise.reject(normaliseError(error));
+      }
+
       try {
         const newToken = await refreshAccessToken();
         original.headers.set?.("Authorization", `Bearer ${newToken}`);
