@@ -1,10 +1,20 @@
+/**
+ * @file AdminUserDetailsPage.tsx
+ * @description User detail view on the real `GET /api/Users/{id}`. Status
+ * derives from `isActive` (the real contract has no "pending" state).
+ * `ordersCount` / `lastActiveAt` are gone — the backend has no source for
+ * them. Suspend/restore stay wired to the mock `/admin/users/{id}/suspend|
+ * restore` endpoints (out of scope for this piece — see piece b).
+ */
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { useUserQuery } from "../hooks/useAdminQueries";
+import { roleLabel } from "../config/roleRegistry";
 import { SuspendUserDialog } from "../components/users/SuspendUserDialog";
 import { RestoreUserDialog } from "../components/users/RestoreUserDialog";
+import { StatusBadge } from "../components/shared/StatusBadge";
 import { Can } from "@shared/auth/Can";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,19 +41,6 @@ export function AdminUserDetailsPage() {
       .join("")
       .substring(0, 2)
       .toUpperCase();
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-success-100 text-success-700 hover:bg-success-200";
-      case "suspended":
-        return "bg-danger-100 text-danger-700 hover:bg-danger-200";
-      case "pending":
-        return "bg-warning-100 text-warning-700 hover:bg-warning-200";
-      default:
-        return "bg-neutral-100 text-neutral-700";
-    }
-  };
 
   if (isLoading) {
     return (
@@ -86,6 +83,8 @@ export function AdminUserDetailsPage() {
     );
   }
 
+  const status = user.isActive ? "active" : "suspended";
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header section */}
@@ -97,15 +96,13 @@ export function AdminUserDetailsPage() {
             </Link>
           </Button>
           <Avatar className="h-16 w-16 border bg-neutral-100 text-neutral-600 font-medium text-lg">
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">{user.name}</h1>
+            <h1 className="text-2xl font-bold text-neutral-900">{user.fullName}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-sm text-neutral-500">{user.phone}</span>
-              <Badge variant="secondary" className={getStatusColor(user.status)}>
-                {t(`superAdmin.users.status.${user.status}`)}
-              </Badge>
+              <span className="text-sm text-neutral-500">{user.phoneNumber}</span>
+              <StatusBadge status={status} kind="user" />
             </div>
           </div>
         </div>
@@ -126,7 +123,7 @@ export function AdminUserDetailsPage() {
                     {t("superAdmin.users.columns.phone")}
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
-                    {user.phone}
+                    {user.phoneNumber}
                   </dd>
                 </div>
                 <div className="space-y-1">
@@ -143,16 +140,32 @@ export function AdminUserDetailsPage() {
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
                     <Badge variant="outline" className="text-neutral-600">
-                      {t(`superAdmin.users.roles.${user.role}`)}
+                      {roleLabel(user.role, t)}
                     </Badge>
                   </dd>
                 </div>
                 <div className="space-y-1">
                   <dt className="text-sm text-[var(--color-muted,theme(colors.neutral.500))]">
-                    {t("superAdmin.users.detail.ordersCount")}
+                    {t("superAdmin.users.detail.city")}
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
-                    {user.ordersCount ?? "—"}
+                    {user.city || "—"}
+                  </dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-sm text-[var(--color-muted,theme(colors.neutral.500))]">
+                    {t("superAdmin.users.detail.address")}
+                  </dt>
+                  <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
+                    {user.address || "—"}
+                  </dd>
+                </div>
+                <div className="space-y-1">
+                  <dt className="text-sm text-[var(--color-muted,theme(colors.neutral.500))]">
+                    {t("superAdmin.users.detail.idenityNumber")}
+                  </dt>
+                  <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
+                    {user.idenityNumber || "—"}
                   </dd>
                 </div>
                 <div className="space-y-1">
@@ -161,14 +174,6 @@ export function AdminUserDetailsPage() {
                   </dt>
                   <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
                     {formatDate(user.createdAt, i18n.language, { year: "numeric", month: "long", day: "numeric" })}
-                  </dd>
-                </div>
-                <div className="space-y-1">
-                  <dt className="text-sm text-[var(--color-muted,theme(colors.neutral.500))]">
-                    {t("superAdmin.users.detail.lastActiveAt")}
-                  </dt>
-                  <dd className="text-sm font-medium text-[var(--color-ink-body,theme(colors.neutral.900))]">
-                    {formatDate(user.lastActiveAt, i18n.language, { year: "numeric", month: "long", day: "numeric" })}
                   </dd>
                 </div>
               </dl>
@@ -184,7 +189,7 @@ export function AdminUserDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {(user.status === "active" || user.status === "pending") && (
+              {status === "active" && (
                 <Can permission="users.suspend">
                   <Button
                     variant="destructive"
@@ -195,7 +200,7 @@ export function AdminUserDetailsPage() {
                   </Button>
                 </Can>
               )}
-              {user.status === "suspended" && (
+              {status === "suspended" && (
                 <Can permission="users.restore">
                   <Button
                     variant="secondary"
@@ -206,13 +211,6 @@ export function AdminUserDetailsPage() {
                   </Button>
                 </Can>
               )}
-              
-              {/* Fallback if user doesn't have permissions or status is unknown */}
-              {(user.status === "active" || user.status === "pending") && (
-                <Can permission="users.suspend" fallback={null}>
-                  <></>
-                </Can>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -221,7 +219,7 @@ export function AdminUserDetailsPage() {
       {suspendOpen && (
         <SuspendUserDialog
           userId={user.id}
-          userName={user.name}
+          userName={user.fullName}
           open={suspendOpen}
           onOpenChange={setSuspendOpen}
         />
@@ -229,7 +227,7 @@ export function AdminUserDetailsPage() {
       {restoreOpen && (
         <RestoreUserDialog
           userId={user.id}
-          userName={user.name}
+          userName={user.fullName}
           open={restoreOpen}
           onOpenChange={setRestoreOpen}
         />

@@ -275,6 +275,11 @@ const AdminComplaintsPage = lazy(() =>
     default: m.AdminComplaintsPage,
   }))
 );
+const AdminProfilePage = lazy(() =>
+  import("@modules/admin/pages/AdminProfilePage").then((m) => ({
+    default: m.AdminProfilePage,
+  }))
+);
 
 // ─── Reference Data Playground (temporary NHTSA verification page) ────────────
 const ReferencePlaygroundPage = lazy(() =>
@@ -857,7 +862,7 @@ export const router = createBrowserRouter([
                     path: "cities",
                     element: <Navigate to="/admin/reference?tab=cities" replace />,
                   },
-                  { path: "profile", element: <ProfilePage /> },
+                  { path: "profile", element: <AdminProfilePage /> },
                 ],
               },
             ],

@@ -1,22 +1,28 @@
+/**
+ * @file AdminUsersPage.tsx
+ * @description Admin Users screen — a single unified, role-aware list on
+ * the real `GET /api/Users` endpoint. The old "Clients" / "Providers"
+ * pill tabs are gone: "Providers" duplicated the dedicated
+ * `/admin/providers` approval-queue page, and "Clients" relied on a
+ * `role === "customer"` filter the real contract can't yet support. Tabs are
+ * back as per-role tabs (`config/roleRegistry.ts`'s `ROLE_TABS`) inside
+ * `UsersPanel`, now that the backend's `roleId` + server-side `FilterBy`
+ * are wired up.
+ */
+
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
 import { Plus, ShieldCheck } from "lucide-react";
-import { cn } from "@shared/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@app/store";
 import { usePermissions } from "@shared/auth/usePermissions";
 
-import { ClientsPanel } from "../components/users/ClientsPanel";
-import { ProvidersPanel } from "../components/users/ProvidersPanel";
+import { UsersPanel } from "../components/users/UsersPanel";
 import { AddUserDialog } from "../components/users/AddUserDialog";
 import { AddAdminDialog } from "../components/users/AddAdminDialog";
 
-type TabValue = "clients" | "providers";
-
 export function AdminUsersPage() {
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addAdminOpen, setAddAdminOpen] = useState(false);
 
@@ -26,17 +32,6 @@ export function AdminUsersPage() {
   const currentUser = useAppSelector((s) => s.auth.user);
   const canManageAdmins =
     isSuperAdmin || currentUser?.role === "admin" || currentUser?.role === "super_admin";
-
-  const currentTab = (searchParams.get("tab") as TabValue) || "clients";
-
-  const setTab = (tab: TabValue) => {
-    setSearchParams({ tab });
-  };
-
-  const tabs: { value: TabValue; label: string }[] = [
-    { value: "clients", label: t("superAdmin.users.tabs.clients") },
-    { value: "providers", label: t("superAdmin.users.tabs.providers") },
-  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,29 +73,7 @@ export function AdminUsersPage() {
         <AddAdminDialog open={addAdminOpen} onOpenChange={setAddAdminOpen} />
       )}
 
-      {/* URL-synced Pill Tabs */}
-      <div className="flex bg-[var(--color-surface-2)] p-1 rounded-full w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.value}
-            onClick={() => setTab(tab.value)}
-            className={cn(
-              "px-5 py-2 text-sm font-medium rounded-full transition-colors",
-              currentTab === tab.value
-                ? "bg-white text-[var(--color-brand-blue)] shadow-sm"
-                : "text-[var(--color-muted)] hover:text-[var(--color-ink-body)]",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content Panels */}
-      <div className="mt-2">
-        {currentTab === "clients" && <ClientsPanel />}
-        {currentTab === "providers" && <ProvidersPanel />}
-      </div>
+      <UsersPanel />
     </div>
   );
 }
