@@ -10,7 +10,6 @@ import { tryAdminMock } from "./handlers/admin.handlers";
 import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handlers";
 import { tryAdminAdsMock } from "./handlers/admin.ads.handlers";
 import { tryAdminSettingsMock } from "./handlers/admin.settings.handlers";
-import { tryAdminAuditMock } from "./handlers/admin.audit.handlers";
 import { tryAdminComplaintsMock } from "./handlers/admin.complaints.handlers";
 import { tryDealerMock } from "./handlers/dealer.handlers";
 import { tryWorkshopMock } from "./handlers/workshop.handlers";
@@ -46,7 +45,7 @@ import { tryScrapMock } from "./handlers/scrap.handlers";
  *   - `lookups/brands`       → GET Lookups/brands(/:id/models(/:id/years))
  *                               — the vehicle brand/model reference data
  *                               admin manages via `admin/brands` mutations.
- * These three prefixes are handled by tryAdminMock/tryAdminAuditMock/
+ * These three prefixes are handled by tryAdminMock/
  * tryAdminComplaintsMock/tryAdminNotificationsMock/tryAdminAdsMock/
  * tryAdminSettingsMock/tryProvidersMock/tryVehiclesMock. tryProvidersMock
  * and tryVehiclesMock also implement non-admin-owned paths (e.g.
@@ -75,7 +74,6 @@ type Handler = (config: InternalAxiosRequestConfig) => Promise<AxiosResponse | n
 
 const alwaysMockHandlers: Handler[] = [
   tryAdminMock,
-  tryAdminAuditMock,
   tryAdminComplaintsMock,
   tryAdminNotificationsMock,
   tryAdminAdsMock,
