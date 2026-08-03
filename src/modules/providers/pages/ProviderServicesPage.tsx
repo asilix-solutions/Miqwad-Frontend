@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { defaultHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, isProviderApproved, resolveProviderType } from "@shared/guards/RoleGuard";
 import { Plus, Search, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,16 +52,16 @@ export function ProviderServicesPage() {
   if (!user || user.role !== "provider") {
     return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
-  if (user.providerStatus !== "approved") {
+  if (!isProviderApproved(user)) {
     return <Navigate to="/provider/pending" replace />;
   }
-  
+
   if (profileLoading) {
     return <LoadingState />;
   }
-  
+
   // Guard against dealers accessing the workshop services page
-  if (myProfile?.type === "dealer") {
+  if (resolveProviderType(user, myProfile?.type) === "dealer") {
     return <Navigate to="/provider/dealer" replace />;
   }
 

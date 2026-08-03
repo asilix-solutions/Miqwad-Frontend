@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
-import { defaultHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, isProviderApproved } from "@shared/guards/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useAppSelector } from "@app/store";
@@ -25,7 +25,7 @@ export function AddProviderServicePage() {
   if (!user || user.role !== "provider") {
     return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
-  if (user.providerStatus !== "approved") {
+  if (!isProviderApproved(user)) {
     return <Navigate to="/provider/pending" replace />;
   }
 
