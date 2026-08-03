@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi, type CreateCategoryPayload, type AdminCreateRequest } from "../api/adminApi";
+import { adminApi, type CreateCategoryPayload, type AdminCreateRequest, type UsersSortField } from "../api/adminApi";
 import type { UserFormValues } from "../schemas/userSchema";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
  */
 export const adminKeys = {
   all: ["admin"] as const,
-  users: (params: { page: number; pageSize: number }) => [...adminKeys.all, "users", params] as const,
+  users: (params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) => [...adminKeys.all, "users", params] as const,
   providers: (status?: AdminProviderStatus, type?: ProviderType) =>
     [...adminKeys.all, "providers", status ?? "all", type ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
@@ -64,7 +64,7 @@ export function useRevenuesQuery(params?: { source?: import("../types").RevenueS
 }
 
 
-export function useUsersQuery(params: { page: number; pageSize: number }) {
+export function useUsersQuery(params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) {
   return useQuery({
     queryKey: adminKeys.users(params),
     queryFn: () => adminApi.getUsers(params),

@@ -15,7 +15,6 @@ import { z } from "zod";
 import type { LoginResponse, UserRole } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { AppError } from "@shared/types/api";
-import { WILDCARD } from "@shared/auth/permissions";
 
 const MS_ROLE_CLAIM = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
 
@@ -123,19 +122,8 @@ const loginResponseSchema = z.object({
     providerType: z.enum(["dealer", "workshop", "scrap"]).nullable(),
     avatarUrl: z.null(),
     isProfileComplete: z.boolean(),
-    permissions: z.array(z.string()).optional(),
   }),
 });
-
-/**
- * TEMPORARY: derive wildcard permissions for admins until the backend issues a real
- * permissions/claims array (login payload or GET /me). Swap this derivation for real
- * data here — isolated to the adapter — when that endpoint exists.
- */
-function derivePermissions(role: UserRole): string[] | undefined {
-  if (role === "admin" || role === "super_admin") return [WILDCARD];
-  return undefined;
-}
 
 /**
  * Adapts the real backend's flat `/auth/login` response into the existing
@@ -167,7 +155,6 @@ export function adaptLoginResponse(raw: unknown): LoginResponse {
       providerType,
       avatarUrl: null,
       isProfileComplete: true,
-      permissions: derivePermissions(role),
     },
   };
 

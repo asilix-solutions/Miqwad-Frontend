@@ -111,6 +111,10 @@ function adaptAuditLogItem(raw: RawAuditLogItem): AuditLogEntry {
  * current page only — `total`/`totalPages` still reflect the *unfiltered*
  * server page, so a filtered view can show fewer rows than the pager
  * implies.
+ *
+ * TODO(audit): filter model is per-page/client-side — refine to
+ *   server-side when backend supports audit filters. Carried from main
+ *   (545fbf1) as-is; may need adaptation to current patterns.
  */
 export function adaptAuditLogsResponse(raw: RawAuditLogPage, query: AuditLogQuery): PaginatedResponse<AuditLogEntry> {
   let items = raw.items.map(adaptAuditLogItem);
