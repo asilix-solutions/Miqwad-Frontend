@@ -10,7 +10,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useMyProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
 import { Spinner } from "@shared/components/ui/spinner";
-import { defaultHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, isProviderApproved, resolveProviderType } from "@shared/guards/RoleGuard";
 import { useAppSelector } from "@app/store";
 
 export function WorkshopGuard() {
@@ -25,11 +25,11 @@ export function WorkshopGuard() {
     );
   }
 
-  if (!user || user.role !== "provider" || myProfile?.type !== "workshop") {
+  if (!user || user.role !== "provider" || resolveProviderType(user, myProfile?.type) !== "workshop") {
     return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
 
-  if (user.providerStatus !== "approved") {
+  if (!isProviderApproved(user)) {
     return <Navigate to="/provider/pending" replace />;
   }
 

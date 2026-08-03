@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { defaultHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, isProviderApproved } from "@shared/guards/RoleGuard";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { resetRegisterDraft } from "../store/providersSlice";
 import { ProviderRegisterStepper } from "../components/ProviderRegisterStepper";
@@ -21,7 +21,7 @@ export function ProviderRegisterPage() {
   const user = useAppSelector((s) => s.auth.user);
 
   useEffect(() => {
-    if (user?.role === "provider" && user.providerStatus === "approved") {
+    if (user?.role === "provider" && isProviderApproved(user)) {
       navigate("/provider/services", { replace: true });
     }
   }, [user, navigate]);
