@@ -1,8 +1,9 @@
 /**
- * @file adminProfile.schemas.ts
- * @description Zod schemas for the admin's own profile: edit form, password
- * reset, and the two-step phone-change flow. Error messages are i18n keys,
- * resolved at render time — same convention as workshop.schemas.ts.
+ * @file accountProfile.schemas.ts
+ * @description Zod schemas for the signed-in user's own profile: edit form,
+ * password reset, and the two-step phone-change flow. Role-neutral — reused
+ * by admin, dealer, workshop, and scrap account pages. Error messages are
+ * i18n keys, resolved at render time — same convention as workshop.schemas.ts.
  */
 
 import { z } from "zod";
@@ -13,7 +14,7 @@ const saudiMobile = /^5\d{8}$/;
 // Mirrors RegisterRequestDto's backend rule: min 8, lower + upper + digit + special.
 const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
-export const adminProfileEditSchema = z.object({
+export const accountProfileEditSchema = z.object({
   fullName: z
     .string()
     .trim()
@@ -28,9 +29,9 @@ export const adminProfileEditSchema = z.object({
   identityNumber: z.string().trim().min(1, { message: "admin.profile.errors.required" }),
 });
 
-export type AdminProfileEditFormValues = z.infer<typeof adminProfileEditSchema>;
+export type AccountProfileEditFormValues = z.infer<typeof accountProfileEditSchema>;
 
-export const adminResetPasswordSchema = z
+export const accountResetPasswordSchema = z
   .object({
     newPassword: z
       .string()
@@ -42,22 +43,22 @@ export const adminResetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export type AdminResetPasswordFormValues = z.infer<typeof adminResetPasswordSchema>;
+export type AccountResetPasswordFormValues = z.infer<typeof accountResetPasswordSchema>;
 
-export const adminChangePhoneRequestSchema = z.object({
+export const accountChangePhoneRequestSchema = z.object({
   newPhoneNumber: z
     .string()
     .trim()
     .regex(saudiMobile, { message: "admin.profile.phone.errors.invalidPhone" }),
 });
 
-export type AdminChangePhoneRequestFormValues = z.infer<typeof adminChangePhoneRequestSchema>;
+export type AccountChangePhoneRequestFormValues = z.infer<typeof accountChangePhoneRequestSchema>;
 
-export const adminChangePhoneVerifySchema = z.object({
+export const accountChangePhoneVerifySchema = z.object({
   code: z
     .string()
     .trim()
     .min(4, { message: "admin.profile.phone.errors.codeRequired" }),
 });
 
-export type AdminChangePhoneVerifyFormValues = z.infer<typeof adminChangePhoneVerifySchema>;
+export type AccountChangePhoneVerifyFormValues = z.infer<typeof accountChangePhoneVerifySchema>;
