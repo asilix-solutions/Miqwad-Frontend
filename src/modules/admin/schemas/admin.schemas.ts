@@ -46,6 +46,16 @@ export const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 
+/** Schema used by the admin PARENT (level-1) category dialog — real backend, single Arabic name. */
+export const parentCategorySchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: "common.requiredField" })
+    .max(150),
+});
+
+export type ParentCategoryFormValues = z.infer<typeof parentCategorySchema>;
+
 /** Schema used by the admin city create/edit dialog. */
 export const citySchema = z.object({
   nameAr: z

@@ -4,6 +4,7 @@ import type { UserFormValues } from "../schemas/userSchema";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
+import { categoriesApi, type ParentCategoriesQuery } from "@modules/services/api/categoriesApi";
 import type { Service, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
@@ -214,6 +215,53 @@ export function usePatchCategoryActiveMutation() {
       adminApi.patchCategoryActive(id, isActive),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: servicesKeys.categories() });
+    },
+  });
+}
+
+// ── Parent Categories (real backend, /api/Categories — level 1 only) ───────
+// Deliberately a separate query key from adminKeys/servicesKeys: this data
+// comes from a different source (real backend vs mock) and must invalidate
+// independently, without ever touching the mocked L2/L3 cache.
+
+export const parentCategoryKeys = {
+  all: ["categories", "parents"] as const,
+  list: (params?: ParentCategoriesQuery) => [...parentCategoryKeys.all, params] as const,
+};
+
+export function useParentCategoriesQuery(params?: ParentCategoriesQuery) {
+  return useQuery({
+    queryKey: parentCategoryKeys.list(params),
+    queryFn: () => categoriesApi.list(params),
+  });
+}
+
+export function useCreateParentCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => categoriesApi.create(name),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: parentCategoryKeys.all });
+    },
+  });
+}
+
+export function useUpdateParentCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: number; name: string }) => categoriesApi.update(id, name),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: parentCategoryKeys.all });
+    },
+  });
+}
+
+export function useDeleteParentCategoryMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => categoriesApi.remove(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: parentCategoryKeys.all });
     },
   });
 }

@@ -1,9 +1,14 @@
 /**
  * @file CategoryFormDialog.tsx
  * @description Hierarchy-aware category create/edit dialog.
- *  - mode "add-root": creates L1; providerTypeScope selectable.
- *  - mode "add-child": creates L2 or L3; parentId + scope inherited from parentNode.
- *  - mode "edit": updates existing; scope is locked for L2/L3.
+ *  - `isRealParent` true (add-root, or editing a level-1 category sourced
+ *    from the real `/api/Categories` backend): renders a single Arabic
+ *    "name" field and writes through the real backend.
+ *  - `isRealParent` false (add-child, edit on any mocked category —
+ *    including legacy mock level-1 roots): unchanged bilingual mock flow.
+ *      - mode "add-root": creates L1; providerTypeScope selectable.
+ *      - mode "add-child": creates L2 or L3; parentId + scope inherited from parentNode.
+ *      - mode "edit": updates existing; scope is locked for L2/L3.
  */
 
 import { useEffect } from "react";
@@ -30,8 +35,15 @@ import {
 import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
+  useCreateParentCategoryMutation,
+  useUpdateParentCategoryMutation,
 } from "../../hooks/useAdminQueries";
-import { categorySchema, type CategoryFormValues } from "../../schemas/admin.schemas";
+import {
+  categorySchema,
+  type CategoryFormValues,
+  parentCategorySchema,
+  type ParentCategoryFormValues,
+} from "../../schemas/admin.schemas";
 import type { ServiceCategory, CategoryTreeNode } from "@modules/services/types";
 import { useToast } from "@shared/components/ui/toastContext";
 
@@ -56,6 +68,8 @@ interface Props {
   parentNode?: CategoryTreeNode;
   /** Provided when mode = "edit". */
   category?: ServiceCategory;
+  /** True for add-root, or editing a level-1 category that came from the real backend. */
+  isRealParent?: boolean;
 }
 
 export function CategoryFormDialog({
@@ -64,7 +78,146 @@ export function CategoryFormDialog({
   mode,
   parentNode,
   category,
+  isRealParent = false,
 }: Props) {
+  if (isRealParent) {
+    return (
+      <ParentCategoryFormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        mode={mode === "edit" ? "edit" : "add-root"}
+        category={category}
+      />
+    );
+  }
+  return (
+    <MockCategoryFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      mode={mode}
+      parentNode={parentNode}
+      category={category}
+    />
+  );
+}
+
+// ── Real backend (parent / level-1) form ─────────────────────────────────────
+
+interface ParentDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  mode: "add-root" | "edit";
+  category?: ServiceCategory;
+}
+
+function ParentCategoryFormDialog({ open, onOpenChange, mode, category }: ParentDialogProps) {
+  const { t } = useTranslation();
+  const toast = useToast();
+
+  const createMutation = useCreateParentCategoryMutation();
+  const updateMutation = useUpdateParentCategoryMutation();
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ParentCategoryFormValues>({
+    resolver: zodResolver(parentCategorySchema),
+    defaultValues: { name: "" },
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    reset({ name: mode === "edit" && category ? category.nameAr : "" });
+  }, [open, mode, category, reset]);
+
+  const dialogTitle =
+    mode === "add-root" ? t("superAdmin.categories.tree.addRoot") : t("superAdmin.categories.edit");
+
+  const onSubmit = async (data: ParentCategoryFormValues) => {
+    try {
+      if (mode === "edit" && category) {
+        await updateMutation.mutateAsync({ id: category.id, name: data.name });
+        toast.success(t("superAdmin.categories.success.updated"));
+      } else {
+        await createMutation.mutateAsync(data.name);
+        toast.success(t("superAdmin.categories.success.created"));
+      }
+      onOpenChange(false);
+    } catch {
+      toast.error(t("common.saveFailed"));
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !isPending && onOpenChange(v)}>
+      <DialogContent className="sm:max-w-[420px]" dir="rtl">
+        <DialogHeader>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex items-center gap-1.5 text-xs text-[var(--color-muted)] bg-[var(--color-surface-2)] rounded-[var(--radius-sm)] px-3 py-2">
+          <span className="font-semibold text-[var(--color-ink-body)]">
+            {t("superAdmin.categories.tree.level.l1")}
+          </span>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label htmlFor="parent-cat-name">
+              {t("superAdmin.categories.form.singleName")}{" "}
+              <span className="text-[var(--color-danger-500)]">*</span>
+            </Label>
+            <Input id="parent-cat-name" {...register("name")} disabled={isPending} />
+            {errors.name && (
+              <p className="text-sm text-[var(--color-danger-500)]">
+                {t(errors.name.message as string)}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90"
+            >
+              {isPending ? t("common.loading") : t("common.save")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Mocked (L2/L3, and legacy mock L1) bilingual form — unchanged ───────────
+
+interface MockDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  mode: FormMode;
+  parentNode?: CategoryTreeNode;
+  category?: ServiceCategory;
+}
+
+function MockCategoryFormDialog({
+  open,
+  onOpenChange,
+  mode,
+  parentNode,
+  category,
+}: MockDialogProps) {
   const { t } = useTranslation();
   const toast = useToast();
 

@@ -1,9 +1,16 @@
 /**
  * @file DeleteCategoryDialog.tsx
  * @description Smart-guard delete dialog for categories.
- * On a 409 Conflict response (children or references exist) the dialog explains
- * the block and offers "تعطيل بدل الحذف" (deactivate instead of delete) as a
- * safe alternative. On a clean leaf category, it confirms and deletes normally.
+ *
+ * `isRealParent` true (level-1 category sourced from the real
+ * `/api/Categories` backend): simpler flow — the real backend has no
+ * `isActive` concept, so there is no "deactivate instead" fallback; a 409
+ * just surfaces as a blocked-delete toast.
+ *
+ * `isRealParent` false (mocked category, any level — including legacy
+ * mock L1 roots): unchanged. On a 409 Conflict response (children or
+ * references exist) the dialog explains the block and offers "تعطيل بدل
+ * الحذف" (deactivate instead of delete) as a safe alternative.
  */
 
 import { useState, useEffect } from "react";
@@ -21,8 +28,10 @@ import { Button } from "@/components/ui/button";
 import {
   useDeleteCategoryMutation,
   usePatchCategoryActiveMutation,
+  useDeleteParentCategoryMutation,
 } from "../../hooks/useAdminQueries";
 import type { ServiceCategory } from "@modules/services/types";
+import { AppError } from "@shared/types/api";
 import { useToast } from "@shared/components/ui/toastContext";
 
 interface ConflictInfo {
@@ -34,6 +43,8 @@ interface Props {
   category: ServiceCategory | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  /** True when `category` is a level-1 category sourced from the real backend. */
+  isRealParent?: boolean;
 }
 
 function is409(err: unknown): err is { response: { status: number; data: ConflictInfo & { error: string } } } {
@@ -45,7 +56,78 @@ function is409(err: unknown): err is { response: { status: number; data: Conflic
   );
 }
 
-export function DeleteCategoryDialog({ category, open, onOpenChange }: Props) {
+export function DeleteCategoryDialog({ category, open, onOpenChange, isRealParent = false }: Props) {
+  if (isRealParent) {
+    return <ParentDeleteCategoryDialog category={category} open={open} onOpenChange={onOpenChange} />;
+  }
+  return <MockDeleteCategoryDialog category={category} open={open} onOpenChange={onOpenChange} />;
+}
+
+// ── Real backend (parent / level-1) delete ───────────────────────────────────
+
+interface ParentDeleteProps {
+  category: ServiceCategory | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}
+
+function ParentDeleteCategoryDialog({ category, open, onOpenChange }: ParentDeleteProps) {
+  const { t } = useTranslation();
+  const toast = useToast();
+
+  const deleteMutation = useDeleteParentCategoryMutation();
+  const isPending = deleteMutation.isPending;
+  const categoryName = category?.nameAr ?? "";
+
+  const handleDelete = async () => {
+    if (!category) return;
+    try {
+      await deleteMutation.mutateAsync(category.id);
+      toast.success(t("superAdmin.categories.success.deleted"));
+      onOpenChange(false);
+    } catch (err) {
+      if (err instanceof AppError && err.status === 409) {
+        toast.error(t("superAdmin.categories.tree.deleteBlockedGeneric"));
+      } else {
+        toast.error(t("common.deleteFailed"));
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !isPending && onOpenChange(v)}>
+      <DialogContent className="sm:max-w-[420px]" dir="rtl">
+        <DialogHeader>
+          <DialogTitle className="text-[var(--color-danger-500)]">
+            {t("superAdmin.categories.deleteConfirm.title")}
+          </DialogTitle>
+          <DialogDescription className="pt-2">
+            {t("superAdmin.categories.deleteConfirm.description", { name: categoryName })}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogFooter className="pt-4 gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            {t("superAdmin.categories.deleteConfirm.cancel")}
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={isPending}>
+            {isPending ? t("common.loading") : t("superAdmin.categories.deleteConfirm.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Mocked (L2/L3, and legacy mock L1) delete — unchanged ───────────────────
+
+interface MockDeleteProps {
+  category: ServiceCategory | null;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+}
+
+function MockDeleteCategoryDialog({ category, open, onOpenChange }: MockDeleteProps) {
   const { t } = useTranslation();
   const toast = useToast();
 
