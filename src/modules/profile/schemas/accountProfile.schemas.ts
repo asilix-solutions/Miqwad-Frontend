@@ -18,15 +18,15 @@ export const accountProfileEditSchema = z.object({
   fullName: z
     .string()
     .trim()
-    .min(2, { message: "admin.profile.errors.required" })
+    .min(2, { message: "accountProfile.errors.required" })
     .max(100),
   phoneNumber: z
     .string()
     .trim()
-    .regex(saudiMobile, { message: "admin.profile.errors.invalidPhone" }),
-  address: z.string().trim().min(1, { message: "admin.profile.errors.required" }),
-  city: z.string().trim().min(1, { message: "admin.profile.errors.required" }),
-  identityNumber: z.string().trim().min(1, { message: "admin.profile.errors.required" }),
+    .regex(saudiMobile, { message: "accountProfile.errors.invalidPhone" }),
+  address: z.string().trim().min(1, { message: "accountProfile.errors.required" }),
+  city: z.string().trim().min(1, { message: "accountProfile.errors.required" }),
+  identityNumber: z.string().trim().min(1, { message: "accountProfile.errors.required" }),
 });
 
 export type AccountProfileEditFormValues = z.infer<typeof accountProfileEditSchema>;
@@ -35,11 +35,11 @@ export const accountResetPasswordSchema = z
   .object({
     newPassword: z
       .string()
-      .regex(strongPassword, { message: "admin.profile.password.errors.weak" }),
-    confirmPassword: z.string().min(1, { message: "admin.profile.password.errors.confirmRequired" }),
+      .regex(strongPassword, { message: "accountProfile.password.errors.weak" }),
+    confirmPassword: z.string().min(1, { message: "accountProfile.password.errors.confirmRequired" }),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
-    message: "admin.profile.password.errors.mismatch",
+    message: "accountProfile.password.errors.mismatch",
     path: ["confirmPassword"],
   });
 
@@ -49,7 +49,7 @@ export const accountChangePhoneRequestSchema = z.object({
   newPhoneNumber: z
     .string()
     .trim()
-    .regex(saudiMobile, { message: "admin.profile.phone.errors.invalidPhone" }),
+    .regex(saudiMobile, { message: "accountProfile.phone.errors.invalidPhone" }),
 });
 
 export type AccountChangePhoneRequestFormValues = z.infer<typeof accountChangePhoneRequestSchema>;
@@ -58,7 +58,7 @@ export const accountChangePhoneVerifySchema = z.object({
   code: z
     .string()
     .trim()
-    .min(4, { message: "admin.profile.phone.errors.codeRequired" }),
+    .min(4, { message: "accountProfile.phone.errors.codeRequired" }),
 });
 
 export type AccountChangePhoneVerifyFormValues = z.infer<typeof accountChangePhoneVerifySchema>;
