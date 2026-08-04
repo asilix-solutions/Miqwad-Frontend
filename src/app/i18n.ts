@@ -1089,6 +1089,7 @@ const ar = {
       form: {
         nameAr: "الاسم بالعربية",
         nameEn: "الاسم بالإنجليزية",
+        singleName: "الاسم",
         iconUrl: "رابط الأيقونة",
         colorHint: "اللون",
         colorOptions: {
@@ -1137,7 +1138,9 @@ const ar = {
         breadcrumbSep: " › ",
         deleteBlockedChildren: "لا يمكن الحذف: يوجد {{count}} تصنيف فرعي.",
         deleteBlockedInUse: "مستخدَم في {{count}} سجل.",
+        deleteBlockedGeneric: "لا يمكن حذف هذا التصنيف لوجود عناصر تابعة له.",
         deactivateInstead: "تعطيل بدل الحذف",
+        parentToggleUnsupported: "لا يمكن تفعيل/تعطيل التصنيفات الرئيسية حالياً.",
         emptyTitle: "لا توجد تصنيفات",
         emptyDescription: "ابدأ بإضافة تصنيف رئيسي",
         scopeLabel: "نوع مقدم الخدمة",
@@ -3251,6 +3254,7 @@ const en: typeof ar = {
       form: {
         nameAr: "Name in Arabic",
         nameEn: "Name in English",
+        singleName: "Name",
         iconUrl: "Icon URL",
         colorHint: "Color",
         colorOptions: {
@@ -3299,7 +3303,9 @@ const en: typeof ar = {
         breadcrumbSep: " › ",
         deleteBlockedChildren: "Cannot delete: has {{count}} sub-category.",
         deleteBlockedInUse: "Used in {{count}} record(s).",
+        deleteBlockedGeneric: "This category cannot be deleted because it has dependent items.",
         deactivateInstead: "Deactivate Instead",
+        parentToggleUnsupported: "Root categories cannot be activated/deactivated yet.",
         emptyTitle: "No Categories",
         emptyDescription: "Start by adding a root category",
         scopeLabel: "Provider Type",

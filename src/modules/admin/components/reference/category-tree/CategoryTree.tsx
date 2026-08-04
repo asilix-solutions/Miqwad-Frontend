@@ -18,6 +18,7 @@ import type { ProviderType } from "@modules/providers/types";
 import {
   useAdminCategoriesQuery,
   usePatchCategoryActiveMutation,
+  useParentCategoriesQuery,
 } from "../../../hooks/useAdminQueries";
 import { CategoryTreeNode } from "./CategoryTreeNode";
 import { CategoryFormDialog } from "../CategoryFormDialog";
@@ -63,11 +64,13 @@ interface FormDialogState {
   mode: "add-root" | "add-child" | "edit";
   parentNode?: CategoryNodeData;
   category?: ServiceCategory;
+  isRealParent: boolean;
 }
 
 interface DeleteDialogState {
   open: boolean;
   category: ServiceCategory | null;
+  isRealParent: boolean;
 }
 
 // ── Skeleton rows ─────────────────────────────────────────────────────────────
@@ -137,6 +140,7 @@ export function CategoryTree() {
   const { t } = useTranslation();
   const toast = useToast();
   const q = useAdminCategoriesQuery();
+  const parentsQuery = useParentCategoriesQuery({ pageSize: 100 });
   const patchActiveMutation = usePatchCategoryActiveMutation();
 
   const [selectedScope, setSelectedScope] = useState<ScopeFilter>(null);
@@ -147,27 +151,46 @@ export function CategoryTree() {
   const [formDialog, setFormDialog] = useState<FormDialogState>({
     open: false,
     mode: "add-root",
+    isRealParent: true,
   });
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
     open: false,
     category: null,
+    isRealParent: false,
   });
+
+  const isLoading = q.isLoading || parentsQuery.isLoading;
+  const isError = q.isError || parentsQuery.isError;
+
+  // Real parent categories (level 1, from /api/Categories) merged with the
+  // existing mocked tree (all levels, including legacy mock L1 roots) —
+  // mock L2/L3 keep resolving their parent chain through the mock roots,
+  // so nothing there can break; real parents show up as additional roots.
+  const realParents = parentsQuery.data?.items;
+  const realParentIds = useMemo(
+    () => new Set((realParents ?? []).map((c) => c.id)),
+    [realParents],
+  );
+  const mergedCategories = useMemo((): ServiceCategory[] => {
+    if (!q.data) return [];
+    return [...(realParents ?? []), ...q.data];
+  }, [realParents, q.data]);
 
   // Build tree from flat list, filtered by selected scope
   const tree = useMemo(() => {
-    if (!q.data) return [];
-    const roots = getCategoryTree(q.data, selectedScope ?? undefined);
+    if (mergedCategories.length === 0) return [];
+    const roots = getCategoryTree(mergedCategories, selectedScope ?? undefined);
     return roots;
-  }, [q.data, selectedScope]);
+  }, [mergedCategories, selectedScope]);
 
   // Initialize: expand L1 nodes on first data load
   useEffect(() => {
     if (q.data && !initializedRef.current) {
       initializedRef.current = true;
-      const l1Ids = new Set(q.data.filter((c) => c.level === 1).map((c) => c.id));
+      const l1Ids = new Set(mergedCategories.filter((c) => c.level === 1).map((c) => c.id));
       setExpandedIds(l1Ids);
     }
-  }, [q.data]);
+  }, [q.data, mergedCategories]);
 
   // Search: compute set of matching node IDs (including ancestors of matches)
   const matchingIds = useMemo((): Set<number> | null => {
@@ -206,26 +229,36 @@ export function CategoryTree() {
   };
 
   const expandAll = () => {
-    if (!q.data) return;
-    setExpandedIds(new Set(q.data.map((c) => c.id)));
+    if (mergedCategories.length === 0) return;
+    setExpandedIds(new Set(mergedCategories.map((c) => c.id)));
   };
 
   const collapseAll = () => setExpandedIds(new Set());
 
   // Dialog openers
   const openAddRoot = () =>
-    setFormDialog({ open: true, mode: "add-root", parentNode: undefined, category: undefined });
+    setFormDialog({ open: true, mode: "add-root", parentNode: undefined, category: undefined, isRealParent: true });
 
   const openAddChild = (parent: CategoryNodeData) =>
-    setFormDialog({ open: true, mode: "add-child", parentNode: parent, category: undefined });
+    setFormDialog({ open: true, mode: "add-child", parentNode: parent, category: undefined, isRealParent: false });
 
   const openEdit = (cat: ServiceCategory) =>
-    setFormDialog({ open: true, mode: "edit", parentNode: undefined, category: cat });
+    setFormDialog({
+      open: true,
+      mode: "edit",
+      parentNode: undefined,
+      category: cat,
+      isRealParent: realParentIds.has(cat.id),
+    });
 
   const openDelete = (cat: ServiceCategory) =>
-    setDeleteDialog({ open: true, category: cat });
+    setDeleteDialog({ open: true, category: cat, isRealParent: realParentIds.has(cat.id) });
 
   const handleToggleActive = async (cat: ServiceCategory) => {
+    if (realParentIds.has(cat.id)) {
+      toast.error(t("superAdmin.categories.tree.parentToggleUnsupported"));
+      return;
+    }
     try {
       await patchActiveMutation.mutateAsync({ id: cat.id, isActive: !cat.isActive });
       toast.success(
@@ -312,10 +345,15 @@ export function CategoryTree() {
 
       {/* ── Tree panel ── */}
       <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-white shadow-sm overflow-hidden">
-        {q.isLoading ? (
+        {isLoading ? (
           <SkeletonRows />
-        ) : q.isError ? (
-          <ErrorState onRetry={() => void q.refetch()} />
+        ) : isError ? (
+          <ErrorState
+            onRetry={() => {
+              void q.refetch();
+              void parentsQuery.refetch();
+            }}
+          />
         ) : visibleRoots.length === 0 ? (
           <EmptyState onAdd={openAddRoot} />
         ) : (
@@ -346,6 +384,7 @@ export function CategoryTree() {
           mode={formDialog.mode}
           parentNode={formDialog.parentNode}
           category={formDialog.category}
+          isRealParent={formDialog.isRealParent}
         />
       )}
 
@@ -354,6 +393,7 @@ export function CategoryTree() {
           category={deleteDialog.category}
           open={deleteDialog.open}
           onOpenChange={(v) => setDeleteDialog((s) => ({ ...s, open: v }))}
+          isRealParent={deleteDialog.isRealParent}
         />
       )}
     </div>
