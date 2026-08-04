@@ -432,23 +432,21 @@ export function ProviderAccountPage() {
         </ProviderCard>
 
         {/* ── Security ─────────────────────────────────────────────────────── */}
-        {!isEditing && (
-          <ProviderCard interactive style={{ animationDelay: "130ms" }}>
-            <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
-              {t("accountProfile.securitySection")}
-            </h2>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => setPasswordDialogOpen(true)} className={btnSecondary}>
-                <KeyRound className="h-4 w-4" aria-hidden />
-                {t("accountProfile.password.changeBtn")}
-              </button>
-              <button type="button" onClick={() => setPhoneDialogOpen(true)} className={btnSecondary}>
-                <Phone className="h-4 w-4" aria-hidden />
-                {t("accountProfile.phone.changeBtn")}
-              </button>
-            </div>
-          </ProviderCard>
-        )}
+        <ProviderCard interactive style={{ animationDelay: "130ms" }}>
+          <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
+            {t("accountProfile.securitySection")}
+          </h2>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => setPasswordDialogOpen(true)} className={btnSecondary}>
+              <KeyRound className="h-4 w-4" aria-hidden />
+              {t("accountProfile.password.changeBtn")}
+            </button>
+            <button type="button" onClick={() => setPhoneDialogOpen(true)} className={btnSecondary}>
+              <Phone className="h-4 w-4" aria-hidden />
+              {t("accountProfile.phone.changeBtn")}
+            </button>
+          </div>
+        </ProviderCard>
       </div>
 
       {/* ── Change password dialog ────────────────────────────────────────── */}
