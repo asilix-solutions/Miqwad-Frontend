@@ -3,9 +3,9 @@
  * @description Admin page for viewing and exporting the system audit log.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAuditLogsQuery, useExportAuditLogsMutation } from "../hooks/useAdminQueries";
+import { useAuditLogsQuery } from "../hooks/useAdminQueries";
 import { DataTable } from "../components/shared/DataTable";
 import { Can } from "@shared/auth/Can";
 import { Button } from "@/components/ui/button";
@@ -14,20 +14,13 @@ import { StatusBadge } from "../components/shared/StatusBadge";
 import { formatDate } from "@shared/lib/formatDate";
 import { Download, ChevronRight, ChevronLeft } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { AuditLogEntry, AuditModule, AuditAction } from "@modules/audit/types";
+import type { AuditLogEntry, AuditAction } from "@modules/audit/types";
 import { AuditDetailDrawer } from "../components/audit/AuditDetailDrawer";
 import { toast } from "sonner";
 
-const AUDIT_MODULES: AuditModule[] = [
-  "users", "providers", "services",
-  "plans", "subscriptions", "notifications", "ads",
-  "settings", "auth"
-];
-
-const AUDIT_ACTIONS: AuditAction[] = [
-  "create", "update", "delete", "approve", "reject",
-  "suspend", "restore", "send", "cancel", "login"
-];
+// Real backend action vocabulary is limited to create/update/delete (see
+// audit.adapter.ts) — no approve/reject/suspend/etc., which were mock-only.
+const AUDIT_ACTIONS: AuditAction[] = ["create", "update", "delete"];
 
 export function AdminAuditLogPage() {
   const { t, i18n } = useTranslation();
@@ -45,40 +38,43 @@ export function AdminAuditLogPage() {
   const { data, isLoading, error } = useAuditLogsQuery({
     page,
     pageSize,
-    module: moduleFilter === "all" ? undefined : (moduleFilter as AuditModule),
+    module: moduleFilter === "all" ? undefined : moduleFilter,
     action: actionFilter === "all" ? undefined : (actionFilter as AuditAction),
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
     search: search || undefined,
   });
 
-  const exportMutation = useExportAuditLogsMutation();
-
+  // No export endpoint exists on the real backend — build the CSV
+  // client-side from the currently-loaded (already filtered) page.
   const handleExport = () => {
-    exportMutation.mutate(
-      {
-        module: moduleFilter === "all" ? undefined : (moduleFilter as AuditModule),
-        action: actionFilter === "all" ? undefined : (actionFilter as AuditAction),
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
-        search: search || undefined,
-      },
-      {
-        onSuccess: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "audit-logs.csv";
-          a.click();
-          window.URL.revokeObjectURL(url);
-          toast.success(t("superAdmin.audit.exported"));
-        },
-        onError: () => {
-          toast.error(t("common.errorTitle"));
-        },
-      }
-    );
+    const rows = data?.items ?? [];
+    if (rows.length === 0) {
+      toast.error(t("common.errorTitle"));
+      return;
+    }
+    const csvRows = [
+      "ID,Date,Actor,Action,Module,Summary",
+      ...rows.map(
+        (l) => `${l.id},${l.createdAt},"${l.actorName}",${l.action},${l.module},"${l.summaryEn}"`,
+      ),
+    ];
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit-logs.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success(t("superAdmin.audit.exported"));
   };
+
+  // Backend has no fixed module taxonomy — offer whatever entity names
+  // have actually appeared on the current page instead of a guessed list.
+  const moduleOptions = useMemo(
+    () => Array.from(new Set((data?.items ?? []).map((i) => i.module))).sort(),
+    [data],
+  );
 
   const columns = [
     {
@@ -111,9 +107,7 @@ export function AdminAuditLogPage() {
       key: "module",
       header: t("superAdmin.audit.columns.module"),
       render: (row: AuditLogEntry) => (
-        <span className="text-sm">
-          {t(`superAdmin.audit.modules.${row.module}`)}
-        </span>
+        <span className="text-sm">{row.module}</span>
       ),
     },
     {
@@ -149,9 +143,9 @@ export function AdminAuditLogPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("superAdmin.audit.filters.allModules")}</SelectItem>
-            {AUDIT_MODULES.map((m) => (
+            {moduleOptions.map((m) => (
               <SelectItem key={m} value={m}>
-                {t(`superAdmin.audit.modules.${m}`)}
+                {m}
               </SelectItem>
             ))}
           </SelectContent>
@@ -198,7 +192,6 @@ export function AdminAuditLogPage() {
           <Can permission="audit.export">
             <Button
               variant="outline"
-              disabled={exportMutation.isPending}
               onClick={handleExport}
               className="gap-2"
             >

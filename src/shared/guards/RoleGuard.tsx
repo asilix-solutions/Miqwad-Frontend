@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAppSelector } from "@app/store";
-import type { UserRole } from "@modules/auth/types";
+import type { User, UserRole } from "@modules/auth/types";
+import type { ProviderType } from "@modules/providers/types";
 
 /**
  * Guards a route subtree to one or more user roles.
@@ -36,6 +37,31 @@ export function providerHomeFor(type: import("@modules/providers/types").Provide
  *  Every call-site that needs "where does this role go?" must import and
  *  call this function — never duplicate the mapping.
  */
+/**
+ * TODO(provider-status): the live backend's login response has no
+ * `isActive`/status field yet — providers are active-by-default, so a
+ * missing `providerStatus` (real backend) is treated as approved. Only an
+ * EXPLICIT "pending"/"rejected" (as set by the mock onboarding flow) gates
+ * access. When the backend adds `isActive` to /auth/login (or
+ * /api/profile), switch this to gate on `isActive === false`.
+ */
+export function isProviderApproved(user: User): boolean {
+  return user.providerStatus == null || user.providerStatus === "approved";
+}
+
+/**
+ * Resolves a provider's sub-type, preferring `user.providerType` (populated
+ * from the numeric role at login for the real backend) and falling back to
+ * `fallback` (typically `/provider/me`'s `type`, which only the mock
+ * backend serves — the real backend has no such endpoint yet).
+ */
+export function resolveProviderType(
+  user: User,
+  fallback?: ProviderType,
+): ProviderType | undefined {
+  return user.providerType ?? fallback ?? undefined;
+}
+
 export function defaultHomeFor(role: UserRole): string {
   switch (role) {
     case "super_admin":

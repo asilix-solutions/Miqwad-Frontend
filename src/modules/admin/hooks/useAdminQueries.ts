@@ -678,12 +678,6 @@ export function useAuditLogsQuery(params: AuditLogQuery) {
   });
 }
 
-export function useExportAuditLogsMutation() {
-  return useMutation({
-    mutationFn: (params: Omit<AuditLogQuery, "page" | "pageSize">) => adminApi.exportAuditLogs(params),
-  });
-}
-
 // ── Complaints ─────────────────────────────────────────────────────────────
 
 export function useComplaintsQuery(params: ComplaintsQuery) {

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, Navigate } from "react-router-dom";
-import { defaultHomeFor, providerHomeFor } from "@shared/guards/RoleGuard";
+import { defaultHomeFor, isProviderApproved, providerHomeFor, resolveProviderType } from "@shared/guards/RoleGuard";
 import { Button } from "@/components/ui/button";
 import { ProviderStatusBanner } from "../components/ProviderStatusBanner";
 import { useAppSelector } from "@app/store";
@@ -24,7 +24,7 @@ export function ProviderPendingPage() {
   }
 
   // Still fetching profile to determine type
-  if (user.providerStatus === "approved" && isLoading) {
+  if (isProviderApproved(user) && isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Spinner className="w-8 h-8 text-brand-orange" />
@@ -32,8 +32,8 @@ export function ProviderPendingPage() {
     );
   }
 
-  if (user.providerStatus === "approved") {
-    return <Navigate to={providerHomeFor(myProfile?.type)} replace />;
+  if (isProviderApproved(user)) {
+    return <Navigate to={providerHomeFor(resolveProviderType(user, myProfile?.type))} replace />;
   }
 
   const isRejected = user.providerStatus === "rejected";

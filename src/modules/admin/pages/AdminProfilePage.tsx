@@ -39,27 +39,27 @@ import {
   ProviderDialog,
 } from "@shared/provider-ui";
 import {
-  adminProfileEditSchema,
-  adminResetPasswordSchema,
-  adminChangePhoneRequestSchema,
-  adminChangePhoneVerifySchema,
-  type AdminProfileEditFormValues,
-  type AdminResetPasswordFormValues,
-  type AdminChangePhoneRequestFormValues,
-  type AdminChangePhoneVerifyFormValues,
-} from "../schemas/adminProfile.schemas";
+  accountProfileEditSchema,
+  accountResetPasswordSchema,
+  accountChangePhoneRequestSchema,
+  accountChangePhoneVerifySchema,
+  type AccountProfileEditFormValues,
+  type AccountResetPasswordFormValues,
+  type AccountChangePhoneRequestFormValues,
+  type AccountChangePhoneVerifyFormValues,
+} from "@modules/profile/schemas/accountProfile.schemas";
 import {
-  useAdminProfileQuery,
-  useUpdateAdminProfileMutation,
-  useResetAdminPasswordMutation,
-  useChangeAdminPhoneRequestMutation,
-  useChangeAdminPhoneVerifyMutation,
-} from "../hooks/useProfileQueries";
-import type { AdminProfile } from "../types";
+  useAccountProfileQuery,
+  useUpdateAccountProfileMutation,
+  useResetAccountPasswordMutation,
+  useChangeAccountPhoneRequestMutation,
+  useChangeAccountPhoneVerifyMutation,
+} from "@modules/profile/hooks/useProfileQueries";
+import type { AccountProfile } from "@modules/profile/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function buildDefaults(profile: AdminProfile | undefined): AdminProfileEditFormValues {
+function buildDefaults(profile: AccountProfile | undefined): AccountProfileEditFormValues {
   return {
     fullName: profile?.fullName ?? "",
     phoneNumber: profile?.phoneNumber ?? "",
@@ -110,15 +110,15 @@ export function AdminProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const initializedRef = useRef(false);
 
-  const profileQuery = useAdminProfileQuery();
-  const updateMutation = useUpdateAdminProfileMutation();
-  const resetPasswordMutation = useResetAdminPasswordMutation();
-  const changePhoneRequestMutation = useChangeAdminPhoneRequestMutation();
-  const changePhoneVerifyMutation = useChangeAdminPhoneVerifyMutation();
+  const profileQuery = useAccountProfileQuery();
+  const updateMutation = useUpdateAccountProfileMutation();
+  const resetPasswordMutation = useResetAccountPasswordMutation();
+  const changePhoneRequestMutation = useChangeAccountPhoneRequestMutation();
+  const changePhoneVerifyMutation = useChangeAccountPhoneVerifyMutation();
   const profile = profileQuery.data;
 
-  const form = useForm<AdminProfileEditFormValues>({
-    resolver: zodResolver(adminProfileEditSchema),
+  const form = useForm<AccountProfileEditFormValues>({
+    resolver: zodResolver(accountProfileEditSchema),
     defaultValues: buildDefaults(undefined),
   });
   const {
@@ -128,18 +128,18 @@ export function AdminProfilePage() {
     formState: { errors },
   } = form;
 
-  const passwordForm = useForm<AdminResetPasswordFormValues>({
-    resolver: zodResolver(adminResetPasswordSchema),
+  const passwordForm = useForm<AccountResetPasswordFormValues>({
+    resolver: zodResolver(accountResetPasswordSchema),
     defaultValues: { newPassword: "", confirmPassword: "" },
   });
 
-  const phoneRequestForm = useForm<AdminChangePhoneRequestFormValues>({
-    resolver: zodResolver(adminChangePhoneRequestSchema),
+  const phoneRequestForm = useForm<AccountChangePhoneRequestFormValues>({
+    resolver: zodResolver(accountChangePhoneRequestSchema),
     defaultValues: { newPhoneNumber: "" },
   });
 
-  const phoneVerifyForm = useForm<AdminChangePhoneVerifyFormValues>({
-    resolver: zodResolver(adminChangePhoneVerifySchema),
+  const phoneVerifyForm = useForm<AccountChangePhoneVerifyFormValues>({
+    resolver: zodResolver(accountChangePhoneVerifySchema),
     defaultValues: { code: "" },
   });
 
@@ -160,7 +160,7 @@ export function AdminProfilePage() {
     setIsEditing(false);
   };
 
-  const onSubmit = (data: AdminProfileEditFormValues) => {
+  const onSubmit = (data: AccountProfileEditFormValues) => {
     updateMutation.mutate(data, {
       onSuccess: () => {
         toast.success(t("admin.profile.saveSuccess"));
@@ -179,7 +179,7 @@ export function AdminProfilePage() {
     setShowConfirmPassword(false);
   };
 
-  const onSubmitPassword = (data: AdminResetPasswordFormValues) => {
+  const onSubmitPassword = (data: AccountResetPasswordFormValues) => {
     resetPasswordMutation.mutate(data, {
       onSuccess: () => {
         toast.success(t("admin.profile.password.success"));
@@ -199,7 +199,7 @@ export function AdminProfilePage() {
     phoneVerifyForm.reset({ code: "" });
   };
 
-  const onSubmitPhoneRequest = (data: AdminChangePhoneRequestFormValues) => {
+  const onSubmitPhoneRequest = (data: AccountChangePhoneRequestFormValues) => {
     changePhoneRequestMutation.mutate(
       { oldPhoneNumber: profile?.phoneNumber ?? "", newPhoneNumber: data.newPhoneNumber },
       {
@@ -214,7 +214,7 @@ export function AdminProfilePage() {
     );
   };
 
-  const onSubmitPhoneVerify = (data: AdminChangePhoneVerifyFormValues) => {
+  const onSubmitPhoneVerify = (data: AccountChangePhoneVerifyFormValues) => {
     changePhoneVerifyMutation.mutate(
       { newPhoneNumber: pendingNewPhone, code: data.code },
       {
