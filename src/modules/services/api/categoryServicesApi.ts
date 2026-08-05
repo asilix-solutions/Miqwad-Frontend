@@ -18,8 +18,12 @@ function unwrap<T>(envelope: ApiEnvelope<T>): T {
 
 export const categoryServicesApi = {
   listForCategory: async (categoryId: number): Promise<Service[]> => {
-    const { data } = await apiClient.get<ApiEnvelope<RawService[]>>(`/Categories/${categoryId}/services`);
-    return unwrap(data).map(adaptRawService);
+    const { data } = await apiClient.get<
+      ApiEnvelope<{ id: number; name: string; services: RawService[] }>
+    >(`/Categories/${categoryId}/services`);
+    const payload = unwrap(data);
+    const rawServices = Array.isArray(payload?.services) ? payload.services : [];
+    return rawServices.map(adaptRawService);
   },
 
   assign: async (categoryId: number, serviceId: number): Promise<void> => {

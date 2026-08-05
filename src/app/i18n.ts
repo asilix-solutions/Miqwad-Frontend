@@ -1094,8 +1094,21 @@ const ar = {
       },
       servicesTab: {
         title: "شجرة الخدمات",
-        comingSoon: "قريباً",
-        comingSoonDescription: "ستتوفر إدارة شجرة الخدمات في مرحلة لاحقة.",
+        add: "＋ إضافة خدمة",
+        addTitle: "إضافة خدمة",
+        editTitle: "تعديل الخدمة",
+        empty: "لا توجد خدمات — أضِف أول خدمة",
+        error: "تعذّر تحميل شجرة الخدمات",
+        form: {
+          name: "اسم الخدمة",
+          parent: "الخدمة الأب",
+          rootOption: "بدون (خدمة رئيسية)",
+        },
+        deleteConfirm: {
+          title: "حذف الخدمة",
+          description: "هل أنت متأكد من حذف الخدمة: {{name}}؟",
+          confirm: "حذف الخدمة",
+        },
       },
       success: {
         assigned: "تم إسناد الخدمة بنجاح",
@@ -3309,8 +3322,21 @@ const en: typeof ar = {
       },
       servicesTab: {
         title: "Service Tree",
-        comingSoon: "Coming soon",
-        comingSoonDescription: "Service tree management will be available in a later phase.",
+        add: "＋ Add Service",
+        addTitle: "Add Service",
+        editTitle: "Edit Service",
+        empty: "No services — add the first one",
+        error: "Failed to load the service tree",
+        form: {
+          name: "Service name",
+          parent: "Parent service",
+          rootOption: "None (root service)",
+        },
+        deleteConfirm: {
+          title: "Delete Service",
+          description: "Are you sure you want to delete the service: {{name}}?",
+          confirm: "Delete Service",
+        },
       },
       success: {
         assigned: "Service assigned successfully",

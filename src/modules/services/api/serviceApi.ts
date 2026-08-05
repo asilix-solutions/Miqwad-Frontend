@@ -1,14 +1,15 @@
 /**
  * @file serviceApi.ts
- * @description Transport layer for the Service entity (self-join tree,
- * `/api/Services` — not yet in Swagger). Mocked in-memory behind a single
- * `SERVICES_SOURCE` flag until the backend ships; flip the flag to switch
- * to the real endpoints without touching any consumer. Deliberately
- * self-contained (its own in-memory store, not the `src/shared/mocks/`
- * bridge) — see the module README/PR notes for the rationale: this entity
- * has no real controller yet, so there is nothing for the always-mock
- * prefix list in `server.ts` to shrink toward, and a self-contained mock
- * keeps the eventual deletion a one-file change.
+ * @description Transport layer for the Service entity (self-join tree via
+ * `parentServiceId`, real `/api/Services` CRUD). `SERVICES_SOURCE` now
+ * defaults to "real"; the in-memory mock stays inert behind the flag as a
+ * fallback (flip back to "mock" if the real endpoints regress) — no
+ * consumer needs to change either way. Deliberately self-contained (its own
+ * in-memory store, not the `src/shared/mocks/` bridge) — see the module
+ * README/PR notes for the rationale: this entity has no mock-server
+ * controller, so there is nothing for the always-mock prefix list in
+ * `server.ts` to shrink toward, and a self-contained mock keeps the
+ * eventual deletion a one-file change.
  */
 import { apiClient } from "@shared/lib/axios";
 import { sleep } from "@shared/lib/utils";
@@ -17,8 +18,15 @@ import type { PaginatedResponse } from "@shared/types/api";
 import { adaptRawService, adaptServiceToWritePayload } from "../lib/serviceAdapter";
 import type { ApiEnvelope, RawCategoriesPage as RawServicesPage } from "../lib/categoryAdapter";
 
-/** Flip to "real" once `/api/Services` ships. Mirrors `SERVICES_SOURCE`-style flags elsewhere. */
-export const SERVICES_SOURCE: "mock" | "real" = "mock";
+/**
+ * Flip back to "mock" only as a fallback. Mirrors `SERVICES_SOURCE`-style
+ * flags elsewhere. Declared `let` (never reassigned) rather than `const` —
+ * TS narrows an exported literal-initialized `const` to its initializer
+ * type at every read site in this file, which would make the `=== "mock"`
+ * branches below a type error once this flips to "real".
+ */
+// eslint-disable-next-line prefer-const
+export let SERVICES_SOURCE: "mock" | "real" = "real";
 
 export interface ServicesQuery {
   isActive?: boolean;
@@ -32,6 +40,17 @@ export interface ServiceWriteInput {
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
   if (!envelope.success) throw new Error(envelope.message || "Request failed");
   return envelope.data;
+}
+
+/**
+ * PUT/DELETE on `/api/Services` are assumed to follow the same 204-safe
+ * write pattern confirmed live for `/api/Categories` (see `categoriesApi.ts`)
+ * until a live probe says otherwise — an empty body on a successful write
+ * must not be unwrapped as an envelope, or edit/delete would false-fail.
+ */
+function unwrapVoid(status: number, body: ApiEnvelope<unknown> | "" | null | undefined): void {
+  if (status === 204 || body === "" || body === null || body === undefined) return;
+  unwrap(body);
 }
 
 // ── In-memory mock store ────────────────────────────────────────────────────
@@ -74,14 +93,13 @@ async function mockCreate(input: ServiceWriteInput): Promise<Service> {
   return adaptRawService(raw);
 }
 
-async function mockUpdate(id: number, input: Partial<ServiceWriteInput> & { isActive?: boolean }): Promise<Service> {
+async function mockUpdate(id: number, input: Partial<ServiceWriteInput> & { isActive?: boolean }): Promise<void> {
   await sleep(250);
   const raw = mockServices.find((s) => s.id === id);
   if (!raw) throw new Error("Service not found");
   if (input.name !== undefined) raw.name = input.name;
   if (input.parentServiceId !== undefined) raw.parentServiceId = input.parentServiceId;
   if (input.isActive !== undefined) raw.isActive = input.isActive;
-  return adaptRawService(raw);
 }
 
 async function mockRemove(id: number): Promise<void> {
@@ -91,7 +109,7 @@ async function mockRemove(id: number): Promise<void> {
   mockServices.splice(index, 1);
 }
 
-// ── Real backend calls (inert until SERVICES_SOURCE = "real") ──────────────
+// ── Real backend calls (live now that SERVICES_SOURCE = "real") ────────────
 
 async function realList(params?: ServicesQuery): Promise<PaginatedResponse<Service>> {
   const { data } = await apiClient.get<ApiEnvelope<RawServicesPage>>("/Services", {
@@ -117,13 +135,14 @@ async function realCreate(input: ServiceWriteInput): Promise<Service> {
   return adaptRawService(unwrap(data));
 }
 
-async function realUpdate(id: number, input: Partial<ServiceWriteInput>): Promise<Service> {
-  const { data } = await apiClient.put<ApiEnvelope<RawService>>(`/Services/${id}`, input);
-  return adaptRawService(unwrap(data));
+async function realUpdate(id: number, input: Partial<ServiceWriteInput>): Promise<void> {
+  const { status, data } = await apiClient.put<ApiEnvelope<RawService> | "">(`/Services/${id}`, input);
+  unwrapVoid(status, data);
 }
 
 async function realRemove(id: number): Promise<void> {
-  await apiClient.delete(`/Services/${id}`);
+  const { status, data } = await apiClient.delete<ApiEnvelope<unknown> | "">(`/Services/${id}`);
+  unwrapVoid(status, data);
 }
 
 // ── Public API — same signatures regardless of source ───────────────────────
@@ -137,7 +156,7 @@ export const serviceApi = {
   create: (input: ServiceWriteInput): Promise<Service> =>
     SERVICES_SOURCE === "mock" ? mockCreate(input) : realCreate(input),
 
-  update: (id: number, input: Partial<ServiceWriteInput>): Promise<Service> =>
+  update: (id: number, input: Partial<ServiceWriteInput>): Promise<void> =>
     SERVICES_SOURCE === "mock" ? mockUpdate(id, input) : realUpdate(id, input),
 
   remove: (id: number): Promise<void> => (SERVICES_SOURCE === "mock" ? mockRemove(id) : realRemove(id)),
