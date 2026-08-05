@@ -38,7 +38,8 @@ export interface ServiceSubcategory {
   averagePrice: number | null;
 }
 
-export interface Service {
+/** A priced, bookable offering under a category (distinct from the Service taxonomy node in service.types.ts). */
+export interface PricedService {
   id: number;
   nameAr: string;
   nameEn: string;

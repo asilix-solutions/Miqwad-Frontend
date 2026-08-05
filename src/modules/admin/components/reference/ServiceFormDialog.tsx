@@ -26,12 +26,12 @@ import { CategoryCascader } from "@shared/provider-ui/CategoryCascader";
 import { useCreateServiceMutation, useUpdateServiceMutation } from "../../hooks/useAdminQueries";
 import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import { serviceSchema, type ServiceFormValues } from "../../schemas/admin.schemas";
-import type { Service } from "@modules/services/types";
+import type { PricedService } from "@modules/services/types";
 import { useToast } from "@shared/components/ui/toastContext";
 
 interface Props {
   mode: "create" | "edit";
-  service?: Service;
+  service?: PricedService;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
