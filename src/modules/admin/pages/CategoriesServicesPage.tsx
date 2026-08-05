@@ -2,8 +2,8 @@
  * @file CategoriesServicesPage.tsx
  * @description Container page for the "التصنيفات والخدمات" (Categories &
  * Services) admin section. Master–detail layout for flat categories and
- * their assigned services (m2m). Services-tree management is a stub here —
- * built in a later phase.
+ * their assigned services (m2m). The "services" tab manages the Service
+ * self-join tree directly (`ServicesTreePanel`).
  *
  * Tab state is URL-synced via `?tab=`, matching AdminReferenceDataPage's
  * convention so refresh/deep-linking work correctly.
@@ -14,7 +14,7 @@ import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CategoryListPanel } from "../components/taxonomy/CategoryListPanel";
 import { CategoryServicesPanel } from "../components/taxonomy/CategoryServicesPanel";
-import { ServicesTabStub } from "../components/taxonomy/ServicesTabStub";
+import { ServicesTreePanel } from "../components/taxonomy/ServicesTreePanel";
 import type { ServiceCategory } from "@modules/services/types";
 
 type TabKey = "categories" | "services";
@@ -104,7 +104,7 @@ export function CategoriesServicesPage() {
         </div>
       )}
 
-      {activeTab === "services" && <ServicesTabStub />}
+      {activeTab === "services" && <ServicesTreePanel />}
     </div>
   );
 }
