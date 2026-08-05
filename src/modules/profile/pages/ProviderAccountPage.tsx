@@ -1,11 +1,15 @@
 /**
- * @file AdminProfilePage.tsx
+ * @file ProviderAccountPage.tsx
  *
- * Admin's own account page, backed by the generic /api/profile surface
- * (operates on the current token holder). Two-mode page like the provider
- * profile pages: VIEW (grouped info cards) and EDIT (inline RHF+Zod form).
+ * Provider's own account/security page (dealer, workshop, scrap alike),
+ * backed by the shared, role-neutral /api/profile surface in
+ * `@modules/profile/*` (api/hooks/schemas/types). Built entirely from the
+ * provider design system (`@shared/provider-ui`) — visually distinct from
+ * `AdminProfilePage`, which this page does not import from or share UI with.
+ *
+ * Two-mode page: VIEW (grouped display cards) and EDIT (inline RHF+Zod form).
  * Password reset and the two-step phone-change OTP flow are separate
- * dialogs, deferred-mounted.
+ * deferred-mounted dialogs.
  *
  * GET /api/profile response shape is unverified in swagger — profileApi's
  * adaptProfile degrades every field to null, rendered here as "—".
@@ -37,6 +41,7 @@ import {
   ProviderSkeleton,
   ProviderInput,
   ProviderDialog,
+  ProviderStatusPill,
 } from "@shared/provider-ui";
 import {
   accountProfileEditSchema,
@@ -69,28 +74,21 @@ function buildDefaults(profile: AccountProfile | undefined): AccountProfileEditF
   };
 }
 
-function DisplayField({
-  icon,
-  label,
-  value,
-}: {
+interface DisplayFieldProps {
   icon: React.ReactNode;
   label: string;
   value: string | null | undefined;
-}) {
+}
+
+function DisplayField({ icon, label, value }: DisplayFieldProps) {
   return (
-    <div className="flex items-start gap-3 rounded-[var(--radius-md)] p-3 transition-colors hover:bg-[var(--color-surface-2)]">
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-        style={{ backgroundColor: "rgba(244,94,43,0.1)" }}
-      >
+    <div className="flex items-start gap-3 rounded-[var(--radius-lg)] p-3 transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)]">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-50)]">
         <span className="text-[var(--color-brand-orange)]">{icon}</span>
       </div>
       <div className="min-w-0">
         <p className="text-xs text-[var(--color-muted)]">{label}</p>
-        <p className="text-sm font-medium text-[var(--color-ink-body)]">
-          {value || "—"}
-        </p>
+        <p className="text-sm font-medium text-[var(--color-ink-body)]">{value || "—"}</p>
       </div>
     </div>
   );
@@ -98,7 +96,7 @@ function DisplayField({
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function AdminProfilePage() {
+export function ProviderAccountPage() {
   const { t } = useTranslation();
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -163,11 +161,11 @@ export function AdminProfilePage() {
   const onSubmit = (data: AccountProfileEditFormValues) => {
     updateMutation.mutate(data, {
       onSuccess: () => {
-        toast.success(t("admin.profile.saveSuccess"));
+        toast.success(t("accountProfile.saveSuccess"));
         setIsEditing(false);
       },
       onError: () => {
-        toast.error(t("admin.profile.saveFailed"));
+        toast.error(t("accountProfile.saveFailed"));
       },
     });
   };
@@ -182,11 +180,11 @@ export function AdminProfilePage() {
   const onSubmitPassword = (data: AccountResetPasswordFormValues) => {
     resetPasswordMutation.mutate(data, {
       onSuccess: () => {
-        toast.success(t("admin.profile.password.success"));
+        toast.success(t("accountProfile.password.success"));
         closePasswordDialog();
       },
       onError: () => {
-        toast.error(t("admin.profile.password.failed"));
+        toast.error(t("accountProfile.password.failed"));
       },
     });
   };
@@ -208,7 +206,7 @@ export function AdminProfilePage() {
           setPhoneStep("verify");
         },
         onError: () => {
-          toast.error(t("admin.profile.phone.requestFailed"));
+          toast.error(t("accountProfile.phone.requestFailed"));
         },
       },
     );
@@ -219,11 +217,11 @@ export function AdminProfilePage() {
       { newPhoneNumber: pendingNewPhone, code: data.code },
       {
         onSuccess: () => {
-          toast.success(t("admin.profile.phone.success"));
+          toast.success(t("accountProfile.phone.success"));
           closePhoneDialog();
         },
         onError: () => {
-          toast.error(t("admin.profile.phone.verifyFailed"));
+          toast.error(t("accountProfile.phone.verifyFailed"));
         },
       },
     );
@@ -234,7 +232,7 @@ export function AdminProfilePage() {
       { oldPhoneNumber: profile?.phoneNumber ?? "", newPhoneNumber: pendingNewPhone },
       {
         onError: () => {
-          toast.error(t("admin.profile.phone.requestFailed"));
+          toast.error(t("accountProfile.phone.requestFailed"));
         },
       },
     );
@@ -246,9 +244,9 @@ export function AdminProfilePage() {
     return (
       <div className="space-y-6 provider-fade-up">
         <ProviderSkeleton variant="block" height={48} />
-        <ProviderSkeleton variant="block" height={160} />
-        <ProviderSkeleton variant="block" height={160} />
-        <ProviderSkeleton variant="block" height={120} />
+        <ProviderSkeleton variant="block" height={180} />
+        <ProviderSkeleton variant="block" height={180} />
+        <ProviderSkeleton variant="block" height={130} />
       </div>
     );
   }
@@ -262,7 +260,7 @@ export function AdminProfilePage() {
         <button
           type="button"
           onClick={() => void profileQuery.refetch()}
-          className="text-sm text-[var(--color-brand-orange)] underline"
+          className="text-sm font-medium text-[var(--color-brand-orange)] hover:underline"
         >
           {t("common.errorRetry")}
         </button>
@@ -275,7 +273,8 @@ export function AdminProfilePage() {
   const btnPrimary =
     "flex h-[var(--size-input-h)] items-center gap-2 rounded-[var(--radius-md)] " +
     "bg-[var(--color-brand-orange)] px-5 text-sm font-semibold text-white " +
-    "transition-colors duration-[var(--dur-fast)] hover:bg-[#E3460F] " +
+    "shadow-[var(--shadow-provider-sm)] transition-colors duration-[var(--dur-fast)] " +
+    "hover:bg-[var(--color-brand-orange-hover,#E3460F)] " +
     "disabled:cursor-not-allowed disabled:opacity-60";
 
   const btnSecondary =
@@ -291,8 +290,8 @@ export function AdminProfilePage() {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <ProviderPageHeader
           icon={<User className="h-5 w-5" aria-hidden />}
-          title={t("admin.profile.title")}
-          subtitle={t("admin.profile.subtitle")}
+          title={t("accountProfile.title")}
+          subtitle={t("accountProfile.subtitle")}
           actions={
             isEditing ? (
               <div className="flex items-center gap-2">
@@ -312,62 +311,73 @@ export function AdminProfilePage() {
             ) : (
               <button type="button" onClick={handleEdit} className={btnPrimary}>
                 <Pencil className="h-4 w-4" aria-hidden />
-                {t("admin.profile.editBtn")}
+                {t("accountProfile.editBtn")}
               </button>
             )
           }
         />
 
         {/* ── Identity banner ─────────────────────────────────────────────── */}
-        <ProviderCard style={{ animationDelay: "40ms" }}>
-          <div className="flex items-center gap-4">
+        <ProviderCard interactive style={{ animationDelay: "40ms" }}>
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Avatar is display-only for now — no server-side profile image endpoint. */}
+            {/* TODO: wire ProviderImageUpload to a real /api/profile/image endpoint once available. */}
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-orange)] text-2xl font-semibold text-white">
               {initial}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h2 className="truncate font-[var(--font-display)] text-xl font-bold text-[var(--color-ink-body)]">
                 {profile.fullName || "—"}
               </h2>
               <p className="text-sm text-[var(--color-muted)]">
-                {profile.email || t("admin.profile.subtitle")}
+                {profile.email || t("accountProfile.subtitle")}
               </p>
             </div>
+            <ProviderStatusPill label={t("accountProfile.securitySection")} tone="brand" />
           </div>
         </ProviderCard>
 
         {/* ── Personal Info ───────────────────────────────────────────────── */}
-        <ProviderCard style={{ animationDelay: "70ms" }}>
+        <ProviderCard interactive style={{ animationDelay: "70ms" }}>
           <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
-            {t("admin.profile.personalSection")}
+            {t("accountProfile.personalSection")}
           </h2>
 
           {isEditing ? (
             <div className="space-y-4">
               <ProviderInput
                 id="fullName"
-                label={t("admin.profile.fullName")}
+                label={t("accountProfile.fullName")}
                 error={errors.fullName?.message ? t(errors.fullName.message) : undefined}
                 {...register("fullName")}
               />
               <ProviderInput
                 id="identityNumber"
-                label={t("admin.profile.identityNumber")}
+                label={t("accountProfile.identityNumber")}
                 error={errors.identityNumber?.message ? t(errors.identityNumber.message) : undefined}
                 {...register("identityNumber")}
               />
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
-              <DisplayField icon={<User className="h-4 w-4" aria-hidden />} label={t("admin.profile.fullName")} value={profile.fullName} />
-              <DisplayField icon={<IdCard className="h-4 w-4" aria-hidden />} label={t("admin.profile.identityNumber")} value={profile.identityNumber} />
+              <DisplayField
+                icon={<User className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.fullName")}
+                value={profile.fullName}
+              />
+              <DisplayField
+                icon={<IdCard className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.identityNumber")}
+                value={profile.identityNumber}
+              />
             </div>
           )}
         </ProviderCard>
 
         {/* ── Contact ──────────────────────────────────────────────────────── */}
-        <ProviderCard style={{ animationDelay: "100ms" }}>
+        <ProviderCard interactive style={{ animationDelay: "100ms" }}>
           <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
-            {t("admin.profile.contactSection")}
+            {t("accountProfile.contactSection")}
           </h2>
 
           {isEditing ? (
@@ -375,7 +385,7 @@ export function AdminProfilePage() {
               <ProviderInput
                 id="phoneNumber"
                 type="tel"
-                label={t("admin.profile.phoneNumber")}
+                label={t("accountProfile.phoneNumber")}
                 leadingIcon={<Phone className="h-4 w-4" aria-hidden />}
                 error={errors.phoneNumber?.message ? t(errors.phoneNumber.message) : undefined}
                 {...register("phoneNumber")}
@@ -383,13 +393,13 @@ export function AdminProfilePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <ProviderInput
                   id="address"
-                  label={t("admin.profile.address")}
+                  label={t("accountProfile.address")}
                   error={errors.address?.message ? t(errors.address.message) : undefined}
                   {...register("address")}
                 />
                 <ProviderInput
                   id="city"
-                  label={t("admin.profile.city")}
+                  label={t("accountProfile.city")}
                   error={errors.city?.message ? t(errors.city.message) : undefined}
                   {...register("city")}
                 />
@@ -397,40 +407,46 @@ export function AdminProfilePage() {
             </div>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
-              <DisplayField icon={<Phone className="h-4 w-4" aria-hidden />} label={t("admin.profile.phoneNumber")} value={profile.phoneNumber} />
-              <DisplayField icon={<Mail className="h-4 w-4" aria-hidden />} label={t("admin.profile.email")} value={profile.email} />
-              <DisplayField icon={<MapPin className="h-4 w-4" aria-hidden />} label={t("admin.profile.address")} value={profile.address} />
-              <DisplayField icon={<MapPin className="h-4 w-4" aria-hidden />} label={t("admin.profile.city")} value={profile.city} />
+              <DisplayField
+                icon={<Phone className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.phoneNumber")}
+                value={profile.phoneNumber}
+              />
+              <DisplayField
+                icon={<Mail className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.email")}
+                value={profile.email}
+              />
+              <DisplayField
+                icon={<MapPin className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.address")}
+                value={profile.address}
+              />
+              <DisplayField
+                icon={<MapPin className="h-4 w-4" aria-hidden />}
+                label={t("accountProfile.city")}
+                value={profile.city}
+              />
             </div>
           )}
         </ProviderCard>
 
         {/* ── Security ─────────────────────────────────────────────────────── */}
-        {!isEditing && (
-          <ProviderCard style={{ animationDelay: "130ms" }}>
-            <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
-              {t("admin.profile.securitySection")}
-            </h2>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => setPasswordDialogOpen(true)}
-                className={btnSecondary}
-              >
-                <KeyRound className="h-4 w-4" aria-hidden />
-                {t("admin.profile.password.changeBtn")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setPhoneDialogOpen(true)}
-                className={btnSecondary}
-              >
-                <Phone className="h-4 w-4" aria-hidden />
-                {t("admin.profile.phone.changeBtn")}
-              </button>
-            </div>
-          </ProviderCard>
-        )}
+        <ProviderCard interactive style={{ animationDelay: "130ms" }}>
+          <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
+            {t("accountProfile.securitySection")}
+          </h2>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button type="button" onClick={() => setPasswordDialogOpen(true)} className={btnSecondary}>
+              <KeyRound className="h-4 w-4" aria-hidden />
+              {t("accountProfile.password.changeBtn")}
+            </button>
+            <button type="button" onClick={() => setPhoneDialogOpen(true)} className={btnSecondary}>
+              <Phone className="h-4 w-4" aria-hidden />
+              {t("accountProfile.phone.changeBtn")}
+            </button>
+          </div>
+        </ProviderCard>
       </div>
 
       {/* ── Change password dialog ────────────────────────────────────────── */}
@@ -438,7 +454,7 @@ export function AdminProfilePage() {
         <ProviderDialog
           open={passwordDialogOpen}
           onOpenChange={(open) => (open ? setPasswordDialogOpen(true) : closePasswordDialog())}
-          title={t("admin.profile.password.title")}
+          title={t("accountProfile.password.title")}
           size="sm"
           footer={
             <>
@@ -461,24 +477,24 @@ export function AdminProfilePage() {
             </>
           }
         >
-          <form
-            onSubmit={passwordForm.handleSubmit(onSubmitPassword)}
-            noValidate
-            className="space-y-4"
-          >
+          <form onSubmit={passwordForm.handleSubmit(onSubmitPassword)} noValidate className="space-y-4">
             <ProviderInput
               id="newPassword"
               type={showNewPassword ? "text" : "password"}
-              label={t("admin.profile.password.newPassword")}
-              hint={t("admin.profile.password.hint")}
+              label={t("accountProfile.password.newPassword")}
+              hint={t("accountProfile.password.hint")}
               trailingIcon={
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowNewPassword((v) => !v)}
-                  aria-label={t("admin.profile.password.toggleVisibility")}
+                  aria-label={t("accountProfile.password.toggleVisibility")}
                 >
-                  {showNewPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
                 </button>
               }
               error={
@@ -491,15 +507,19 @@ export function AdminProfilePage() {
             <ProviderInput
               id="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
-              label={t("admin.profile.password.confirmPassword")}
+              label={t("accountProfile.password.confirmPassword")}
               trailingIcon={
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowConfirmPassword((v) => !v)}
-                  aria-label={t("admin.profile.password.toggleVisibility")}
+                  aria-label={t("accountProfile.password.toggleVisibility")}
                 >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4" aria-hidden />
+                  )}
                 </button>
               }
               error={
@@ -518,10 +538,10 @@ export function AdminProfilePage() {
         <ProviderDialog
           open={phoneDialogOpen}
           onOpenChange={(open) => (open ? setPhoneDialogOpen(true) : closePhoneDialog())}
-          title={t("admin.profile.phone.title")}
+          title={t("accountProfile.phone.title")}
           description={
             phoneStep === "verify"
-              ? t("admin.profile.phone.codeSentNotice", { phone: pendingNewPhone })
+              ? t("accountProfile.phone.codeSentNotice", { phone: pendingNewPhone })
               : undefined
           }
           size="sm"
@@ -540,18 +560,14 @@ export function AdminProfilePage() {
                   {changePhoneRequestMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : null}
-                  {t("admin.profile.phone.sendCode")}
+                  {t("accountProfile.phone.sendCode")}
                 </button>
               </>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => setPhoneStep("request")}
-                  className={btnSecondary}
-                >
+                <button type="button" onClick={() => setPhoneStep("request")} className={btnSecondary}>
                   <ArrowLeft className="h-4 w-4" aria-hidden />
-                  {t("admin.profile.phone.back")}
+                  {t("accountProfile.phone.back")}
                 </button>
                 <button
                   type="button"
@@ -562,25 +578,21 @@ export function AdminProfilePage() {
                   {changePhoneVerifyMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : null}
-                  {t("admin.profile.phone.verify")}
+                  {t("accountProfile.phone.verify")}
                 </button>
               </>
             )
           }
         >
           {phoneStep === "request" ? (
-            <form
-              onSubmit={phoneRequestForm.handleSubmit(onSubmitPhoneRequest)}
-              noValidate
-              className="space-y-4"
-            >
+            <form onSubmit={phoneRequestForm.handleSubmit(onSubmitPhoneRequest)} noValidate className="space-y-4">
               <p className="text-sm text-[var(--color-muted)]">
-                {t("admin.profile.phone.currentPhone", { phone: profile.phoneNumber || "—" })}
+                {t("accountProfile.phone.currentPhone", { phone: profile.phoneNumber || "—" })}
               </p>
               <ProviderInput
                 id="newPhoneNumber"
                 type="tel"
-                label={t("admin.profile.phone.newPhoneNumber")}
+                label={t("accountProfile.phone.newPhoneNumber")}
                 leadingIcon={<Phone className="h-4 w-4" aria-hidden />}
                 error={
                   phoneRequestForm.formState.errors.newPhoneNumber?.message
@@ -591,15 +603,11 @@ export function AdminProfilePage() {
               />
             </form>
           ) : (
-            <form
-              onSubmit={phoneVerifyForm.handleSubmit(onSubmitPhoneVerify)}
-              noValidate
-              className="space-y-4"
-            >
+            <form onSubmit={phoneVerifyForm.handleSubmit(onSubmitPhoneVerify)} noValidate className="space-y-4">
               <ProviderInput
                 id="code"
                 inputMode="numeric"
-                label={t("admin.profile.phone.code")}
+                label={t("accountProfile.phone.code")}
                 error={
                   phoneVerifyForm.formState.errors.code?.message
                     ? t(phoneVerifyForm.formState.errors.code.message)
@@ -613,7 +621,7 @@ export function AdminProfilePage() {
                 disabled={changePhoneRequestMutation.isPending}
                 className="text-xs font-medium text-[var(--color-brand-orange)] hover:underline disabled:opacity-60"
               >
-                {t("admin.profile.phone.resend")}
+                {t("accountProfile.phone.resend")}
               </button>
             </form>
           )}

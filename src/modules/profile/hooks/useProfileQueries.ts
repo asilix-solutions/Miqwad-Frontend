@@ -1,8 +1,9 @@
 /**
  * @file useProfileQueries.ts
  *
- * TanStack Query hooks for the admin's own profile (/api/profile).
- * Silent — no toasts here; toasts live in AdminProfilePage.
+ * TanStack Query hooks for the signed-in user's own profile (/api/profile).
+ * Role-neutral — reused by admin, dealer, workshop, and scrap account pages.
+ * Silent — no toasts here; toasts live in the consuming page.
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -13,14 +14,14 @@ export const profileKeys = {
   detail: () => [...profileKeys.all, "detail"] as const,
 };
 
-export function useAdminProfileQuery() {
+export function useAccountProfileQuery() {
   return useQuery({
     queryKey: profileKeys.detail(),
     queryFn: () => profileApi.getProfile(),
   });
 }
 
-export function useUpdateAdminProfileMutation() {
+export function useUpdateAccountProfileMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: Parameters<typeof profileApi.updateProfile>[0]) =>
@@ -31,21 +32,21 @@ export function useUpdateAdminProfileMutation() {
   });
 }
 
-export function useResetAdminPasswordMutation() {
+export function useResetAccountPasswordMutation() {
   return useMutation({
     mutationFn: (payload: Parameters<typeof profileApi.resetPassword>[0]) =>
       profileApi.resetPassword(payload),
   });
 }
 
-export function useChangeAdminPhoneRequestMutation() {
+export function useChangeAccountPhoneRequestMutation() {
   return useMutation({
     mutationFn: (payload: Parameters<typeof profileApi.changePhoneRequest>[0]) =>
       profileApi.changePhoneRequest(payload),
   });
 }
 
-export function useChangeAdminPhoneVerifyMutation() {
+export function useChangeAccountPhoneVerifyMutation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: Parameters<typeof profileApi.changePhoneVerify>[0]) =>

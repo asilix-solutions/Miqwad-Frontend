@@ -120,12 +120,6 @@ const ResetPasswordPage = lazy(() =>
 // );
 // ===== END FROZEN =====
 
-const ProfilePage = lazy(() =>
-  import("@modules/auth/pages/ProfilePage").then((m) => ({
-    default: m.ProfilePage,
-  }))
-);
-
 // ─── Admin-Only Notice Page (shown to non-admin roles while client routes are frozen) ──
 const AdminOnlyNoticePage = lazy(() =>
   import("@modules/auth/pages/AdminOnlyNoticePage").then((m) => ({
@@ -162,6 +156,11 @@ const AddProviderServicePage = lazy(() =>
 const EditProviderServicePage = lazy(() =>
   import("@modules/providers/pages/EditProviderServicePage").then((m) => ({
     default: m.EditProviderServicePage,
+  }))
+);
+const ProviderAccountPage = lazy(() =>
+  import("@modules/profile/pages/ProviderAccountPage").then((m) => ({
+    default: m.ProviderAccountPage,
   }))
 );
 
@@ -740,7 +739,7 @@ export const router = createBrowserRouter([
                     path: "services/:id/edit",
                     element: <EditProviderServicePage />,
                   },
-                  { path: "profile", element: <ProfilePage /> },
+                  { path: "account", element: <ProviderAccountPage /> },
                 ],
               },
             ],

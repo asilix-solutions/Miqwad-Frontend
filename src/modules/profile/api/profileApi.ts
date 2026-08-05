@@ -2,23 +2,24 @@
  * @file profileApi.ts
  *
  * Thin API layer for the generic /api/profile surface, which operates on
- * the CURRENT token holder — so it also serves the admin's own account.
- * `/api/profile` has no `admin/` prefix, so it bypasses the always-mocked
- * bridge (see shared/mocks/server.ts) and hits the real .NET backend.
+ * the CURRENT token holder — so it serves every role's own account (admin,
+ * dealer, workshop, scrap). `/api/profile` has no role-specific prefix, so
+ * it bypasses the always-mocked bridge (see shared/mocks/server.ts) and
+ * hits the real .NET backend.
  */
 
 import { apiClient } from "@shared/lib/axios";
 import { unwrapEnvelope } from "@modules/auth/api/auth.adapter";
 import type {
-  AdminProfile,
-  UpdateAdminProfileRequest,
-  ResetAdminPasswordRequest,
-  ChangeAdminPhoneRequest,
-  ChangeAdminPhoneVerifyRequest,
+  AccountProfile,
+  UpdateAccountProfileRequest,
+  ResetAccountPasswordRequest,
+  ChangeAccountPhoneRequest,
+  ChangeAccountPhoneVerifyRequest,
 } from "../types";
 
 /** Raw GET /api/profile record — shape unverified in swagger, tolerate anything. */
-interface RawAdminProfile {
+interface RawAccountProfile {
   fullName?: string | null;
   email?: string | null;
   phoneNumber?: string | null;
@@ -35,8 +36,8 @@ interface RawAdminProfile {
  * later. Tolerates an enveloped or flat payload, and either spelling of the
  * identity-number field (the backend uses both spellings across endpoints).
  */
-function adaptProfile(raw: unknown): AdminProfile {
-  const data = unwrapEnvelope<RawAdminProfile>(raw) ?? {};
+function adaptProfile(raw: unknown): AccountProfile {
+  const data = unwrapEnvelope<RawAccountProfile>(raw) ?? {};
   return {
     fullName: data.fullName ?? null,
     email: data.email ?? null,
@@ -48,25 +49,25 @@ function adaptProfile(raw: unknown): AdminProfile {
 }
 
 export const profileApi = {
-  getProfile: async (): Promise<AdminProfile> => {
+  getProfile: async (): Promise<AccountProfile> => {
     const { data } = await apiClient.get("/profile");
     return adaptProfile(data);
   },
 
-  updateProfile: async (payload: UpdateAdminProfileRequest): Promise<AdminProfile> => {
+  updateProfile: async (payload: UpdateAccountProfileRequest): Promise<AccountProfile> => {
     const { data } = await apiClient.put("/profile", payload);
     return adaptProfile(data);
   },
 
-  resetPassword: async (payload: ResetAdminPasswordRequest): Promise<void> => {
+  resetPassword: async (payload: ResetAccountPasswordRequest): Promise<void> => {
     await apiClient.post("/profile/reset-password", payload);
   },
 
-  changePhoneRequest: async (payload: ChangeAdminPhoneRequest): Promise<void> => {
+  changePhoneRequest: async (payload: ChangeAccountPhoneRequest): Promise<void> => {
     await apiClient.post("/profile/change-phone-number", payload);
   },
 
-  changePhoneVerify: async (payload: ChangeAdminPhoneVerifyRequest): Promise<void> => {
+  changePhoneVerify: async (payload: ChangeAccountPhoneVerifyRequest): Promise<void> => {
     await apiClient.post("/profile/change-phone-number/verify", payload);
   },
 };

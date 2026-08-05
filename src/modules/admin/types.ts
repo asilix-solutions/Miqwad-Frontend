@@ -54,48 +54,6 @@ export interface AdminUserRow {
 
 export type AdminUserDetail = AdminUserRow;
 
-/**
- * The admin's own account, from GET /api/profile — a generic endpoint that
- * operates on the current token holder (works for admin, provider, etc).
- * All fields are nullable: the live GET response shape is unverified in
- * swagger (only "200 OK" is documented), so every field is best-effort.
- */
-export interface AdminProfile {
-  fullName: string | null;
-  email: string | null;
-  phoneNumber: string | null;
-  address: string | null;
-  city: string | null;
-  identityNumber: string | null;
-}
-
-/** PUT /api/profile body. */
-export interface UpdateAdminProfileRequest {
-  fullName: string;
-  phoneNumber: string;
-  address: string;
-  identityNumber: string;
-  city: string;
-}
-
-/** POST /api/profile/reset-password body. */
-export interface ResetAdminPasswordRequest {
-  newPassword: string;
-  confirmPassword: string;
-}
-
-/** POST /api/profile/change-phone-number body — step 1, requests an OTP. */
-export interface ChangeAdminPhoneRequest {
-  oldPhoneNumber: string;
-  newPhoneNumber: string;
-}
-
-/** POST /api/profile/change-phone-number/verify body — step 2, confirms the OTP. */
-export interface ChangeAdminPhoneVerifyRequest {
-  newPhoneNumber: string;
-  code: string;
-}
-
 export interface MonthlyPoint { month: string; value: number; }
 export interface StatusCount  { status: string; count: number; }
 

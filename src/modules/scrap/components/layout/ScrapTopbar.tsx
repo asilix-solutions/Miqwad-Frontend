@@ -6,12 +6,21 @@
  */
 
 import type { ReactNode } from "react";
-import { LogOut, Languages } from "lucide-react";
+import { LogOut, Languages, User as UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@app/store";
 import { useLogout } from "@modules/auth/hooks/useLogout";
 import i18n from "@app/i18n";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface ScrapTopbarProps {
   children?: ReactNode;
@@ -19,6 +28,7 @@ interface ScrapTopbarProps {
 
 export function ScrapTopbar({ children }: ScrapTopbarProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const { logout: handleLogout } = useLogout();
 
@@ -49,27 +59,39 @@ export function ScrapTopbar({ children }: ScrapTopbarProps) {
         </button>
 
         {user ? (
-          <div className="flex items-center gap-3 pe-4 border-e border-ink-200">
-            <div className="flex-col items-end hidden sm:flex">
-              <span className="text-sm font-medium text-ink-900 leading-tight">
-                {user.fullName || user.phoneNumber}
-              </span>
-              <span className="text-xs text-ink-500">{user.phoneNumber}</span>
-            </div>
-            <Avatar className="h-9 w-9 bg-brand-100 text-brand-700">
-              <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName} />
-              <AvatarFallback>{user.fullName?.charAt(0) ?? "S"}</AvatarFallback>
-            </Avatar>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-3 pe-3 ps-1 py-1 rounded-md hover:bg-ink-50 transition-colors"
+              >
+                <div className="flex-col items-end hidden sm:flex">
+                  <span className="text-sm font-medium text-ink-900 leading-tight">
+                    {user.fullName || user.phoneNumber}
+                  </span>
+                  <span className="text-xs text-ink-500">{user.phoneNumber}</span>
+                </div>
+                <Avatar className="h-9 w-9 bg-brand-100 text-brand-700">
+                  <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName} />
+                  <AvatarFallback>{user.fullName?.charAt(0) ?? "S"}</AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{user.fullName}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/provider/account")}>
+                <UserIcon />
+                {t("accountProfile.menuItem")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => void handleLogout()}>
+                <LogOut />
+                {t("auth.logout")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
-
-        <button
-          onClick={() => void handleLogout()}
-          className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] text-ink-600 hover:text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline-block">{t("auth.logout")}</span>
-        </button>
       </div>
     </header>
   );
