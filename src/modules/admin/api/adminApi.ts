@@ -2,7 +2,7 @@ import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, SubscriberType, RevenueSummary, RevenueSource } from "../types";
 import type { ProviderType } from "@modules/providers/types";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { PricedService, ServiceCategory } from "@modules/services/types";
 
 /**
  * Payload for creating a category.
@@ -261,18 +261,18 @@ export const adminApi = {
 
   // ── Services ─────────────────────────────────────────────────────────────
 
-  getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<Service[]> => {
-    const { data } = await apiClient.get<Service[]>("/admin/services", { params });
+  getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<PricedService[]> => {
+    const { data } = await apiClient.get<PricedService[]>("/admin/services", { params });
     return data;
   },
 
-  createService: async (payload: Omit<Service, "id">): Promise<Service> => {
-    const { data } = await apiClient.post<Service>("/admin/services", payload);
+  createService: async (payload: Omit<PricedService, "id">): Promise<PricedService> => {
+    const { data } = await apiClient.post<PricedService>("/admin/services", payload);
     return data;
   },
 
-  updateService: async (id: number, payload: Partial<Service>): Promise<Service> => {
-    const { data } = await apiClient.put<Service>(`/admin/services/${id}`, payload);
+  updateService: async (id: number, payload: Partial<PricedService>): Promise<PricedService> => {
+    const { data } = await apiClient.put<PricedService>(`/admin/services/${id}`, payload);
     return data;
   },
 

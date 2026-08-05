@@ -5,7 +5,7 @@ import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks/useServicesQueries";
 import { categoriesApi, type ParentCategoriesQuery } from "@modules/services/api/categoriesApi";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { PricedService, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
@@ -278,7 +278,7 @@ export function useAdminServicesQuery(params?: { categoryId?: number; isActive?:
 export function useCreateServiceMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<Service, "id">) => adminApi.createService(payload),
+    mutationFn: (payload: Omit<PricedService, "id">) => adminApi.createService(payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
     },
@@ -288,7 +288,7 @@ export function useCreateServiceMutation() {
 export function useUpdateServiceMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<Service> }) =>
+    mutationFn: ({ id, payload }: { id: number; payload: Partial<PricedService> }) =>
       adminApi.updateService(id, payload),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "services"] });
