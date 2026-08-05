@@ -6,7 +6,7 @@
  * wired via the shared toast context so consuming screens don't each have
  * to repeat success/error messaging.
  */
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@shared/components/ui/toastContext";
 import { serviceApi, type ServiceWriteInput, type ServicesQuery } from "../api/serviceApi";
@@ -107,6 +107,26 @@ export function useAssignServiceMutation() {
       toast.error(t("common.saveFailed"));
     },
   });
+}
+
+/**
+ * Assigned-service count per category, for a flat category list's row
+ * badges. Fires one `listForCategory` request per id (there is no bulk
+ * count endpoint) — fine for the small L1-only category lists this backs.
+ */
+export function useCategoryServiceCounts(categoryIds: number[]) {
+  const results = useQueries({
+    queries: categoryIds.map((id) => ({
+      queryKey: categoryServicesKeys.forCategory(id),
+      queryFn: () => categoryServicesApi.listForCategory(id),
+    })),
+  });
+
+  const counts: Record<number, number | undefined> = {};
+  categoryIds.forEach((id, index) => {
+    counts[id] = results[index]?.data?.length;
+  });
+  return counts;
 }
 
 export function useUnassignServiceMutation() {

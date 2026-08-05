@@ -44,6 +44,19 @@ function unwrap<T>(envelope: ApiEnvelope<T>): T {
   return envelope.data;
 }
 
+/**
+ * PUT/DELETE on this endpoint return 204 No Content with an empty body —
+ * standard REST for a successful write with nothing to return. Reading
+ * `envelope.success`/`.data` on an empty body throws a false failure, so
+ * no-content responses are treated as success without unwrapping. A
+ * present body is still unwrapped normally so real envelope failures
+ * (`success: false`) keep throwing with the backend message.
+ */
+function unwrapVoid(status: number, body: ApiEnvelope<unknown> | "" | null | undefined): void {
+  if (status === 204 || body === "" || body === null || body === undefined) return;
+  unwrap(body);
+}
+
 export const categoriesApi = {
   list: async (params?: ParentCategoriesQuery): Promise<PaginatedResponse<ServiceCategory>> => {
     const { data } = await apiClient.get<ApiEnvelope<RawCategoriesPage>>("/Categories", {
@@ -68,12 +81,16 @@ export const categoriesApi = {
     return adaptRawCategory(unwrap(data));
   },
 
-  update: async (id: number, name: string): Promise<ServiceCategory> => {
-    const { data } = await apiClient.put<ApiEnvelope<RawCategory>>(`/Categories/${id}`, adaptToWritePayload(name));
-    return adaptRawCategory(unwrap(data));
+  update: async (id: number, name: string): Promise<void> => {
+    const { status, data } = await apiClient.put<ApiEnvelope<RawCategory> | "">(
+      `/Categories/${id}`,
+      adaptToWritePayload(name),
+    );
+    unwrapVoid(status, data);
   },
 
   remove: async (id: number): Promise<void> => {
-    await apiClient.delete(`/Categories/${id}`);
+    const { status, data } = await apiClient.delete<ApiEnvelope<unknown> | "">(`/Categories/${id}`);
+    unwrapVoid(status, data);
   },
 };

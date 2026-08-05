@@ -13,6 +13,7 @@ import {
   ScrollText,
   Settings,
   FolderTree,
+  Layers,
 
   CreditCard,
   Bell,
@@ -35,6 +36,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: ClipboardCheck },
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
+  { key: "taxonomy", labelPath: "adminNav.taxonomy", path: "/admin/taxonomy", icon: Layers },
 
   { key: "subscriptions", labelPath: "adminNav.subscriptions", path: "/admin/subscriptions", icon: CreditCard },
   { key: "revenues", labelPath: "adminNav.revenues", path: "/admin/revenues", icon: TrendingUp },
