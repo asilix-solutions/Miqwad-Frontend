@@ -771,6 +771,7 @@ const ar = {
     reference: "البيانات المرجعية",
     categories: "البيانات المرجعية",
     cities: "المدن",
+    taxonomy: "التصنيفات والخدمات",
 
     plans: "خطط الاشتراك",
     subscriptions: "الاشتراكات",
@@ -1050,6 +1051,55 @@ const ar = {
         cities: "المدن",
         brands: "الماركات والموديلات",
         services: "الخدمات",
+      },
+    },
+    taxonomy: {
+      title: "التصنيفات والخدمات",
+      subtitle: "إدارة تصنيفات مقود وربطها بالخدمات",
+      tabs: {
+        categories: "التصنيفات",
+        services: "الخدمات",
+      },
+      categories: {
+        title: "التصنيفات",
+        add: "＋ إضافة تصنيف",
+        servicesCount: "{{count}} خدمة",
+        servicesCount_zero: "لا خدمات",
+        empty: {
+          title: "لا توجد تصنيفات",
+          description: "ابدأ بإضافة أول تصنيف",
+        },
+        error: "تعذّر تحميل التصنيفات",
+      },
+      detail: {
+        title: "الخدمات المُسنَدة",
+        assign: "＋ إسناد خدمة",
+        empty: "لا خدمات مُسنَدة — أسنِد أول خدمة",
+        error: "تعذّر تحميل الخدمات المُسنَدة",
+        unassignConfirm: "إزالة {{name}} من هذا التصنيف؟",
+        noSelection: {
+          title: "لم يتم اختيار تصنيف",
+          description: "اختر تصنيفًا من القائمة لعرض الخدمات المُسنَدة إليه",
+        },
+        closeSheet: "إغلاق",
+      },
+      picker: {
+        title: "إسناد خدمة",
+        search: "ابحث عن خدمة...",
+        empty: "لا توجد خدمات متاحة",
+        error: "تعذّر تحميل شجرة الخدمات",
+        mockNotice: "قائمة الخدمات ما زالت تجريبية؛ قد يرفض الخادم إسناد خدمة تجريبية حتى يتم ربط واجهة الخدمات الحقيقية.",
+        alreadyAssigned: "مُسنَدة",
+        done: "تم",
+      },
+      servicesTab: {
+        title: "شجرة الخدمات",
+        comingSoon: "قريباً",
+        comingSoonDescription: "ستتوفر إدارة شجرة الخدمات في مرحلة لاحقة.",
+      },
+      success: {
+        assigned: "تم إسناد الخدمة بنجاح",
+        unassigned: "تم إلغاء إسناد الخدمة بنجاح",
       },
     },
     dashboard: {
@@ -2936,6 +2986,7 @@ const en: typeof ar = {
     reference: "Reference Data",
     categories: "Reference Data",
     cities: "Cities",
+    taxonomy: "Categories & Services",
 
     plans: "Subscription Plans",
     subscriptions: "Subscriptions",
@@ -3215,6 +3266,55 @@ const en: typeof ar = {
         cities: "Cities",
         brands: "Brands & Models",
         services: "Services",
+      },
+    },
+    taxonomy: {
+      title: "Categories & Services",
+      subtitle: "Manage Maqwad categories and their assigned services",
+      tabs: {
+        categories: "Categories",
+        services: "Services",
+      },
+      categories: {
+        title: "Categories",
+        add: "＋ Add Category",
+        servicesCount: "{{count}} services",
+        servicesCount_zero: "No services",
+        empty: {
+          title: "No categories",
+          description: "Start by adding the first category",
+        },
+        error: "Failed to load categories",
+      },
+      detail: {
+        title: "Assigned Services",
+        assign: "＋ Assign Service",
+        empty: "No assigned services — assign the first one",
+        error: "Failed to load assigned services",
+        unassignConfirm: "Remove {{name}} from this category?",
+        noSelection: {
+          title: "No category selected",
+          description: "Select a category from the list to view its assigned services",
+        },
+        closeSheet: "Close",
+      },
+      picker: {
+        title: "Assign Service",
+        search: "Search for a service...",
+        empty: "No services available",
+        error: "Failed to load the service tree",
+        mockNotice: "The service list is still mock data; the real backend may reject assigning a mock service until the real Services API ships.",
+        alreadyAssigned: "Assigned",
+        done: "Done",
+      },
+      servicesTab: {
+        title: "Service Tree",
+        comingSoon: "Coming soon",
+        comingSoonDescription: "Service tree management will be available in a later phase.",
+      },
+      success: {
+        assigned: "Service assigned successfully",
+        unassigned: "Service unassigned successfully",
       },
     },
     dashboard: {
