@@ -14,6 +14,16 @@
  *   GET    /Lookups/brands/{id}/models
  *   GET    /Lookups/brands/{id}/models/{modelId}/years
  *
+ * Brand/Model management (admin, real backend — see `api/brandsApi.ts`):
+ *   GET    /Brands
+ *   POST   /Brands
+ *   GET    /Brands/{id}
+ *   PUT    /Brands/{id}
+ *   DELETE /Brands/{id}
+ *   GET    /Brands/{brandId}/models
+ * `Brand`/`VehicleModel` carry a single `name` (backend has no nameAr/nameEn
+ * split) — bilingual UI copy for surrounding labels stays in i18n as usual.
+ *
  * Optional fields stay nullable so the UI can render
  * a clean "—" placeholder without runtime checks everywhere.
  */
@@ -23,15 +33,14 @@ export type FuelType = "gasoline" | "diesel" | "hybrid" | "electric";
 export interface Brand {
   id: number;
   name: string;
-  nameAr: string;
-  nameEn: string;
+  image: string | null;
+  createdAt?: string;
 }
 
 export interface VehicleModel {
   id: number;
   name: string;
-  nameAr: string;
-  nameEn: string;
+  brandId: number | null;
 }
 
 export interface Vehicle {

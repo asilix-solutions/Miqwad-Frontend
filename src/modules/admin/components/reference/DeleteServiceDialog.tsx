@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useDeleteServiceMutation } from "../../hooks/useAdminQueries";
-import type { Service } from "@modules/services/types";
+import type { PricedService } from "@modules/services/types";
 import { useToast } from "@shared/components/ui/toastContext";
 
 interface Props {
-  service: Service | null;
+  service: PricedService | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

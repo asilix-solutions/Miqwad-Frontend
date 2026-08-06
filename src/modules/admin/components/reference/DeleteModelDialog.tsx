@@ -1,3 +1,9 @@
+/**
+ * @file DeleteModelDialog.tsx
+ * @description Delete confirmation for a model
+ * (`/api/Brands/{brandId}/models/{modelId}`, 204 on success). A 409
+ * response surfaces as a blocked-delete toast.
+ */
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -10,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDeleteModelMutation } from "../../hooks/useAdminQueries";
 import type { VehicleModel } from "@modules/vehicles/types";
+import { AppError } from "@shared/types/api";
 import { useToast } from "@shared/components/ui/toastContext";
 
 interface Props {
@@ -30,8 +37,12 @@ export function DeleteModelDialog({ brandId, model, open, onOpenChange }: Props)
       await deleteMutation.mutateAsync({ brandId, modelId: model.id });
       toast.success(t("superAdmin.models.success.deleted"));
       onOpenChange(false);
-    } catch {
-      toast.error(t("common.deleteFailed"));
+    } catch (err) {
+      if (err instanceof AppError && err.status === 409) {
+        toast.error(t("superAdmin.models.deleteConfirm.blocked"));
+      } else {
+        toast.error(t("common.deleteFailed"));
+      }
     }
   };
 
@@ -44,7 +55,7 @@ export function DeleteModelDialog({ brandId, model, open, onOpenChange }: Props)
           </DialogTitle>
           <DialogDescription className="pt-2">
             {t("superAdmin.models.deleteConfirm.description", {
-              name: model?.nameAr ?? "",
+              name: model?.name ?? "",
             })}
           </DialogDescription>
         </DialogHeader>

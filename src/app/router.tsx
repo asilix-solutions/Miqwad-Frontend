@@ -229,6 +229,12 @@ const AdminReferenceDataPage = lazy(() =>
   }))
 );
 
+const CategoriesServicesPage = lazy(() =>
+  import("@modules/admin/pages/CategoriesServicesPage").then((m) => ({
+    default: m.CategoriesServicesPage,
+  }))
+);
+
 const AdminPlansPage = lazy(() =>
   import("@modules/admin/pages/AdminPlansPage").then((m) => ({
     default: m.AdminPlansPage,
@@ -791,6 +797,15 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="categories.view" />,
                     children: [
                       { index: true, element: <AdminReferenceDataPage /> },
+                    ],
+                  },
+
+                  {
+                    // Categories & Services — flat categories + category<->service assignment
+                    path: "taxonomy",
+                    element: <PermissionGuard permission="categories.view" />,
+                    children: [
+                      { index: true, element: <CategoriesServicesPage /> },
                     ],
                   },
 

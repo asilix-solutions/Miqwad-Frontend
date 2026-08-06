@@ -146,7 +146,8 @@ function ParentCategoryFormDialog({ open, onOpenChange, mode, category }: Parent
         toast.success(t("superAdmin.categories.success.created"));
       }
       onOpenChange(false);
-    } catch {
+    } catch (err) {
+      console.error("Category save failed:", err);
       toast.error(t("common.saveFailed"));
     }
   };

@@ -29,7 +29,7 @@ interface Props {
  * them at render time so the form stays language-agnostic.
  */
 export function BrandModelYearSelect({ control, watch, setValue, errors }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const brandId = watch("brandId");
   const modelId = watch("modelId");
 
@@ -75,7 +75,7 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
                 <SelectItem value="none">{t("common.select")}</SelectItem>
                 {brandsQuery.data?.map((b) => (
                   <SelectItem key={b.id} value={String(b.id)}>
-                    {i18n.language === "ar" ? b.nameAr ?? b.name : b.nameEn ?? b.name}
+                    {b.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -113,7 +113,7 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
                 </SelectItem>
                 {modelsQuery.data?.map((m) => (
                   <SelectItem key={m.id} value={String(m.id)}>
-                    {i18n.language === "ar" ? m.nameAr ?? m.name : m.nameEn ?? m.name}
+                    {m.name}
                   </SelectItem>
                 ))}
               </SelectContent>

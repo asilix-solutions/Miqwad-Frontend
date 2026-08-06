@@ -16,7 +16,7 @@ import { DataTable } from "../shared/DataTable";
 import { useAdminServicesQuery, useUpdateServiceMutation } from "../../hooks/useAdminQueries";
 import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import { getCategoryPath } from "@modules/services/lib/categoryTree";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { PricedService, ServiceCategory } from "@modules/services/types";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
 import { Can } from "@shared/auth/Can";
@@ -69,10 +69,10 @@ export function ServicesPanel() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
-  const [selectedService, setSelectedService] = useState<Service | undefined>();
+  const [selectedService, setSelectedService] = useState<PricedService | undefined>();
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null);
+  const [serviceToDelete, setServiceToDelete] = useState<PricedService | null>(null);
 
   // L1 options for the category filter
   const l1Options = useMemo(
@@ -94,18 +94,18 @@ export function ServicesPanel() {
     setFormOpen(true);
   };
 
-  const openEdit = (svc: Service) => {
+  const openEdit = (svc: PricedService) => {
     setFormMode("edit");
     setSelectedService(svc);
     setFormOpen(true);
   };
 
-  const openDelete = (svc: Service) => {
+  const openDelete = (svc: PricedService) => {
     setServiceToDelete(svc);
     setDeleteOpen(true);
   };
 
-  const handleToggleActive = async (svc: Service) => {
+  const handleToggleActive = async (svc: PricedService) => {
     try {
       await updateMutation.mutateAsync({
         id: svc.id,
@@ -160,7 +160,7 @@ export function ServicesPanel() {
       </div>
 
       <div className="rounded-md border border-[var(--color-divider)] bg-white shadow-sm">
-        <DataTable<Service>
+        <DataTable<PricedService>
           rows={services}
           isLoading={q.isLoading}
           isError={q.isError}
@@ -169,21 +169,21 @@ export function ServicesPanel() {
             {
               key: "nameAr",
               header: t("superAdmin.services.columns.nameAr"),
-              render: (svc: Service) => (
+              render: (svc: PricedService) => (
                 <span className={!svc.isActive ? "opacity-50" : ""}>{svc.nameAr}</span>
               ),
             },
             {
               key: "nameEn",
               header: t("superAdmin.services.columns.nameEn"),
-              render: (svc: Service) => (
+              render: (svc: PricedService) => (
                 <span dir="ltr" className={!svc.isActive ? "opacity-50" : ""}>{svc.nameEn}</span>
               ),
             },
             {
               key: "categoryId",
               header: t("superAdmin.services.columns.categoryId"),
-              render: (svc: Service) => {
+              render: (svc: PricedService) => {
                 const cats = categoriesQ.data ?? [];
                 const { l1, l2, l3 } = getCategoryPath(cats, svc.categoryId);
                 const nameOf = (c: typeof l1) =>
@@ -217,7 +217,7 @@ export function ServicesPanel() {
             {
               key: "basePrice",
               header: t("superAdmin.services.columns.basePrice"),
-              render: (svc: Service) => (
+              render: (svc: PricedService) => (
                 <span className={`tabular-nums ${!svc.isActive ? "opacity-50" : ""}`}>
                   {formatCurrency(svc.basePrice, i18n.language)}
                 </span>
@@ -226,7 +226,7 @@ export function ServicesPanel() {
             {
               key: "isActive",
               header: t("superAdmin.services.columns.isActive"),
-              render: (svc: Service) => (
+              render: (svc: PricedService) => (
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${svc.isActive ? "bg-success-50 text-success-700" : "bg-ink-100 text-ink-600"}`}>
                   {svc.isActive ? t("superAdmin.services.status.active") : t("superAdmin.services.status.inactive")}
                 </span>
@@ -236,7 +236,7 @@ export function ServicesPanel() {
               key: "actions",
               header: t("superAdmin.services.columns.actions"),
               className: "text-end",
-              render: (svc: Service) => (
+              render: (svc: PricedService) => (
                 <div
                   className="flex justify-end items-center gap-2"
                   onClick={(e) => e.stopPropagation()}

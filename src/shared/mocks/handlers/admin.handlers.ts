@@ -36,7 +36,7 @@ import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { DashboardStats } from "@modules/admin/types";
-import type { Service } from "@modules/services/types";
+import type { PricedService } from "@modules/services/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { ProviderProfile } from "@modules/providers/types";
 import type { RevenueSummary, RevenueRecord } from "@modules/admin/types";
@@ -134,7 +134,7 @@ const MOCK_STATS: DashboardStats = {
   ],
 };
 
-let SEED_SERVICES: Service[] = [
+let SEED_SERVICES: PricedService[] = [
   { id: 1, nameAr: "غسيل خارجي",       nameEn: "Exterior Wash",          categoryId: 126, basePrice: 50,  isActive: true },
   { id: 2, nameAr: "تلميع داخلي",       nameEn: "Interior Detailing",      categoryId: 127, basePrice: 150, isActive: true },
   { id: 3, nameAr: "تغيير زيت المحرك",  nameEn: "Engine Oil Change",       categoryId: 111, basePrice: 200, isActive: true,  estimatedDuration: 30 },
@@ -546,7 +546,7 @@ export async function tryAdminMock(
     requireAdmin(config);
     const payload = JSON.parse(config.data || "{}");
     const newId = Math.max(0, ...SEED_SERVICES.map(s => s.id)) + 1;
-    const newService: Service = {
+    const newService: PricedService = {
       id: newId,
       nameAr: payload.nameAr,
       nameEn: payload.nameEn,

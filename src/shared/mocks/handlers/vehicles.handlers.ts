@@ -20,6 +20,11 @@ import { AxiosHeaders } from "axios";
  * State lives in localStorage so the demo survives page reloads.
  * Each entity is scoped to the currently signed-in user, so testing
  * with a different phone shows an isolated garage.
+ *
+ * Admin Brand/Model CRUD (previously mocked here under `admin/brands...`)
+ * now targets the real backend's `/api/Brands` resource directly — see
+ * `@modules/vehicles/api/brandsApi.ts`. The static BRANDS/MODELS below stay
+ * only as the `/Lookups/brands...` demo dataset.
  */
 
 import type {
@@ -114,79 +119,79 @@ function parseBody(data: unknown): Record<string, unknown> {
 
 // ---------- Static lookup data ----------------------------------------------
 // Subset of the real Saudi-market dataset; enough for a realistic demo.
-let nextBrandId = 11;
-let BRANDS: Brand[] = [
-  { id: 1, name: "Toyota", nameEn: "Toyota", nameAr: "تويوتا" },
-  { id: 2, name: "Hyundai", nameEn: "Hyundai", nameAr: "هيونداي" },
-  { id: 3, name: "Kia", nameEn: "Kia", nameAr: "كيا" },
-  { id: 4, name: "Nissan", nameEn: "Nissan", nameAr: "نيسان" },
-  { id: 5, name: "Ford", nameEn: "Ford", nameAr: "فورد" },
-  { id: 6, name: "Chevrolet", nameEn: "Chevrolet", nameAr: "شيفروليه" },
-  { id: 7, name: "Mercedes-Benz", nameEn: "Mercedes-Benz", nameAr: "مرسيدس-بنز" },
-  { id: 8, name: "BMW", nameEn: "BMW", nameAr: "بي إم دبليو" },
-  { id: 9, name: "Lexus", nameEn: "Lexus", nameAr: "لكزس" },
-  { id: 10, name: "GMC", nameEn: "GMC", nameAr: "جي إم سي" },
+// Only used by /Lookups/brands... — the real Brand/Model catalog (admin
+// CRUD) now lives on the real backend at /api/Brands, not here.
+const BRANDS: Brand[] = [
+  { id: 1, name: "Toyota", image: null },
+  { id: 2, name: "Hyundai", image: null },
+  { id: 3, name: "Kia", image: null },
+  { id: 4, name: "Nissan", image: null },
+  { id: 5, name: "Ford", image: null },
+  { id: 6, name: "Chevrolet", image: null },
+  { id: 7, name: "Mercedes-Benz", image: null },
+  { id: 8, name: "BMW", image: null },
+  { id: 9, name: "Lexus", image: null },
+  { id: 10, name: "GMC", image: null },
 ];
 
-let nextModelId = 2000;
-let MODELS: Record<number, VehicleModel[]> = {
+const MODELS: Record<number, VehicleModel[]> = {
   1: [
-    { id: 101, name: "Corolla", nameEn: "Corolla", nameAr: "كورولا" },
-    { id: 102, name: "Camry", nameEn: "Camry", nameAr: "كامري" },
-    { id: 103, name: "Land Cruiser", nameEn: "Land Cruiser", nameAr: "لاند كروزر" },
-    { id: 104, name: "Hilux", nameEn: "Hilux", nameAr: "هايلكس" },
-    { id: 105, name: "Yaris", nameEn: "Yaris", nameAr: "يارس" },
-    { id: 106, name: "RAV4", nameEn: "RAV4", nameAr: "راف4" },
+    { id: 101, name: "Corolla", brandId: 1 },
+    { id: 102, name: "Camry", brandId: 1 },
+    { id: 103, name: "Land Cruiser", brandId: 1 },
+    { id: 104, name: "Hilux", brandId: 1 },
+    { id: 105, name: "Yaris", brandId: 1 },
+    { id: 106, name: "RAV4", brandId: 1 },
   ],
   2: [
-    { id: 201, name: "Elantra", nameEn: "Elantra", nameAr: "إلنترا" },
-    { id: 202, name: "Sonata", nameEn: "Sonata", nameAr: "سوناتا" },
-    { id: 203, name: "Tucson", nameEn: "Tucson", nameAr: "توسان" },
-    { id: 204, name: "Santa Fe", nameEn: "Santa Fe", nameAr: "سنتافي" },
-    { id: 205, name: "Accent", nameEn: "Accent", nameAr: "أكسنت" },
+    { id: 201, name: "Elantra", brandId: 2 },
+    { id: 202, name: "Sonata", brandId: 2 },
+    { id: 203, name: "Tucson", brandId: 2 },
+    { id: 204, name: "Santa Fe", brandId: 2 },
+    { id: 205, name: "Accent", brandId: 2 },
   ],
   3: [
-    { id: 301, name: "Cerato", nameEn: "Cerato", nameAr: "سيراتو" },
-    { id: 302, name: "Sportage", nameEn: "Sportage", nameAr: "سبورتاج" },
-    { id: 303, name: "Sorento", nameEn: "Sorento", nameAr: "سورنتو" },
-    { id: 304, name: "Rio", nameEn: "Rio", nameAr: "ريو" },
+    { id: 301, name: "Cerato", brandId: 3 },
+    { id: 302, name: "Sportage", brandId: 3 },
+    { id: 303, name: "Sorento", brandId: 3 },
+    { id: 304, name: "Rio", brandId: 3 },
   ],
   4: [
-    { id: 401, name: "Sunny", nameEn: "Sunny", nameAr: "صني" },
-    { id: 402, name: "Altima", nameEn: "Altima", nameAr: "ألتيما" },
-    { id: 403, name: "Patrol", nameEn: "Patrol", nameAr: "باترول" },
-    { id: 404, name: "X-Trail", nameEn: "X-Trail", nameAr: "إكس-تريل" },
+    { id: 401, name: "Sunny", brandId: 4 },
+    { id: 402, name: "Altima", brandId: 4 },
+    { id: 403, name: "Patrol", brandId: 4 },
+    { id: 404, name: "X-Trail", brandId: 4 },
   ],
   5: [
-    { id: 501, name: "Explorer", nameEn: "Explorer", nameAr: "إكسبلورر" },
-    { id: 502, name: "Edge", nameEn: "Edge", nameAr: "إيدج" },
-    { id: 503, name: "Mustang", nameEn: "Mustang", nameAr: "موستانج" },
-    { id: 504, name: "F-150", nameEn: "F-150", nameAr: "إف-150" },
+    { id: 501, name: "Explorer", brandId: 5 },
+    { id: 502, name: "Edge", brandId: 5 },
+    { id: 503, name: "Mustang", brandId: 5 },
+    { id: 504, name: "F-150", brandId: 5 },
   ],
   6: [
-    { id: 601, name: "Tahoe", nameEn: "Tahoe", nameAr: "تاهو" },
-    { id: 602, name: "Suburban", nameEn: "Suburban", nameAr: "سوبربان" },
-    { id: 603, name: "Captiva", nameEn: "Captiva", nameAr: "كابتيفا" },
+    { id: 601, name: "Tahoe", brandId: 6 },
+    { id: 602, name: "Suburban", brandId: 6 },
+    { id: 603, name: "Captiva", brandId: 6 },
   ],
   7: [
-    { id: 701, name: "C-Class", nameEn: "C-Class", nameAr: "الفئة C" },
-    { id: 702, name: "E-Class", nameEn: "E-Class", nameAr: "الفئة E" },
-    { id: 703, name: "G-Class", nameEn: "G-Class", nameAr: "الفئة G" },
-    { id: 704, name: "S-Class", nameEn: "S-Class", nameAr: "الفئة S" },
+    { id: 701, name: "C-Class", brandId: 7 },
+    { id: 702, name: "E-Class", brandId: 7 },
+    { id: 703, name: "G-Class", brandId: 7 },
+    { id: 704, name: "S-Class", brandId: 7 },
   ],
   8: [
-    { id: 801, name: "3 Series", nameEn: "3 Series", nameAr: "الفئة الثالثة" },
-    { id: 802, name: "5 Series", nameEn: "5 Series", nameAr: "الفئة الخامسة" },
-    { id: 803, name: "X5", nameEn: "X5", nameAr: "إكس5" },
+    { id: 801, name: "3 Series", brandId: 8 },
+    { id: 802, name: "5 Series", brandId: 8 },
+    { id: 803, name: "X5", brandId: 8 },
   ],
   9: [
-    { id: 901, name: "ES", nameEn: "ES", nameAr: "ES" },
-    { id: 902, name: "LX", nameEn: "LX", nameAr: "LX" },
-    { id: 903, name: "RX", nameEn: "RX", nameAr: "RX" },
+    { id: 901, name: "ES", brandId: 9 },
+    { id: 902, name: "LX", brandId: 9 },
+    { id: 903, name: "RX", brandId: 9 },
   ],
   10: [
-    { id: 1001, name: "Yukon", nameEn: "Yukon", nameAr: "يوكن" },
-    { id: 1002, name: "Sierra", nameEn: "Sierra", nameAr: "سييرا" },
+    { id: 1001, name: "Yukon", brandId: 10 },
+    { id: 1002, name: "Sierra", brandId: 10 },
   ],
 };
 
@@ -201,11 +206,11 @@ function yearsForModel(): number[] {
 
 function findBrandName(id: number): string {
   const b = BRANDS.find((b) => b.id === id);
-  return b?.nameAr ?? b?.name ?? "—";
+  return b?.name ?? "—";
 }
 function findModelName(brandId: number, modelId: number): string {
   const m = MODELS[brandId]?.find((m) => m.id === modelId);
-  return m?.nameAr ?? m?.name ?? "—";
+  return m?.name ?? "—";
 }
 
 // ---------- URL helpers -----------------------------------------------------
@@ -214,21 +219,6 @@ const VEH_HISTORY = /^Vehicles\/(\d+)\/maintenance-history$/i;
 const VEH_UPCOMING = /^Vehicles\/(\d+)\/upcoming-services$/i;
 const LOOKUPS_MODELS = /^Lookups\/brands\/(\d+)\/models$/i;
 const LOOKUPS_YEARS = /^Lookups\/brands\/(\d+)\/models\/(\d+)\/years$/i;
-
-function requireAdmin(config: InternalAxiosRequestConfig) {
-  try {
-    const raw = localStorage.getItem("maqwad.user");
-    if (!raw) throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
-    const me = JSON.parse(raw);
-    if (me.role !== "admin" && me.role !== "super_admin") {
-      throw fail(config, 403, "FORBIDDEN", "غير مسموح");
-    }
-    return me;
-  } catch (err: any) {
-    if (err.isAxiosError) throw err;
-    throw fail(config, 401, "AUTH_REQUIRED", "غير مصرّح");
-  }
-}
 
 /**
  * Returns the mock response for a vehicles/lookups request, or `null`
@@ -418,116 +408,6 @@ export async function tryVehiclesMock(
       throw fail(config, 404, "NOT_FOUND", "السيارة غير موجودة");
     }
     return ok(config, buildUpcomingDemo(v));
-  }
-
-  // ---- Admin CRUD for Brands ---------------------------------------------
-  if (url === "admin/brands" && method === "post") {
-    requireAdmin(config);
-    const body = parseBody(config.data) as Partial<Brand>;
-    if (!body.nameEn || !body.nameAr) throw fail(config, 400, "VALIDATION", "اسم الماركة مطلوب");
-    
-    const newBrand: Brand = {
-      id: nextBrandId++,
-      name: String(body.nameEn),
-      nameEn: String(body.nameEn),
-      nameAr: String(body.nameAr),
-    };
-    BRANDS.push(newBrand);
-    // Initialize models list for the new brand
-    MODELS[newBrand.id] = [];
-    return ok(config, newBrand, 201);
-  }
-
-  const adminBrandsMatch = url.match(/^admin\/brands\/(\d+)$/i);
-  if (adminBrandsMatch && method === "put") {
-    requireAdmin(config);
-    const id = Number(adminBrandsMatch[1]);
-    const index = BRANDS.findIndex((b) => b.id === id);
-    if (index === -1) throw fail(config, 404, "NOT_FOUND", "الماركة غير موجودة");
-
-    const body = parseBody(config.data) as Partial<Brand>;
-    const updated: Brand = {
-      ...BRANDS[index],
-      name: body.nameEn ? String(body.nameEn) : BRANDS[index].name,
-      nameEn: body.nameEn ? String(body.nameEn) : BRANDS[index].nameEn,
-      nameAr: body.nameAr ? String(body.nameAr) : BRANDS[index].nameAr,
-    };
-    BRANDS[index] = updated;
-    return ok(config, updated);
-  }
-
-  if (adminBrandsMatch && method === "delete") {
-    requireAdmin(config);
-    const id = Number(adminBrandsMatch[1]);
-    const index = BRANDS.findIndex((b) => b.id === id);
-    if (index === -1) throw fail(config, 404, "NOT_FOUND", "الماركة غير موجودة");
-
-    // CASCADE delete models
-    delete MODELS[id];
-    BRANDS.splice(index, 1);
-    return ok(config, undefined, 204);
-  }
-
-  // ---- Admin CRUD for Models ---------------------------------------------
-  const adminModelsListMatch = url.match(/^admin\/brands\/(\d+)\/models$/i);
-  if (adminModelsListMatch && method === "post") {
-    requireAdmin(config);
-    const brandId = Number(adminModelsListMatch[1]);
-    if (!BRANDS.some((b) => b.id === brandId)) {
-      throw fail(config, 404, "NOT_FOUND", "الماركة غير موجودة");
-    }
-
-    const body = parseBody(config.data) as Partial<VehicleModel>;
-    if (!body.nameEn || !body.nameAr) throw fail(config, 400, "VALIDATION", "اسم الموديل مطلوب");
-
-    const newModel: VehicleModel = {
-      id: nextModelId++,
-      name: String(body.nameEn),
-      nameEn: String(body.nameEn),
-      nameAr: String(body.nameAr),
-    };
-    
-    if (!MODELS[brandId]) MODELS[brandId] = [];
-    MODELS[brandId].push(newModel);
-    return ok(config, newModel, 201);
-  }
-
-  const adminModelsMatch = url.match(/^admin\/brands\/(\d+)\/models\/(\d+)$/i);
-  if (adminModelsMatch && method === "put") {
-    requireAdmin(config);
-    const brandId = Number(adminModelsMatch[1]);
-    const modelId = Number(adminModelsMatch[2]);
-    
-    const brandModels = MODELS[brandId];
-    if (!brandModels) throw fail(config, 404, "NOT_FOUND", "الماركة غير موجودة");
-    
-    const index = brandModels.findIndex((m) => m.id === modelId);
-    if (index === -1) throw fail(config, 404, "NOT_FOUND", "الموديل غير موجود");
-
-    const body = parseBody(config.data) as Partial<VehicleModel>;
-    const updated: VehicleModel = {
-      ...brandModels[index],
-      name: body.nameEn ? String(body.nameEn) : brandModels[index].name,
-      nameEn: body.nameEn ? String(body.nameEn) : brandModels[index].nameEn,
-      nameAr: body.nameAr ? String(body.nameAr) : brandModels[index].nameAr,
-    };
-    brandModels[index] = updated;
-    return ok(config, updated);
-  }
-
-  if (adminModelsMatch && method === "delete") {
-    requireAdmin(config);
-    const brandId = Number(adminModelsMatch[1]);
-    const modelId = Number(adminModelsMatch[2]);
-    
-    const brandModels = MODELS[brandId];
-    if (!brandModels) throw fail(config, 404, "NOT_FOUND", "الماركة غير موجودة");
-    
-    const index = brandModels.findIndex((m) => m.id === modelId);
-    if (index === -1) throw fail(config, 404, "NOT_FOUND", "الموديل غير موجود");
-
-    brandModels.splice(index, 1);
-    return ok(config, undefined, 204);
   }
 
   // Not ours — let the next handler / real backend deal with it.

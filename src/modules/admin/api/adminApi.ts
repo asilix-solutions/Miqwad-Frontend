@@ -2,7 +2,7 @@ import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, SubscriberType, RevenueSummary, RevenueSource } from "../types";
 import type { ProviderType } from "@modules/providers/types";
-import type { Service, ServiceCategory } from "@modules/services/types";
+import type { PricedService, ServiceCategory } from "@modules/services/types";
 
 /**
  * Payload for creating a category.
@@ -13,7 +13,6 @@ import type { Service, ServiceCategory } from "@modules/services/types";
 export type CreateCategoryPayload =
   Pick<ServiceCategory, "nameAr" | "nameEn" | "iconUrl" | "colorHint"> &
   Partial<Pick<ServiceCategory, "parentId" | "level" | "providerTypeScope" | "isActive" | "sortOrder">>;
-import type { Brand, VehicleModel } from "@modules/vehicles/types";
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
@@ -261,18 +260,18 @@ export const adminApi = {
 
   // ── Services ─────────────────────────────────────────────────────────────
 
-  getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<Service[]> => {
-    const { data } = await apiClient.get<Service[]>("/admin/services", { params });
+  getServices: async (params?: { categoryId?: number; isActive?: boolean }): Promise<PricedService[]> => {
+    const { data } = await apiClient.get<PricedService[]>("/admin/services", { params });
     return data;
   },
 
-  createService: async (payload: Omit<Service, "id">): Promise<Service> => {
-    const { data } = await apiClient.post<Service>("/admin/services", payload);
+  createService: async (payload: Omit<PricedService, "id">): Promise<PricedService> => {
+    const { data } = await apiClient.post<PricedService>("/admin/services", payload);
     return data;
   },
 
-  updateService: async (id: number, payload: Partial<Service>): Promise<Service> => {
-    const { data } = await apiClient.put<Service>(`/admin/services/${id}`, payload);
+  updateService: async (id: number, payload: Partial<PricedService>): Promise<PricedService> => {
+    const { data } = await apiClient.put<PricedService>(`/admin/services/${id}`, payload);
     return data;
   },
 
@@ -338,37 +337,9 @@ export const adminApi = {
     await apiClient.delete(`/admin/cities/${id}`);
   },
 
-  // ── Vehicle Brands ─────────────────────────────────────────────────────────
-
-  createBrand: async (payload: Omit<Brand, "id" | "name">): Promise<Brand> => {
-    const { data } = await apiClient.post<Brand>("/admin/brands", payload);
-    return data;
-  },
-
-  updateBrand: async (id: number, payload: Partial<Omit<Brand, "id" | "name">>): Promise<Brand> => {
-    const { data } = await apiClient.put<Brand>(`/admin/brands/${id}`, payload);
-    return data;
-  },
-
-  deleteBrand: async (id: number): Promise<void> => {
-    await apiClient.delete(`/admin/brands/${id}`);
-  },
-
-  // ── Vehicle Models ─────────────────────────────────────────────────────────
-
-  createModel: async (brandId: number, payload: Omit<VehicleModel, "id" | "name">): Promise<VehicleModel> => {
-    const { data } = await apiClient.post<VehicleModel>(`/admin/brands/${brandId}/models`, payload);
-    return data;
-  },
-
-  updateModel: async (brandId: number, modelId: number, payload: Partial<Omit<VehicleModel, "id" | "name">>): Promise<VehicleModel> => {
-    const { data } = await apiClient.put<VehicleModel>(`/admin/brands/${brandId}/models/${modelId}`, payload);
-    return data;
-  },
-
-  deleteModel: async (brandId: number, modelId: number): Promise<void> => {
-    await apiClient.delete(`/admin/brands/${brandId}/models/${modelId}`);
-  },
+  // Vehicle Brands/Models moved off the mocked `/admin/brands...` endpoint —
+  // see `@modules/vehicles/api/brandsApi.ts` (real `/api/Brands`) and
+  // `@modules/admin/hooks/useAdminQueries.ts` for the brand/model mutations.
 
   // ── Notifications ──────────────────────────────────────────────────────────
 
