@@ -7,8 +7,8 @@ import { useServiceCategoriesQuery, servicesKeys } from "@modules/services/hooks
 import { categoriesApi, type ParentCategoriesQuery } from "@modules/services/api/categoriesApi";
 import type { PricedService, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
-import { useBrandsQuery, useModelsQuery } from "@modules/vehicles/hooks/useBrandsModels";
-import type { Brand, VehicleModel } from "@modules/vehicles/types";
+import { useBrandsQuery, useModelsQuery, brandKeys } from "@modules/vehicles/hooks/useBrandsModels";
+import { brandsApi } from "@modules/vehicles/api/brandsApi";
 import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { AdPlacement, AdCampaign } from "@modules/ads/types";
@@ -416,7 +416,10 @@ export function useDeleteCityMutation() {
   });
 }
 
-// ── Vehicle Brands ──────────────────────────────────────────────────────────
+// ── Vehicle Brands (real backend, /api/Brands) ──────────────────────────────
+// Reads delegate to the vehicles-module lookup hooks (shared with
+// BrandModelYearSelect); mutations here hit brandsApi directly and
+// invalidate the same `brandKeys` namespace so both consumers stay in sync.
 
 export function useAdminBrandsQuery() {
   return useBrandsQuery();
@@ -425,9 +428,9 @@ export function useAdminBrandsQuery() {
 export function useCreateBrandMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<Brand, "id">) => adminApi.createBrand(payload),
+    mutationFn: ({ name, image }: { name: string; image?: string | null }) => brandsApi.create(name, image),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands"] });
+      void qc.invalidateQueries({ queryKey: brandKeys.all });
     },
   });
 }
@@ -435,10 +438,10 @@ export function useCreateBrandMutation() {
 export function useUpdateBrandMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<Brand> }) =>
-      adminApi.updateBrand(id, payload),
+    mutationFn: ({ id, name, image }: { id: number; name: string; image?: string | null }) =>
+      brandsApi.update(id, name, image),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands"] });
+      void qc.invalidateQueries({ queryKey: brandKeys.all });
     },
   });
 }
@@ -446,14 +449,14 @@ export function useUpdateBrandMutation() {
 export function useDeleteBrandMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => adminApi.deleteBrand(id),
+    mutationFn: (id: number) => brandsApi.remove(id),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands"] });
+      void qc.invalidateQueries({ queryKey: brandKeys.all });
     },
   });
 }
 
-// ── Vehicle Models ─────────────────────────────────────────────────────────
+// ── Vehicle Models (real backend, /api/Brands/{brandId}/models) ────────────
 
 export function useModelsForBrandQuery(brandId: number | null) {
   return useModelsQuery(brandId);
@@ -462,10 +465,9 @@ export function useModelsForBrandQuery(brandId: number | null) {
 export function useCreateModelMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ brandId, payload }: { brandId: number; payload: Omit<VehicleModel, "id"> }) => 
-      adminApi.createModel(brandId, payload),
+    mutationFn: ({ brandId, name }: { brandId: number; name: string }) => brandsApi.createModel(brandId, name),
     onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands", variables.brandId, "models"] });
+      void qc.invalidateQueries({ queryKey: brandKeys.models(variables.brandId) });
     },
   });
 }
@@ -473,23 +475,23 @@ export function useCreateModelMutation() {
 export function useUpdateModelMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ brandId, modelId, payload }: { brandId: number; modelId: number; payload: Partial<VehicleModel> }) =>
-      adminApi.updateModel(brandId, modelId, payload),
+    mutationFn: ({ brandId, modelId, name }: { brandId: number; modelId: number; name: string }) =>
+      brandsApi.updateModel(brandId, modelId, name),
     onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: ["lookups", "brands", variables.brandId, "models"] });
+      void qc.invalidateQueries({ queryKey: brandKeys.models(variables.brandId) });
     },
   });
 }
 
-  export function useDeleteModelMutation() {
-    const qc = useQueryClient();
-    return useMutation({
-      mutationFn: ({ brandId, modelId }: { brandId: number; modelId: number }) => adminApi.deleteModel(brandId, modelId),
-      onSuccess: (_, variables) => {
-        void qc.invalidateQueries({ queryKey: ["lookups", "brands", variables.brandId, "models"] });
-      },
-    });
-  }
+export function useDeleteModelMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ brandId, modelId }: { brandId: number; modelId: number }) => brandsApi.removeModel(brandId, modelId),
+    onSuccess: (_, variables) => {
+      void qc.invalidateQueries({ queryKey: brandKeys.models(variables.brandId) });
+    },
+  });
+}
 
 // ── Notifications ──────────────────────────────────────────────────────────
 

@@ -1,3 +1,9 @@
+/**
+ * @file BrandFormDialog.tsx
+ * @description Create/edit dialog for the real-backend `/api/Brands`
+ * resource — single Arabic name + optional image URL (backend accepts a
+ * plain `image` string field, not a file upload).
+ */
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,8 +46,8 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
   } = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
     defaultValues: {
-      nameAr: "",
-      nameEn: "",
+      name: "",
+      image: "",
     },
   });
 
@@ -49,13 +55,13 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
     if (open) {
       if (mode === "edit" && brand) {
         reset({
-          nameAr: brand.nameAr,
-          nameEn: brand.nameEn,
+          name: brand.name,
+          image: brand.image ?? "",
         });
       } else {
         reset({
-          nameAr: "",
-          nameEn: "",
+          name: "",
+          image: "",
         });
       }
     }
@@ -64,21 +70,10 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
   const onSubmit = async (data: BrandFormValues) => {
     try {
       if (mode === "create") {
-        await createMutation.mutateAsync({
-          name: data.nameEn, // Fallback for backward compatibility
-          nameAr: data.nameAr,
-          nameEn: data.nameEn,
-        });
+        await createMutation.mutateAsync({ name: data.name, image: data.image || null });
         toast.success(t("superAdmin.brands.success.created"));
       } else if (mode === "edit" && brand) {
-        await updateMutation.mutateAsync({
-          id: brand.id,
-          payload: {
-            name: data.nameEn,
-            nameAr: data.nameAr,
-            nameEn: data.nameEn,
-          },
-        });
+        await updateMutation.mutateAsync({ id: brand.id, name: data.name, image: data.image || null });
         toast.success(t("superAdmin.brands.success.updated"));
       }
       onOpenChange(false);
@@ -97,22 +92,20 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="nameAr">
-              {t("superAdmin.brands.form.nameAr")} <span className="text-danger-500">*</span>
+            <Label htmlFor="name">
+              {t("superAdmin.brands.form.name")} <span className="text-danger-500">*</span>
             </Label>
-            <Input id="nameAr" {...register("nameAr")} disabled={isPending} />
-            {errors.nameAr && (
-              <p className="text-sm text-danger-500">{t(errors.nameAr.message as string)}</p>
+            <Input id="name" {...register("name")} disabled={isPending} />
+            {errors.name && (
+              <p className="text-sm text-danger-500">{t(errors.name.message as string)}</p>
             )}
           </div>
-          
+
           <div className="space-y-2">
-            <Label htmlFor="nameEn">
-              {t("superAdmin.brands.form.nameEn")} <span className="text-danger-500">*</span>
-            </Label>
-            <Input id="nameEn" dir="ltr" className="text-left" {...register("nameEn")} disabled={isPending} />
-            {errors.nameEn && (
-              <p className="text-sm text-danger-500">{t(errors.nameEn.message as string)}</p>
+            <Label htmlFor="image">{t("superAdmin.brands.form.image")}</Label>
+            <Input id="image" dir="ltr" className="text-left" {...register("image")} disabled={isPending} />
+            {errors.image && (
+              <p className="text-sm text-danger-500">{t(errors.image.message as string)}</p>
             )}
           </div>
 

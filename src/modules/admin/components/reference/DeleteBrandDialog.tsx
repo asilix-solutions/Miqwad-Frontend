@@ -1,3 +1,10 @@
+/**
+ * @file DeleteBrandDialog.tsx
+ * @description Delete confirmation for a brand (`/api/Brands/{id}`, 204 on
+ * success). A 409 response (backend refuses because models/vehicles still
+ * reference it) surfaces as a blocked-delete toast — no deactivate-instead
+ * fallback, since the real backend has no `isActive` concept.
+ */
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -10,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDeleteBrandMutation, useModelsForBrandQuery } from "../../hooks/useAdminQueries";
 import type { Brand } from "@modules/vehicles/types";
+import { AppError } from "@shared/types/api";
 import { useToast } from "@shared/components/ui/toastContext";
 
 interface Props {
@@ -23,7 +31,7 @@ export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
   const toast = useToast();
   const deleteMutation = useDeleteBrandMutation();
   const modelsQuery = useModelsForBrandQuery(brand?.id ?? null);
-  
+
   const modelsCount = modelsQuery.data?.length ?? 0;
 
   const handleConfirm = async () => {
@@ -32,8 +40,12 @@ export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
       await deleteMutation.mutateAsync(brand.id);
       toast.success(t("superAdmin.brands.success.deleted"));
       onOpenChange(false);
-    } catch {
-      toast.error(t("common.deleteFailed"));
+    } catch (err) {
+      if (err instanceof AppError && err.status === 409) {
+        toast.error(t("superAdmin.brands.deleteConfirm.blocked"));
+      } else {
+        toast.error(t("common.deleteFailed"));
+      }
     }
   };
 
@@ -46,7 +58,7 @@ export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
           </DialogTitle>
           <DialogDescription className="pt-2">
             {t("superAdmin.brands.deleteConfirm.description", {
-              name: brand?.nameAr ?? "",
+              name: brand?.name ?? "",
               count: modelsCount,
             })}
           </DialogDescription>
