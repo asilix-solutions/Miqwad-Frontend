@@ -70,30 +70,23 @@ export const citySchema = z.object({
 
 export type CityFormValues = z.infer<typeof citySchema>;
 
-/** Schema used by the admin brand create/edit dialog. */
+/** Schema used by the admin brand create/edit dialog — real backend, single name + optional image URL. */
 export const brandSchema = z.object({
-  nameAr: z
+  name: z
     .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
-  nameEn: z
-    .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
+    .min(1, { message: "common.requiredField" })
+    .max(150),
+  image: z.string().max(500).optional().or(z.literal("")),
 });
 
 export type BrandFormValues = z.infer<typeof brandSchema>;
 
-/** Schema used by the admin model create/edit dialog. */
+/** Schema used by the admin model create/edit dialog — real backend, single name. */
 export const modelSchema = z.object({
-  nameAr: z
+  name: z
     .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
-  nameEn: z
-    .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
+    .min(1, { message: "common.requiredField" })
+    .max(150),
 });
 
 export type ModelFormValues = z.infer<typeof modelSchema>;

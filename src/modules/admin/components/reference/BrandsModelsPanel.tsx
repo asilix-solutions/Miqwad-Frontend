@@ -1,6 +1,12 @@
+/**
+ * @file BrandsModelsPanel.tsx
+ * @description Master-detail admin panel for the real-backend `/api/Brands`
+ * resource: brands (master, single name + optional image) on the left,
+ * the selected brand's models (detail, single name) on the right.
+ */
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, ListTree, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, ListTree, ChevronRight, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "../shared/DataTable";
 import { useAdminBrandsQuery, useModelsForBrandQuery } from "../../hooks/useAdminQueries";
@@ -13,7 +19,7 @@ import { Can } from "@shared/auth/Can";
 
 export function BrandsModelsPanel() {
   const { t } = useTranslation();
-  
+
   // ─── Master State (Brands) ───────────────────────────────────────────────────
   const brandsQuery = useAdminBrandsQuery();
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
@@ -94,19 +100,34 @@ export function BrandsModelsPanel() {
             rows={brandsQuery.data ?? []}
             isLoading={brandsQuery.isLoading}
             isError={brandsQuery.isError}
+            emptyText={t("superAdmin.brands.empty")}
+            errorText={t("superAdmin.brands.error")}
             getRowKey={(brand) => brand.id.toString()}
             columns={[
               {
-                key: "nameAr",
-                header: t("superAdmin.brands.columns.nameAr"),
-                render: (brand: Brand) => brand.nameAr,
-              },
-              {
-                key: "nameEn",
-                header: t("superAdmin.brands.columns.nameEn"),
-                render: (brand: Brand) => (
-                  <span dir="ltr">{brand.nameEn}</span>
-                ),
+                key: "name",
+                header: t("superAdmin.brands.columns.name"),
+                render: (brand: Brand) =>
+                  brand.image ? (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={brand.image}
+                        alt=""
+                        className="h-8 w-8 rounded-[var(--radius-xs)] object-cover border border-[var(--color-divider)]"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <span>{brand.name}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--color-surface-2)]">
+                        <ImageOff className="h-4 w-4 text-[var(--color-muted)]" />
+                      </div>
+                      <span>{brand.name}</span>
+                    </div>
+                  ),
               },
               {
                 key: "actions",
@@ -124,7 +145,7 @@ export function BrandsModelsPanel() {
                         size="icon"
                         className={[
                           "h-8 w-8 rounded-[var(--radius-md)]",
-                          isSelected 
+                          isSelected
                             ? "bg-[var(--color-surface-3)] text-[var(--color-brand-orange)]"
                             : "text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)]"
                         ].join(" ")}
@@ -173,9 +194,9 @@ export function BrandsModelsPanel() {
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSelectedBrand(null)}
                   className="h-8 w-8 -ms-2"
                 >
@@ -183,7 +204,7 @@ export function BrandsModelsPanel() {
                   <ChevronRight className="h-5 w-5 ltr:hidden rotate-180" />
                 </Button>
                 <h2 className="text-lg font-bold text-[var(--color-ink-body)]">
-                  {t("superAdmin.models.modelsOf", { brandName: selectedBrand.nameAr })}
+                  {t("superAdmin.models.modelsOf", { brandName: selectedBrand.name })}
                 </h2>
               </div>
               <Can permission="models.create">
@@ -202,19 +223,14 @@ export function BrandsModelsPanel() {
                 rows={modelsQuery.data ?? []}
                 isLoading={modelsQuery.isLoading}
                 isError={modelsQuery.isError}
+                emptyText={t("superAdmin.models.empty")}
+                errorText={t("superAdmin.models.error")}
                 getRowKey={(model) => model.id.toString()}
                 columns={[
                   {
-                    key: "nameAr",
-                    header: t("superAdmin.models.columns.nameAr"),
-                    render: (model: VehicleModel) => model.nameAr,
-                  },
-                  {
-                    key: "nameEn",
-                    header: t("superAdmin.models.columns.nameEn"),
-                    render: (model: VehicleModel) => (
-                      <span dir="ltr">{model.nameEn}</span>
-                    ),
+                    key: "name",
+                    header: t("superAdmin.models.columns.name"),
+                    render: (model: VehicleModel) => model.name,
                   },
                   {
                     key: "actions",
