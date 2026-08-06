@@ -12,15 +12,38 @@ jobs:
 
     steps:
 
-      - name: Send Discord Notification
+      - name: Send Discord Release Notification
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
 
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{
-            "username": "GitHub Bot",
-            "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-            "content": "🚀 New commit pushed to main branch!"
-          }' \
+          -d "{
+            \"username\": \"Miqwad Deployment Bot\",
+            \"embeds\": [
+              {
+                \"title\": \"🟢 Miqwad Front End Gets Pushed New Release\",
+                \"description\": \"The application has pushed a new release to the server successfully.\\n\\nYou can check the latest changes by visiting the website URL below.\",
+                \"color\": 65280,
+                \"fields\": [
+                  {
+                    \"name\": \"🌐 Website\",
+                    \"value\": \"https://miqwad-test-tau.vercel.app/login\"
+                  },
+                  {
+                    \"name\": \"👤 Released By\",
+                    \"value\": \"${{ github.actor }}\"
+                  },
+                  {
+                    \"name\": \"📝 Commit Message\",
+                    \"value\": \"${{ github.event.head_commit.message }}\"
+                  }
+                ],
+                \"footer\": {
+                  \"text\": \"Miqwad Front End Deployment System\"
+                },
+                \"timestamp\": \"${{ github.event.head_commit.timestamp }}\"
+              }
+            ]
+          }" \
           $DISCORD_WEBHOOK
