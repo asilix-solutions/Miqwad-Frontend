@@ -7,6 +7,7 @@
 
 ---
 
+
 ## Overview
 
 **Maqwad** is a Saudi-market marketplace that connects vehicle owners with car-service providers — workshops (ورشة), parts dealers (تاجر), and scrap yards (تشليح). The frontend is a fully client-side SPA built in React 19 + TypeScript, served behind a mock API today and designed for seamless swap to a .NET REST backend.
