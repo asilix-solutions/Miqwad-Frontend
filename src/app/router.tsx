@@ -235,6 +235,12 @@ const CategoriesServicesPage = lazy(() =>
   }))
 );
 
+const AttachmentsPage = lazy(() =>
+  import("@modules/attachments/pages/AttachmentsPage").then((m) => ({
+    default: m.AttachmentsPage,
+  }))
+);
+
 const AdminPlansPage = lazy(() =>
   import("@modules/admin/pages/AdminPlansPage").then((m) => ({
     default: m.AdminPlansPage,
@@ -806,6 +812,14 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="categories.view" />,
                     children: [
                       { index: true, element: <CategoriesServicesPage /> },
+                    ],
+                  },
+
+                  {
+                    path: "attachments",
+                    element: <PermissionGuard permission="attachments.view" />,
+                    children: [
+                      { index: true, element: <AttachmentsPage /> },
                     ],
                   },
 

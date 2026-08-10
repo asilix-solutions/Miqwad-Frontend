@@ -160,6 +160,11 @@ export const PERMISSIONS = {
     view: "complaints.view",
     manage: "complaints.manage",
   },
+
+  // ── Attachments ────────────────────────────────────────────────────────────
+  attachments: {
+    view: "attachments.view",
+  },
 } as const;
 
 // =============================================================================
