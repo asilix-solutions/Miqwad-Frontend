@@ -23,7 +23,7 @@ import {
   type EmailLoginFormValues,
   type PhoneFormValues,
 } from "../schemas/auth.schemas";
-import { useLoginMutation, useRegisterMutation } from "../hooks/useAuthMutations";
+import { useLoginMutation, usePhoneLoginMutation } from "../hooks/useAuthMutations";
 import { useAppSelector } from "@app/store";
 import { defaultHomeFor, providerHomeFor } from "@shared/guards/RoleGuard";
 import { isEmailNotVerifiedError } from "../api/auth.adapter";
@@ -51,7 +51,7 @@ export function LoginPage() {
     mode: "onSubmit",
   });
 
-  const registerMutation = useRegisterMutation();
+  const phoneLoginMutation = usePhoneLoginMutation();
   const loginMutation = useLoginMutation();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -78,7 +78,7 @@ export function LoginPage() {
 
   const onPhoneSubmit = phoneForm.handleSubmit(async (values) => {
     try {
-      await registerMutation.mutateAsync({ phoneNumber: values.phoneNumber });
+      await phoneLoginMutation.mutateAsync({ phoneNumber: values.phoneNumber });
       navigate("/verify-otp");
     } catch (err) {
       const message = err instanceof Error ? err.message : t("errors.unknown");
@@ -168,11 +168,11 @@ export function LoginPage() {
           {/* Submit button */}
           <Button
             type="submit"
-            disabled={registerMutation.isPending}
+            disabled={phoneLoginMutation.isPending}
             block
             className="mt-[var(--space-6)]"
           >
-            {registerMutation.isPending && (
+            {phoneLoginMutation.isPending && (
               <Loader2 size={18} className="animate-spin" />
             )}
             {t("auth.login.button")}

@@ -10,12 +10,12 @@ import {
 import type {
   ForgotPasswordRequest,
   LoginRequest,
+  PhoneLoginRequest,
+  PhoneVerifyRequest,
   RegisterProviderPayload,
-  RegisterRequest,
   ResetPasswordRequest,
   UpdateProfileRequest,
   VerifyEmailOtpRequest,
-  VerifyOtpRequest,
 } from "../types";
 
 /**
@@ -23,26 +23,29 @@ import type {
  * Components stay thin and stateless; all side-effects live here.
  */
 
-export function useRegisterMutation() {
+// The backend's OtpResponseDto carries no resendAfter — the frontend owns
+// the resend cooldown window entirely.
+const OTP_RESEND_SECONDS = 60;
+
+export function usePhoneLoginMutation() {
   const dispatch = useAppDispatch();
   return useMutation({
-    mutationFn: (req: RegisterRequest) => authApi.register(req),
-    onSuccess: (res, vars) => {
+    mutationFn: (req: PhoneLoginRequest) => authApi.phoneLogin(req),
+    onSuccess: (_res, vars) => {
       dispatch(
         setPendingVerification({
-          verificationId: res.verificationId,
           phoneNumber: vars.phoneNumber,
-          resendAfter: res.resendAfter,
+          resendAfter: OTP_RESEND_SECONDS,
         }),
       );
     },
   });
 }
 
-export function useVerifyOtpMutation() {
+export function useVerifyPhoneLoginMutation() {
   const dispatch = useAppDispatch();
   return useMutation({
-    mutationFn: (req: VerifyOtpRequest) => authApi.verifyOtp(req),
+    mutationFn: (req: PhoneVerifyRequest) => authApi.verifyPhoneLogin(req),
     onSuccess: (res) => {
       dispatch(
         setCredentials({

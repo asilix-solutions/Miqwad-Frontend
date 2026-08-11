@@ -9,7 +9,7 @@ import { useAppSelector } from "@app/store";
 import { defaultHomeFor } from "@shared/guards/RoleGuard";
 import { OtpInput } from "../components/OtpInput";
 import { useResendTimer } from "../hooks/useResendTimer";
-import { useRegisterMutation, useVerifyOtpMutation } from "../hooks/useAuthMutations";
+import { usePhoneLoginMutation, useVerifyPhoneLoginMutation } from "../hooks/useAuthMutations";
 
 /**
  * Sprint 1 — OTP verification.
@@ -28,8 +28,8 @@ export function OtpPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { seconds, reset, isFinished } = useResendTimer(pending?.resendAfter ?? 60);
 
-  const verifyMutation = useVerifyOtpMutation();
-  const registerMutation = useRegisterMutation();
+  const verifyMutation = useVerifyPhoneLoginMutation();
+  const phoneLoginMutation = usePhoneLoginMutation();
 
   // If user lands here without an in-flight verification, send them back to /login.
   useEffect(() => {
@@ -47,8 +47,8 @@ export function OtpPage() {
     }
     try {
       const res = await verifyMutation.mutateAsync({
-        verificationId: pending.verificationId,
-        code: finalCode,
+        phoneNumber: pending.phoneNumber,
+        otp: finalCode,
       });
       if (res.user.role === "provider" && !res.user.isProfileComplete) {
         navigate("/provider/onboarding", { replace: true });
@@ -63,7 +63,7 @@ export function OtpPage() {
 
   const handleResend = async () => {
     try {
-      await registerMutation.mutateAsync({ phoneNumber: pending.phoneNumber });
+      await phoneLoginMutation.mutateAsync({ phoneNumber: pending.phoneNumber });
       reset();
       toast.info(t("auth.otpResendNow"));
     } catch (err) {
@@ -152,7 +152,7 @@ export function OtpPage() {
         <button
           type="button"
           onClick={() => void handleResend()}
-          disabled={!isFinished || registerMutation.isPending}
+          disabled={!isFinished || phoneLoginMutation.isPending}
           className={`font-[var(--fw-ibm-semibold)] ${
             isFinished
               ? "text-[var(--color-brand-orange)] hover:underline"
