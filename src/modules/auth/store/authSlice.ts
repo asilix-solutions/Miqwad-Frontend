@@ -6,9 +6,12 @@ interface AuthState {
   user: User | null;
   accessToken: string | null;
   refreshToken: string | null;
-  /** Set after register() so OTP page can finish the flow. */
+  /**
+   * Set after phoneLogin() so the OTP page can finish the flow. No
+   * verificationId: /api/auth/phone/verify authenticates by
+   * phoneNumber + otp alone (see Swagger PhoneVerifyLoginRequestDto).
+   */
   pendingVerification: {
-    verificationId: string;
     phoneNumber: string;
     resendAfter: number;
   } | null;

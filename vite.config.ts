@@ -29,6 +29,14 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // `/phone/login` lives outside the `/api` prefix on the backend
+      // (confirmed in Swagger) — proxy it separately so the dev origin
+      // stays same-origin like every other auth call.
+      "/phone": {
+        target: "https://miqwad-test.runasp.net",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

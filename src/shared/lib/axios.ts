@@ -34,6 +34,22 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
+// The backend's `/phone/login` endpoint (see Swagger) is NOT under the
+// `/api` prefix that every other endpoint uses — a confirmed backend
+// inconsistency, not a typo here. `ROOT_BASE_URL` strips the trailing
+// `/api` so this one call can reach the real path; `vite.config.ts`
+// proxies `/phone` alongside `/api` in dev for the same reason.
+const ROOT_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "") || "/";
+
+export const rootApiClient: AxiosInstance = axios.create({
+  baseURL: ROOT_BASE_URL,
+  timeout: 20_000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
 /**
  * Bare axios used only by the refresh call to avoid recursive interception.
  */

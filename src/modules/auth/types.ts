@@ -46,31 +46,27 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-export interface RegisterRequest {
-  phoneNumber: string; // E.164 without leading + (e.g. 9665XXXXXXXX)
-}
-
-export interface RegisterResponse {
-  /** Server-issued correlation id used to verify the OTP later. */
-  verificationId: string;
-  /** Seconds until a new OTP can be requested. */
-  resendAfter: number;
-}
-
-export interface VerifyOtpRequest {
-  verificationId: string;
-  code: string;
-}
-
-export interface VerifyOtpResponse extends AuthTokens {
-  user: User;
+/**
+ * REAL CONTRACT (confirmed live via Swagger `PhoneLoginRequestDto`):
+ * POST /phone/login — sends an OTP to the given phone. `phoneNumber` is the
+ * local Saudi mobile form (`5XXXXXXXX`); `authApi.phoneLogin` converts it to
+ * the backend's `00966XXXXXXXXX` shape.
+ */
+export interface PhoneLoginRequest {
+  phoneNumber: string;
 }
 
 /**
- * PROVISIONAL CONTRACT — pending backend OQ1 (BACKEND_API_REQUIREMENTS.md:1049).
- * Response shape mirrors VerifyOtpResponse so session wiring is reused.
- * Confirm with backend before .NET wiring.
+ * REAL CONTRACT (confirmed live via Swagger `PhoneVerifyLoginRequestDto`):
+ * POST /api/auth/phone/verify — `otp` must match `^\d{6}$`. Response is the
+ * same `LoginResponseDto` shape as `/auth/login`, adapted via
+ * `adaptLoginResponse`.
  */
+export interface PhoneVerifyRequest {
+  phoneNumber: string;
+  otp: string;
+}
+
 export interface LoginRequest {
   identifier: string;
   password: string;

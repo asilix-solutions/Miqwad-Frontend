@@ -4,15 +4,11 @@ import { createPendingProviderProfile } from "./providers.handlers";
 import type { ProviderType } from "@modules/providers/types";
 
 /**
- * In-process mock for /auth/* and /users/me endpoints.
- * The shape mirrors what the .NET backend should return once the
- * MVP-spec endpoints are implemented (see backend_message.md / Excel plan).
- *
- * For the MVP demo:
- *   - Any 9-digit phone starting with 5 is "valid".
- *   - Any 6-digit code that ends with the last 6 digits of the phone passes,
- *     or simply the literal string "123456".
- *   - The mock is persistent across reloads through localStorage.
+ * In-process mock for the auth endpoints not yet confirmed live on the real
+ * backend (register-provider, refresh-token, logout, users/me). Phone
+ * login/verify and email login/register are all confirmed live and fall
+ * through to the real backend untouched (see `tryAuthMock`).
+ * The mock DB is persistent across reloads through localStorage.
  */
 
 interface MockUser {
@@ -33,20 +29,6 @@ interface MockUser {
    * permission sets are defined on the backend.
    */
   permissions: string[];
-}
-
-/**
- * Demo-only convenience: signing in with these phone numbers
- * spins up a pre-seeded user with the matching role so testers
- * can quickly switch between dashboards. Remove (or guard with
- * `import.meta.env.DEV`) once a real backend takes over.
- */
-function defaultRoleForPhone(phone: string): MockUser["role"] {
-  if (phone === "500000000") return "super_admin";
-  if (phone === "501110007") return "provider";
-  if (phone === "501110008") return "provider";
-  if (phone === "501110010") return "provider";
-  return "customer";
 }
 
 /**
@@ -72,8 +54,6 @@ const SEED_EMAILS: Record<string, string> = {
 
 interface MockDB {
   users: Record<string, MockUser>;
-  /** verificationId -> phoneNumber */
-  verifications: Record<string, string>;
 }
 
 const DB_KEY = "maqwad.mockDb";
@@ -85,7 +65,7 @@ function loadDb(): MockDB {
   } catch {
     /* ignore */
   }
-  return { users: {}, verifications: {} };
+  return { users: {} };
 }
 
 function saveDb(db: MockDB): void {
@@ -184,91 +164,10 @@ export async function tryAuthMock(
   const url = (config.url ?? "").replace(/^\/+|\/+$/g, "");
   const method = (config.method ?? "get").toLowerCase();
 
-  // -- POST /auth/register --------------------------------------------------
-  // PARTIALLY PEELED — this URL is shared by two unrelated flows:
-  //   1. authApi.registerProvider (per-type provider signup) sends
-  //      { fullName, email, phoneNumber, password, confirmPassword,
-  //      termsOfServiceAccepted, role }. The real backend is confirmed
-  //      live for this shape (see authApi.ts), so it falls through (null).
-  //   2. authApi.register (legacy phone-only OTP flow, still used by
-  //      LoginPage/OtpPage) sends only { phoneNumber }. That endpoint
-  //      isn't built on the backend yet, so it stays mocked below.
-  // Discriminate on `email`/`password`, which only the provider payload has.
-  if (url === "auth/register" && method === "post") {
-    const body = parseBody(config.data);
-    if (body.email != null && body.password != null) {
-      return null;
-    }
-    const phone = String(body.phoneNumber ?? "");
-    if (!/^5\d{8}$/.test(phone)) {
-      throw fail(config, 400, "INVALID_PHONE", "رقم الجوال غير صحيح");
-    }
-    const db = loadDb();
-    const verificationId = makeId("ver");
-    db.verifications[verificationId] = phone;
-    saveDb(db);
-    return ok(config, { verificationId, resendAfter: 60 });
-  }
-
-  // -- POST /auth/verify-otp ------------------------------------------------
-  if (url === "auth/verify-otp" && method === "post") {
-    const body = parseBody(config.data);
-    const verificationId = String(body.verificationId ?? "");
-    const code = String(body.code ?? "");
-    const db = loadDb();
-    const phone = db.verifications[verificationId];
-    if (!phone) throw fail(config, 400, "INVALID_VERIFICATION", "انتهت صلاحية الجلسة");
-    const accepted = code === "123456" || code === phone.slice(-6);
-    if (!accepted) throw fail(config, 400, "INVALID_OTP", "الرمز غير صحيح");
-
-    let user = Object.values(db.users).find((u) => u.phoneNumber === phone);
-    if (!user) {
-      const role = defaultRoleForPhone(phone);
-      const isAdmin = role === "admin" || role === "super_admin";
-      const isDealer = phone === "501110007";
-      const isWorkshop = phone === "501110008";
-      const isScrap = phone === "501110010";
-      user = {
-        id: isDealer
-          ? "seed_provider_7"
-          : isWorkshop
-          ? "seed_provider_8"
-          : isScrap
-          ? "seed_provider_10"
-          : makeId("usr"),
-        phoneNumber: phone,
-        fullName: isAdmin
-          ? "مسؤول النظام"
-          : isDealer
-          ? "متجر الشامل لقطع الغيار"
-          : isWorkshop
-          ? "ورشة الخليج للسيارات - جدة"
-          : isScrap
-          ? "تشليح السلام"
-          : "",
-        email: isDealer
-          ? "shamel@dealer.sa"
-          : isWorkshop
-          ? "toyota@workshop.sa"
-          : isScrap
-          ? "salam@scrap.sa"
-          : null,
-        role,
-        avatarUrl: null,
-        isProfileComplete: isAdmin || isDealer || isWorkshop || isScrap,
-        providerId: isDealer ? 7 : isWorkshop ? 8 : isScrap ? 11 : null,
-        providerStatus: isDealer || isWorkshop || isScrap ? "approved" : null,
-        providerRejectionReason: null,
-        permissions: permissionsForRole(role),
-      };
-      db.users[user.id] = user;
-    }
-    delete db.verifications[verificationId];
-    saveDb(db);
-
-    const tokens = makeTokens();
-    return ok(config, { ...tokens, user });
-  }
+  // POST /auth/register (provider signup), POST /phone/login, and POST
+  // /api/auth/phone/verify are all confirmed live on the real backend (see
+  // Swagger) and are not under an always-mocked prefix, so they fall
+  // through untouched — no handler needed for any of them here.
 
   // -- POST /auth/register-provider ------------------------------------------
   // Provider signup engine: create account + provider-profile record, then
