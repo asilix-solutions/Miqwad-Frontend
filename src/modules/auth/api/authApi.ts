@@ -1,44 +1,58 @@
-import { apiClient } from "@shared/lib/axios";
+import { apiClient, rootApiClient } from "@shared/lib/axios";
 import { adaptLoginResponse, unwrapEnvelope, unwrapEnvelopeMessage } from "./auth.adapter";
 import { PROVIDER_TYPE_TO_ROLE } from "../register/providerRole";
+import { toBackendPhone } from "../lib/phone";
 import type {
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
   MessageResponse,
+  PhoneLoginRequest,
+  PhoneVerifyRequest,
   RegisterProviderPayload,
   RegisterProviderResponse,
-  RegisterRequest,
-  RegisterResponse,
   ResetPasswordRequest,
   UpdateProfileRequest,
   User,
   VerifyEmailOtpRequest,
-  VerifyOtpRequest,
-  VerifyOtpResponse,
 } from "../types";
 
 /**
- * Thin transport layer for /auth + /users/me endpoints.
- * The MVP plan expects the Backend to expose:
- *   POST /auth/register, POST /auth/verify-otp,
- *   POST /auth/refresh-token, POST /auth/logout,
- *   GET  /users/me, PUT /users/me
+ * Thin transport layer for phone-login/register/auth + /users/me endpoints.
+ * Real, confirmed-live endpoints: POST /phone/login, POST
+ * /api/auth/phone/verify, POST /auth/register, POST /auth/login, POST
+ * /auth/refresh-token, POST /auth/logout, GET /users/me, PUT /users/me.
  *
- * When the backend is not yet ready (Sprint 0 → 1 handoff),
- * these requests are intercepted by the mock layer (see
+ * Endpoints not yet confirmed live are intercepted by the mock layer (see
  * `@shared/mocks`) so the UI is fully exercisable.
  */
 
 export const authApi = {
-  register: async (payload: RegisterRequest): Promise<RegisterResponse> => {
-    const { data } = await apiClient.post<RegisterResponse>("/auth/register", payload);
-    return data;
+  // REAL CONTRACT (confirmed live via Swagger, tag "Auth"): POST /phone/login
+  // — note this path is NOT under `/api` (a confirmed backend
+  // inconsistency), hence `rootApiClient` instead of `apiClient`. Body:
+  // `{ phoneNumber }` (PhoneLoginRequestDto). Response is enveloped
+  // `{ success, message, data: null, errors }` (OtpResponseDtoApiResponse)
+  // — no verificationId, no resendAfter; the frontend times its own resend
+  // window (see `usePhoneLoginMutation`).
+  phoneLogin: async (payload: PhoneLoginRequest): Promise<MessageResponse> => {
+    const { data } = await rootApiClient.post<unknown>("/phone/login", {
+      phoneNumber: toBackendPhone(payload.phoneNumber),
+    });
+    return { message: unwrapEnvelopeMessage(data) };
   },
 
-  verifyOtp: async (payload: VerifyOtpRequest): Promise<VerifyOtpResponse> => {
-    const { data } = await apiClient.post<VerifyOtpResponse>("/auth/verify-otp", payload);
-    return data;
+  // REAL CONTRACT (confirmed live via Swagger, tag "Auth"): POST
+  // /api/auth/phone/verify. Body: `{ phoneNumber, otp }`
+  // (PhoneVerifyLoginRequestDto, `otp` pattern `^\d{6}$`). Response is
+  // `LoginResponseDtoApiResponse` — same enveloped shape as `/auth/login`,
+  // so it reuses `adaptLoginResponse`.
+  verifyPhoneLogin: async (payload: PhoneVerifyRequest): Promise<LoginResponse> => {
+    const { data } = await apiClient.post<unknown>("/auth/phone/verify", {
+      phoneNumber: toBackendPhone(payload.phoneNumber),
+      otp: payload.otp,
+    });
+    return adaptLoginResponse(data);
   },
 
   // REAL CONTRACT (confirmed live): POST /auth/register — single .NET swap
@@ -50,7 +64,7 @@ export const authApi = {
     const { data } = await apiClient.post<unknown>("/auth/register", {
       fullName: payload.companyName,
       email: payload.email,
-      phoneNumber: payload.phone,
+      phoneNumber: toBackendPhone(payload.phone),
       password: payload.password,
       confirmPassword: payload.confirmPassword,
       termsOfServiceAccepted: payload.termsOfServiceAccepted,

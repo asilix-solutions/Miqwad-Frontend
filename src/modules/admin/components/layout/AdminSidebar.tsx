@@ -14,6 +14,7 @@ import {
   Settings,
   FolderTree,
   Layers,
+  Paperclip,
 
   CreditCard,
   Bell,
@@ -37,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
   { key: "taxonomy", labelPath: "adminNav.taxonomy", path: "/admin/taxonomy", icon: Layers },
+  { key: "attachments", labelPath: "adminNav.attachments", path: "/admin/attachments", icon: Paperclip },
 
   { key: "subscriptions", labelPath: "adminNav.subscriptions", path: "/admin/subscriptions", icon: CreditCard },
   { key: "revenues", labelPath: "adminNav.revenues", path: "/admin/revenues", icon: TrendingUp },

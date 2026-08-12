@@ -772,10 +772,84 @@ const ar = {
     categories: "البيانات المرجعية",
     cities: "المدن",
     taxonomy: "التصنيفات والخدمات",
+    attachments: "المرفقات",
 
     plans: "خطط الاشتراك",
     subscriptions: "الاشتراكات",
     revenues: "الإيرادات",
+  },
+  attachments: {
+    title: "المرفقات",
+    subtitle: "إدارة الملفات المرفوعة عبر النظام",
+    empty: "لا توجد مرفقات بعد",
+    emptyFiltered: "لا توجد مرفقات مطابقة",
+    error: "تعذر تحميل المرفقات",
+    tabs: {
+      all: "كل المرفقات",
+      byUser: "حسب المستخدم",
+    },
+    owner: {
+      label: "المالك",
+      unknown: "غير معروف",
+    },
+    byUser: {
+      count: "{{count}} مرفقات",
+      empty: "لا مرفقات بعد",
+      selectPrompt: "اختر مستخدمًا لعرض مرفقاته",
+    },
+    upload: {
+      cta: "رفع مرفق",
+      firstCta: "رفع أول مرفق",
+      title: "رفع مرفق جديد",
+    },
+    replace: {
+      title: "استبدال المرفق",
+    },
+    form: {
+      file: "الملف",
+      filePickLabel: "اختر ملفًا أو اسحبه هنا",
+      owner: "المالك",
+      ownerPlaceholder: "اختر مستخدمًا",
+      ownerSearchPlaceholder: "ابحث بالاسم…",
+      ownerEmpty: "لا يوجد مستخدمون مطابقون",
+    },
+    preview: {
+      noInlinePreview: "لا يمكن عرض هذا النوع من الملفات مباشرة",
+      openInNewTab: "فتح في تبويب جديد",
+    },
+    delete: {
+      title: "حذف المرفق",
+      confirm: "هل أنت متأكد من حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+    },
+    filters: {
+      searchPlaceholder: "ابحث باسم الملف…",
+      gridView: "عرض شبكي",
+      listView: "عرض قائمة",
+      kinds: {
+        all: "الكل",
+        image: "صور",
+        pdf: "PDF",
+        doc: "مستندات",
+        other: "أخرى",
+      },
+    },
+    fileKinds: {
+      image: "صورة",
+      pdf: "PDF",
+      doc: "مستند",
+      other: "أخرى",
+    },
+    actions: {
+      preview: "معاينة",
+      replace: "استبدال",
+      delete: "حذف",
+    },
+    errors: {
+      fileRequired: "الملف مطلوب",
+      fileTooLarge: "حجم الملف يتجاوز الحد المسموح (20 ميجابايت)",
+      fileTypeInvalid: "نوع الملف غير مدعوم",
+      ownerRequired: "يجب اختيار المالك",
+    },
   },
   superAdmin: {
     revenues: {
@@ -3003,10 +3077,84 @@ const en: typeof ar = {
     categories: "Reference Data",
     cities: "Cities",
     taxonomy: "Categories & Services",
+    attachments: "Attachments",
 
     plans: "Subscription Plans",
     subscriptions: "Subscriptions",
     revenues: "Revenues",
+  },
+  attachments: {
+    title: "Attachments",
+    subtitle: "Manage files uploaded across the system",
+    empty: "No attachments yet",
+    emptyFiltered: "No attachments match your filters",
+    error: "Failed to load attachments",
+    tabs: {
+      all: "All Attachments",
+      byUser: "By User",
+    },
+    owner: {
+      label: "Owner",
+      unknown: "Unknown",
+    },
+    byUser: {
+      count: "{{count}} files",
+      empty: "No attachments yet",
+      selectPrompt: "Select a user to view their attachments",
+    },
+    upload: {
+      cta: "Upload Attachment",
+      firstCta: "Upload your first attachment",
+      title: "Upload New Attachment",
+    },
+    replace: {
+      title: "Replace Attachment",
+    },
+    form: {
+      file: "File",
+      filePickLabel: "Choose or drag a file here",
+      owner: "Owner",
+      ownerPlaceholder: "Select a user",
+      ownerSearchPlaceholder: "Search by name…",
+      ownerEmpty: "No matching users",
+    },
+    preview: {
+      noInlinePreview: "This file type can't be previewed inline",
+      openInNewTab: "Open in new tab",
+    },
+    delete: {
+      title: "Delete Attachment",
+      confirm: "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    },
+    filters: {
+      searchPlaceholder: "Search by file name…",
+      gridView: "Grid view",
+      listView: "List view",
+      kinds: {
+        all: "All",
+        image: "Images",
+        pdf: "PDF",
+        doc: "Documents",
+        other: "Other",
+      },
+    },
+    fileKinds: {
+      image: "Image",
+      pdf: "PDF",
+      doc: "Document",
+      other: "Other",
+    },
+    actions: {
+      preview: "Preview",
+      replace: "Replace",
+      delete: "Delete",
+    },
+    errors: {
+      fileRequired: "File is required",
+      fileTooLarge: "File exceeds the maximum size (20 MB)",
+      fileTypeInvalid: "Unsupported file type",
+      ownerRequired: "Owner is required",
+    },
   },
   superAdmin: {
     revenues: {
