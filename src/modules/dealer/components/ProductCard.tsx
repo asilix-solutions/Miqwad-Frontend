@@ -2,15 +2,16 @@
  * @file ProductCard.tsx
  *
  * Dealer-specific product card for the card grid view.
- * Reuses ProviderCard / ProviderStatusPill from provider-ui.
- * Dealer-specific — lives in modules/dealer/components/.
+ * A "product" is a priced service offering — no image/sku/condition, so the
+ * card leads with the service name and a quantity/price summary.
+ * Reuses ProviderCard from provider-ui. Dealer-specific — lives in
+ * modules/dealer/components/.
  */
 
 import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
-import { Package, Pencil, Power, Trash2 } from "lucide-react";
-import { ProviderCard, ProviderStatusPill } from "@shared/provider-ui";
-import type { StatusPillTone } from "@shared/provider-ui";
+import { Pencil, Trash2, Wrench } from "lucide-react";
+import { ProviderCard } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
 import type { Product } from "../types";
 
@@ -19,41 +20,18 @@ import type { Product } from "../types";
 /** Props for {@link ProductCard}. */
 export interface ProductCardProps {
   product: Product;
-  categoryLabel: string;
   onEdit: (product: Product) => void;
-  onToggleStatus: (product: Product) => void;
   onDelete: (product: Product) => void;
   onCardClick: (product: Product) => void;
-  isTogglePending?: boolean;
   /** CSS style forwarded for stagger animation-delay. */
   style?: CSSProperties;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const STATUS_TONE: Record<string, StatusPillTone> = {
-  active:       "success",
-  draft:        "neutral",
-  out_of_stock: "warning",
-  archived:     "neutral",
-};
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 /** Dealer product card for the grid view. */
-export function ProductCard({
-  product,
-  onEdit,
-  onToggleStatus,
-  onDelete,
-  onCardClick,
-  isTogglePending,
-  style,
-}: ProductCardProps) {
+export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: ProductCardProps) {
   const { t, i18n } = useTranslation();
-
-  const name = i18n.language === "ar" ? product.nameAr : product.nameEn;
-  const isDimmed = product.status === "archived" || product.status === "draft";
 
   const cardStyle: CSSProperties = {
     transition:
@@ -74,10 +52,9 @@ export function ProductCard({
       className={cn(
         "provider-fade-up flex flex-col overflow-hidden",
         "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
-        isDimmed && "opacity-60",
       )}
     >
-      {/* ── Clickable area: image + product details ───────────────────────── */}
+      {/* ── Clickable area: icon + product details ─────────────────────────── */}
       <div
         role="button"
         tabIndex={0}
@@ -87,50 +64,30 @@ export function ProductCard({
           if (e.key === "Enter" || e.key === " ") onCardClick(product);
         }}
       >
-        {/* Image / placeholder */}
-        {product.images?.[0] ? (
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-t-[var(--radius-lg)]">
-            <img
-              src={product.images[0]}
-              alt={name}
-              className="h-full w-full object-cover transition-transform duration-[var(--dur-slow)] ease-[var(--ease-provider)] hover:scale-105"
-            />
-          </div>
-        ) : (
-          <div
-            className="flex aspect-[4/3] w-full items-center justify-center rounded-t-[var(--radius-lg)] bg-[var(--color-surface-2)]"
-            aria-hidden
-          >
-            <Package className="h-10 w-10 text-[var(--color-muted)]" />
-          </div>
-        )}
+        <div
+          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-[var(--radius-lg)] bg-[var(--color-surface-2)]"
+          aria-hidden
+        >
+          <Wrench className="h-10 w-10 text-[var(--color-muted)]" />
+        </div>
 
-        {/* Product details */}
         <div className="flex flex-col gap-2 p-4">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-[var(--color-ink-body)]">
-            {name}
+            {product.serviceName}
           </h3>
-
-          <span className="text-xs text-[var(--color-muted)]" dir="ltr">
-            {product.sku}
-          </span>
 
           <span className="tabular-nums text-base font-semibold text-[var(--color-brand-orange)]">
             {formatCurrency(product.price)}
           </span>
 
           <div className="flex items-center justify-between gap-2">
-            <ProviderStatusPill
-              label={t(`dealer.status.product.${product.status}`)}
-              tone={STATUS_TONE[product.status] ?? "neutral"}
-            />
-            {product.stockQty === 0 ? (
+            {product.quantity === 0 ? (
               <span className="text-xs font-medium text-[var(--color-warning-500)]">
                 {t("dealer.products.outOfStock")}
               </span>
             ) : (
               <span className="text-xs text-[var(--color-muted)]">
-                {t("dealer.products.colStock")}: {product.stockQty}
+                {t("dealer.products.colQuantity")}: {product.quantity}
               </span>
             )}
           </div>
@@ -142,15 +99,6 @@ export function ProductCard({
         className="flex items-center justify-end gap-0.5 border-t border-[var(--color-divider)] px-4 py-2"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          title={t("dealer.products.toggleStatusBtn")}
-          disabled={isTogglePending}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)] disabled:opacity-40"
-          onClick={() => onToggleStatus(product)}
-        >
-          <Power className="h-4 w-4" aria-hidden />
-        </button>
         <button
           type="button"
           title={t("common.edit")}

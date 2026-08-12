@@ -4,8 +4,15 @@ import type {
   NearbyProvider,
   NearbySearchFilters,
   ProviderReviewsResponse,
+  PublicProviderService,
 } from "../types";
-import type { ProviderProfile, ProviderService } from "@modules/providers/types";
+import type { ProviderProfile } from "@modules/providers/types";
+import type { ApiEnvelope } from "@modules/services/lib/categoryAdapter";
+
+function unwrap<T>(envelope: ApiEnvelope<T>): T {
+  if (!envelope.success) throw new Error(envelope.message || "Request failed");
+  return envelope.data;
+}
 
 /**
  * Transport layer for the Discovery module.
@@ -57,15 +64,19 @@ export const discoveryApi = {
   },
 
   /**
-   * GET /providers/{id}/services — list of services the provider offers.
-   * Same endpoint used in the provider area, just read-only from the
-   * customer perspective.
+   * GET /public/provider-services?FilterBy=providerId&FilterValue={id} —
+   * the provider's priced offerings, read-only from the customer
+   * perspective. Confirmed live contract (Dealer JWT probe): standard
+   * `{ success, message, data, errors }` envelope wrapping a
+   * `PaginatedResponse`-shaped page.
    */
-  providerServices: async (providerId: number): Promise<ProviderService[]> => {
-    const { data } = await apiClient.get<ProviderService[]>(
-      `/providers/${providerId}/services`,
-    );
-    return data;
+  providerServices: async (providerId: number): Promise<PublicProviderService[]> => {
+    const { data } = await apiClient.get<
+      ApiEnvelope<{ items: PublicProviderService[]; pageNumber: number; pageSize: number; totalCount: number; totalPages: number }>
+    >("/public/provider-services", {
+      params: { FilterBy: "providerId", FilterValue: providerId },
+    });
+    return unwrap(data).items;
   },
 
   /**

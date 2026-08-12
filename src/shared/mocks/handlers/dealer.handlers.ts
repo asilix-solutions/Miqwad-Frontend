@@ -1,12 +1,17 @@
 /**
- * In-process mock for Dealer Dashboard.
+ * In-process mock for Dealer Dashboard — orders, shipments, dues.
+ *
+ * Products no longer live here: a dealer "product" is a real
+ * `/api/provider-services` row (see `providerServicesApi.ts`), never routed
+ * through this always-mocked `dealer/` bridge. The seed products below are
+ * kept as internal, non-exposed data purely to build the order/shipment
+ * seed line items — they are not the dealer module's `Product` type and no
+ * `dealer/products` endpoint is matched anymore.
  */
 import type { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "../../types/api";
 import type {
-  Product,
-  Inventory,
   Order,
   OrderStatus,
   Shipment,
@@ -16,9 +21,18 @@ import type {
 import { canTransition } from "../../../modules/dealer/orderLifecycle";
 import { canTransitionShipment } from "../../../modules/dealer/shipmentLifecycle";
 
+/** Internal-only seed shape for order line items — not the dealer `Product` API type. */
+interface SeedProduct {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  sku: string;
+  price: number;
+  stockQty: number;
+}
+
 interface DealerDb {
-  products: Record<string, Product>;
-  inventory: Record<string, Inventory>;
+  products: Record<string, SeedProduct>;
   orders: Record<string, Order>;
   shipments: Record<string, Shipment>;
   dues: Record<string, DealerDues>;
@@ -27,7 +41,7 @@ interface DealerDb {
 }
 
 const DEALER_DB_KEY = "maqwad.dealer.mockDb";
-const MOCK_SEED_VERSION = 2;
+const MOCK_SEED_VERSION = 3; // bumped: dropped inventory/product endpoints — products now live in /api/provider-services
 const MOCK_SEED_VERSION_KEY = "maqwad.dealer.mockSeedVersion";
 const DEALER_ID = "7"; // Matches seed_provider_7's numeric ID (which is used as providerId in FE state)
 const COMMISSION_RATE = 5;
@@ -40,7 +54,7 @@ function loadDb(): DealerDb {
     if (storedVersion !== MOCK_SEED_VERSION) {
       localStorage.removeItem(DEALER_DB_KEY);
       localStorage.setItem(MOCK_SEED_VERSION_KEY, MOCK_SEED_VERSION.toString());
-      return { products: {}, inventory: {}, orders: {}, shipments: {}, dues: {}, nextId: 1000, seeded: false };
+      return { products: {}, orders: {}, shipments: {}, dues: {}, nextId: 1000, seeded: false };
     }
 
     const raw = localStorage.getItem(DEALER_DB_KEY);
@@ -48,7 +62,7 @@ function loadDb(): DealerDb {
   } catch {
     /* ignore */
   }
-  return { products: {}, inventory: {}, orders: {}, shipments: {}, dues: {}, nextId: 1000, seeded: false };
+  return { products: {}, orders: {}, shipments: {}, dues: {}, nextId: 1000, seeded: false };
 }
 
 function saveDb(db: DealerDb): void {
@@ -104,47 +118,16 @@ function seedIfEmpty(db: DealerDb): void {
   if (db.seeded) return;
   const now = new Date().toISOString();
 
-  // 1. Products
-  const productsSeed: Partial<Product>[] = [
-    // categoryId re-pointed from L2 → L3 leaves so getCategoryPath resolves full path.
-    // OLD→NEW: "202"→"215"/"216" (بطاريات L2 → 60/80 Ah L3), "201"→"211"/"212"/"213"
-    // (زيوت وفلاتر L2 → زيت محرك/فلتر زيت/فلتر هواء L3), "207"→"225" (تبريد L2 → ريديتر L3),
-    // "208"→"227"/"228" (إكسسوارات L2 → مساحات/معطر L3).
-    { nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", categoryId: "215", price: 350, condition: "new", status: "active", stockQty: 100 },
-    { nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", categoryId: "216", price: 450, condition: "new", status: "active", stockQty: 45 },
-    { nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", categoryId: "211", price: 120, condition: "new", status: "active", stockQty: 200 },
-    { nameAr: "زيت محرك 10W-40", nameEn: "10W-40 Engine Oil", sku: "OIL-10W40", categoryId: "211", price: 100, condition: "new", status: "active", stockQty: 150 },
-    { nameAr: "فلتر زيت", nameEn: "Oil Filter", sku: "FLT-OIL", categoryId: "212", price: 40, condition: "new", status: "active", stockQty: 300 },
-    { nameAr: "فلتر هواء", nameEn: "Air Filter", sku: "FLT-AIR", categoryId: "213", price: 50, condition: "new", status: "active", stockQty: 250 },
-    { nameAr: "سائل تبريد أحمر", nameEn: "Red Coolant", sku: "COOL-RED", categoryId: "225", price: 60, condition: "new", status: "active", stockQty: 180 },
-    { nameAr: "سائل تبريد أخضر", nameEn: "Green Coolant", sku: "COOL-GRN", categoryId: "225", price: 55, condition: "new", status: "out_of_stock", stockQty: 0 },
-    { nameAr: "مساحات زجاج أمامية", nameEn: "Windshield Wipers", sku: "ACC-WIPER", categoryId: "227", price: 80, condition: "new", status: "active", stockQty: 120 },
-    { nameAr: "معطر سيارة", nameEn: "Car Air Freshener", sku: "ACC-FRESH", categoryId: "228", price: 15, condition: "new", status: "draft", stockQty: 50 },
+  // 1. Products — seed data only, used to build order line-item snapshots below.
+  const productsSeed: SeedProduct[] = [
+    { id: "", nameAr: "بطارية سيارة 60 أمبير", nameEn: "60 Ah Car Battery", sku: "BAT-60A", price: 350, stockQty: 100 },
+    { id: "", nameAr: "بطارية سيارة 80 أمبير", nameEn: "80 Ah Car Battery", sku: "BAT-80A", price: 450, stockQty: 45 },
+    { id: "", nameAr: "زيت محرك 5W-30", nameEn: "5W-30 Engine Oil", sku: "OIL-5W30", price: 120, stockQty: 200 },
   ];
 
   for (const p of productsSeed) {
     const id = `prod_${db.nextId++}`;
-    db.products[id] = {
-      id,
-      dealerId: DEALER_ID,
-      nameAr: p.nameAr!,
-      nameEn: p.nameEn!,
-      sku: p.sku!,
-      categoryId: p.categoryId!,
-      price: p.price!,
-      condition: p.condition!,
-      status: p.status!,
-      stockQty: p.stockQty!,
-      createdAt: now,
-      updatedAt: now,
-    };
-    db.inventory[id] = {
-      productId: id,
-      dealerId: DEALER_ID,
-      onHand: p.stockQty!,
-      reserved: 0,
-      updatedAt: now,
-    };
+    db.products[id] = { ...p, id };
   }
 
   // 2. Orders & Shipments
@@ -153,7 +136,7 @@ function seedIfEmpty(db: DealerDb): void {
   const p2 = db.products[productKeys[1]];
   const p3 = db.products[productKeys[2]];
 
-  const ordersSeed: Array<{ customer: string; status: import("../../../modules/dealer/types").OrderStatus; items: Array<{p: Product; qty: number}>; hasShipment?: boolean }> = [
+  const ordersSeed: Array<{ customer: string; status: OrderStatus; items: Array<{p: SeedProduct; qty: number}>; hasShipment?: boolean }> = [
     { customer: "أحمد عبدالله", status: "new", items: [{p: p1, qty: 1}, {p: p2, qty: 2}] },
     { customer: "خالد محمد", status: "preparing", items: [{p: p3, qty: 4}] },
     { customer: "سالم الفهد", status: "shipped", items: [{p: p1, qty: 1}], hasShipment: true },
@@ -219,12 +202,6 @@ function seedIfEmpty(db: DealerDb): void {
 
     if (o.status === "delivered") {
       grossSales += subtotal;
-    } else if (o.status === "new" || o.status === "preparing") {
-      for (const i of o.items) {
-        if (db.inventory[i.p.id]) {
-          db.inventory[i.p.id].reserved += i.qty;
-        }
-      }
     }
   }
 
@@ -268,93 +245,6 @@ export async function tryDealerMock(
     Object.entries(config.params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== "") searchParams.append(k, String(v));
     });
-  }
-
-  if (path === "dealer/products" && method === "get") {
-    // FUTURE: filter by authenticated dealerId — backend MUST enforce per-store isolation (SRS: no cross-store visibility)
-    let list = Object.values(db.products);
-    const status = searchParams.get("status");
-    const categoryId = searchParams.get("categoryId");
-    if (status) list = list.filter(p => p.status === status);
-    if (categoryId) list = list.filter(p => p.categoryId === categoryId);
-    
-    return ok(config, paginate(list, searchParams.get("page") ?? undefined, searchParams.get("pageSize") ?? undefined));
-  }
-
-  const prodMatch = path.match(/^dealer\/products\/([^/]+)$/);
-  if (prodMatch && method === "get") {
-    const p = db.products[prodMatch[1]];
-    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
-    return ok(config, p);
-  }
-
-  if (path === "dealer/products" && method === "post") {
-    const payload = JSON.parse(config.data || "{}");
-    const id = `prod_${db.nextId++}`;
-    const now = new Date().toISOString();
-    const newProduct: Product = {
-      id,
-      dealerId: DEALER_ID,
-      nameAr: payload.nameAr || "",
-      nameEn: payload.nameEn || "",
-      sku: payload.sku || "",
-      categoryId: payload.categoryId || "",
-      price: payload.price || 0,
-      condition: payload.condition || "new",
-      status: payload.status || "draft",
-      stockQty: payload.stockQty || 0,
-      images: payload.images,
-      descriptionAr: payload.descriptionAr,
-      descriptionEn: payload.descriptionEn,
-      createdAt: now,
-      updatedAt: now,
-    };
-    db.products[id] = newProduct;
-    db.inventory[id] = {
-      productId: id,
-      dealerId: DEALER_ID,
-      onHand: newProduct.stockQty,
-      reserved: 0,
-      updatedAt: now,
-    };
-    saveDb(db);
-    return ok(config, newProduct);
-  }
-
-  if (prodMatch && method === "patch" && !path.endsWith("/status")) {
-    const p = db.products[prodMatch[1]];
-    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
-    const payload = JSON.parse(config.data || "{}");
-    const now = new Date().toISOString();
-    
-    db.products[prodMatch[1]] = { ...p, ...payload, updatedAt: now };
-    
-    if (payload.stockQty !== undefined && db.inventory[prodMatch[1]]) {
-      db.inventory[prodMatch[1]].onHand = payload.stockQty;
-      db.inventory[prodMatch[1]].updatedAt = now;
-    }
-    saveDb(db);
-    return ok(config, db.products[prodMatch[1]]);
-  }
-
-  const prodStatusMatch = path.match(/^dealer\/products\/([^/]+)\/status$/);
-  if (prodStatusMatch && method === "patch") {
-    const p = db.products[prodStatusMatch[1]];
-    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
-    const payload = JSON.parse(config.data || "{}");
-    p.status = payload.status;
-    p.updatedAt = new Date().toISOString();
-    saveDb(db);
-    return ok(config, p);
-  }
-
-  if (prodMatch && method === "delete") {
-    const p = db.products[prodMatch[1]];
-    if (!p) throw fail(config, 404, "NOT_FOUND", "Product not found");
-    delete db.products[prodMatch[1]];
-    delete db.inventory[prodMatch[1]];
-    saveDb(db);
-    return ok(config, { success: true });
   }
 
   if (path === "dealer/orders" && method === "get") {

@@ -22,12 +22,9 @@ export interface ProductGridProps {
   isLoading: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  getCategoryLabel: (categoryId: string) => string;
   onEdit: (product: Product) => void;
-  onToggleStatus: (product: Product) => void;
   onDelete: (product: Product) => void;
   onCardClick: (product: Product) => void;
-  isTogglePending?: boolean;
   onAddProduct?: () => void;
 }
 
@@ -42,14 +39,12 @@ function ProductCardSkeleton() {
       <div className="flex flex-col gap-3 p-4">
         <ProviderSkeleton variant="line" width="75%" />
         <ProviderSkeleton variant="line" width="40%" />
-        <ProviderSkeleton variant="line" width="55%" />
         <div className="flex items-center justify-between gap-3">
           <ProviderSkeleton variant="line" width="35%" />
           <ProviderSkeleton variant="line" width="25%" />
         </div>
       </div>
       <div className="flex justify-end gap-1 border-t border-[var(--color-divider)] px-4 py-2">
-        <ProviderSkeleton variant="circle" height={32} width={32} />
         <ProviderSkeleton variant="circle" height={32} width={32} />
         <ProviderSkeleton variant="circle" height={32} width={32} />
       </div>
@@ -67,12 +62,9 @@ export function ProductGrid({
   isLoading,
   isError,
   onRetry,
-  getCategoryLabel,
   onEdit,
-  onToggleStatus,
   onDelete,
   onCardClick,
-  isTogglePending,
   onAddProduct,
 }: ProductGridProps) {
   const { t } = useTranslation();
@@ -124,12 +116,9 @@ export function ProductGrid({
         <ProductCard
           key={product.id}
           product={product}
-          categoryLabel={getCategoryLabel(product.categoryId)}
           onEdit={onEdit}
-          onToggleStatus={onToggleStatus}
           onDelete={onDelete}
           onCardClick={onCardClick}
-          isTogglePending={isTogglePending}
           style={{ animationDelay: `${Math.min(index, STAGGER_CAP) * 50}ms` }}
         />
       ))}

@@ -1,34 +1,16 @@
 /**
  * Dealer API client
+ *
+ * Products no longer live here — a dealer "product" is a thin wrapper
+ * around the admin service catalog (`/api/provider-services`), see
+ * `providerServicesApi.ts`. This client keeps orders/shipments/dues, which
+ * still go through the `/dealer/*` mock bridge.
  */
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { Product, ProductStatus, Order, OrderStatus, Shipment, ShipmentStatus, DealerDues } from "../types";
+import type { Order, OrderStatus, Shipment, ShipmentStatus, DealerDues } from "../types";
 
 export const dealerApi = {
-  getProducts: async (params?: Record<string, any>): Promise<PaginatedResponse<Product>> => {
-    const { data } = await apiClient.get<PaginatedResponse<Product>>("/dealer/products", { params });
-    return data;
-  },
-  getProduct: async (id: string): Promise<Product> => {
-    const { data } = await apiClient.get<Product>(`/dealer/products/${id}`);
-    return data;
-  },
-  createProduct: async (payload: Partial<Product>): Promise<Product> => {
-    const { data } = await apiClient.post<Product>("/dealer/products", payload);
-    return data;
-  },
-  updateProduct: async (id: string, payload: Partial<Product>): Promise<Product> => {
-    const { data } = await apiClient.patch<Product>(`/dealer/products/${id}`, payload);
-    return data;
-  },
-  deleteProduct: async (id: string): Promise<void> => {
-    await apiClient.delete(`/dealer/products/${id}`);
-  },
-  updateProductStatus: async (id: string, status: ProductStatus): Promise<Product> => {
-    const { data } = await apiClient.patch<Product>(`/dealer/products/${id}/status`, { status });
-    return data;
-  },
   getOrders: async (params?: Record<string, any>): Promise<PaginatedResponse<Order>> => {
     const { data } = await apiClient.get<PaginatedResponse<Order>>("/dealer/orders", { params });
     return data;

@@ -176,25 +176,20 @@ export function ProviderPublicDetailsPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-display font-semibold text-ink-900 truncate">
-                        {s.name}
+                        {s.serviceName}
                       </p>
-                      {s.categoryName && (
-                        <p className="text-xs text-ink-500 mt-0.5">{s.categoryName}</p>
-                      )}
+                      <p className="text-xs text-ink-500 mt-0.5">
+                        {t("discovery.services.quantity", { count: s.quantity })}
+                      </p>
                     </div>
                     <div className="text-end shrink-0">
                       <p className="font-display text-lg font-bold text-brand-600">
                         {t("common.priceSar", { amount: s.price })}
                       </p>
-                      {s.estimatedDuration != null && (
-                        <p className="text-xs text-ink-500">
-                          {t("discovery.duration", { mins: s.estimatedDuration })}
-                        </p>
-                      )}
                     </div>
                   </div>
-                  {s.description && (
-                    <p className="text-sm text-ink-600 leading-relaxed">{s.description}</p>
+                  {s.notes && (
+                    <p className="text-sm text-ink-600 leading-relaxed">{s.notes}</p>
                   )}
                 </li>
               ))}
