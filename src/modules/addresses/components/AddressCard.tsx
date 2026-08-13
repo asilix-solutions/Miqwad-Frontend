@@ -17,11 +17,12 @@ import type { Address } from "../types";
 
 interface Props {
   address: Address;
+  ownerName?: string;
   onEdit: (address: Address) => void;
   onDelete: (address: Address) => void;
 }
 
-export function AddressCard({ address, onEdit, onDelete }: Props) {
+export function AddressCard({ address, ownerName, onEdit, onDelete }: Props) {
   const { t, i18n } = useTranslation();
   const { ref, inView } = useInViewport<HTMLDivElement>();
 
@@ -69,8 +70,8 @@ export function AddressCard({ address, onEdit, onDelete }: Props) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1 text-xs text-[var(--color-muted)]">
             <User className="size-3 shrink-0" />
-            <span className="min-w-0 truncate text-start">
-              {t("addresses.card.owner", { id: address.userId })}
+            <span className="min-w-0 truncate text-start" title={ownerName}>
+              {ownerName ?? t("addresses.card.ownerUnknown")}
             </span>
           </div>
           {address.createdAt && (

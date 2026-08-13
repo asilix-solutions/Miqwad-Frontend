@@ -13,7 +13,6 @@ export const addressKeys = {
   all: ["addresses"] as const,
   list: (params: AddressesListParams = {}) => [...addressKeys.all, "list", params] as const,
   detail: (id: string) => [...addressKeys.all, "detail", id] as const,
-  byUser: (userId: string) => [...addressKeys.all, "byUser", userId] as const,
 };
 
 export function useAddressesList(params: AddressesListParams = {}) {
@@ -32,17 +31,6 @@ export function useAddress(id: string) {
     queryKey: addressKeys.detail(id),
     queryFn: async () => adaptRawAddress(await addressesApi.get(id)),
     enabled: !!id,
-  });
-}
-
-export function useUserAddresses(userId: string) {
-  return useQuery({
-    queryKey: addressKeys.byUser(userId),
-    queryFn: async () => {
-      const page = await addressesApi.getUserAddresses(userId);
-      return { ...page, items: page.items.map(adaptRawAddress) };
-    },
-    enabled: !!userId,
   });
 }
 

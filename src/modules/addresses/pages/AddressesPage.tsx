@@ -3,10 +3,13 @@
  * @description Admin Addresses list page — Phase 2 (spatial card grid).
  * Addresses are about WHERE, so each card leads with a mini-map thumbnail
  * instead of a plain table row. Supports title/shortNumber search, a
- * lightweight "filter by user" combobox (switches to GET
- * /api/Users/{userId}/addresses), newest/oldest sort, and pagination.
+ * "filter by user" combobox (admin picks a name; internally sends
+ * GET /api/Addresses?FilterBy=userId&FilterValue={numericId} — the
+ * per-user `/api/Users/{userId}/addresses` endpoint is not implemented on
+ * the backend), newest/oldest sort, and pagination. The user filter and
+ * title search are mutually exclusive server-side (single FilterBy).
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MapPinOff, Plus, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +20,8 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
-import { useAddressesList, useUserAddresses } from "../hooks/useAddressesQueries";
+import { useUsersQuery } from "@modules/admin/hooks/useAdminQueries";
+import { useAddressesList } from "../hooks/useAddressesQueries";
 import type { Address } from "../types";
 import { AddressCard } from "../components/AddressCard";
 import { AddressFilters } from "../components/AddressFilters";
@@ -26,6 +30,7 @@ import { DeleteAddressDialog } from "../components/DeleteAddressDialog";
 import { Can } from "@shared/auth/Can";
 
 const PAGE_SIZE = 24;
+const USERS_MAP_PAGE_SIZE = 100;
 
 export function AddressesPage() {
   const { t } = useTranslation();
@@ -39,20 +44,24 @@ export function AddressesPage() {
     setPageNumber(1);
   }, [search, userId, sortDescending]);
 
-  const listQuery = useAddressesList({
+  const q = useAddressesList({
     pageNumber,
     pageSize: PAGE_SIZE,
     sortBy: "createdAt",
     sortDescending,
-    filterBy: search.trim() ? "title" : undefined,
-    filterValue: search.trim() || undefined,
+    filterBy: userId ? "userId" : search.trim() ? "title" : undefined,
+    filterValue: userId ? userId : search.trim() || undefined,
   });
-  const userQuery = useUserAddresses(userId ?? "");
-
-  const isFilteringByUser = !!userId;
-  const q = isFilteringByUser ? userQuery : listQuery;
   const items = q.data?.items ?? [];
-  const totalPages = isFilteringByUser ? 1 : (listQuery.data?.totalPages ?? 1);
+  const totalPages = q.data?.totalPages ?? 1;
+
+  // Owner names for cards: the admin must never see a raw userId, only the
+  // matching fullName from the loaded /api/Users list.
+  const usersMapQuery = useUsersQuery({ page: 1, pageSize: USERS_MAP_PAGE_SIZE, includeAdmins: true });
+  const userNameById = useMemo(
+    () => new Map((usersMapQuery.data?.items ?? []).map((u) => [String(u.id), u.fullName])),
+    [usersMapQuery.data],
+  );
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -137,12 +146,18 @@ export function AddressesPage() {
       {!q.isLoading && !q.isError && items.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((address) => (
-            <AddressCard key={address.id} address={address} onEdit={openEdit} onDelete={openDelete} />
+            <AddressCard
+              key={address.id}
+              address={address}
+              ownerName={userNameById.get(String(address.userId))}
+              onEdit={openEdit}
+              onDelete={openDelete}
+            />
           ))}
         </div>
       )}
 
-      {!isFilteringByUser && totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination>
           <PaginationContent>
             <PaginationItem>

@@ -871,7 +871,7 @@ const ar = {
     },
     card: {
       miniMapAlt: "خريطة مصغرة لموقع {{title}}",
-      owner: "المستخدم #{{id}}",
+      ownerUnknown: "مستخدم غير معروف",
     },
     actions: {
       edit: "تعديل",
@@ -3231,7 +3231,7 @@ const en: typeof ar = {
     },
     card: {
       miniMapAlt: "Mini map of {{title}}'s location",
-      owner: "User #{{id}}",
+      ownerUnknown: "Unknown user",
     },
     actions: {
       edit: "Edit",

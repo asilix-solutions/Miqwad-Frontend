@@ -111,11 +111,4 @@ export const addressesApi = {
   remove: async (id: string): Promise<void> => {
     await apiClient.delete(`/Addresses/${id}`);
   },
-
-  getUserAddresses: async (userId: string): Promise<PaginatedResponse<RawAddress>> => {
-    const { data } = await apiClient.get<ApiEnvelope<RawPage<RawAddress> | RawAddress[] | null>>(
-      `/Users/${userId}/addresses`,
-    );
-    return fromRawPage(unwrap(data));
-  },
 };
