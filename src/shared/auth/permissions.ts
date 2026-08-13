@@ -165,6 +165,14 @@ export const PERMISSIONS = {
   attachments: {
     view: "attachments.view",
   },
+
+  // ── Addresses ──────────────────────────────────────────────────────────────
+  addresses: {
+    view: "addresses.view",
+    create: "addresses.create",
+    edit: "addresses.edit",
+    delete: "addresses.delete",
+  },
 } as const;
 
 // =============================================================================

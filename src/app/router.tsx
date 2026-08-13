@@ -223,6 +223,12 @@ const AdminUserDetailsPage = lazy(() =>
 );
 
 
+const AdminAddressesPage = lazy(() =>
+  import("@modules/addresses/pages/AddressesPage").then((m) => ({
+    default: m.AddressesPage,
+  }))
+);
+
 const AdminReferenceDataPage = lazy(() =>
   import("@modules/admin/pages/AdminReferenceDataPage").then((m) => ({
     default: m.AdminReferenceDataPage,
@@ -797,6 +803,13 @@ export const router = createBrowserRouter([
                   },
 
 
+                  {
+                    path: "addresses",
+                    element: <PermissionGuard permission="addresses.view" />,
+                    children: [
+                      { index: true, element: <AdminAddressesPage /> },
+                    ],
+                  },
                   {
                     // Reference Data — consolidated container (categories + cities)
                     path: "reference",
