@@ -1,10 +1,11 @@
 /**
  * @file AddressFilters.tsx
  * @description Filter bar above the address card grid: title/shortNumber
- * search, a lightweight "filter by user" combobox (loads one user's
- * addresses via GET /api/Users/{userId}/addresses), and a newest/oldest
- * sort toggle. Reuses the searchable Combobox + real /api/Users lookup
- * already built for the attachments owner picker.
+ * search, a "filter by user" combobox (admin picks/searches by name; the
+ * combobox value is the user's numeric id, sent to the parent as
+ * `userId` — the admin never sees the raw id), and a newest/oldest sort
+ * toggle. Reuses the searchable Combobox + real /api/Users lookup already
+ * built for the attachments owner picker.
  */
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -33,7 +34,7 @@ export function AddressFilters({
 }: Props) {
   const { t } = useTranslation();
   const [userSearch, setUserSearch] = useState("");
-  const usersQuery = useUsersQuery({ page: 1, pageSize: 20, search: userSearch || undefined });
+  const usersQuery = useUsersQuery({ page: 1, pageSize: 20, search: userSearch || undefined, includeAdmins: true });
 
   const userOptions: ComboboxOption[] = useMemo(
     () =>

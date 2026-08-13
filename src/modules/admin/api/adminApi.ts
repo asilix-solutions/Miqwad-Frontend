@@ -72,12 +72,14 @@ function adaptUser(raw: RawAdminUser): AdminUserRow {
 }
 
 /**
- * Unwraps the envelope, maps every row, and excludes admin accounts
- * (role === 1, resolved via roleRegistry's isAdminRole).
+ * Unwraps the envelope, maps every row, and by default excludes admin
+ * accounts (role === 1, resolved via roleRegistry's isAdminRole). Pass
+ * `includeAdmins: true` for consumers that resolve names for any owner
+ * (e.g. address owner lookups), where hiding admins would break resolution.
  */
-function adaptUserList(raw: unknown): PaginatedResponse<AdminUserRow> {
+function adaptUserList(raw: unknown, includeAdmins = false): PaginatedResponse<AdminUserRow> {
   const data = unwrapEnvelope<RawUsersListData>(raw);
-  const items = data.items.map(adaptUser).filter((user) => !isAdminRole(user.role));
+  const items = data.items.map(adaptUser).filter((user) => includeAdmins || !isAdminRole(user.role));
   return {
     items,
     page: data.pageNumber,
@@ -149,6 +151,7 @@ export const adminApi = {
     isActive?: boolean;
     sortBy?: UsersSortField;
     sortDescending?: boolean;
+    includeAdmins?: boolean;
   }): Promise<PaginatedResponse<AdminUserRow>> => {
     const filter = params.roleId !== undefined
       ? { FilterBy: "roleId", FilterValue: params.roleId }
@@ -168,7 +171,7 @@ export const adminApi = {
         ...sort,
       },
     });
-    return adaptUserList(data);
+    return adaptUserList(data, params.includeAdmins);
   },
 
   getUser: async (id: string): Promise<AdminUserDetail> => {
