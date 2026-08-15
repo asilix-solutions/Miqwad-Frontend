@@ -173,6 +173,12 @@ export const PERMISSIONS = {
     edit: "addresses.edit",
     delete: "addresses.delete",
   },
+
+  // ── Orders ─────────────────────────────────────────────────────────────────
+  orders: {
+    view: "orders.view",
+    manage: "orders.manage",
+  },
 } as const;
 
 // =============================================================================
