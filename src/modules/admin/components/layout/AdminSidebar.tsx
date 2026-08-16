@@ -21,6 +21,8 @@ import {
   Megaphone,
   MessageSquareWarning,
   TrendingUp,
+  MapPin,
+  ShoppingCart,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -36,6 +38,8 @@ const NAV_ITEMS: NavItem[] = [
   { key: "dashboard", labelPath: "adminNav.dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { key: "providers", labelPath: "adminNav.providers", path: "/admin/providers", icon: ClipboardCheck },
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
+  { key: "addresses", labelPath: "adminNav.addresses", path: "/admin/addresses", icon: MapPin },
+  { key: "orders", labelPath: "adminNav.orders", path: "/admin/orders", icon: ShoppingCart },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
   { key: "taxonomy", labelPath: "adminNav.taxonomy", path: "/admin/taxonomy", icon: Layers },
   { key: "attachments", labelPath: "adminNav.attachments", path: "/admin/attachments", icon: Paperclip },

@@ -40,6 +40,24 @@ export interface NearbyProvider {
   isOpenNow: boolean;
 }
 
+/**
+ * A provider's public offering, as returned by
+ * `GET /api/public/provider-services?FilterBy=providerId&FilterValue={id}`.
+ * Confirmed live contract (Dealer JWT probe): same row shape as the
+ * provider's own `/api/provider-services` — the offering IS a priced
+ * catalog service, so there is no independent categoryName/description/
+ * estimatedDuration on the public side either.
+ */
+export interface PublicProviderService {
+  id: number;
+  providerId: number;
+  serviceId: number;
+  serviceName: string;
+  quantity: number;
+  price: number;
+  notes: string | null;
+}
+
 /** Filters bound to the URL/Redux for the search page. */
 export interface NearbySearchFilters {
   /** Search origin. null → "use my location" once we have it. */

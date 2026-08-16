@@ -20,7 +20,7 @@ interface Props {
 }
 
 export function DeleteProductDialog({ product, open, onOpenChange }: Props) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const toast = useToast();
   const deleteMutation = useDeleteProductMutation();
 
@@ -35,7 +35,7 @@ export function DeleteProductDialog({ product, open, onOpenChange }: Props) {
     }
   };
 
-  const productName = i18n.language === "ar" ? product?.nameAr : product?.nameEn;
+  const productName = product?.serviceName;
 
   return (
     <ProviderDialog

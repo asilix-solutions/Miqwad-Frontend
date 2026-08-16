@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
  */
 export const adminKeys = {
   all: ["admin"] as const,
-  users: (params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) => [...adminKeys.all, "users", params] as const,
+  users: (params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean; includeAdmins?: boolean }) => [...adminKeys.all, "users", params] as const,
   providers: (status?: AdminProviderStatus, type?: ProviderType) =>
     [...adminKeys.all, "providers", status ?? "all", type ?? "all"] as const,
   dashboardStats: () => [...adminKeys.all, "dashboardStats"] as const,
@@ -65,7 +65,7 @@ export function useRevenuesQuery(params?: { source?: import("../types").RevenueS
 }
 
 
-export function useUsersQuery(params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean }) {
+export function useUsersQuery(params: { page: number; pageSize: number; search?: string; roleId?: number; isActive?: boolean; sortBy?: UsersSortField; sortDescending?: boolean; includeAdmins?: boolean }) {
   return useQuery({
     queryKey: adminKeys.users(params),
     queryFn: () => adminApi.getUsers(params),

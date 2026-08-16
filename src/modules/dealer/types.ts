@@ -1,43 +1,40 @@
 /**
  * Dealer module types.
- * 
+ *
  * Represents the contract between the frontend and the future .NET backend.
  */
 
-/** 
- * Dealer sells NEW parts only. 
- * FUTURE: "refurbished" might be added.
+/**
+ * A dealer "product" is a thin wrapper around an admin catalog service —
+ * `GET/POST/PUT/DELETE /api/provider-services`. Picking a service, then
+ * setting price/quantity/notes, IS adding a product; there is no
+ * free-standing name/sku/image/category on the dealer side. `serviceId` is
+ * immutable after create (PUT only accepts quantity/price/notes).
  */
-export type ProductCondition = "new";
-
-export type ProductStatus = "active" | "draft" | "out_of_stock" | "archived";
-
 export interface Product {
   id: string;
-  dealerId: string; // owning dealer (provider id)
-  nameAr: string; 
-  nameEn: string;
-  sku: string;
-  categoryId: string;
+  providerId: string; // owning dealer (provider id) — server-derived from the JWT, never sent on write
+  serviceId: string; // FK into the admin service catalog (GET /api/Services)
+  serviceName: string; // denormalised by the backend for display
+  orderId: string | null; // set once a customer order references this offering
+  quantity: number;
   price: number; // SAR
-  condition: ProductCondition;
-  status: ProductStatus;
-  stockQty: number; // denormalized current stock (source of truth = Inventory)
-  images?: string[];
-  descriptionAr?: string; 
-  descriptionEn?: string;
-  // FUTURE: compatibleVehicles?: string[] // FR-MKT-03 wallet/vehicle compatibility filter
-  createdAt: string; 
-  updatedAt: string;
+  notes?: string;
 }
 
-export interface Inventory {
-  productId: string;
-  dealerId: string;
-  onHand: number;
-  reserved: number; // reserved by open orders
-  // FUTURE: reorderThreshold?: number;
-  updatedAt: string;
+/** A category a catalog service belongs to (denormalised on the service itself). */
+export interface ServiceCategoryRef {
+  id: string;
+  name: string;
+}
+
+/** One `GET /api/Services` entry, adapted for the dealer's service picker. */
+export interface ServiceCatalogItem {
+  id: string;
+  name: string;
+  parentServiceId: string | null;
+  categories: ServiceCategoryRef[];
+  isActive: boolean;
 }
 
 export type OrderStatus = "new" | "preparing" | "shipped" | "delivered" | "cancelled";

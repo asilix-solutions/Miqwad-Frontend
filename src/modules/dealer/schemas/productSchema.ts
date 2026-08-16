@@ -1,20 +1,17 @@
 /**
- * Dealer product schema
+ * @file productSchema.ts
+ * @description Dealer product (provider-service offering) form schema —
+ * pick a service, then set price/quantity/notes. `serviceId` stays in the
+ * schema for both modes so a single form type covers create and edit; the
+ * edit form just never lets the user change it (PUT doesn't accept it).
  */
 import { z } from "zod";
 
 export const productSchema = z.object({
-  nameAr: z.string().min(1, "dealer.products.validation.nameArRequired"),
-  nameEn: z.string().min(1, "dealer.products.validation.nameEnRequired"),
-  sku: z.string().min(1, "dealer.products.validation.skuRequired"),
-  categoryId: z.string().min(1, "dealer.products.validation.categoryL3Required"),
-  price: z.number().positive("dealer.products.validation.pricePositive"),
-  condition: z.enum(["new"]),
-  status: z.enum(["active", "draft", "out_of_stock", "archived"]),
-  stockQty: z.number().int().min(0, "dealer.products.validation.stockNonNegative"),
-  images: z.array(z.string()).optional(),
-  descriptionAr: z.string().optional(),
-  descriptionEn: z.string().optional(),
+  serviceId: z.string().min(1, "dealer.products.validation.serviceRequired"),
+  quantity: z.number().int("dealer.products.validation.quantityMin").min(1, "dealer.products.validation.quantityMin"),
+  price: z.number().min(0, "dealer.products.validation.priceNonNegative"),
+  notes: z.string().max(500, "dealer.products.validation.notesMax").optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

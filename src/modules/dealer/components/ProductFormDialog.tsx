@@ -1,112 +1,87 @@
 /**
  * @file ProductFormDialog.tsx
  *
- * Product create / edit dialog using the provider design system.
- * ProviderDialog shell, ProviderInput / ProviderTextarea / ProviderSelect /
- * ProviderImageUpload replace the old admin-flavoured controls.
- * Category selection uses CategoryCascader (3-level L1→L2→L3) instead of a flat select.
- * Form logic (react-hook-form + zod, mutations, reset-on-open) is unchanged.
+ * Dealer "product" create / edit dialog. A dealer product is a thin wrapper
+ * around the admin service catalog — ADD mode opens the {@link ServicePicker}
+ * to choose a serviceId, then price/quantity/notes; EDIT mode shows the
+ * chosen service read-only (serviceId is immutable after create — PUT only
+ * accepts quantity/price/notes).
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
-import { Tag, Hash, DollarSign, Package } from "lucide-react";
+import { ChevronDown, DollarSign, Hash, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  ProviderDialog,
-  ProviderInput,
-  ProviderTextarea,
-  ProviderSelect,
-  ProviderImageUpload,
-} from "@shared/provider-ui";
-import type { ProviderSelectOption } from "@shared/provider-ui";
-import { CategoryCascader } from "@shared/provider-ui/CategoryCascader";
-import type { ServiceCategory } from "@modules/services/types";
+import { ProviderDialog, ProviderInput, ProviderTextarea } from "@shared/provider-ui";
+import { useDealerProductsQuery } from "../hooks/useDealerQueries";
 import { useCreateProductMutation, useUpdateProductMutation } from "../hooks/useDealerMutations";
 import { productSchema, type ProductFormValues } from "../schemas/productSchema";
-import type { Product } from "../types";
+import type { Product, ServiceCatalogItem } from "../types";
 import { useToast } from "@shared/components/ui/toastContext";
+import { ServicePicker } from "./ServicePicker";
 
 interface Props {
   mode: "create" | "edit";
   product?: Product;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Full flat list of ServiceCategory records for the cascader. */
-  categories: ServiceCategory[];
 }
 
-export function ProductFormDialog({ mode, product, open, onOpenChange, categories }: Props) {
+export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
 
+  const productsQuery = useDealerProductsQuery();
   const createMutation = useCreateProductMutation();
   const updateMutation = useUpdateProductMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedServiceName, setSelectedServiceName] = useState("");
 
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
+    setFocus,
     reset,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: {
-      nameAr: "",
-      nameEn: "",
-      sku: "",
-      categoryId: "",
-      price: 0,
-      stockQty: 0,
-      condition: "new",
-      status: "draft",
-      descriptionAr: "",
-      descriptionEn: "",
-      images: [],
-    },
+    defaultValues: { serviceId: "", quantity: 1, price: 0, notes: "" },
   });
 
-  const categoryId = watch("categoryId");
-  const status = watch("status");
-  const images = watch("images");
-
   useEffect(() => {
-    if (open) {
-      if (mode === "edit" && product) {
-        reset({
-          nameAr: product.nameAr,
-          nameEn: product.nameEn,
-          sku: product.sku,
-          categoryId: product.categoryId,
-          price: product.price,
-          stockQty: product.stockQty,
-          condition: product.condition,
-          status: product.status,
-          descriptionAr: product.descriptionAr || "",
-          descriptionEn: product.descriptionEn || "",
-          images: product.images || [],
-        });
-      } else {
-        reset({
-          nameAr: "",
-          nameEn: "",
-          sku: "",
-          categoryId: "",
-          price: 0,
-          stockQty: 0,
-          condition: "new",
-          status: "active",
-          descriptionAr: "",
-          descriptionEn: "",
-          images: [],
-        });
-      }
+    if (!open) return;
+    if (mode === "edit" && product) {
+      reset({
+        serviceId: product.serviceId,
+        quantity: product.quantity,
+        price: product.price,
+        notes: product.notes ?? "",
+      });
+      setSelectedServiceName(product.serviceName);
+    } else {
+      reset({ serviceId: "", quantity: 1, price: 0, notes: "" });
+      setSelectedServiceName("");
     }
   }, [open, mode, product, reset]);
+
+  // Services already offered — excludes the row being edited so its own service isn't self-disabled.
+  const existingServiceIds = new Set(
+    (productsQuery.data?.items ?? [])
+      .filter((p) => !(mode === "edit" && product && p.id === product.id))
+      .map((p) => p.serviceId),
+  );
+
+  const handleServiceSelect = (service: ServiceCatalogItem) => {
+    setValue("serviceId", service.id, { shouldValidate: true });
+    setSelectedServiceName(service.name);
+    setPickerOpen(false);
+    setFocus("price");
+  };
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
@@ -114,7 +89,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
         await createMutation.mutateAsync(data);
         toast.success(t("common.saved"));
       } else if (mode === "edit" && product) {
-        await updateMutation.mutateAsync({ id: product.id, payload: data });
+        await updateMutation.mutateAsync({ id: product.id, values: data });
         toast.success(t("common.saved"));
       }
       onOpenChange(false);
@@ -123,188 +98,137 @@ export function ProductFormDialog({ mode, product, open, onOpenChange, categorie
     }
   };
 
-  const statusOptions: ProviderSelectOption[] = [
-    { value: "active",       label: t("dealer.status.product.active") },
-    { value: "draft",        label: t("dealer.status.product.draft") },
-    { value: "out_of_stock", label: t("dealer.status.product.out_of_stock") },
-    { value: "archived",     label: t("dealer.status.product.archived") },
-  ];
-
   return (
-    <ProviderDialog
-      open={open}
-      onOpenChange={(val) => !isPending && onOpenChange(val)}
-      blurBackdrop
-      title={
-        mode === "create"
-          ? t("dealer.products.form.createTitle")
-          : t("dealer.products.form.editTitle")
-      }
-      description={
-        mode === "create"
-          ? t("dealer.products.form.createSubtitle")
-          : t("dealer.products.form.editSubtitle")
-      }
-      size="lg"
-      footer={
-        <>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            type="submit"
-            form="product-form"
-            disabled={isPending}
-            className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-          >
-            {isPending ? t("common.loading") : t("common.save")}
-          </Button>
-        </>
-      }
-    >
-      <form
-        id="product-form"
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-5"
-        dir={i18n.dir()}
+    <>
+      <ProviderDialog
+        open={open}
+        onOpenChange={(val) => !isPending && onOpenChange(val)}
+        blurBackdrop
+        title={
+          mode === "create"
+            ? t("dealer.products.form.createTitle")
+            : t("dealer.products.form.editTitle")
+        }
+        description={
+          mode === "create"
+            ? t("dealer.products.form.createSubtitle")
+            : t("dealer.products.form.editSubtitle")
+        }
+        size="md"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="submit"
+              form="product-form"
+              disabled={isPending}
+              className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
+            >
+              {isPending ? t("common.loading") : t("common.save")}
+            </Button>
+          </>
+        }
       >
-        {/* Names row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProviderInput
-            id="nameAr"
-            label={`${t("dealer.products.form.nameAr")} *`}
-            error={errors.nameAr ? t(errors.nameAr.message!) : undefined}
-            leadingIcon={<Tag className="h-4 w-4" aria-hidden />}
-            disabled={isPending}
-            {...register("nameAr")}
-          />
-          <ProviderInput
-            id="nameEn"
-            dir="ltr"
-            label={`${t("dealer.products.form.nameEn")} *`}
-            error={errors.nameEn ? t(errors.nameEn.message!) : undefined}
-            leadingIcon={<Tag className="h-4 w-4" aria-hidden />}
-            className="text-left"
-            disabled={isPending}
-            {...register("nameEn")}
-          />
-        </div>
+        <form
+          id="product-form"
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-5"
+          dir={i18n.dir()}
+        >
+          {/* Service picker trigger */}
+          <div>
+            <p className="mb-1.5 text-sm font-medium text-[var(--color-ink-body)]">
+              {t("dealer.products.form.service")} *
+            </p>
+            <button
+              type="button"
+              disabled={mode === "edit" || isPending}
+              onClick={() => setPickerOpen(true)}
+              className={[
+                "flex h-[var(--size-input-h)] w-full items-center justify-between gap-2 rounded-[var(--radius-md)] border px-3 text-sm transition-colors duration-[var(--dur-fast)]",
+                mode === "edit"
+                  ? "cursor-not-allowed border-[var(--color-divider)] bg-[var(--color-surface-2)]"
+                  : errors.serviceId
+                    ? "border-[var(--color-danger-500)]"
+                    : "border-[var(--color-divider)] bg-[var(--color-surface)] hover:border-[var(--color-brand-orange)]",
+              ].join(" ")}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <Wrench className="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                <span
+                  className={
+                    selectedServiceName
+                      ? "truncate text-[var(--color-ink-body)]"
+                      : "truncate text-[var(--color-muted)]"
+                  }
+                >
+                  {selectedServiceName || t("dealer.products.form.servicePlaceholder")}
+                </span>
+              </span>
+              {mode === "create" && (
+                <ChevronDown className="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+              )}
+            </button>
+            {errors.serviceId && (
+              <p role="alert" className="mt-1 text-xs text-[var(--color-danger-500)]">
+                {t(errors.serviceId.message!)}
+              </p>
+            )}
+          </div>
 
-        {/* SKU row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProviderInput
-            id="sku"
-            dir="ltr"
-            label={`${t("dealer.products.form.sku")} *`}
-            error={errors.sku ? t(errors.sku.message!) : undefined}
-            leadingIcon={<Hash className="h-4 w-4" aria-hidden />}
-            className="text-left"
-            disabled={isPending}
-            {...register("sku")}
-          />
-        </div>
+          {/* Price + Quantity row */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ProviderInput
+              id="price"
+              type="number"
+              step="0.01"
+              dir="ltr"
+              label={`${t("dealer.products.form.price")} (SAR) *`}
+              error={errors.price ? t(errors.price.message!) : undefined}
+              leadingIcon={<DollarSign className="h-4 w-4" aria-hidden />}
+              className="text-left"
+              disabled={isPending}
+              {...register("price", { valueAsNumber: true })}
+            />
+            <ProviderInput
+              id="quantity"
+              type="number"
+              dir="ltr"
+              label={`${t("dealer.products.form.quantity")} *`}
+              error={errors.quantity ? t(errors.quantity.message!) : undefined}
+              leadingIcon={<Hash className="h-4 w-4" aria-hidden />}
+              className="text-left"
+              disabled={isPending}
+              {...register("quantity", { valueAsNumber: true })}
+            />
+          </div>
 
-        {/* Category — three-level cascader (dealer providerType scope) */}
-        {/*
-         * String↔number bridge: Product.categoryId is stored as a string (e.g. "215").
-         * CategoryCascader works with numeric ids internally.
-         * value:    convert stored string → number | null at the cascader boundary.
-         * onChange: convert selected number back → string before storing in form state.
-         * The form's zod schema validates categoryId as a non-empty string; since the
-         * cascader only fires onChange when L3 is chosen, an empty string means no leaf
-         * was selected and validation will fail with categoryL3Required.
-         */}
-        <div>
-          <p className="mb-2 text-sm font-medium text-[var(--color-ink-body)]">
-            {t("dealer.products.form.category")} *
-          </p>
-          <CategoryCascader
-            categories={categories}
-            providerType="dealer"
-            value={categoryId ? Number(categoryId) : null}
-            onChange={(id) => setValue("categoryId", String(id), { shouldValidate: true })}
-            error={errors.categoryId ? t(errors.categoryId.message!) : undefined}
+          {/* Notes */}
+          <ProviderTextarea
+            id="notes"
+            label={`${t("dealer.products.form.notes")} (${t("common.optional")})`}
+            rows={3}
             disabled={isPending}
+            {...register("notes")}
           />
-        </div>
+        </form>
+      </ProviderDialog>
 
-        {/* Price + Stock row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProviderInput
-            id="price"
-            type="number"
-            step="0.01"
-            dir="ltr"
-            label={`${t("dealer.products.form.price")} (SAR) *`}
-            error={errors.price ? t(errors.price.message!) : undefined}
-            leadingIcon={<DollarSign className="h-4 w-4" aria-hidden />}
-            className="text-left"
-            disabled={isPending}
-            {...register("price", { valueAsNumber: true })}
-          />
-          <ProviderInput
-            id="stockQty"
-            type="number"
-            dir="ltr"
-            label={`${t("dealer.products.form.stock")} *`}
-            error={errors.stockQty ? t(errors.stockQty.message!) : undefined}
-            leadingIcon={<Package className="h-4 w-4" aria-hidden />}
-            className="text-left"
-            disabled={isPending}
-            {...register("stockQty", { valueAsNumber: true })}
-          />
-        </div>
-
-        {/* Status row (half-width) */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProviderSelect
-            id="status"
-            label={`${t("dealer.products.form.status")} *`}
-            value={status}
-            onValueChange={(val) =>
-              setValue("status", val as ProductFormValues["status"], { shouldValidate: true })
-            }
-            options={statusOptions}
-            placeholder={t("common.select")}
-            error={errors.status ? t(errors.status.message!) : undefined}
-            disabled={isPending}
-          />
-        </div>
-
-        {/* Image upload */}
-        <ProviderImageUpload
-          label={t("dealer.products.form.images")}
-          dropLabel={t("dealer.products.form.dropImage")}
-          hint={t("dealer.products.form.imageHint")}
-          value={images}
-          onChange={(urls) => setValue("images", urls as string[], { shouldValidate: true })}
-          multiple
-          maxSizeMB={8}
+      {pickerOpen && (
+        <ServicePicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          existingServiceIds={existingServiceIds}
+          onSelect={handleServiceSelect}
         />
-
-        {/* Descriptions */}
-        <ProviderTextarea
-          id="descriptionAr"
-          label={`${t("dealer.products.form.descriptionAr")} (${t("common.optional")})`}
-          rows={3}
-          disabled={isPending}
-          {...register("descriptionAr")}
-        />
-        <ProviderTextarea
-          id="descriptionEn"
-          dir="ltr"
-          label={`${t("dealer.products.form.descriptionEn")} (${t("common.optional")})`}
-          className="text-left"
-          rows={3}
-          disabled={isPending}
-          {...register("descriptionEn")}
-        />
-      </form>
-    </ProviderDialog>
+      )}
+    </>
   );
 }
