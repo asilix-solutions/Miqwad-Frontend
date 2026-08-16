@@ -5,15 +5,32 @@
  * entity exists. Confirmed live contract (Dealer JWT probe, token-stripped):
  *  - Envelope: `{ success, message, data, errors }` on every response.
  *  - `POST/GET/PUT/DELETE /api/provider-services` — the dealer's own
- *    offerings, caller-scoped by the backend from the JWT. `providerId` is
- *    server-derived and must never be sent on write.
+ *    offerings, caller-scoped by the backend from the JWT. `providerId` and
+ *    `orderId` are server-derived and must never be sent on write.
  *  - `GET /api/Services` — the admin-managed service catalog (Dealer-403 on
  *    `/api/Categories` and `/Services/{id}/children`, so this list endpoint
  *    is the only source for the picker).
+ *  - `POST/PUT /api/provider-services` are now **multipart/form-data**
+ *    (2026-08 update): `ServiceId, Quantity, Price, Notes,
+ *    IsCompatibleWith, Files[]`. `Price` must be an integer string — the
+ *    live binder rejects decimal strings under multipart; this is a
+ *    confirmed backend limitation, not a frontend choice. `Files` on PUT is
+ *    additive only — there is no confirmed image-removal path (the
+ *    attachments DELETE returned 401 for the owning dealer), so the UI must
+ *    not offer one.
  */
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { ApiEnvelope } from "@modules/services/lib/categoryAdapter";
+
+/** One image ref on a `ProviderService`, shaped like the confirmed `/api/attachments` DTO. */
+export interface RawProviderServiceAttachment {
+  id: number;
+  originalFileName?: string | null;
+  filePath?: string | null;
+  contentType?: string | null;
+  [key: string]: unknown;
+}
 
 export interface RawProviderService {
   id: number;
@@ -24,6 +41,8 @@ export interface RawProviderService {
   quantity: number;
   price: number;
   notes: string | null;
+  isCompatibleWith?: string | null;
+  attachments?: RawProviderServiceAttachment[] | null;
 }
 
 export interface RawServiceCategoryRef {
@@ -52,17 +71,38 @@ export interface ProviderServiceCreateInput {
   quantity: number;
   price: number;
   notes?: string;
+  isCompatibleWith?: string;
+  files?: File[];
 }
 
 export interface ProviderServiceUpdateInput {
   quantity: number;
   price: number;
   notes?: string;
+  isCompatibleWith?: string;
+  /** Additive only — appended to whatever images the row already has. */
+  files?: File[];
 }
 
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
   if (!envelope.success) throw new Error(envelope.message || "Request failed");
   return envelope.data;
+}
+
+/** Builds the shared multipart body for create/update — `serviceId` only present on create. */
+function buildProviderServiceForm(
+  input: ProviderServiceCreateInput | ProviderServiceUpdateInput,
+  serviceId?: number,
+): FormData {
+  const form = new FormData();
+  if (serviceId != null) form.append("ServiceId", String(serviceId));
+  form.append("Quantity", String(input.quantity));
+  // Confirmed live: the multipart binder rejects non-integer Price strings.
+  form.append("Price", String(Math.round(input.price)));
+  if (input.notes) form.append("Notes", input.notes);
+  if (input.isCompatibleWith) form.append("IsCompatibleWith", input.isCompatibleWith);
+  for (const file of input.files ?? []) form.append("Files", file);
+  return form;
 }
 
 /**
@@ -105,12 +145,18 @@ export const providerServicesApi = {
   },
 
   create: async (input: ProviderServiceCreateInput): Promise<RawProviderService> => {
-    const { data } = await apiClient.post<ApiEnvelope<RawProviderService>>("/provider-services", input);
+    const form = buildProviderServiceForm(input, input.serviceId);
+    const { data } = await apiClient.post<ApiEnvelope<RawProviderService>>("/provider-services", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return unwrap(data);
   },
 
   update: async (id: number, input: ProviderServiceUpdateInput): Promise<RawProviderService> => {
-    const { data } = await apiClient.put<ApiEnvelope<RawProviderService>>(`/provider-services/${id}`, input);
+    const form = buildProviderServiceForm(input);
+    const { data } = await apiClient.put<ApiEnvelope<RawProviderService>>(`/provider-services/${id}`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return unwrap(data);
   },
 

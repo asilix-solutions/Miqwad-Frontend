@@ -20,6 +20,8 @@ export interface Product {
   quantity: number;
   price: number; // SAR
   notes?: string;
+  isCompatibleWith?: string; // free-text vehicle compatibility note, raw passthrough
+  images: string[]; // attachment URLs — add-only on update, no confirmed removal path
 }
 
 /** A category a catalog service belongs to (denormalised on the service itself). */

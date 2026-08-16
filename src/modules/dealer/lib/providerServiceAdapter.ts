@@ -8,12 +8,19 @@
  */
 import type {
   RawProviderService,
+  RawProviderServiceAttachment,
   RawServiceCatalogItem,
   ProviderServiceCreateInput,
   ProviderServiceUpdateInput,
 } from "../api/providerServicesApi";
 import type { Product, ServiceCatalogItem } from "../types";
 import type { ProductFormValues } from "../schemas/productSchema";
+
+/** Pulls a usable image URL off one raw attachment ref — null-tolerant, never throws. */
+function adaptAttachmentUrl(raw: RawProviderServiceAttachment): string | null {
+  const url = raw?.filePath ?? (raw?.["url"] as string | undefined) ?? (raw?.["fileUrl"] as string | undefined);
+  return typeof url === "string" && url ? url : null;
+}
 
 /** Adapts one raw `/api/provider-services` row into the dealer's `Product` shape. */
 export function adaptProviderService(raw: RawProviderService): Product {
@@ -26,6 +33,10 @@ export function adaptProviderService(raw: RawProviderService): Product {
     quantity: raw?.quantity ?? 0,
     price: raw?.price ?? 0,
     notes: raw?.notes ?? undefined,
+    isCompatibleWith: raw?.isCompatibleWith ?? undefined,
+    images: Array.isArray(raw?.attachments)
+      ? raw.attachments.map(adaptAttachmentUrl).filter((url): url is string => url !== null)
+      : [],
   };
 }
 
@@ -36,6 +47,8 @@ export function adaptToCreatePayload(values: ProductFormValues): ProviderService
     quantity: values.quantity,
     price: values.price,
     notes: values.notes || undefined,
+    isCompatibleWith: values.isCompatibleWith || undefined,
+    files: values.files,
   };
 }
 
@@ -45,6 +58,8 @@ export function adaptToUpdatePayload(values: Omit<ProductFormValues, "serviceId"
     quantity: values.quantity,
     price: values.price,
     notes: values.notes || undefined,
+    isCompatibleWith: values.isCompatibleWith || undefined,
+    files: values.files,
   };
 }
 
