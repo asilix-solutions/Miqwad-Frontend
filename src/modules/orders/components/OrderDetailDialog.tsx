@@ -2,8 +2,10 @@
  * @file OrderDetailDialog.tsx
  * @description Read-only order detail view, fetched fresh via GET /{id}
  * rather than reusing the list row (so status/tracking reflect the latest
- * state even if the list is stale).
+ * state even if the list is stale). Status is shown as the same colored
+ * badge used in the list for visual consistency.
  */
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Dialog,
@@ -14,7 +16,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@shared/lib/formatDate";
 import { useOrder } from "../hooks/useOrdersQueries";
-import { orderStatusToI18nKey, orderTypeToI18nKey, paymentMethodToI18nKey } from "../lib/orderEnums";
+import { orderTypeToI18nKey, paymentMethodToI18nKey } from "../lib/orderEnums";
+import { OrderStatusBadge } from "./OrderStatusBadge";
 
 interface Props {
   orderId: string | null;
@@ -26,12 +29,12 @@ export function OrderDetailDialog({ orderId, open, onOpenChange }: Props) {
   const { t, i18n } = useTranslation();
   const q = useOrder(orderId ?? "");
 
-  const rows: { label: string; value: string }[] = q.data
+  const rows: { label: string; value: ReactNode }[] = q.data
     ? [
         { label: t("orders.columns.trackNumber"), value: q.data.trackNumber || "—" },
         { label: t("orders.columns.userFullName"), value: q.data.userFullName || "—" },
         { label: t("orders.columns.type"), value: t(orderTypeToI18nKey(q.data.type)) },
-        { label: t("orders.columns.status"), value: t(orderStatusToI18nKey(q.data.status)) },
+        { label: t("orders.columns.status"), value: <OrderStatusBadge status={q.data.status} /> },
         { label: t("orders.columns.paymentMethod"), value: t(paymentMethodToI18nKey(q.data.paymentMethod)) },
         { label: t("orders.columns.createdAt"), value: formatDate(q.data.createdAt, i18n.language) },
       ]

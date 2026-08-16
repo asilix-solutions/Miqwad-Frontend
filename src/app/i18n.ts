@@ -948,6 +948,24 @@ const ar = {
       paymentMethod: "طريقة الدفع",
       trackNumber: "رقم التتبع",
     },
+    stats: {
+      total: "الإجمالي",
+    },
+    filters: {
+      searchPlaceholder: "بحث برقم التتبع...",
+      allStatuses: "كل الحالات",
+      allTypes: "كل الأنواع",
+      fromDate: "من تاريخ",
+      toDate: "إلى تاريخ",
+      dateTo: "إلى",
+      sortByCreatedAt: "تاريخ الإنشاء",
+      sortByStatus: "الحالة",
+      sort: {
+        desc: "الأحدث أولاً",
+        asc: "الأقدم أولاً",
+      },
+      clear: "مسح الفلاتر",
+    },
     status: {
       InWaiting: "قيد الانتظار",
       Ready: "جاهز",
@@ -3374,6 +3392,24 @@ const en: typeof ar = {
       type: "Type",
       paymentMethod: "Payment Method",
       trackNumber: "Track Number",
+    },
+    stats: {
+      total: "Total",
+    },
+    filters: {
+      searchPlaceholder: "Search by track number...",
+      allStatuses: "All Statuses",
+      allTypes: "All Types",
+      fromDate: "From date",
+      toDate: "To date",
+      dateTo: "to",
+      sortByCreatedAt: "Created At",
+      sortByStatus: "Status",
+      sort: {
+        desc: "Newest first",
+        asc: "Oldest first",
+      },
+      clear: "Clear filters",
     },
     status: {
       InWaiting: "In Waiting",
