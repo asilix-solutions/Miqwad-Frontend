@@ -1,11 +1,20 @@
 /**
  * @file OrdersPage.tsx
- * @description Admin Orders list page — Phase 1 (functional plain
- * DataTable, no colored badges/advanced filters — that's Phase 2). Supports
- * view (GET /{id}), update (PUT), delete. No create — orders are created by
- * customers, not admins.
+ * @description Admin Orders list page — Phase 2 visual polish + management
+ * UX: colored status badges, a light stats strip, a filter + sort toolbar,
+ * and pagination. Supports view (GET /{id}), update (PUT), delete. No
+ * create — orders are created by customers, not admins.
+ *
+ * LIVE-CONFIRMED against GET /api/Orders: FilterBy only accepts
+ * "trackNumber" — any other FilterBy value (status/type/userId/...) returns
+ * HTTP 400, which previously made the whole query fail whenever a status or
+ * type filter was active. So only search reaches the server as
+ * FilterBy=trackNumber; the date range (DateFilterBy=createdAt/FromDate/
+ * ToDate) is a separate, combinable pair that works standalone. Status
+ * (via the stats strip) and type (via the dropdown) are applied
+ * client-side on the fetched page, same as the existing stats-strip counts.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, Pencil, PackageOpen, RotateCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,12 +27,16 @@ import {
 import { DataTable, type DataTableColumn } from "@shared/components/DataTable";
 import { Can } from "@shared/auth/Can";
 import { useOrdersList } from "../hooks/useOrdersQueries";
-import type { Order } from "../types";
-import { orderStatusToI18nKey, orderTypeToI18nKey, paymentMethodToI18nKey } from "../lib/orderEnums";
+import type { Order, OrderStatus, OrderType } from "../types";
+import { paymentMethodToI18nKey } from "../lib/orderEnums";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import { OrderDetailDialog } from "../components/OrderDetailDialog";
 import { OrderUpdateDialog } from "../components/OrderUpdateDialog";
 import { OrderDeleteDialog } from "../components/OrderDeleteDialog";
+import { OrderStatusBadge } from "../components/OrderStatusBadge";
+import { OrderTypeBadge } from "../components/OrderTypeBadge";
+import { OrderStatsStrip } from "../components/OrderStatsStrip";
+import { OrderFilters, type OrderSortBy } from "../components/OrderFilters";
 
 const PAGE_SIZE = 20;
 
@@ -32,14 +45,50 @@ export function OrdersPage() {
 
   const [pageNumber, setPageNumber] = useState(1);
 
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<OrderStatus | "all">("all");
+  const [type, setType] = useState<OrderType | "all">("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [sortBy, setSortBy] = useState<OrderSortBy>("createdAt");
+  const [sortDescending, setSortDescending] = useState(true);
+
+  useEffect(() => {
+    setPageNumber(1);
+  }, [search, status, type, fromDate, toDate, sortBy, sortDescending]);
+
+  // Only "trackNumber" is a valid FilterBy value server-side; status/type
+  // are filtered client-side below (see file header).
+  const trimmedSearch = search.trim();
+  const filterBy = trimmedSearch ? "trackNumber" : undefined;
+  const filterValue = trimmedSearch || undefined;
+
   const q = useOrdersList({
     pageNumber,
     pageSize: PAGE_SIZE,
-    sortBy: "createdAt",
-    sortDescending: true,
+    sortBy,
+    sortDescending,
+    filterBy,
+    filterValue,
+    dateFilterBy: fromDate || toDate ? "createdAt" : undefined,
+    fromDate: fromDate || undefined,
+    toDate: toDate || undefined,
   });
-  const items = q.data?.items ?? [];
+  const fetchedItems = q.data?.items ?? [];
   const totalPages = q.data?.totalPages ?? 1;
+
+  const typeFilteredItems = type === "all" ? fetchedItems : fetchedItems.filter((o) => o.type === type);
+  const items = status === "all" ? typeFilteredItems : typeFilteredItems.filter((o) => o.status === status);
+
+  const hasActiveFilters = Boolean(trimmedSearch || status !== "all" || type !== "all" || fromDate || toDate);
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatus("all");
+    setType("all");
+    setFromDate("");
+    setToDate("");
+  };
 
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -68,8 +117,8 @@ export function OrdersPage() {
   const columns: DataTableColumn<Order>[] = [
     { key: "trackNumber", header: t("orders.columns.trackNumber"), render: (row) => row.trackNumber || "—" },
     { key: "userFullName", header: t("orders.columns.userFullName") },
-    { key: "type", header: t("orders.columns.type"), render: (row) => t(orderTypeToI18nKey(row.type)) },
-    { key: "status", header: t("orders.columns.status"), render: (row) => t(orderStatusToI18nKey(row.status)) },
+    { key: "type", header: t("orders.columns.type"), render: (row) => <OrderTypeBadge type={row.type} /> },
+    { key: "status", header: t("orders.columns.status"), render: (row) => <OrderStatusBadge status={row.status} /> },
     {
       key: "paymentMethod",
       header: t("orders.columns.paymentMethod"),
@@ -134,6 +183,29 @@ export function OrdersPage() {
           </Button>
         )}
       </div>
+
+      <OrderStatsStrip
+        items={typeFilteredItems}
+        activeStatus={status}
+        onStatusClick={(s) => setStatus(s)}
+      />
+
+      <OrderFilters
+        search={search}
+        onSearchChange={setSearch}
+        type={type}
+        onTypeChange={setType}
+        fromDate={fromDate}
+        onFromDateChange={setFromDate}
+        toDate={toDate}
+        onToDateChange={setToDate}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        sortDescending={sortDescending}
+        onSortDescendingChange={setSortDescending}
+        onClear={clearFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       <DataTable<Order>
         columns={columns}
