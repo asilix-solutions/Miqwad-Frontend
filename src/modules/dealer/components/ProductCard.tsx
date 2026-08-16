@@ -65,16 +65,24 @@ export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: P
         }}
       >
         <div
-          className="flex aspect-[4/3] w-full items-center justify-center rounded-t-[var(--radius-lg)] bg-[var(--color-surface-2)]"
+          className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-t-[var(--radius-lg)] bg-[var(--color-surface-2)]"
           aria-hidden
         >
-          <Wrench className="h-10 w-10 text-[var(--color-muted)]" />
+          {product.images[0] ? (
+            <img src={product.images[0]} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Wrench className="h-10 w-10 text-[var(--color-muted)]" />
+          )}
         </div>
 
         <div className="flex flex-col gap-2 p-4">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-[var(--color-ink-body)]">
             {product.serviceName}
           </h3>
+
+          {product.isCompatibleWith && (
+            <p className="line-clamp-1 text-xs text-[var(--color-muted)]">{product.isCompatibleWith}</p>
+          )}
 
           <span className="tabular-nums text-base font-semibold text-[var(--color-brand-orange)]">
             {formatCurrency(product.price)}

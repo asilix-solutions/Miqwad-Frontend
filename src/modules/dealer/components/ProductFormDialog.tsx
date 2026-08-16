@@ -21,6 +21,7 @@ import { productSchema, type ProductFormValues } from "../schemas/productSchema"
 import type { Product, ServiceCatalogItem } from "../types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { ServicePicker } from "./ServicePicker";
+import { ProductImagesPicker } from "./ProductImagesPicker";
 
 interface Props {
   mode: "create" | "edit";
@@ -47,11 +48,14 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
     setValue,
     setFocus,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: { serviceId: "", quantity: 1, price: 0, notes: "" },
+    defaultValues: { serviceId: "", quantity: 1, price: 0, notes: "", isCompatibleWith: "", files: [] },
   });
+
+  const files = watch("files") ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -61,10 +65,12 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
         quantity: product.quantity,
         price: product.price,
         notes: product.notes ?? "",
+        isCompatibleWith: product.isCompatibleWith ?? "",
+        files: [],
       });
       setSelectedServiceName(product.serviceName);
     } else {
-      reset({ serviceId: "", quantity: 1, price: 0, notes: "" });
+      reset({ serviceId: "", quantity: 1, price: 0, notes: "", isCompatibleWith: "", files: [] });
       setSelectedServiceName("");
     }
   }, [open, mode, product, reset]);
@@ -188,7 +194,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
             <ProviderInput
               id="price"
               type="number"
-              step="0.01"
+              step="1"
               dir="ltr"
               label={`${t("dealer.products.form.price")} (SAR) *`}
               error={errors.price ? t(errors.price.message!) : undefined}
@@ -209,6 +215,25 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
               {...register("quantity", { valueAsNumber: true })}
             />
           </div>
+
+          {/* Vehicle compatibility */}
+          <ProviderInput
+            id="isCompatibleWith"
+            label={`${t("dealer.products.form.isCompatibleWith")} (${t("common.optional")})`}
+            placeholder={t("dealer.products.form.isCompatibleWithPlaceholder")}
+            hint={t("dealer.products.form.isCompatibleWithHint")}
+            error={errors.isCompatibleWith ? t(errors.isCompatibleWith.message!) : undefined}
+            disabled={isPending}
+            {...register("isCompatibleWith")}
+          />
+
+          {/* Images */}
+          <ProductImagesPicker
+            existingImages={mode === "edit" && product ? product.images : []}
+            files={files}
+            onFilesChange={(next) => setValue("files", next, { shouldValidate: true })}
+            disabled={isPending}
+          />
 
           {/* Notes */}
           <ProviderTextarea

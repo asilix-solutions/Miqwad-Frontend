@@ -10,8 +10,14 @@ import { z } from "zod";
 export const productSchema = z.object({
   serviceId: z.string().min(1, "dealer.products.validation.serviceRequired"),
   quantity: z.number().int("dealer.products.validation.quantityMin").min(1, "dealer.products.validation.quantityMin"),
-  price: z.number().min(0, "dealer.products.validation.priceNonNegative"),
+  // Whole numbers only — the live multipart binder rejects decimal Price strings (confirmed backend limitation).
+  price: z
+    .number()
+    .int("dealer.products.validation.priceInteger")
+    .min(0, "dealer.products.validation.priceNonNegative"),
   notes: z.string().max(500, "dealer.products.validation.notesMax").optional(),
+  isCompatibleWith: z.string().max(300, "dealer.products.validation.compatibilityMax").optional(),
+  files: z.array(z.instanceof(File)).optional(),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;

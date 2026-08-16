@@ -78,15 +78,43 @@ export function ProductDetailDialog({
         {/* Icon + service name */}
         <div className="flex items-center gap-3">
           <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)]"
+            className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface-2)]"
             aria-hidden
           >
-            <Wrench className="h-6 w-6 text-[var(--color-muted)]" />
+            {product.images[0] ? (
+              <img src={product.images[0]} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <Wrench className="h-6 w-6 text-[var(--color-muted)]" />
+            )}
           </div>
           <h2 className="text-lg font-semibold leading-snug text-[var(--color-ink-body)]">
             {product.serviceName}
           </h2>
         </div>
+
+        {/* Image gallery — read-only, no removal path (backend limitation) */}
+        {product.images.length > 1 && (
+          <div className="flex flex-wrap gap-2">
+            {product.images.map((url) => (
+              <div
+                key={url}
+                className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-2)]"
+              >
+                <img src={url} alt="" className="h-full w-full object-cover" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Vehicle compatibility */}
+        {product.isCompatibleWith && (
+          <p className="text-sm text-[var(--color-muted)]">
+            <span className="font-medium text-[var(--color-ink-body)]">
+              {t("dealer.products.form.isCompatibleWith")}:{" "}
+            </span>
+            {product.isCompatibleWith}
+          </p>
+        )}
 
         {/* Price — prominent */}
         <span className="tabular-nums text-2xl font-bold text-[var(--color-brand-orange)]">
