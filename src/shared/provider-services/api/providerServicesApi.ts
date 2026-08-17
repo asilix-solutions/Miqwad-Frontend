@@ -1,27 +1,34 @@
 /**
  * @file providerServicesApi.ts
- * @description Transport layer for the dealer "products" flow, which is a
+ * @description Transport layer for the provider "offerings" flow, which is a
  * thin wrapper around the admin service catalog — no free-standing product
- * entity exists. Confirmed live contract (Dealer JWT probe, token-stripped):
+ * entity exists. Shared by every provider type (dealer, scrap, ...) — the
+ * contract is caller-scoped by the JWT, identical byte-for-byte regardless
+ * of provider role. Confirmed live contract (token-stripped probe):
  *  - Envelope: `{ success, message, data, errors }` on every response.
- *  - `POST/GET/PUT/DELETE /api/provider-services` — the dealer's own
+ *  - `POST/GET/PUT/DELETE /api/provider-services` — the caller's own
  *    offerings, caller-scoped by the backend from the JWT. `providerId` and
  *    `orderId` are server-derived and must never be sent on write.
- *  - `GET /api/Services` — the admin-managed service catalog (Dealer-403 on
- *    `/api/Categories` and `/Services/{id}/children`, so this list endpoint
- *    is the only source for the picker).
- *  - `POST/PUT /api/provider-services` are now **multipart/form-data**
- *    (2026-08 update): `ServiceId, Quantity, Price, Notes,
- *    IsCompatibleWith, Files[]`. `Price` must be an integer string — the
- *    live binder rejects decimal strings under multipart; this is a
- *    confirmed backend limitation, not a frontend choice. `Files` on PUT is
- *    additive only — there is no confirmed image-removal path (the
- *    attachments DELETE returned 401 for the owning dealer), so the UI must
- *    not offer one.
+ *  - `GET /api/Services` — the admin-managed service catalog (non-admin
+ *    tokens get 403 on `/api/Categories` and `/Services/{id}/children`, so
+ *    this list endpoint is the only source for the picker).
+ *  - `POST/PUT /api/provider-services` are **multipart/form-data**:
+ *    `ServiceId, Quantity, Price, Notes, IsCompatibleWith, Files[]`.
+ *    `Price` must be an integer string — the live binder rejects decimal
+ *    strings under multipart; this is a confirmed backend limitation, not a
+ *    frontend choice. `Files` on PUT is additive only — there is no
+ *    confirmed image-removal path, so the UI must not offer one.
  */
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { ApiEnvelope } from "@modules/services/lib/categoryAdapter";
+
+/** Generic `{ success, message, data, errors }` envelope every endpoint returns. */
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  errors: unknown;
+}
 
 /** One image ref on a `ProviderService`, shaped like the confirmed `/api/attachments` DTO. */
 export interface RawProviderServiceAttachment {
