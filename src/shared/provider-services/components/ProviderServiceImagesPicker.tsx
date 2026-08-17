@@ -1,11 +1,12 @@
 /**
- * @file ProductImagesPicker.tsx
+ * @file ProviderServiceImagesPicker.tsx
  *
- * Multi-image picker for the product form. Shows existing image thumbnails
- * (read-only — the backend has no confirmed image-removal path, so there is
- * no remove control on them) alongside newly picked files, which CAN be
- * removed before submit. Selecting more files always appends (additive on
- * PUT, matches the confirmed backend contract).
+ * Multi-image picker for the provider-service form, shared by every
+ * provider type. Shows existing image thumbnails (read-only — the backend
+ * has no confirmed image-removal path, so there is no remove control on
+ * them) alongside newly picked files, which CAN be removed before submit.
+ * Selecting more files always appends (additive on PUT, matches the
+ * confirmed backend contract).
  */
 
 import { useEffect, useMemo, useRef } from "react";
@@ -22,7 +23,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export function ProductImagesPicker({ existingImages, files, onFilesChange, disabled }: Props) {
+export function ProviderServiceImagesPicker({ existingImages, files, onFilesChange, disabled }: Props) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -43,7 +44,7 @@ export function ProductImagesPicker({ existingImages, files, onFilesChange, disa
   return (
     <div>
       <p className="mb-1.5 text-sm font-medium text-[var(--color-ink-body)]">
-        {t("dealer.products.form.images")}
+        {t("providerService.imagesPicker.images")}
       </p>
 
       <div className="flex flex-wrap gap-3">
@@ -85,20 +86,20 @@ export function ProductImagesPicker({ existingImages, files, onFilesChange, disa
           )}
         >
           <ImagePlus className="h-5 w-5" aria-hidden />
-          <span className="text-[10px]">{t("dealer.products.form.addImage")}</span>
+          <span className="text-[10px]">{t("providerService.imagesPicker.addImage")}</span>
         </button>
 
         {existingImages.length === 0 && files.length === 0 && (
           <div className="flex h-20 items-center gap-2 px-2 text-xs text-[var(--color-muted)]">
             <ImageIcon className="h-4 w-4 shrink-0" aria-hidden />
-            {t("dealer.products.form.imagesEmpty")}
+            {t("providerService.imagesPicker.imagesEmpty")}
           </div>
         )}
       </div>
 
       {existingImages.length > 0 && (
         <p className="mt-1.5 text-xs text-[var(--color-muted)]">
-          {t("dealer.products.form.imagesAddOnlyNote")}
+          {t("providerService.imagesPicker.imagesAddOnlyNote")}
         </p>
       )}
 

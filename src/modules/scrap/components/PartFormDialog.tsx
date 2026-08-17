@@ -1,8 +1,8 @@
 /**
- * @file ProductFormDialog.tsx
+ * @file PartFormDialog.tsx
  *
- * Dealer "product" create / edit dialog. A dealer product is a thin wrapper
- * around the admin service catalog — ADD mode opens the {@link ServicePicker}
+ * Scrap "part" create / edit dialog. A scrap part is a thin wrapper around
+ * the admin service catalog — ADD mode opens the {@link PartServicePicker}
  * to choose a serviceId, then price/quantity/notes; EDIT mode shows the
  * chosen service read-only (serviceId is immutable after create — PUT only
  * accepts quantity/price/notes).
@@ -15,28 +15,31 @@ import { useTranslation } from "react-i18next";
 import { ChevronDown, DollarSign, Hash, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProviderDialog, ProviderInput, ProviderTextarea } from "@shared/provider-ui";
-import { useDealerProductsQuery } from "../hooks/useDealerQueries";
-import { useCreateProductMutation, useUpdateProductMutation } from "../hooks/useDealerMutations";
-import { productSchema, type ProductFormValues } from "../schemas/productSchema";
-import type { Product, ServiceCatalogItem } from "../types";
+import {
+  providerServiceSchema as partSchema,
+  ProviderServiceImagesPicker,
+  type ProviderServiceFormValues as PartFormValues,
+  type ProviderService,
+  type ServiceCatalogItem,
+} from "@shared/provider-services";
+import { useScrapPartsQuery, useCreateScrapPartMutation, useUpdateScrapPartMutation } from "../hooks/useScrapPartsQueries";
 import { useToast } from "@shared/components/ui/toastContext";
-import { ServicePicker } from "./ServicePicker";
-import { ProviderServiceImagesPicker } from "@shared/provider-services";
+import { PartServicePicker } from "./PartServicePicker";
 
 interface Props {
   mode: "create" | "edit";
-  product?: Product;
+  part?: ProviderService;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) {
+export function PartFormDialog({ mode, part, open, onOpenChange }: Props) {
   const { t, i18n } = useTranslation();
   const toast = useToast();
 
-  const productsQuery = useDealerProductsQuery();
-  const createMutation = useCreateProductMutation();
-  const updateMutation = useUpdateProductMutation();
+  const partsQuery = useScrapPartsQuery();
+  const createMutation = useCreateScrapPartMutation();
+  const updateMutation = useUpdateScrapPartMutation();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -50,8 +53,8 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
     reset,
     watch,
     formState: { errors },
-  } = useForm<ProductFormValues>({
-    resolver: zodResolver(productSchema),
+  } = useForm<PartFormValues>({
+    resolver: zodResolver(partSchema),
     defaultValues: { serviceId: "", quantity: 1, price: 0, notes: "", isCompatibleWith: "", files: [] },
   });
 
@@ -59,26 +62,26 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
 
   useEffect(() => {
     if (!open) return;
-    if (mode === "edit" && product) {
+    if (mode === "edit" && part) {
       reset({
-        serviceId: product.serviceId,
-        quantity: product.quantity,
-        price: product.price,
-        notes: product.notes ?? "",
-        isCompatibleWith: product.isCompatibleWith ?? "",
+        serviceId: part.serviceId,
+        quantity: part.quantity,
+        price: part.price,
+        notes: part.notes ?? "",
+        isCompatibleWith: part.isCompatibleWith ?? "",
         files: [],
       });
-      setSelectedServiceName(product.serviceName);
+      setSelectedServiceName(part.serviceName);
     } else {
       reset({ serviceId: "", quantity: 1, price: 0, notes: "", isCompatibleWith: "", files: [] });
       setSelectedServiceName("");
     }
-  }, [open, mode, product, reset]);
+  }, [open, mode, part, reset]);
 
   // Services already offered — excludes the row being edited so its own service isn't self-disabled.
   const existingServiceIds = new Set(
-    (productsQuery.data?.items ?? [])
-      .filter((p) => !(mode === "edit" && product && p.id === product.id))
+    (partsQuery.data?.items ?? [])
+      .filter((p) => !(mode === "edit" && part && p.id === part.id))
       .map((p) => p.serviceId),
   );
 
@@ -89,13 +92,13 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
     setFocus("price");
   };
 
-  const onSubmit = async (data: ProductFormValues) => {
+  const onSubmit = async (data: PartFormValues) => {
     try {
       if (mode === "create") {
         await createMutation.mutateAsync(data);
         toast.success(t("common.saved"));
-      } else if (mode === "edit" && product) {
-        await updateMutation.mutateAsync({ id: product.id, values: data });
+      } else if (mode === "edit" && part) {
+        await updateMutation.mutateAsync({ id: part.id, values: data });
         toast.success(t("common.saved"));
       }
       onOpenChange(false);
@@ -111,14 +114,10 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
         onOpenChange={(val) => !isPending && onOpenChange(val)}
         blurBackdrop
         title={
-          mode === "create"
-            ? t("dealer.products.form.createTitle")
-            : t("dealer.products.form.editTitle")
+          mode === "create" ? t("scrap.parts.form.createTitle") : t("scrap.parts.form.editTitle")
         }
         description={
-          mode === "create"
-            ? t("dealer.products.form.createSubtitle")
-            : t("dealer.products.form.editSubtitle")
+          mode === "create" ? t("scrap.parts.form.createSubtitle") : t("scrap.parts.form.editSubtitle")
         }
         size="md"
         footer={
@@ -133,7 +132,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
             </Button>
             <Button
               type="submit"
-              form="product-form"
+              form="part-form"
               disabled={isPending}
               className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
             >
@@ -143,7 +142,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
         }
       >
         <form
-          id="product-form"
+          id="part-form"
           onSubmit={handleSubmit(onSubmit)}
           className="space-y-5"
           dir={i18n.dir()}
@@ -151,7 +150,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
           {/* Service picker trigger */}
           <div>
             <p className="mb-1.5 text-sm font-medium text-[var(--color-ink-body)]">
-              {t("dealer.products.form.service")} *
+              {t("scrap.parts.form.service")} *
             </p>
             <button
               type="button"
@@ -175,7 +174,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
                       : "truncate text-[var(--color-muted)]"
                   }
                 >
-                  {selectedServiceName || t("dealer.products.form.servicePlaceholder")}
+                  {selectedServiceName || t("scrap.parts.form.servicePlaceholder")}
                 </span>
               </span>
               {mode === "create" && (
@@ -196,7 +195,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
               type="number"
               step="1"
               dir="ltr"
-              label={`${t("dealer.products.form.price")} (SAR) *`}
+              label={`${t("scrap.parts.form.price")} (SAR) *`}
               error={errors.price ? t(errors.price.message!) : undefined}
               leadingIcon={<DollarSign className="h-4 w-4" aria-hidden />}
               className="text-left"
@@ -207,7 +206,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
               id="quantity"
               type="number"
               dir="ltr"
-              label={`${t("dealer.products.form.quantity")} *`}
+              label={`${t("scrap.parts.form.quantity")} *`}
               error={errors.quantity ? t(errors.quantity.message!) : undefined}
               leadingIcon={<Hash className="h-4 w-4" aria-hidden />}
               className="text-left"
@@ -219,9 +218,9 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
           {/* Vehicle compatibility */}
           <ProviderInput
             id="isCompatibleWith"
-            label={`${t("dealer.products.form.isCompatibleWith")} (${t("common.optional")})`}
-            placeholder={t("dealer.products.form.isCompatibleWithPlaceholder")}
-            hint={t("dealer.products.form.isCompatibleWithHint")}
+            label={`${t("scrap.parts.form.isCompatibleWith")} (${t("common.optional")})`}
+            placeholder={t("scrap.parts.form.isCompatibleWithPlaceholder")}
+            hint={t("scrap.parts.form.isCompatibleWithHint")}
             error={errors.isCompatibleWith ? t(errors.isCompatibleWith.message!) : undefined}
             disabled={isPending}
             {...register("isCompatibleWith")}
@@ -229,7 +228,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
 
           {/* Images */}
           <ProviderServiceImagesPicker
-            existingImages={mode === "edit" && product ? product.images : []}
+            existingImages={mode === "edit" && part ? part.images : []}
             files={files}
             onFilesChange={(next) => setValue("files", next, { shouldValidate: true })}
             disabled={isPending}
@@ -238,7 +237,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
           {/* Notes */}
           <ProviderTextarea
             id="notes"
-            label={`${t("dealer.products.form.notes")} (${t("common.optional")})`}
+            label={`${t("scrap.parts.form.notes")} (${t("common.optional")})`}
             rows={3}
             disabled={isPending}
             {...register("notes")}
@@ -247,7 +246,7 @@ export function ProductFormDialog({ mode, product, open, onOpenChange }: Props) 
       </ProviderDialog>
 
       {pickerOpen && (
-        <ServicePicker
+        <PartServicePicker
           open={pickerOpen}
           onOpenChange={setPickerOpen}
           existingServiceIds={existingServiceIds}

@@ -3,8 +3,7 @@
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { dealerApi } from "../api/dealerApi";
-import { providerServicesApi } from "../api/providerServicesApi";
-import { adaptToCreatePayload, adaptToUpdatePayload } from "../lib/providerServiceAdapter";
+import { providerServicesApi, adaptToCreatePayload, adaptToUpdatePayload } from "@shared/provider-services";
 import { dealerKeys } from "./useDealerQueries";
 import type { OrderStatus, ShipmentStatus } from "../types";
 import type { ProductFormValues } from "../schemas/productSchema";

@@ -709,6 +709,15 @@ export const router = createBrowserRouter([
                         },
                       },
                       {
+                        path: "parts",
+                        async lazy() {
+                          const { ScrapPartsPage } = await import(
+                            "@modules/scrap/pages/ScrapPartsPage"
+                          );
+                          return { Component: ScrapPartsPage };
+                        },
+                      },
+                      {
                         path: "conversations",
                         async lazy() {
                           const { ScrapConversationsPage } = await import(
