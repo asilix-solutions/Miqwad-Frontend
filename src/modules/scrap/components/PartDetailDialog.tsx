@@ -1,11 +1,12 @@
 /**
- * @file ProductDetailDialog.tsx
+ * @file PartDetailDialog.tsx
  *
- * Product detail dialog with blurred backdrop. Displays the offered
- * service, price, quantity and notes, and exposes Edit / Delete actions.
+ * Part detail dialog with blurred backdrop. Displays the offered service,
+ * price, quantity, notes and image gallery, and exposes Edit / Delete
+ * actions.
  *
  * Built on ProviderDialog with blurBackdrop={true}.
- * Dealer-specific — lives in modules/dealer/components/.
+ * Scrap-specific — lives in modules/scrap/components/.
  */
 
 import { useTranslation } from "react-i18next";
@@ -13,29 +14,23 @@ import { Pencil, Trash2, Wrench } from "lucide-react";
 import { ProviderDialog } from "@shared/provider-ui";
 import { Button } from "@/components/ui/button";
 import { cn } from "@shared/lib/utils";
-import type { Product } from "../types";
+import type { ProviderService } from "@shared/provider-services";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-/** Props for {@link ProductDetailDialog}. */
-export interface ProductDetailDialogProps {
-  product: Product;
+/** Props for {@link PartDetailDialog}. */
+export interface PartDetailDialogProps {
+  part: ProviderService;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
+  onEdit: (part: ProviderService) => void;
+  onDelete: (part: ProviderService) => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-/** Full product detail dialog with blurred backdrop. */
-export function ProductDetailDialog({
-  product,
-  open,
-  onOpenChange,
-  onEdit,
-  onDelete,
-}: ProductDetailDialogProps) {
+/** Full part detail dialog with blurred backdrop. */
+export function PartDetailDialog({ part, open, onOpenChange, onEdit, onDelete }: PartDetailDialogProps) {
   const { t, i18n } = useTranslation();
 
   const formatCurrency = (amount: number) =>
@@ -48,7 +43,7 @@ export function ProductDetailDialog({
     <ProviderDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={t("dealer.products.detail.title")}
+      title={t("scrap.parts.detail.title")}
       size="md"
       blurBackdrop
       footer={
@@ -58,7 +53,7 @@ export function ProductDetailDialog({
             variant="ghost"
             size="sm"
             className="text-[var(--color-danger-500)] hover:bg-[var(--color-danger-50)] hover:text-[var(--color-danger-500)]"
-            onClick={() => onDelete(product)}
+            onClick={() => onDelete(part)}
           >
             <Trash2 className="me-1.5 h-4 w-4" aria-hidden />
             {t("common.delete")}
@@ -67,7 +62,7 @@ export function ProductDetailDialog({
           <div className="flex-1" aria-hidden />
 
           {/* Primary action on the end side */}
-          <Button size="sm" onClick={() => onEdit(product)}>
+          <Button size="sm" onClick={() => onEdit(part)}>
             <Pencil className="me-1.5 h-4 w-4" aria-hidden />
             {t("common.edit")}
           </Button>
@@ -81,21 +76,21 @@ export function ProductDetailDialog({
             className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-md)] bg-[var(--color-surface-2)]"
             aria-hidden
           >
-            {product.images[0] ? (
-              <img src={product.images[0]} alt="" className="h-full w-full object-cover" />
+            {part.images[0] ? (
+              <img src={part.images[0]} alt="" className="h-full w-full object-cover" />
             ) : (
               <Wrench className="h-6 w-6 text-[var(--color-muted)]" />
             )}
           </div>
           <h2 className="text-lg font-semibold leading-snug text-[var(--color-ink-body)]">
-            {product.serviceName}
+            {part.serviceName}
           </h2>
         </div>
 
         {/* Image gallery — read-only, no removal path (backend limitation) */}
-        {product.images.length > 1 && (
+        {part.images.length > 1 && (
           <div className="flex flex-wrap gap-2">
-            {product.images.map((url) => (
+            {part.images.map((url) => (
               <div
                 key={url}
                 className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--color-surface-2)]"
@@ -107,33 +102,31 @@ export function ProductDetailDialog({
         )}
 
         {/* Vehicle compatibility */}
-        {product.isCompatibleWith && (
+        {part.isCompatibleWith && (
           <p className="text-sm text-[var(--color-muted)]">
             <span className="font-medium text-[var(--color-ink-body)]">
-              {t("dealer.products.form.isCompatibleWith")}:{" "}
+              {t("scrap.parts.form.isCompatibleWith")}:{" "}
             </span>
-            {product.isCompatibleWith}
+            {part.isCompatibleWith}
           </p>
         )}
 
         {/* Price — prominent */}
         <span className="tabular-nums text-2xl font-bold text-[var(--color-brand-orange)]">
-          {formatCurrency(product.price)}
+          {formatCurrency(part.price)}
         </span>
 
         {/* Meta grid */}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
-            <dt className="text-[var(--color-muted)]">{t("dealer.products.colQuantity")}</dt>
+            <dt className="text-[var(--color-muted)]">{t("scrap.parts.colQuantity")}</dt>
             <dd
               className={cn(
                 "mt-0.5 font-medium",
-                product.quantity === 0
-                  ? "text-[var(--color-warning-500)]"
-                  : "text-[var(--color-ink-body)]",
+                part.quantity === 0 ? "text-[var(--color-warning-500)]" : "text-[var(--color-ink-body)]",
               )}
             >
-              {product.quantity === 0 ? t("dealer.products.outOfStock") : product.quantity}
+              {part.quantity === 0 ? t("scrap.parts.outOfStock") : part.quantity}
             </dd>
           </div>
         </dl>
@@ -144,14 +137,12 @@ export function ProductDetailDialog({
         {/* Notes */}
         <div>
           <p className="mb-1 text-xs font-medium text-[var(--color-muted)]">
-            {t("dealer.products.form.notes")}
+            {t("scrap.parts.form.notes")}
           </p>
-          {product.notes ? (
-            <p className="text-sm leading-relaxed text-[var(--color-ink-body)]">{product.notes}</p>
+          {part.notes ? (
+            <p className="text-sm leading-relaxed text-[var(--color-ink-body)]">{part.notes}</p>
           ) : (
-            <p className="text-sm italic text-[var(--color-muted)]">
-              {t("dealer.products.detail.noNotes")}
-            </p>
+            <p className="text-sm italic text-[var(--color-muted)]">{t("scrap.parts.detail.noNotes")}</p>
           )}
         </div>
       </div>

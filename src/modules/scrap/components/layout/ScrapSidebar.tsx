@@ -42,9 +42,9 @@ const NAV_ITEMS: NavItem[] = [
     icon: ClipboardList,
   },
   {
-    key: "myOffers",
-    labelPath: "scrap.nav.myOffers",
-    path: "/provider/scrap/my-offers",
+    key: "parts",
+    labelPath: "scrap.nav.parts",
+    path: "/provider/scrap/parts",
     icon: Tag,
   },
   {

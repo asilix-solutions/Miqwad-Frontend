@@ -1,11 +1,11 @@
 /**
- * @file ProductCard.tsx
+ * @file PartCard.tsx
  *
- * Dealer-specific product card for the card grid view.
- * A "product" is a priced service offering — no image/sku/condition, so the
- * card leads with the service name and a quantity/price summary.
- * Reuses ProviderCard from provider-ui. Dealer-specific — lives in
- * modules/dealer/components/.
+ * Scrap-specific part card for the catalog grid view.
+ * A "part" is a priced service offering — no image/sku/condition beyond
+ * what's uploaded, so the card leads with the service name and a
+ * quantity/price summary. Reuses ProviderCard from provider-ui.
+ * Scrap-specific — lives in modules/scrap/components/.
  */
 
 import type { CSSProperties } from "react";
@@ -13,24 +13,24 @@ import { useTranslation } from "react-i18next";
 import { Pencil, Trash2, Wrench } from "lucide-react";
 import { ProviderCard } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
-import type { Product } from "../types";
+import type { ProviderService } from "@shared/provider-services";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-/** Props for {@link ProductCard}. */
-export interface ProductCardProps {
-  product: Product;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
-  onCardClick: (product: Product) => void;
+/** Props for {@link PartCard}. */
+export interface PartCardProps {
+  part: ProviderService;
+  onEdit: (part: ProviderService) => void;
+  onDelete: (part: ProviderService) => void;
+  onCardClick: (part: ProviderService) => void;
   /** CSS style forwarded for stagger animation-delay. */
   style?: CSSProperties;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-/** Dealer product card for the grid view. */
-export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: ProductCardProps) {
+/** Scrap part card for the grid view. */
+export function PartCard({ part, onEdit, onDelete, onCardClick, style }: PartCardProps) {
   const { t, i18n } = useTranslation();
 
   const cardStyle: CSSProperties = {
@@ -54,22 +54,22 @@ export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: P
         "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
       )}
     >
-      {/* ── Clickable area: icon + product details ─────────────────────────── */}
+      {/* ── Clickable area: icon + part details ─────────────────────────── */}
       <div
         role="button"
         tabIndex={0}
         className="flex-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-brand-orange)]/50"
-        onClick={() => onCardClick(product)}
+        onClick={() => onCardClick(part)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") onCardClick(product);
+          if (e.key === "Enter" || e.key === " ") onCardClick(part);
         }}
       >
         <div
           className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-t-[var(--radius-lg)] bg-[var(--color-surface-2)]"
           aria-hidden
         >
-          {product.images[0] ? (
-            <img src={product.images[0]} alt="" className="h-full w-full object-cover" />
+          {part.images[0] ? (
+            <img src={part.images[0]} alt="" className="h-full w-full object-cover" />
           ) : (
             <Wrench className="h-10 w-10 text-[var(--color-muted)]" />
           )}
@@ -77,25 +77,25 @@ export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: P
 
         <div className="flex flex-col gap-2 p-4">
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-[var(--color-ink-body)]">
-            {product.serviceName}
+            {part.serviceName}
           </h3>
 
-          {product.isCompatibleWith && (
-            <p className="line-clamp-1 text-xs text-[var(--color-muted)]">{product.isCompatibleWith}</p>
+          {part.isCompatibleWith && (
+            <p className="line-clamp-1 text-xs text-[var(--color-muted)]">{part.isCompatibleWith}</p>
           )}
 
           <span className="tabular-nums text-base font-semibold text-[var(--color-brand-orange)]">
-            {formatCurrency(product.price)}
+            {formatCurrency(part.price)}
           </span>
 
           <div className="flex items-center justify-between gap-2">
-            {product.quantity === 0 ? (
+            {part.quantity === 0 ? (
               <span className="text-xs font-medium text-[var(--color-warning-500)]">
-                {t("dealer.products.outOfStock")}
+                {t("scrap.parts.outOfStock")}
               </span>
             ) : (
               <span className="text-xs text-[var(--color-muted)]">
-                {t("dealer.products.colQuantity")}: {product.quantity}
+                {t("scrap.parts.colQuantity")}: {part.quantity}
               </span>
             )}
           </div>
@@ -111,7 +111,7 @@ export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: P
           type="button"
           title={t("common.edit")}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-muted)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]"
-          onClick={() => onEdit(product)}
+          onClick={() => onEdit(part)}
         >
           <Pencil className="h-4 w-4" aria-hidden />
         </button>
@@ -119,7 +119,7 @@ export function ProductCard({ product, onEdit, onDelete, onCardClick, style }: P
           type="button"
           title={t("common.delete")}
           className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-danger-500)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-danger-50)]"
-          onClick={() => onDelete(product)}
+          onClick={() => onDelete(part)}
         >
           <Trash2 className="h-4 w-4" aria-hidden />
         </button>

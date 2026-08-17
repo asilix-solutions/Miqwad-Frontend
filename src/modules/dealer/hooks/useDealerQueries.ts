@@ -3,8 +3,7 @@
  */
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { dealerApi } from "../api/dealerApi";
-import { providerServicesApi } from "../api/providerServicesApi";
-import { adaptProviderService, adaptServiceCatalogItem } from "../lib/providerServiceAdapter";
+import { providerServicesApi, adaptProviderService, adaptServiceCatalogItem } from "@shared/provider-services";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { Product, ServiceCatalogItem } from "../types";
 

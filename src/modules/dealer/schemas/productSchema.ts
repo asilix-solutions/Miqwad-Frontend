@@ -1,17 +1,11 @@
 /**
  * @file productSchema.ts
  * @description Dealer product (provider-service offering) form schema —
- * pick a service, then set price/quantity/notes. `serviceId` stays in the
- * schema for both modes so a single form type covers create and edit; the
- * edit form just never lets the user change it (PUT doesn't accept it).
+ * a dealer-scoped alias of the shared `providerServiceSchema`, promoted to
+ * `@shared/provider-services` so scrap (and future provider types) can
+ * reuse the identical pick-a-service-then-price/quantity/notes shape.
  */
-import { z } from "zod";
-
-export const productSchema = z.object({
-  serviceId: z.string().min(1, "dealer.products.validation.serviceRequired"),
-  quantity: z.number().int("dealer.products.validation.quantityMin").min(1, "dealer.products.validation.quantityMin"),
-  price: z.number().min(0, "dealer.products.validation.priceNonNegative"),
-  notes: z.string().max(500, "dealer.products.validation.notesMax").optional(),
-});
-
-export type ProductFormValues = z.infer<typeof productSchema>;
+export {
+  providerServiceSchema as productSchema,
+  type ProviderServiceFormValues as ProductFormValues,
+} from "@shared/provider-services";
