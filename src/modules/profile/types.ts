@@ -17,6 +17,10 @@ export interface AccountProfile {
   address: string | null;
   city: string | null;
   identityNumber: string | null;
+  /** ASCII "FromDay-ToDay" range, e.g. "Sat-Thu". See workingHours.ts. */
+  workingDays: string | null;
+  /** ASCII "HH:mm-HH:mm" range, e.g. "09:00-18:00". See workingHours.ts. */
+  workingHours: string | null;
 }
 
 /** PUT /api/profile body. */
@@ -26,6 +30,16 @@ export interface UpdateAccountProfileRequest {
   address: string;
   identityNumber: string;
   city: string;
+}
+
+/**
+ * PUT /api/profile/working-days body — WorkshopOwner-only today (scrap's
+ * SalvageSpecialist role gets a 400). Both fields are ALWAYS required
+ * together: omitting one nulls it out rather than merging.
+ */
+export interface UpdateWorkingDaysRequest {
+  workingDays: string;
+  workingHours: string;
 }
 
 /** POST /api/profile/reset-password body. */
@@ -44,4 +58,13 @@ export interface ChangeAccountPhoneRequest {
 export interface ChangeAccountPhoneVerifyRequest {
   newPhoneNumber: string;
   code: string;
+}
+
+/**
+ * The signed-in user's own profile image, from GET/POST/PUT /api/profile/image.
+ * `url` is absolute. A `null` query result means no image exists (confirmed
+ * live: GET 404s when unset — the api layer degrades that to `null`).
+ */
+export interface ProfileImage {
+  url: string;
 }
