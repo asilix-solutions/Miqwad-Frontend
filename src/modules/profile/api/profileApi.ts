@@ -13,6 +13,7 @@ import { unwrapEnvelope } from "@modules/auth/api/auth.adapter";
 import type {
   AccountProfile,
   UpdateAccountProfileRequest,
+  UpdateWorkingDaysRequest,
   ResetAccountPasswordRequest,
   ChangeAccountPhoneRequest,
   ChangeAccountPhoneVerifyRequest,
@@ -27,6 +28,8 @@ interface RawAccountProfile {
   city?: string | null;
   identityNumber?: string | null;
   idenityNumber?: string | null;
+  workingDays?: string | null;
+  workingHours?: string | null;
   [key: string]: unknown;
 }
 
@@ -45,6 +48,8 @@ function adaptProfile(raw: unknown): AccountProfile {
     address: data.address ?? null,
     city: data.city ?? null,
     identityNumber: data.identityNumber ?? data.idenityNumber ?? null,
+    workingDays: data.workingDays ?? null,
+    workingHours: data.workingHours ?? null,
   };
 }
 
@@ -69,5 +74,13 @@ export const profileApi = {
 
   changePhoneVerify: async (payload: ChangeAccountPhoneVerifyRequest): Promise<void> => {
     await apiClient.post("/profile/change-phone-number/verify", payload);
+  },
+
+  /**
+   * WorkshopOwner-only today (SalvageSpecialist/scrap gets a 400 — see
+   * types.ts). Both fields are always sent together; omitting one nulls it.
+   */
+  updateWorkingDays: async (payload: UpdateWorkingDaysRequest): Promise<void> => {
+    await apiClient.put("/profile/working-days", payload);
   },
 };

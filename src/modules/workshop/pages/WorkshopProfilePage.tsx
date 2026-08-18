@@ -27,7 +27,6 @@ import {
   Phone,
   MessageCircle,
   ExternalLink,
-  Clock,
   Wrench,
   BadgeCheck,
   Image,
@@ -53,7 +52,6 @@ import {
   useUpdateWorkshopProfileMutation,
 } from "../hooks/useWorkshopQueries";
 import type {
-  DayOfWeek,
   WeeklyHours,
   WorkshopServiceType,
   WorkshopVehicleBrand,
@@ -61,10 +59,9 @@ import type {
 } from "../types";
 import { ProfileImageUpload } from "@modules/profile/components/ProfileImageUpload";
 import { ProviderAddressesSection } from "@modules/profile/components/ProviderAddressesSection";
+import { WorkingHoursSelector } from "@modules/profile/components/WorkingHoursSelector";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const DAYS: DayOfWeek[] = ["sat", "sun", "mon", "tue", "wed", "thu", "fri"];
 
 const SERVICE_TYPES: WorkshopServiceType[] = [
   "mechanical",
@@ -195,10 +192,9 @@ export function WorkshopProfilePage() {
     }
   }, [profile, reset]);
 
-  // Watch reactive slices needed for chip toggles and working-hours toggles.
+  // Watch reactive slices needed for chip toggles.
   const serviceTypes = watch("specializations.serviceTypes");
   const vehicleBrands = watch("specializations.vehicleBrands");
-  const workingHoursValues = watch("workingHours");
 
   const toggleService = useCallback(
     (svc: WorkshopServiceType) => {
@@ -223,22 +219,6 @@ export function WorkshopProfilePage() {
     },
     [getValues, setValue],
   );
-
-  // Copy first open day's times to all other open days.
-  const applyHoursToAll = () => {
-    const firstOpen = DAYS.find((d) => {
-      const day = getValues(`workingHours.${d}`);
-      return !day.isClosed && day.open && day.close;
-    });
-    if (!firstOpen) return;
-    const { open, close } = getValues(`workingHours.${firstOpen}`);
-    DAYS.forEach((d) => {
-      if (!getValues(`workingHours.${d}.isClosed`)) {
-        setValue(`workingHours.${d}.open`, open, { shouldDirty: true });
-        setValue(`workingHours.${d}.close`, close, { shouldDirty: true });
-      }
-    });
-  };
 
   const handleEdit = () => {
     reset(buildDefaults(profile));
@@ -697,122 +677,10 @@ export function WorkshopProfilePage() {
 
         {/* ── 4. Working Hours ────────────────────────────────────────────── */}
         <ProviderCard style={{ animationDelay: "130ms" }}>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-[var(--color-ink-body)]">
-              {t("workshop.profile.workingHoursSection")}
-            </h2>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={applyHoursToAll}
-                className="text-xs font-medium text-[var(--color-brand-orange)] hover:underline"
-              >
-                {t("workshop.profile.applyToAll")}
-              </button>
-            )}
-          </div>
-
-          <div className="divide-y divide-[var(--color-divider)]">
-            {DAYS.map((day) => {
-              if (isEditing) {
-                const isClosed = workingHoursValues?.[day]?.isClosed ?? true;
-                const dayErrors = errors.workingHours?.[day];
-                return (
-                  <div key={day} className="flex flex-wrap items-center gap-3 py-3">
-                    <span className="w-24 shrink-0 text-sm text-[var(--color-ink-body)]">
-                      {t(`workshop.profile.days.${day}`)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setValue(`workingHours.${day}.isClosed`, !isClosed, {
-                          shouldDirty: true,
-                        })
-                      }
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs font-medium",
-                        "transition-colors duration-[var(--dur-fast)]",
-                        isClosed
-                          ? "border-[var(--color-divider)] bg-[var(--color-surface-2)] text-[var(--color-muted)]"
-                          : "border-[var(--color-brand-orange)] bg-[var(--color-brand-orange)] text-white",
-                      )}
-                    >
-                      {isClosed
-                        ? t("workshop.profile.isClosed")
-                        : t("workshop.profile.isOpen")}
-                    </button>
-                    {!isClosed && (
-                      <>
-                        <input
-                          type="time"
-                          {...register(`workingHours.${day}.open`)}
-                          aria-label={t("workshop.profile.openTime")}
-                          className={cn(
-                            "h-9 w-28 rounded-[var(--radius-md)] border px-2 text-sm",
-                            "bg-[var(--color-surface)] text-[var(--color-ink-body)]",
-                            "focus:outline-none focus:ring-2",
-                            "focus:border-[var(--color-brand-orange)]",
-                            "focus:ring-[var(--color-brand-orange)]/20",
-                            dayErrors
-                              ? "border-[var(--color-danger-500)]"
-                              : "border-[var(--color-divider)]",
-                          )}
-                        />
-                        <span className="text-xs text-[var(--color-muted)]" aria-hidden>
-                          —
-                        </span>
-                        <input
-                          type="time"
-                          {...register(`workingHours.${day}.close`)}
-                          aria-label={t("workshop.profile.closeTime")}
-                          className={cn(
-                            "h-9 w-28 rounded-[var(--radius-md)] border px-2 text-sm",
-                            "bg-[var(--color-surface)] text-[var(--color-ink-body)]",
-                            "focus:outline-none focus:ring-2",
-                            "focus:border-[var(--color-brand-orange)]",
-                            "focus:ring-[var(--color-brand-orange)]/20",
-                            dayErrors
-                              ? "border-[var(--color-danger-500)]"
-                              : "border-[var(--color-divider)]",
-                          )}
-                        />
-                        {dayErrors && (
-                          <p
-                            role="alert"
-                            className="w-full text-xs text-[var(--color-danger-500)]"
-                          >
-                            {t("workshop.profile.validation.openCloseRequired")}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                );
-              }
-
-              const dayData = profile.workingHours[day];
-              return (
-                <div key={day} className="flex items-center gap-3 py-3">
-                  <span className="w-24 shrink-0 text-sm font-medium text-[var(--color-ink-body)]">
-                    {t(`workshop.profile.days.${day}`)}
-                  </span>
-                  {dayData.isClosed ? (
-                    <span className="text-sm text-[var(--color-muted)]">
-                      {t("workshop.profile.isClosed")}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-sm text-[var(--color-ink-body)]">
-                      <Clock
-                        className="h-3.5 w-3.5 shrink-0 text-[var(--color-muted)]"
-                        aria-hidden
-                      />
-                      {dayData.open} — {dayData.close}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <h2 className="mb-4 text-sm font-semibold text-[var(--color-ink-body)]">
+            {t("workshop.profile.workingHoursSection")}
+          </h2>
+          <WorkingHoursSelector readOnly={!isEditing} />
         </ProviderCard>
 
         {/* ── 5. Location ─────────────────────────────────────────────────── */}
