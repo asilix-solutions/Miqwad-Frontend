@@ -61,6 +61,8 @@ import {
   useChangeAccountPhoneVerifyMutation,
 } from "@modules/profile/hooks/useProfileQueries";
 import type { AccountProfile } from "@modules/profile/types";
+import { ProfileImageUpload } from "@modules/profile/components/ProfileImageUpload";
+import { ProviderAddressesSection } from "@modules/profile/components/ProviderAddressesSection";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -320,11 +322,7 @@ export function ProviderAccountPage() {
         {/* ── Identity banner ─────────────────────────────────────────────── */}
         <ProviderCard interactive style={{ animationDelay: "40ms" }}>
           <div className="flex flex-wrap items-center gap-4">
-            {/* Avatar is display-only for now — no server-side profile image endpoint. */}
-            {/* TODO: wire ProviderImageUpload to a real /api/profile/image endpoint once available. */}
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-orange)] text-2xl font-semibold text-white">
-              {initial}
-            </div>
+            <ProfileImageUpload fallbackInitial={initial} />
             <div className="min-w-0 flex-1">
               <h2 className="truncate font-[var(--font-display)] text-xl font-bold text-[var(--color-ink-body)]">
                 {profile.fullName || "—"}
@@ -430,6 +428,9 @@ export function ProviderAccountPage() {
             </div>
           )}
         </ProviderCard>
+
+        {/* ── Addresses ────────────────────────────────────────────────────── */}
+        <ProviderAddressesSection style={{ animationDelay: "115ms" }} />
 
         {/* ── Security ─────────────────────────────────────────────────────── */}
         <ProviderCard interactive style={{ animationDelay: "130ms" }}>
