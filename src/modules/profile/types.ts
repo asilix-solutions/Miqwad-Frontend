@@ -45,3 +45,12 @@ export interface ChangeAccountPhoneVerifyRequest {
   newPhoneNumber: string;
   code: string;
 }
+
+/**
+ * The signed-in user's own profile image, from GET/POST/PUT /api/profile/image.
+ * `url` is absolute. A `null` query result means no image exists (confirmed
+ * live: GET 404s when unset — the api layer degrades that to `null`).
+ */
+export interface ProfileImage {
+  url: string;
+}
