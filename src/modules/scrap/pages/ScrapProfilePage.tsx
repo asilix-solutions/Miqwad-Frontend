@@ -54,6 +54,8 @@ import {
   useUpdateScrapProfileMutation,
 } from "../hooks/useScrapQueries";
 import type { ScrapProfile, ScrapVehicleBrand } from "../types";
+import { ProfileImageUpload } from "@modules/profile/components/ProfileImageUpload";
+import { ProviderAddressesSection } from "@modules/profile/components/ProviderAddressesSection";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -433,6 +435,12 @@ export function ScrapProfilePage() {
             )}
           </div>
 
+          <div className="mb-4">
+            <ProfileImageUpload
+              fallbackInitial={profile.companyName?.trim().charAt(0) || "م"}
+            />
+          </div>
+
           {isEditing ? (
             <div className="space-y-4">
               <ProviderInput
@@ -775,6 +783,9 @@ export function ScrapProfilePage() {
             </div>
           )}
         </ProviderCard>
+
+        {/* ── 7. Addresses ─────────────────────────────────────────────────── */}
+        <ProviderAddressesSection style={{ animationDelay: "220ms" }} />
 
       </div>
     </form>
