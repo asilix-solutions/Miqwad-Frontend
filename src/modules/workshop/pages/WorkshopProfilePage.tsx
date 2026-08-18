@@ -59,6 +59,8 @@ import type {
   WorkshopVehicleBrand,
   WorkshopProfile,
 } from "../types";
+import { ProfileImageUpload } from "@modules/profile/components/ProfileImageUpload";
+import { ProviderAddressesSection } from "@modules/profile/components/ProviderAddressesSection";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -501,6 +503,12 @@ export function WorkshopProfilePage() {
             {!isEditing && profile.isVerified && (
               <ProviderStatusPill tone="success" label={t("providers.profile.verified")} />
             )}
+          </div>
+
+          <div className="mb-4">
+            <ProfileImageUpload
+              fallbackInitial={profile.companyName?.trim().charAt(0) || "م"}
+            />
           </div>
 
           {isEditing ? (
@@ -1003,6 +1011,9 @@ export function WorkshopProfilePage() {
             </div>
           )}
         </ProviderCard>
+
+        {/* ── 7. Addresses ─────────────────────────────────────────────────── */}
+        <ProviderAddressesSection style={{ animationDelay: "220ms" }} />
 
       </div>
     </form>
