@@ -26,15 +26,7 @@ import type { PartRequestStatus } from "../types";
 
 const PAGE_SIZE = 10;
 
-const STATUS_VALUES: Array<PartRequestStatus | "all"> = [
-  "all",
-  "new",
-  "quoted",
-  "accepted",
-  "shipped",
-  "completed",
-  "cancelled",
-];
+const STATUS_VALUES: Array<PartRequestStatus | "all"> = ["all", "new"];
 
 // ── Loading skeleton card ─────────────────────────────────────────────────────
 
