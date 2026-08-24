@@ -1,23 +1,18 @@
 /**
  * @file ScrapPartRequestCard.tsx
  *
- * Premium inbox-style card for the Scrap Part Requests page.
- * Photo thumbnail at inline-start, part info + vehicle, status/escrow pills,
- * privacy-masked phone badge, relative time. Full card is a Link.
+ * Premium inbox-style card for a browseable salvage order.
+ * Photo thumbnail at inline-start, part info + vehicle, status pill,
+ * "already offered" badge, relative time. Full card is a Link/button.
  *
  * Architecture: src/modules/scrap/components/
  */
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
-import { Shield, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { ProviderStatusPill } from "@shared/provider-ui";
-import { useEscrowQuery } from "../hooks/useScrapQueries";
-import { partRequestStatusTone } from "../lib/partRequestLifecycle";
-import { escrowStatusTone } from "../lib/escrowLifecycle";
-import { toPillTone } from "../lib/toPillTone";
-import type { PartRequest } from "../types";
+import type { SalvageOrder } from "../types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -73,121 +68,63 @@ function PartThumb({ src }: { src: string | undefined }) {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ScrapPartRequestCardProps {
-  request: PartRequest;
-  /** When provided, clicking the card calls this instead of navigating to the route. */
-  onSelect?: (id: string) => void;
+  request: SalvageOrder;
+  onSelect: (id: string) => void;
+  /** Whether this scrap provider has already submitted an offer on this order. */
+  alreadyOffered?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-/** Premium inbox-style card for a single part request. */
-export function ScrapPartRequestCard({ request, onSelect }: ScrapPartRequestCardProps) {
+/** Premium inbox-style card for a single browseable salvage order. */
+export function ScrapPartRequestCard({ request, onSelect, alreadyOffered }: ScrapPartRequestCardProps) {
   const { t, i18n } = useTranslation();
 
-  const { data: escrow } = useEscrowQuery(request.escrowId ? request.id : "");
-
-  const brandLabel = t(`scrap.profile.specializations.brand.${request.vehicle.brand}`, {
-    defaultValue: request.vehicle.brand,
-  });
-
+  const vehicleLine = [request.brand, request.model, request.year].filter(Boolean).join(" · ");
   const timeAgo = formatTimeAgo(request.createdAt, i18n.language);
 
-  const sharedStyle = {
-    transition: [
-      "transform var(--dur-base) var(--ease-provider)",
-      "box-shadow var(--dur-base) var(--ease-provider)",
-    ].join(", "),
-  };
-  const sharedClass = [
-    "flex items-start gap-4 p-4 sm:p-5",
-    "bg-[var(--color-surface)] rounded-[var(--radius-lg)]",
-    "shadow-[var(--shadow-provider-sm)]",
-    "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
-    "focus-visible:outline-none focus-visible:ring-2",
-    "focus-visible:ring-[var(--color-brand-orange)]/40",
-    "cursor-pointer",
-  ].join(" ");
-
-  const inner = (
-    <>
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(request.id)}
+      style={{
+        transition: [
+          "transform var(--dur-base) var(--ease-provider)",
+          "box-shadow var(--dur-base) var(--ease-provider)",
+        ].join(", "),
+      }}
+      className={[
+        "flex w-full items-start gap-4 p-4 sm:p-5 text-start",
+        "bg-[var(--color-surface)] rounded-[var(--radius-lg)]",
+        "shadow-[var(--shadow-provider-sm)]",
+        "hover:-translate-y-0.5 hover:shadow-[var(--shadow-provider-hover)]",
+        "focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-[var(--color-brand-orange)]/40",
+        "cursor-pointer",
+      ].join(" ")}
+    >
       {/* Part thumbnail ─────────────────────────────────────────────────── */}
       <PartThumb src={request.photos[0]} />
 
       {/* Main content ───────────────────────────────────────────────────── */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        {/* Part name + request number */}
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-          <p className="truncate text-base font-semibold leading-snug text-[var(--color-ink-body)]">
-            {request.partName}
-          </p>
-          <span className="shrink-0 font-mono text-xs text-[var(--color-muted)]">
-            {t("scrap.partRequests.requestNumber")} {request.requestNumber}
-          </span>
-        </div>
-
-        {/* Vehicle */}
-        <p className="text-sm text-[var(--color-muted)]">
-          {brandLabel} · {request.vehicle.model} · {request.vehicle.year}
+        <p className="truncate text-base font-semibold leading-snug text-[var(--color-ink-body)]">
+          {request.partName}
         </p>
 
-        {/* Bottom row: pills + time + phone */}
+        <p className="text-sm text-[var(--color-muted)]">{vehicleLine}</p>
+
         <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          {/* Status pill + optional escrow pill */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <ProviderStatusPill
-              tone={toPillTone(partRequestStatusTone(request.status))}
-              label={t(`scrap.status.${request.status}`)}
-            />
-            {escrow && (
-              <ProviderStatusPill
-                tone={toPillTone(escrowStatusTone(escrow.status))}
-                label={t(`scrap.escrow.status.${escrow.status}`)}
-              />
+            <ProviderStatusPill tone="neutral" label={request.status} />
+            {alreadyOffered && (
+              <ProviderStatusPill tone="success" label={t("scrap.partRequests.alreadyOfferedBadge")} />
             )}
           </div>
 
-          {/* Relative time + privacy phone badge */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)]">
-            <span>{timeAgo}</span>
-            <span
-              className={[
-                "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 leading-none",
-                "bg-[var(--color-info-50)] text-[var(--color-info-500)]",
-                "text-[10px] font-medium",
-              ].join(" ")}
-            >
-              <Shield className="h-2.5 w-2.5 shrink-0" aria-hidden />
-              <span>{request.customerPhoneMasked}</span>
-              <span className="opacity-60">
-                · {t("scrap.partRequests.protectedPhone")}
-              </span>
-            </span>
-          </div>
+          <span className="text-xs text-[var(--color-muted)]">{timeAgo}</span>
         </div>
       </div>
-    </>
-  );
-
-  if (onSelect) {
-    return (
-      <button
-        type="button"
-        onClick={() => onSelect(request.id)}
-        style={sharedStyle}
-        className={`w-full text-start ${sharedClass}`}
-      >
-        {inner}
-      </button>
-    );
-  }
-
-  return (
-    <Link
-      to={`/provider/scrap/part-requests/${request.id}`}
-      style={sharedStyle}
-      className={sharedClass}
-    >
-      {inner}
-    </Link>
+    </button>
   );
 }
