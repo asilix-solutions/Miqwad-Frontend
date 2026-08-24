@@ -1,54 +1,67 @@
 /**
  * @file PartRequestDetailContent.tsx
  *
- * Shared detail view for a single part request.
+ * Shared detail view for a single salvage order (customer "part request").
  * Used by both the inline dialog (from the list page) and the full-page route.
- * Self-contained: fetches its own data, handles loading/error internally.
+ * Self-contained: fetches its own data, handles loading/error/403 internally.
+ *
+ * Escrow/warranty timeline, order-number display, and shipping actions were
+ * removed here — they belonged to the old mock buy/ship/escrow lifecycle,
+ * which has no real backend counterpart (see
+ * docs/probe-scrap-offers-2026-08-20.md §2.4). The workflow is now:
+ * browse a salvage Order, inspect it, submit an Offer against its `orderId`.
+ *
+ * Offer form fields (confirmed against live Swagger 2026-08-23):
+ *   providerServiceId — the provider picks one of their own existing parts
+ *   startDate / endDate — neutral labels only (no business semantics assumed)
  */
 
-import { useState, useId } from "react";
+import { useState, useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import {
   AlertCircle,
   RefreshCw,
-  Shield,
   Package,
-  Check,
-  Lock,
   Info,
   MessageCircle,
-  CheckCircle2,
-  XCircle,
   Loader2,
+  Pencil,
+  Trash2,
+  ArrowRight,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+import { Select as SelectPrimitive } from "radix-ui";
+import { cn } from "@shared/lib/utils";
 import {
   ProviderSkeleton,
   ProviderStatusPill,
   ProviderInput,
-  ProviderTextarea,
-  ProviderImageUpload,
+  ProviderEmptyState,
 } from "@shared/provider-ui";
-import { formatCurrency } from "@shared/lib/formatCurrency";
 import { useToast } from "@shared/components/ui/toastContext";
-import { offerSchema } from "../schemas/scrap.schemas";
-import type { OfferFormValues } from "../schemas/scrap.schemas";
+import { salvageOfferSchema } from "../schemas/scrap.schemas";
+import type { SalvageOfferFormValues } from "../schemas/scrap.schemas";
+import { useSalvageOrderQuery } from "../hooks/useSalvageOrders";
 import {
-  usePartRequestQuery,
-  useEscrowQuery,
-  useSubmitOfferMutation,
-  useUpdatePartRequestStatusMutation,
-} from "../hooks/useScrapQueries";
-import { partRequestStatusTone } from "../lib/partRequestLifecycle";
-import { toPillTone } from "../lib/toPillTone";
-import type { EscrowStatus } from "../types";
+  useOffersQuery,
+  useCreateOfferMutation,
+  useUpdateOfferMutation,
+  useDeleteOfferMutation,
+} from "../hooks/useOffersQueries";
+import { useScrapPartsQuery } from "../hooks/useScrapPartsQueries";
+import type { Offer } from "../types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface PartRequestDetailContentProps {
   requestId: string;
 }
+
+export type { OfferFormProps };
 
 // ── Safe image thumbnail ──────────────────────────────────────────────────────
 
@@ -76,222 +89,271 @@ function SafeThumb({ src }: { src: string }) {
   );
 }
 
-// ── Escrow timeline stepper ───────────────────────────────────────────────────
-
-const TIMELINE_STEPS: EscrowStatus[] = ["pending", "held", "released"];
-
-function stepIndex(status: EscrowStatus): number {
-  const idx = TIMELINE_STEPS.indexOf(status);
-  return idx >= 0 ? idx : 0;
-}
-
-interface EscrowTimelineProps {
-  status: EscrowStatus;
-  amount: number;
-}
-
-function EscrowTimeline({ status, amount }: EscrowTimelineProps) {
-  const { t, i18n } = useTranslation();
-  const current = stepIndex(status);
-  const isSpecial = status === "disputed" || status === "refunded";
-
-  const stepLabels: Record<EscrowStatus, string> = {
-    pending: t("scrap.escrow.status.pending"),
-    held: t("scrap.escrow.status.held"),
-    released: t("scrap.escrow.status.released"),
-    disputed: t("scrap.escrow.status.disputed"),
-    refunded: t("scrap.escrow.status.refunded"),
-  };
-
-  const toneColors: Record<EscrowStatus, string> = {
-    pending: "var(--color-muted)",
-    held: "var(--color-info-500)",
-    released: "var(--color-success-500)",
-    disputed: "var(--color-warning-500)",
-    refunded: "var(--color-danger-500)",
-  };
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-sm font-medium text-[var(--color-ink-body)]">
-          {t("scrap.partRequests.escrowTimelineTitle")}
-        </span>
-        <span className="text-sm font-semibold text-[var(--color-ink-body)]">
-          {formatCurrency(amount, i18n.language)}
-        </span>
-      </div>
-
-      {/* Steps row */}
-      <div className="flex items-center gap-0">
-        {TIMELINE_STEPS.map((step, idx) => {
-          const isDone = idx < current || (status === "released" && idx === 2);
-          const isCurrent =
-            !isSpecial && idx === current;
-          const tone = isCurrent
-            ? toneColors[status]
-            : isDone
-              ? "var(--color-success-500)"
-              : "var(--color-divider)";
-
-          return (
-            <div key={step} className="flex flex-1 flex-col items-center gap-1.5">
-              {/* Connector line before (except first) */}
-              <div className="flex w-full items-center">
-                {idx > 0 && (
-                  <div
-                    className="h-0.5 flex-1 transition-colors duration-[var(--dur-base)]"
-                    style={{
-                      backgroundColor:
-                        idx <= current ? "var(--color-success-500)" : "var(--color-divider)",
-                    }}
-                  />
-                )}
-
-                {/* Step circle */}
-                <div
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-[var(--dur-base)]"
-                  style={{
-                    borderColor: tone,
-                    backgroundColor: isDone || isCurrent ? tone : "var(--color-surface)",
-                  }}
-                >
-                  {isDone ? (
-                    <Check className="h-4 w-4 text-white" aria-hidden />
-                  ) : isCurrent ? (
-                    <Lock className="h-3.5 w-3.5 text-white" aria-hidden />
-                  ) : (
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: "var(--color-divider)" }}
-                    />
-                  )}
-                </div>
-
-                {idx < TIMELINE_STEPS.length - 1 && (
-                  <div
-                    className="h-0.5 flex-1 transition-colors duration-[var(--dur-base)]"
-                    style={{
-                      backgroundColor:
-                        idx < current ? "var(--color-success-500)" : "var(--color-divider)",
-                    }}
-                  />
-                )}
-              </div>
-
-              <span
-                className="text-center text-xs font-medium leading-tight"
-                style={{ color: isCurrent || isDone ? tone : "var(--color-muted)" }}
-              >
-                {stepLabels[step]}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Special state badge */}
-      {isSpecial && (
-        <div
-          className="flex items-center gap-2 rounded-[var(--radius-sm)] px-3 py-2"
-          style={{
-            backgroundColor:
-              status === "disputed"
-                ? "var(--color-warning-50)"
-                : "var(--color-danger-50)",
-            color: toneColors[status],
-          }}
-        >
-          <AlertCircle className="h-4 w-4 shrink-0" aria-hidden />
-          <span className="text-sm font-medium">{stepLabels[status]}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Offer form ────────────────────────────────────────────────────────────────
+// ── Offer form (create or edit) ─────────────────────────────────────────────
 
 interface OfferFormProps {
-  requestId: string;
+  orderId: string;
+  /** When set, the form edits this existing offer instead of creating a new one. */
+  existingOffer?: Offer;
+  onDone?: () => void;
 }
 
-function OfferForm({ requestId }: OfferFormProps) {
+/**
+ * Extracts the date-only portion (YYYY-MM-DD) from an ISO-8601 date-time
+ * string, for prefilling <input type="date"> when editing an existing offer.
+ */
+function toDateOnly(iso: string): string {
+  return iso.split("T")[0] ?? iso;
+}
+
+/** Exported for reuse by ScrapMyOffersPage's edit dialog. */
+export function OfferForm({ orderId, existingOffer, onDone }: OfferFormProps) {
   const { t } = useTranslation();
   const toast = useToast();
+  const navigate = useNavigate();
   const formId = useId();
 
-  const submitOfferMutation = useSubmitOfferMutation();
+  const createMutation = useCreateOfferMutation();
+  const updateMutation = useUpdateOfferMutation();
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  // Load the provider's own parts (provider-services) for the selector
+  const { data: partsPage, isLoading: partsLoading } = useScrapPartsQuery();
+  const parts = partsPage?.items ?? [];
 
   const {
     register,
     handleSubmit,
-    setValue,
-    watch,
+    control,
     formState: { errors },
-  } = useForm<OfferFormValues>({
-    resolver: zodResolver(offerSchema),
-    defaultValues: { note: "", photos: [] },
+  } = useForm<SalvageOfferFormValues>({
+    resolver: zodResolver(salvageOfferSchema),
+    defaultValues: {
+      providerServiceId: existingOffer?.providerServiceId ?? "",
+      startDate: existingOffer ? toDateOnly(existingOffer.startDate) : "",
+      endDate: existingOffer ? toDateOnly(existingOffer.endDate) : "",
+    },
   });
 
-  const photos = watch("photos") ?? [];
+  function onSubmit(values: SalvageOfferFormValues) {
+    if (existingOffer) {
+      updateMutation.mutate(
+        {
+          id: existingOffer.id,
+          payload: {
+            providerServiceId: values.providerServiceId,
+            startDate: values.startDate,
+            endDate: values.endDate,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast.success(t("scrap.offer.updateSuccess"));
+            onDone?.();
+          },
+          onError: () => toast.error(t("common.saveFailed")),
+        },
+      );
+      return;
+    }
 
-  function onSubmit(values: OfferFormValues) {
-    submitOfferMutation.mutate(
-      { id: requestId, payload: values },
+    createMutation.mutate(
+      {
+        orderId,
+        providerServiceId: values.providerServiceId,
+        startDate: values.startDate,
+        endDate: values.endDate,
+      },
       {
         onSuccess: () => {
           toast.success(t("scrap.offer.success"));
+          onDone?.();
         },
-        onError: () => {
-          toast.error(t("common.saveFailed"));
-        },
+        onError: () => toast.error(t("common.saveFailed")),
       },
     );
   }
 
+  // ── Loading parts ──────────────────────────────────────────────────────────
+  if (partsLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        <ProviderSkeleton width="60%" height={16} />
+        <ProviderSkeleton width="100%" height={48} className="rounded-[var(--radius-md)]" />
+      </div>
+    );
+  }
+
+  // ── Empty parts state ──────────────────────────────────────────────────────
+  if (parts.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-[var(--radius-md)] border border-[var(--color-divider)] p-5 text-center">
+        <Package className="h-8 w-8 text-[var(--color-muted)]" aria-hidden />
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-semibold text-[var(--color-ink-body)]">
+            {t("scrap.offer.noPartsTitle")}
+          </p>
+          <p className="text-xs text-[var(--color-muted)]">
+            {t("scrap.offer.noPartsDescription")}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/provider/scrap/parts")}
+          className={[
+            "inline-flex items-center gap-2 rounded-[var(--radius-md)]",
+            "bg-[var(--color-brand-orange)] px-4 py-2 text-sm font-semibold text-white",
+            "transition-colors hover:bg-[var(--color-brand-orange-hover)]",
+            "focus-visible:outline-none focus-visible:ring-2",
+            "focus-visible:ring-[var(--color-brand-orange)]/40",
+          ].join(" ")}
+        >
+          {t("scrap.offer.goToParts")}
+          <ArrowRight className="h-4 w-4 rtl:rotate-180" aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
+  // ── Form ───────────────────────────────────────────────────────────────────
   return (
     <form id={formId} onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-      {/* Price */}
+      {/* ── Provider part selector ───────────────────────────────────────── */}
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor={`${formId}-providerServiceId`}
+          className="text-sm font-medium text-[var(--color-ink-body)]"
+        >
+          {t("scrap.offer.providerServiceLabel")}
+        </label>
+        <Controller
+          name="providerServiceId"
+          control={control}
+          render={({ field }) => (
+            <SelectPrimitive.Root value={field.value || ""} onValueChange={field.onChange}>
+              <SelectPrimitive.Trigger
+                id={`${formId}-providerServiceId`}
+                aria-invalid={errors.providerServiceId ? true : undefined}
+                className={cn(
+                  "inline-flex h-[var(--size-input-h)] w-full items-center justify-between gap-2",
+                  "rounded-[var(--radius-md)] border bg-[var(--color-surface)]",
+                  "ps-3 pe-3 text-sm text-[var(--color-ink-body)] outline-none",
+                  "data-[placeholder]:text-[var(--color-muted)]",
+                  "focus-visible:ring-2 transition-colors duration-[var(--dur-fast)]",
+                  "[&>span]:flex [&>span]:flex-1 [&>span]:min-w-0 [&>span]:items-center",
+                  errors.providerServiceId
+                    ? "border-[var(--color-danger-500)] focus-visible:border-[var(--color-danger-500)] focus-visible:ring-[var(--color-danger-500)]/20"
+                    : "border-[var(--color-divider)] focus-visible:border-[var(--color-brand-orange)] focus-visible:ring-[var(--color-brand-orange)]/20"
+                )}
+              >
+                <SelectPrimitive.Value placeholder={t("scrap.offer.providerServicePlaceholder")}>
+                  {(() => {
+                    const selectedPart = parts.find((p) => p.id === field.value);
+                    if (!selectedPart) return undefined;
+                    return (
+                      <div className="flex w-full min-w-0 items-center justify-between gap-3 pe-1">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <Package className="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                          <span className="truncate font-medium">{selectedPart.serviceName ?? selectedPart.id}</span>
+                        </div>
+                        {selectedPart.price !== undefined && selectedPart.price > 0 && (
+                          <span className="shrink-0 text-xs font-normal text-[var(--color-muted)]">
+                            {selectedPart.price} ر.س
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </SelectPrimitive.Value>
+
+                <SelectPrimitive.Icon asChild>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                </SelectPrimitive.Icon>
+              </SelectPrimitive.Trigger>
+
+              <SelectPrimitive.Portal>
+                <SelectPrimitive.Content
+                  position="popper"
+                  sideOffset={6}
+                  className={cn(
+                    "z-50 w-[var(--radix-select-trigger-width)]",
+                    "overflow-hidden rounded-[var(--radius-md)]",
+                    "border border-[var(--color-divider)] bg-[var(--color-surface)]",
+                    "shadow-[var(--shadow-provider-md)]",
+                    "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+                    "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+                    "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                  )}
+                  style={{ animationDuration: "var(--dur-fast)" }}
+                >
+                  <SelectPrimitive.Viewport className="p-1.5">
+                    {parts.map((part) => (
+                      <SelectPrimitive.Item
+                        key={part.id}
+                        value={part.id}
+                        className={cn(
+                          "relative flex cursor-default select-none items-center justify-between",
+                          "rounded-[var(--radius-sm)] ps-3 pe-8 py-2.5 text-sm",
+                          "text-[var(--color-ink-body)] outline-none",
+                          "transition-colors duration-[var(--dur-fast)]",
+                          "data-[highlighted]:bg-[var(--color-surface-2)]",
+                          "data-[state=checked]:font-medium"
+                        )}
+                      >
+                        <div className="flex w-full min-w-0 items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <Package className="h-4 w-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                            <SelectPrimitive.ItemText>
+                              <span className="truncate">{part.serviceName ?? part.id}</span>
+                            </SelectPrimitive.ItemText>
+                          </div>
+                          {part.price !== undefined && part.price > 0 && (
+                            <span className="shrink-0 text-xs font-normal text-[var(--color-muted)]">
+                              {part.price} ر.س
+                            </span>
+                          )}
+                        </div>
+                        <span className="absolute end-2 flex h-4 w-4 items-center justify-center">
+                          <SelectPrimitive.ItemIndicator>
+                            <Check className="h-4 w-4 text-[var(--color-brand-orange)]" aria-hidden />
+                          </SelectPrimitive.ItemIndicator>
+                        </span>
+                      </SelectPrimitive.Item>
+                    ))}
+                  </SelectPrimitive.Viewport>
+                </SelectPrimitive.Content>
+              </SelectPrimitive.Portal>
+            </SelectPrimitive.Root>
+          )}
+        />
+        {errors.providerServiceId?.message && (
+          <p className="text-xs text-[var(--color-danger-500)]">
+            {t(errors.providerServiceId.message)}
+          </p>
+        )}
+      </div>
+
+      {/* ── Start date ───────────────────────────────────────────────────── */}
       <ProviderInput
-        id={`${formId}-price`}
-        type="number"
-        min={1}
-        step="any"
-        label={t("scrap.offer.price")}
-        hint={t("scrap.offer.priceHint")}
-        trailingIcon={
-          <span className="text-xs font-medium text-[var(--color-muted)]">ر.س</span>
-        }
-        error={errors.price?.message ? t(errors.price.message) : undefined}
-        {...register("price", { valueAsNumber: true })}
+        id={`${formId}-startDate`}
+        type="date"
+        label={t("scrap.offer.startDateLabel")}
+        error={errors.startDate?.message ? t(errors.startDate.message) : undefined}
+        {...register("startDate")}
       />
 
-      {/* Note */}
-      <ProviderTextarea
-        id={`${formId}-note`}
-        label={t("scrap.offer.note")}
-        placeholder={t("common.optional")}
-        rows={3}
-        maxLength={500}
-        error={errors.note?.message ? t(errors.note.message) : undefined}
-        {...register("note")}
+      {/* ── End date ─────────────────────────────────────────────────────── */}
+      <ProviderInput
+        id={`${formId}-endDate`}
+        type="date"
+        label={t("scrap.offer.endDateLabel")}
+        error={errors.endDate?.message ? t(errors.endDate.message) : undefined}
+        {...register("endDate")}
       />
 
-      {/* Photos */}
-      <ProviderImageUpload
-        label={t("scrap.offer.photos")}
-        dropLabel={t("dealer.products.form.dropImage")}
-        value={photos}
-        onChange={(v) => setValue("photos", v as string[])}
-        multiple
-        maxSizeMB={8}
-      />
-
-      {/* Submit button */}
       <button
         type="submit"
-        disabled={submitOfferMutation.isPending}
+        disabled={isPending}
         className={[
           "inline-flex items-center justify-center gap-2",
           "w-full rounded-[var(--radius-md)] bg-[var(--color-brand-orange)]",
@@ -303,166 +365,172 @@ function OfferForm({ requestId }: OfferFormProps) {
           "disabled:cursor-not-allowed disabled:opacity-60",
         ].join(" ")}
       >
-        {submitOfferMutation.isPending && (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        )}
-        {t("scrap.offer.submit")}
+        {isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+        {existingOffer ? t("scrap.offer.editTitle") : t("scrap.offer.submit")}
       </button>
     </form>
   );
 }
 
-// ── Confirm-ship button ───────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-interface MarkShippedButtonProps {
-  requestId: string;
+function formatDate(iso: string, lang: string): string {
+  return new Intl.DateTimeFormat(lang === "ar" ? "ar-SA" : "en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(iso));
 }
 
-function MarkShippedButton({ requestId }: MarkShippedButtonProps) {
-  const { t } = useTranslation();
+// ── Existing-offer summary (with edit/delete) ───────────────────────────────
+
+interface MyOfferPanelProps {
+  offer: Offer;
+}
+
+function MyOfferPanel({ offer }: MyOfferPanelProps) {
+  const { t, i18n } = useTranslation();
   const toast = useToast();
-  const [confirming, setConfirming] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
-  const mutation = useUpdatePartRequestStatusMutation();
+  const deleteMutation = useDeleteOfferMutation();
 
-  function handleConfirm() {
-    mutation.mutate(
-      { id: requestId, status: "shipped" },
-      {
-        onSuccess: () => {
-          toast.success(t("scrap.partRequests.markShipped"));
-          setConfirming(false);
-        },
-        onError: () => {
-          toast.error(t("common.saveFailed"));
-          setConfirming(false);
-        },
+  function handleDelete() {
+    deleteMutation.mutate(offer.id, {
+      onSuccess: () => {
+        toast.success(t("scrap.offer.deleteSuccess"));
+        setConfirmingDelete(false);
       },
+      onError: () => {
+        toast.error(t("common.saveFailed"));
+        setConfirmingDelete(false);
+      },
+    });
+  }
+
+  if (editing) {
+    return (
+      <OfferForm orderId={offer.orderId} existingOffer={offer} onDone={() => setEditing(false)} />
     );
   }
 
-  if (!confirming) {
-    return (
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className={[
-          "inline-flex items-center justify-center gap-2",
-          "w-full rounded-[var(--radius-md)] bg-[var(--color-brand-orange)]",
-          "h-[var(--size-input-h)] px-5 text-sm font-semibold text-white",
-          "transition-colors duration-[var(--dur-fast)]",
-          "hover:bg-[var(--color-brand-orange-hover)]",
-          "focus-visible:outline-none focus-visible:ring-2",
-          "focus-visible:ring-[var(--color-brand-orange)]/40",
-        ].join(" ")}
-      >
-        {t("scrap.partRequests.markShipped")}
-      </button>
-    );
-  }
+  const serviceName = offer.providerService?.serviceName ?? "—";
+  const price = offer.providerService?.price;
+  const lang = i18n.language;
 
   return (
     <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-[var(--color-divider)] p-4">
-      <p className="text-sm text-[var(--color-ink-body)]">
-        {t("scrap.partRequests.markShippedConfirm")}
-      </p>
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={() => setConfirming(false)}
-          disabled={mutation.isPending}
-          className={[
-            "flex-1 rounded-[var(--radius-md)] border border-[var(--color-divider)]",
-            "py-2 text-sm font-medium text-[var(--color-ink-body)]",
-            "transition-colors duration-[var(--dur-fast)]",
-            "hover:bg-[var(--color-surface-2)]",
-            "focus-visible:outline-none focus-visible:ring-2",
-            "focus-visible:ring-[var(--color-brand-orange)]/40",
-            "disabled:opacity-50",
-          ].join(" ")}
-        >
-          {t("common.cancel")}
-        </button>
-        <button
-          type="button"
-          onClick={handleConfirm}
-          disabled={mutation.isPending}
-          className={[
-            "flex-1 inline-flex items-center justify-center gap-2",
-            "rounded-[var(--radius-md)] bg-[var(--color-brand-orange)]",
-            "py-2 text-sm font-semibold text-white",
-            "transition-colors duration-[var(--dur-fast)]",
-            "hover:bg-[var(--color-brand-orange-hover)]",
-            "focus-visible:outline-none focus-visible:ring-2",
-            "focus-visible:ring-[var(--color-brand-orange)]/40",
-            "disabled:opacity-60 disabled:cursor-not-allowed",
-          ].join(" ")}
-        >
-          {mutation.isPending && (
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          )}
-          {t("common.confirm")}
-        </button>
+      <div className="flex flex-col gap-1">
+        <p className="text-sm font-semibold text-[var(--color-ink-body)]">{serviceName}</p>
+        {price !== undefined && price > 0 && (
+          <p className="text-sm text-[var(--color-muted)]">{price} ر.س</p>
+        )}
+        <p className="text-xs text-[var(--color-muted)]">
+          {t("scrap.offer.startDateLabel")}: {formatDate(offer.startDate, lang)}
+        </p>
+        <p className="text-xs text-[var(--color-muted)]">
+          {t("scrap.offer.endDateLabel")}: {formatDate(offer.endDate, lang)}
+        </p>
       </div>
-    </div>
-  );
-}
 
-// ── Info panel ────────────────────────────────────────────────────────────────
+      {!confirmingDelete && (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className={[
+              "flex-1 inline-flex items-center justify-center gap-2",
+              "rounded-[var(--radius-md)] border border-[var(--color-divider)]",
+              "py-2 text-sm font-medium text-[var(--color-ink-body)]",
+              "transition-colors duration-[var(--dur-fast)]",
+              "hover:bg-[var(--color-surface-2)]",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-[var(--color-brand-orange)]/40",
+            ].join(" ")}
+          >
+            <Pencil className="h-4 w-4" aria-hidden />
+            {t("scrap.myOffers.edit")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmingDelete(true)}
+            className={[
+              "flex-1 inline-flex items-center justify-center gap-2",
+              "rounded-[var(--radius-md)] border border-[var(--color-danger-500)]/30",
+              "py-2 text-sm font-medium text-[var(--color-danger-500)]",
+              "transition-colors duration-[var(--dur-fast)]",
+              "hover:bg-[var(--color-danger-50)]",
+              "focus-visible:outline-none focus-visible:ring-2",
+              "focus-visible:ring-[var(--color-danger-500)]/40",
+            ].join(" ")}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden />
+            {t("scrap.myOffers.delete")}
+          </button>
+        </div>
+      )}
 
-interface InfoPanelProps {
-  icon: React.ReactNode;
-  message: string;
-  tone?: "info" | "success" | "muted" | "danger";
-}
-
-function InfoPanel({ icon, message, tone = "info" }: InfoPanelProps) {
-  const bg: Record<string, string> = {
-    info: "var(--color-info-50)",
-    success: "var(--color-success-50)",
-    muted: "var(--color-surface-2)",
-    danger: "var(--color-danger-50)",
-  };
-  const fg: Record<string, string> = {
-    info: "var(--color-info-500)",
-    success: "var(--color-success-500)",
-    muted: "var(--color-muted)",
-    danger: "var(--color-danger-500)",
-  };
-
-  return (
-    <div
-      className="flex items-start gap-3 rounded-[var(--radius-md)] px-4 py-3"
-      style={{ backgroundColor: bg[tone] }}
-    >
-      <span className="mt-0.5 shrink-0" style={{ color: fg[tone] }}>
-        {icon}
-      </span>
-      <p className="text-sm font-medium leading-snug" style={{ color: fg[tone] }}>
-        {message}
-      </p>
+      {confirmingDelete && (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[var(--color-ink-body)]">{t("scrap.offer.deleteConfirmBody")}</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={deleteMutation.isPending}
+              className={[
+                "flex-1 rounded-[var(--radius-md)] border border-[var(--color-divider)]",
+                "py-2 text-sm font-medium text-[var(--color-ink-body)]",
+                "hover:bg-[var(--color-surface-2)]",
+                "disabled:opacity-50",
+              ].join(" ")}
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className={[
+                "flex-1 inline-flex items-center justify-center gap-2",
+                "rounded-[var(--radius-md)] bg-[var(--color-danger-500)]",
+                "py-2 text-sm font-semibold text-white",
+                "hover:opacity-90",
+                "disabled:opacity-60 disabled:cursor-not-allowed",
+              ].join(" ")}
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              {t("common.confirm")}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-/** Shared detail view for a single part request. */
+/** Shared detail view for a single salvage order. */
 export function PartRequestDetailContent({ requestId }: PartRequestDetailContentProps) {
   const { t } = useTranslation();
 
   const {
-    data: request,
-    isLoading: reqLoading,
-    isError: reqError,
-    refetch: reqRefetch,
-  } = usePartRequestQuery(requestId);
+    data: order,
+    isLoading: orderLoading,
+    isError: orderError,
+    refetch: orderRefetch,
+  } = useSalvageOrderQuery(requestId);
 
-  const { data: escrow, isLoading: escrowLoading } = useEscrowQuery(
-    request?.escrowId ? requestId : "",
+  const { data: myOffers, isLoading: offersLoading } = useOffersQuery({ pageSize: 100 });
+
+  const myOfferForThisOrder = useMemo(
+    () => myOffers?.items.find((o) => o.orderId === requestId),
+    [myOffers, requestId],
   );
 
-  const isLoading = reqLoading || escrowLoading;
+  const isLoading = orderLoading || offersLoading;
 
   // ── Loading skeleton ────────────────────────────────────────────────────────
   if (isLoading) {
@@ -475,7 +543,6 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
         <div className="flex flex-col gap-2.5">
           <ProviderSkeleton width="40%" height={16} />
           <ProviderSkeleton width="70%" height={14} />
-          <ProviderSkeleton width={140} height={20} className="rounded-full" />
         </div>
         <div className="flex gap-3">
           {[0, 1, 2].map((i) => (
@@ -488,14 +555,14 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
   }
 
   // ── Error state ─────────────────────────────────────────────────────────────
-  if (reqError || !request) {
+  if (orderError) {
     return (
       <div className="flex flex-col items-center gap-4 py-8 text-center">
         <AlertCircle className="h-8 w-8 text-[var(--color-danger-500)]" aria-hidden />
         <p className="text-sm text-[var(--color-muted)]">{t("common.errorTitle")}</p>
         <button
           type="button"
-          onClick={() => void reqRefetch()}
+          onClick={() => void orderRefetch()}
           className={[
             "inline-flex items-center gap-2 rounded-[var(--radius-md)]",
             "bg-[var(--color-brand-orange)] px-4 py-2 text-sm font-semibold text-white",
@@ -511,9 +578,18 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
     );
   }
 
-  const brandLabel = t(`scrap.profile.specializations.brand.${request.vehicle.brand}`, {
-    defaultValue: request.vehicle.brand,
-  });
+  // ── Friendly 403 / not-found state ──────────────────────────────────────────
+  if (!order) {
+    return (
+      <ProviderEmptyState
+        icon={<Info className="h-8 w-8" />}
+        title={t("scrap.partRequests.browsingUnavailableTitle")}
+        description={t("scrap.partRequests.browsingUnavailableDescription")}
+      />
+    );
+  }
+
+  const vehicleLine = [order.brand, order.model, order.year].filter(Boolean).join(" · ");
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -523,66 +599,55 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 className="text-lg font-semibold leading-snug text-[var(--color-ink-body)]">
-            {request.partName}
+            {order.partName}
           </h2>
-          <span className="font-mono text-xs text-[var(--color-muted)]">
-            {t("scrap.partRequests.requestNumber")} {request.requestNumber}
-          </span>
+          {order.customerName && (
+            <span className="text-xs text-[var(--color-muted)]">
+              {t("scrap.partRequests.customerName")}: {order.customerName}
+            </span>
+          )}
         </div>
-        <ProviderStatusPill
-          tone={toPillTone(partRequestStatusTone(request.status))}
-          label={t(`scrap.status.${request.status}`)}
-        />
+        <ProviderStatusPill tone="neutral" label={order.status} />
       </div>
 
       <div className="border-t border-[var(--color-divider)]" />
 
       {/* ── Part info ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3">
-        {/* Vehicle */}
         <div className="flex flex-col gap-0.5">
           <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
             {t("scrap.partRequests.vehicle")}
           </span>
-          <p className="text-sm text-[var(--color-ink-body)]">
-            {brandLabel} · {request.vehicle.model} · {request.vehicle.year}
-          </p>
+          <p className="text-sm text-[var(--color-ink-body)]">{vehicleLine}</p>
         </div>
 
-        {/* Description */}
-        {request.description && (
+        {order.serialNumber && (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
+              {t("scrap.partRequests.serialNumber")}
+            </span>
+            <p className="text-sm text-[var(--color-ink-body)]">{order.serialNumber}</p>
+          </div>
+        )}
+
+        {order.description && (
           <div className="flex flex-col gap-0.5">
             <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
               {t("scrap.partRequests.description")}
             </span>
-            <p className="text-sm text-[var(--color-ink-body)]">{request.description}</p>
+            <p className="text-sm text-[var(--color-ink-body)]">{order.description}</p>
           </div>
         )}
-
-        {/* Masked phone badge */}
-        <div className="flex items-center gap-2">
-          <span
-            className={[
-              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 leading-none",
-              "bg-[var(--color-info-50)] text-[var(--color-info-500)]",
-              "text-xs font-medium",
-            ].join(" ")}
-          >
-            <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span>{request.customerPhoneMasked}</span>
-            <span className="opacity-60">· {t("scrap.partRequests.protectedPhone")}</span>
-          </span>
-        </div>
       </div>
 
       {/* ── Photo gallery ─────────────────────────────────────────────────────── */}
-      {request.photos.length > 0 && (
+      {order.photos.length > 0 && (
         <div className="flex flex-col gap-2">
           <span className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
             {t("scrap.partRequests.gallery")}
           </span>
           <div className="flex flex-wrap gap-3">
-            {request.photos.map((src, i) => (
+            {order.photos.map((src, i) => (
               <SafeThumb key={i} src={src} />
             ))}
           </div>
@@ -591,65 +656,15 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
 
       <div className="border-t border-[var(--color-divider)]" />
 
-      {/* ── Escrow timeline ───────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        {escrow ? (
-          <EscrowTimeline status={escrow.status} amount={escrow.amount} />
-        ) : (
-          <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-            <Lock className="h-4 w-4 shrink-0" aria-hidden />
-            <span>{t("scrap.partRequests.escrowNotStarted")}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-[var(--color-divider)]" />
-
-      {/* ── State-driven action area ──────────────────────────────────────────── */}
+      {/* ── Offer area ───────────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3">
-        {request.status === "new" && (
-          <>
-            <p className="text-sm font-semibold text-[var(--color-ink-body)]">
-              {t("scrap.offer.title")}
-            </p>
-            <OfferForm requestId={requestId} />
-          </>
-        )}
-
-        {request.status === "accepted" && (
-          <MarkShippedButton requestId={requestId} />
-        )}
-
-        {request.status === "quoted" && (
-          <InfoPanel
-            icon={<Info className="h-4 w-4" />}
-            message={t("scrap.partRequests.awaitingBuyerAccept")}
-            tone="info"
-          />
-        )}
-
-        {request.status === "shipped" && (
-          <InfoPanel
-            icon={<Lock className="h-4 w-4" />}
-            message={t("scrap.partRequests.awaitingDeliveryConfirm")}
-            tone="info"
-          />
-        )}
-
-        {request.status === "completed" && (
-          <InfoPanel
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            message={t("scrap.partRequests.completedReleased")}
-            tone="success"
-          />
-        )}
-
-        {request.status === "cancelled" && (
-          <InfoPanel
-            icon={<XCircle className="h-4 w-4" />}
-            message={t("scrap.partRequests.cancelledNotice")}
-            tone="muted"
-          />
+        <p className="text-sm font-semibold text-[var(--color-ink-body)]">
+          {myOfferForThisOrder ? t("scrap.myOffers.title") : t("scrap.offer.title")}
+        </p>
+        {myOfferForThisOrder ? (
+          <MyOfferPanel offer={myOfferForThisOrder} />
+        ) : (
+          <OfferForm orderId={order.id} />
         )}
       </div>
 

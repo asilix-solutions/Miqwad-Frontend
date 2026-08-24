@@ -157,3 +157,73 @@ export interface SubmitOfferPayload {
   note?: string;
   photos?: string[];
 }
+
+// ── Salvage Orders (real Orders API, OrderType = salvage) ──────────────────────
+
+/**
+ * View model adapted from the real `Order` DTO (OrderType = salvage).
+ * The raw backend shape is isolated in `salvageOrdersApi.ts`'s adapter — no
+ * other file should assume anything about the raw `Order` fields.
+ * See docs/probe-scrap-offers-2026-08-20.md §1.1/§1.4 for the source shape.
+ */
+export interface SalvageOrder {
+  id: string;
+  partName: string;
+  brand: string;
+  model: string;
+  year: string;
+  serialNumber?: string;
+  description?: string;
+  photos: string[];
+  customerName?: string;
+  /** Raw backend order status string — label mapping is unconfirmed, shown as-is. */
+  status: string;
+  createdAt: string;
+}
+
+// ── Offers (real /api/Offers) ───────────────────────────────────────────────
+
+/**
+ * Nested provider-service summary returned inside GET /api/Offers items.
+ * Attachments are normalised to a plain `images` string array by the adapter.
+ */
+export interface OfferProviderService {
+  id: string;
+  serviceId: string;
+  serviceName: string | null;
+  quantity: number;
+  price: number;
+  notes: string | null;
+  isCompatibleWith: string | null;
+  images: string[];
+}
+
+/** A submitted offer, as returned by GET /api/Offers. */
+export interface Offer {
+  id: string;
+  orderId: string;
+  providerServiceId: string;
+  startDate: string;
+  endDate: string;
+  providerService: OfferProviderService | null;
+  createdAt: string;
+}
+
+/** POST /api/Offers body — confirmed against live Swagger 2026-08-23. */
+export interface CreateOfferPayload {
+  orderId: string;
+  providerServiceId: string;
+  /** ISO-8601 date-time string — converted at the API boundary. */
+  startDate: string;
+  /** ISO-8601 date-time string — converted at the API boundary. */
+  endDate: string;
+}
+
+/** PUT /api/Offers/{id} body — orderId MUST NOT be included. */
+export interface UpdateOfferPayload {
+  providerServiceId: string;
+  /** ISO-8601 date-time string — converted at the API boundary. */
+  startDate: string;
+  /** ISO-8601 date-time string — converted at the API boundary. */
+  endDate: string;
+}

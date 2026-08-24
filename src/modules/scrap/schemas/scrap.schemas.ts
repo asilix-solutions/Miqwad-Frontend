@@ -26,17 +26,34 @@ const SCRAP_VEHICLE_BRANDS = [
 
 export { SCRAP_VEHICLE_BRANDS };
 
-// ── Offer form ────────────────────────────────────────────────────────────────
+// ── Salvage offer form (confirmed CreateOfferDto / UpdateOfferDto fields) ────────
 
-export const offerSchema = z.object({
-  price: z
-    .number()
-    .positive("scrap.offer.validation.pricePositive"),
-  note: z.string().max(500).optional(),
-  photos: z.array(z.string().url()).optional(),
-});
+export const salvageOfferSchema = z
+  .object({
+    providerServiceId: z
+      .string()
+      .min(1, "scrap.offer.validation.providerServiceRequired"),
 
-export type OfferFormValues = z.infer<typeof offerSchema>;
+    startDate: z
+      .string()
+      .min(1, "scrap.offer.validation.startDateRequired"),
+
+    endDate: z
+      .string()
+      .min(1, "scrap.offer.validation.endDateRequired"),
+  })
+  .refine(
+    (value) =>
+      !value.startDate ||
+      !value.endDate ||
+      new Date(value.endDate) >= new Date(value.startDate),
+    {
+      message: "scrap.offer.validation.endDateAfterStart",
+      path: ["endDate"],
+    },
+  );
+
+export type SalvageOfferFormValues = z.infer<typeof salvageOfferSchema>;
 
 // ── Profile form ──────────────────────────────────────────────────────────────
 
