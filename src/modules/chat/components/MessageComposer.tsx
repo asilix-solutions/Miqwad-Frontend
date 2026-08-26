@@ -2,10 +2,12 @@
  * @file MessageComposer.tsx
  *
  * Message input + send button. Enter sends, Shift+Enter inserts a newline.
- * Disabled (with a hint) whenever the live connection isn't "connected".
- * Enforces the hub's content rules client-side (1–2000 chars) so obviously
- * invalid sends never reach SendMessage, and surfaces a bilingual inline
- * error if the hub rejects the send anyway (never crashes).
+ * Sending is REST-based and always available (empty/too-long/sending guards
+ * only) — the SignalR hub is receive-only, so its status never gates send.
+ * When the hub isn't "connected" a soft, non-blocking hint informs that new
+ * messages may arrive late. Enforces the hub's content rules client-side
+ * (1–2000 chars) so obviously invalid sends never reach the API, and
+ * surfaces a bilingual inline error if the send fails anyway (never crashes).
  */
 
 import { useState, type KeyboardEvent } from "react";
@@ -30,14 +32,14 @@ export function MessageComposer({ status, onSend }: MessageComposerProps) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  const disconnected = status !== "connected";
+  const receiveDegraded = status !== "connected";
   const isEmpty = value.trim().length === 0;
   const isTooLong = value.length > MAX_CONTENT_LENGTH;
-  const disabled = disconnected || isEmpty || isTooLong || sending;
+  const disabled = isEmpty || isTooLong || sending;
 
   const handleSend = async () => {
     const trimmed = value.trim();
-    if (!trimmed || disconnected || isTooLong || sending) return;
+    if (!trimmed || isTooLong || sending) return;
 
     setSending(true);
     setSendError(null);
@@ -69,7 +71,6 @@ export function MessageComposer({ status, onSend }: MessageComposerProps) {
           }}
           onKeyDown={handleKeyDown}
           placeholder={t("chat.composerPlaceholder")}
-          disabled={disconnected}
           rows={1}
           className="min-h-0 resize-none py-2.5"
         />
@@ -107,9 +108,9 @@ export function MessageComposer({ status, onSend }: MessageComposerProps) {
         </p>
       )}
 
-      {disconnected && (
+      {receiveDegraded && (
         <p className="text-xs text-[var(--color-muted)]">
-          {t("chat.composerDisconnectedHint")}
+          {t("chat.composerReceiveDegradedHint")}
         </p>
       )}
     </div>
