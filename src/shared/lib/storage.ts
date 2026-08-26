@@ -11,6 +11,7 @@ export const StorageKeys = {
   refreshToken: `${PREFIX}refreshToken`,
   language: `${PREFIX}language`,
   user: `${PREFIX}user`,
+  notificationsMuted: `${PREFIX}notificationsMuted`,
 } as const;
 
 export type StorageKey = (typeof StorageKeys)[keyof typeof StorageKeys];

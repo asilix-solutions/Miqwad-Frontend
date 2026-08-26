@@ -17,6 +17,8 @@ import { logout } from "@modules/auth/store/authSlice";
 import { authApi } from "@modules/auth/api/authApi";
 import { chatHubManager } from "@modules/chat/lib/chatHub";
 import { resetChat } from "@modules/chat/store/chatSlice";
+import { notificationsHubManager } from "@modules/notifications/api/notificationsHub";
+import { clearAll as clearNotifications } from "@modules/notifications/store/notificationsSlice";
 
 export function useLogout() {
   const dispatch = useAppDispatch();
@@ -35,6 +37,8 @@ export function useLogout() {
     // the next user signs in on this tab.
     void chatHubManager.disconnect();
     dispatch(resetChat());
+    void notificationsHubManager.disconnect();
+    dispatch(clearNotifications());
     dispatch(logout());
     queryClient.clear();
     navigate("/login", { replace: true });
