@@ -393,6 +393,21 @@
   }
 }
 
+/* Live status dot pulse — used by ConnectionStatusDot (chat, and any future
+   live-status indicator). Soft opacity breathing, not a jarring blink. */
+@keyframes provider-status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+.provider-status-pulse {
+  animation: provider-status-pulse 1.8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .provider-status-pulse {
+    animation: none !important;
+  }
+}
+
 /* Sidebar drawer slide transition — used by DealerSidebar (and future provider sidebars) */
 .provider-sidebar-transition {
   transition: transform var(--dur-base) var(--ease-provider);
