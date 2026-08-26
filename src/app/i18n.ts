@@ -2634,7 +2634,7 @@ const ar = {
       connecting: "جارٍ الاتصال...",
       selfHint: "يعكس هذا حالة اتصالك أنت، وليس حالة اتصال الطرف الآخر",
     },
-    composerDisconnectedHint: "غير متصل حالياً — لا يمكن إرسال الرسائل",
+    composerReceiveDegradedHint: "قد تصل الرسائل الجديدة متأخرة",
     composer: {
       charCounter: "{{count}}/{{max}}",
       tooLong: "الرسالة طويلة جداً",
@@ -5295,7 +5295,7 @@ const en: typeof ar = {
       connecting: "Connecting...",
       selfHint: "Reflects your own connection, not the other person's",
     },
-    composerDisconnectedHint: "Currently disconnected — messages can't be sent",
+    composerReceiveDegradedHint: "New messages may arrive with a delay",
     composer: {
       charCounter: "{{count}}/{{max}}",
       tooLong: "Message is too long",
