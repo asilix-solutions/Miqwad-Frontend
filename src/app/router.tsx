@@ -727,6 +727,15 @@ export const router = createBrowserRouter([
                         },
                       },
                       {
+                        path: "notifications",
+                        async lazy() {
+                          const { NotificationsPage } = await import(
+                            "@modules/notifications/pages/NotificationsPage"
+                          );
+                          return { Component: NotificationsPage };
+                        },
+                      },
+                      {
                         path: "subscription",
                         async lazy() {
                           const { ScrapSubscriptionPage } = await import(

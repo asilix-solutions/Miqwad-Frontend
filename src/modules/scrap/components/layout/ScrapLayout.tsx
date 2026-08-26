@@ -9,12 +9,22 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Menu } from "lucide-react";
+import { useNotificationsHub } from "@modules/notifications/hooks/useNotificationsHub";
+import { NotificationToastHost } from "@shared/provider-ui";
 import { ScrapSidebar } from "./ScrapSidebar";
 import { ScrapTopbar } from "./ScrapTopbar";
+
+const SCRAP_NOTIFICATIONS_PATH = "/provider/scrap/notifications";
 
 export function ScrapLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+
+  // Connect on mount of the shell (not a specific page) so notifications
+  // keep arriving regardless of which scrap route is active — see
+  // @modules/notifications/hooks/useNotificationsHub. Never disconnected
+  // here: torn down only on logout (useLogout.ts), same as the chat hub.
+  useNotificationsHub();
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -30,6 +40,7 @@ export function ScrapLayout() {
 
   return (
     <div className="min-h-screen bg-[var(--color-app-bg,#F5F6FA)] flex">
+      <NotificationToastHost viewAllHref={SCRAP_NOTIFICATIONS_PATH} />
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/40 lg:hidden"

@@ -2660,6 +2660,17 @@ const ar = {
     unreadLabel: "غير مقروءة",
     newMessages: "رسائل جديدة",
   },
+  notifications: {
+    title: "الإشعارات",
+    subtitle: "إشعارات هذه الجلسة — تظهر هنا الإشعارات المستلمة منذ فتح الصفحة",
+    bellLabel: "الإشعارات",
+    markAllRead: "تعليم الكل كمقروء",
+    mute: "كتم صوت الإشعارات",
+    unmute: "إلغاء كتم صوت الإشعارات",
+    viewAll: "عرض كل الإشعارات",
+    emptyTitle: "لا توجد إشعارات بعد",
+    emptyDescription: "ستظهر هنا الإشعارات الجديدة فور وصولها خلال هذه الجلسة.",
+  },
 };
 
 const en: typeof ar = {
@@ -5320,6 +5331,17 @@ const en: typeof ar = {
     dayYesterday: "Yesterday",
     unreadLabel: "unread",
     newMessages: "New messages",
+  },
+  notifications: {
+    title: "Notifications",
+    subtitle: "This session's notifications — shown here since you opened the page",
+    bellLabel: "Notifications",
+    markAllRead: "Mark all as read",
+    mute: "Mute notification sound",
+    unmute: "Unmute notification sound",
+    viewAll: "View all notifications",
+    emptyTitle: "No notifications yet",
+    emptyDescription: "New notifications will appear here as soon as they arrive this session.",
   },
 };
 
