@@ -55,3 +55,11 @@ export type { ProviderDialogProps } from "./ProviderDialog";
 
 export { CategoryMultiSelectTree } from "./CategoryMultiSelectTree";
 export type { CategoryMultiSelectTreeProps } from "./CategoryMultiSelectTree";
+
+// ── Notifications ───────────────────────────────────────────────────────────
+
+export { NotificationBell } from "./NotificationBell";
+export type { NotificationBellProps } from "./NotificationBell";
+
+export { NotificationToastHost } from "./NotificationToastHost";
+export type { NotificationToastHostProps } from "./NotificationToastHost";

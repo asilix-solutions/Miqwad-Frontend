@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@app/store";
 import { useLogout } from "@modules/auth/hooks/useLogout";
 import i18n from "@app/i18n";
+import { NotificationBell } from "@shared/provider-ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -48,6 +49,8 @@ export function ScrapTopbar({ children }: ScrapTopbarProps) {
       <div className="flex items-center min-w-0 flex-1">{children}</div>
 
       <div className="flex items-center gap-4 ms-auto">
+        <NotificationBell viewAllHref="/provider/scrap/notifications" />
+
         <button
           onClick={toggleLang}
           className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] text-ink-600 hover:text-ink-900 hover:bg-ink-50 transition-colors text-sm font-medium"

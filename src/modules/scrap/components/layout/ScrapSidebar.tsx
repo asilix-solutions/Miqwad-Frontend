@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Tag,
   MessageSquare,
+  Bell,
   CreditCard,
   UserCircle,
 } from "lucide-react";
@@ -52,6 +53,12 @@ const NAV_ITEMS: NavItem[] = [
     labelPath: "scrap.nav.conversations",
     path: "/provider/scrap/conversations",
     icon: MessageSquare,
+  },
+  {
+    key: "notifications",
+    labelPath: "notifications.title",
+    path: "/provider/scrap/notifications",
+    icon: Bell,
   },
   {
     key: "subscription",
