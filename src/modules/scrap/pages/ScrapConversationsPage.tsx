@@ -1,21 +1,12 @@
 /**
  * @file ScrapConversationsPage.tsx
  *
- * Scrap provider conversations — deferred entry point for the external chat system.
- * No chat logic here; wired externally later.
+ * Scrap provider conversations entry point — renders the shared
+ * ChatScreen (live SignalR hub; see CHAT_SOURCE / CHAT_HUB_URL).
  */
 
-import { useTranslation } from "react-i18next";
-import { MessageSquare } from "lucide-react";
-import { ProviderEmptyState } from "@shared/provider-ui/ProviderEmptyState";
+import { ChatScreen } from "@modules/chat/components/ChatScreen";
 
 export function ScrapConversationsPage() {
-  const { t } = useTranslation();
-  return (
-    <ProviderEmptyState
-      icon={<MessageSquare className="h-8 w-8" />}
-      title={t("scrap.conversations.title")}
-      description={t("scrap.conversations.comingSoonNote")}
-    />
-  );
+  return <ChatScreen role="scrap" />;
 }

@@ -15,6 +15,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch } from "@app/store";
 import { logout } from "@modules/auth/store/authSlice";
 import { authApi } from "@modules/auth/api/authApi";
+import { chatHubManager } from "@modules/chat/lib/chatHub";
+import { resetChat } from "@modules/chat/store/chatSlice";
 
 export function useLogout() {
   const dispatch = useAppDispatch();
@@ -27,6 +29,12 @@ export function useLogout() {
     } catch {
       // Best-effort: clear locally even if the server call fails.
     }
+    // This is the single sanctioned logout entry point (see file JSDoc), so
+    // chat cleanup lives here rather than being duplicated at each call site:
+    // tear down the live hub connection and clear per-user chat state before
+    // the next user signs in on this tab.
+    void chatHubManager.disconnect();
+    dispatch(resetChat());
     dispatch(logout());
     queryClient.clear();
     navigate("/login", { replace: true });

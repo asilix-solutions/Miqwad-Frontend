@@ -4,6 +4,7 @@ import authReducer from "@modules/auth/store/authSlice";
 import vehiclesReducer from "@modules/vehicles/store/vehiclesSlice";
 import providersReducer from "@modules/providers/store/providersSlice";
 import discoveryReducer from "@modules/discovery/store/discoverySlice";
+import chatReducer from "@modules/chat/store/chatSlice";
 
 /**
  * Root Redux store.
@@ -15,6 +16,7 @@ export const store = configureStore({
     vehicles: vehiclesReducer,
     providers: providersReducer,
     discovery: discoveryReducer,
+    chat: chatReducer,
   },
   devTools: import.meta.env.DEV,
 });
