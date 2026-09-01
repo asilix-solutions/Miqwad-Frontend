@@ -2,14 +2,15 @@
  * @file OrderFilters.tsx
  * @description Filter + sort toolbar above the orders table. LIVE-CONFIRMED
  * against GET /api/Orders: FilterBy only accepts "trackNumber" — any other
- * FilterBy value (status/type/userId/userFullName/...) returns HTTP 400
+ * FilterBy value (status/userId/userFullName/...) returns HTTP 400
  * ("بيانات غير صالحة"), which previously broke the whole list query. So
  * search is the only server-side FilterBy/FilterValue use; the created-at
  * date range (DateFilterBy=createdAt/FromDate/ToDate) is a separate,
- * combinable pair of params that works standalone. Status has no dropdown
- * here — it's filtered via the stats strip (OrderStatsStrip) — and both
- * status and type are applied client-side on the fetched batch (see
- * OrdersPage.tsx), since the backend can't filter by either server-side.
+ * combinable pair of params that works standalone. The type <Select> here
+ * now drives SERVER-SIDE filtering via the OrderType numeric-enum param
+ * (its value/onChange feed the query path in OrdersPage.tsx). Status has no
+ * dropdown here — it's filtered via the stats strip (OrderStatsStrip),
+ * still client-side on the fetched batch.
  */
 import { useTranslation } from "react-i18next";
 import { ArrowDownAZ, ArrowUpAZ, X } from "lucide-react";

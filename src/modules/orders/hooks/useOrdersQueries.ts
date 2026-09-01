@@ -7,7 +7,7 @@
  */
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { ordersApi, type OrdersListParams } from "../api/ordersApi";
-import { adaptRawOrder, adaptToUpdatePayload } from "../lib/orderAdapter";
+import { adaptRawOrder, adaptRawOrderDetail, adaptToUpdatePayload } from "../lib/orderAdapter";
 import type { UpdateOrderInput } from "../types";
 
 export const orderKeys = {
@@ -30,7 +30,7 @@ export function useOrdersList(params: OrdersListParams = {}) {
 export function useOrder(id: string) {
   return useQuery({
     queryKey: orderKeys.detail(id),
-    queryFn: async () => adaptRawOrder(await ordersApi.get(id)),
+    queryFn: async () => adaptRawOrderDetail(await ordersApi.get(id)),
     enabled: !!id,
   });
 }
