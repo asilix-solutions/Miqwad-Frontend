@@ -6,13 +6,16 @@
  * create — orders are created by customers, not admins.
  *
  * LIVE-CONFIRMED against GET /api/Orders: FilterBy only accepts
- * "trackNumber" — any other FilterBy value (status/type/userId/...) returns
- * HTTP 400, which previously made the whole query fail whenever a status or
- * type filter was active. So only search reaches the server as
+ * "trackNumber" — any other FilterBy value (status/userId/...) returns
+ * HTTP 400, which previously made the whole query fail whenever such a
+ * filter was active. So only search reaches the server as
  * FilterBy=trackNumber; the date range (DateFilterBy=createdAt/FromDate/
- * ToDate) is a separate, combinable pair that works standalone. Status
- * (via the stats strip) and type (via the dropdown) are applied
- * client-side on the fetched page, same as the existing stats-strip counts.
+ * ToDate) is a separate, combinable pair that works standalone.
+ *
+ * Type filtering is now SERVER-SIDE via the `OrderType` numeric-enum param
+ * (live-verified: 200 + filtered totalCount). The dropdown value maps to a
+ * number through ORDER_TYPE_MAP; "all" omits the param. Status filtering
+ * stays client-side on the fetched page (via the stats strip), unchanged.
  */
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -28,7 +31,7 @@ import { DataTable, type DataTableColumn } from "@shared/components/DataTable";
 import { Can } from "@shared/auth/Can";
 import { useOrdersList } from "../hooks/useOrdersQueries";
 import type { Order, OrderStatus, OrderType } from "../types";
-import { paymentMethodToI18nKey } from "../lib/orderEnums";
+import { paymentMethodToI18nKey, ORDER_TYPE_MAP } from "../lib/orderEnums";
 import { formatRelativeDate } from "../lib/formatRelativeDate";
 import { OrderDetailDialog } from "../components/OrderDetailDialog";
 import { OrderUpdateDialog } from "../components/OrderUpdateDialog";
@@ -57,11 +60,14 @@ export function OrdersPage() {
     setPageNumber(1);
   }, [search, status, type, fromDate, toDate, sortBy, sortDescending]);
 
-  // Only "trackNumber" is a valid FilterBy value server-side; status/type
-  // are filtered client-side below (see file header).
+  // Only "trackNumber" is a valid FilterBy value server-side; status is
+  // filtered client-side below (see file header). Type is server-side.
   const trimmedSearch = search.trim();
   const filterBy = trimmedSearch ? "trackNumber" : undefined;
   const filterValue = trimmedSearch || undefined;
+
+  // "all" → omit the param; otherwise the numeric enum via the shared map.
+  const orderType = type === "all" ? undefined : ORDER_TYPE_MAP[type].number;
 
   const q = useOrdersList({
     pageNumber,
@@ -73,12 +79,13 @@ export function OrdersPage() {
     dateFilterBy: fromDate || toDate ? "createdAt" : undefined,
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
+    orderType,
   });
   const fetchedItems = q.data?.items ?? [];
   const totalPages = q.data?.totalPages ?? 1;
 
-  const typeFilteredItems = type === "all" ? fetchedItems : fetchedItems.filter((o) => o.type === type);
-  const items = status === "all" ? typeFilteredItems : typeFilteredItems.filter((o) => o.status === status);
+  // Server already applied the type filter; status stays client-side.
+  const items = status === "all" ? fetchedItems : fetchedItems.filter((o) => o.status === status);
 
   const hasActiveFilters = Boolean(trimmedSearch || status !== "all" || type !== "all" || fromDate || toDate);
 
@@ -185,7 +192,7 @@ export function OrdersPage() {
       </div>
 
       <OrderStatsStrip
-        items={typeFilteredItems}
+        items={fetchedItems}
         activeStatus={status}
         onStatusClick={(s) => setStatus(s)}
       />
