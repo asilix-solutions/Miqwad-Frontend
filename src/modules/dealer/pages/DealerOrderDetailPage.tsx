@@ -25,7 +25,7 @@ import {
 import type { ColumnDef, StatusPillTone } from "@shared/provider-ui";
 import { useDealerOrderQuery } from "../hooks/useDealerQueries";
 import type { OrderItem, OrderStatus } from "../types";
-import { formatOrderDate } from "../lib/formatOrderDate";
+import { formatOrderDate } from "@shared/lib/formatOrderDate";
 import { formatOrderMoney } from "../lib/formatOrderMoney";
 
 // ── Constants ─────────────────────────────────────────────────────────────────

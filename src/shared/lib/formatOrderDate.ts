@@ -1,7 +1,8 @@
 /**
  * @file formatOrderDate.ts
  *
- * One shared, null-safe date formatter for dealer orders (list + detail).
+ * One shared, null-safe date formatter for live `/api/Orders` timestamps,
+ * reused across provider modules (dealer orders, scrap salvage requests).
  *
  * The live `/api/Orders` `createdAt` is an ISO string with NO timezone
  * suffix (e.g. `2026-08-30T11:20:00`). `new Date("…no Z…")` already parses

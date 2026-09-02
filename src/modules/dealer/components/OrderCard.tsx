@@ -17,7 +17,7 @@ import { ProviderCard, ProviderStatusPill } from "@shared/provider-ui";
 import type { StatusPillTone } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
 import type { Order, OrderStatus } from "../types";
-import { formatOrderDate } from "../lib/formatOrderDate";
+import { formatOrderDate } from "@shared/lib/formatOrderDate";
 import { formatOrderMoney } from "../lib/formatOrderMoney";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
