@@ -1,7 +1,8 @@
 /**
  * @file useSalvageOrders.ts
  *
- * TanStack Query hooks for browsing salvage orders (customer part requests).
+ * TanStack Query hooks for browsing live salvage orders (customer part
+ * requests) — GET /api/Orders?OrderType=2 via `salvageOrdersApi`.
  * Silent hooks — toasts live in UI components, not here.
  */
 

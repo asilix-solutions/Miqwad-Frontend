@@ -26,34 +26,36 @@ const SCRAP_VEHICLE_BRANDS = [
 
 export { SCRAP_VEHICLE_BRANDS };
 
-// ── Salvage offer form (confirmed CreateOfferDto / UpdateOfferDto fields) ────────
+// ── Salvage quotation form (live /api/request-quotations contract) ─────────────
+//
+// Quantity & Price are intentionally NOT in this schema — the server enforces
+// them with a whole-number binder (int >= 1; decimals 400), but both are
+// hidden in the UI per product decision and injected as whole-number
+// placeholders at submit (see requestQuotationsApi).
 
-export const salvageOfferSchema = z
-  .object({
-    providerServiceId: z
-      .string()
-      .min(1, "scrap.offer.validation.providerServiceRequired"),
+export const quotationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "scrap.offer.validation.nameRequired")
+    .max(150, "scrap.offer.validation.nameTooLong"),
 
-    startDate: z
-      .string()
-      .min(1, "scrap.offer.validation.startDateRequired"),
+  notes: z
+    .string()
+    .trim()
+    .max(2000, "scrap.offer.validation.notesTooLong")
+    .optional()
+    .or(z.literal("")),
 
-    endDate: z
-      .string()
-      .min(1, "scrap.offer.validation.endDateRequired"),
-  })
-  .refine(
-    (value) =>
-      !value.startDate ||
-      !value.endDate ||
-      new Date(value.endDate) >= new Date(value.startDate),
-    {
-      message: "scrap.offer.validation.endDateAfterStart",
-      path: ["endDate"],
-    },
-  );
+  isCompatibleWith: z
+    .string()
+    .trim()
+    .max(500, "scrap.offer.validation.isCompatibleWithTooLong")
+    .optional()
+    .or(z.literal("")),
+});
 
-export type SalvageOfferFormValues = z.infer<typeof salvageOfferSchema>;
+export type QuotationFormValues = z.infer<typeof quotationFormSchema>;
 
 // ── Profile form ──────────────────────────────────────────────────────────────
 

@@ -1,18 +1,19 @@
 /**
  * @file ScrapPartRequestsPage.tsx
  *
- * Scrap provider salvage-order browse page — customer "part requests" are
- * real Orders (OrderType = salvage), fetched via useSalvageOrdersQuery
- * (fixture-backed today; see salvageOrdersApi.ts for the fixture→live
- * switch). Filters operate client-side over the fetched list: brand, search
- * (part name / brand / model), and "not yet offered by me" (cross-referenced
- * against this scrap's own GET /api/Offers). Renders a friendly state when
- * the browse endpoint is not yet authorized (403).
+ * Scrap provider salvage-request browse page. Customer "part requests" are
+ * live Orders (OrderType = 2), fetched via `useSalvageOrdersQuery`
+ * (GET /api/Orders?OrderType=2). Filters operate client-side over the fetched
+ * list: brand, free-text search, and "not yet quoted by me" — the last is
+ * derived client-side by cross-referencing this scrap's own
+ * GET /api/request-quotations (no backend boolean exists).
+ *
+ * Architecture: src/modules/scrap/pages/
  */
 
 import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, ClipboardList, RefreshCw, Info } from "lucide-react";
+import { AlertCircle, ClipboardList, RefreshCw } from "lucide-react";
 import {
   ProviderPageHeader,
   ProviderSelect,
@@ -22,7 +23,7 @@ import {
 } from "@shared/provider-ui";
 import type { ProviderSelectOption } from "@shared/provider-ui";
 import { useSalvageOrdersQuery } from "../hooks/useSalvageOrders";
-import { useOffersQuery } from "../hooks/useOffersQueries";
+import { useRequestQuotationsQuery } from "../hooks/useRequestQuotations";
 import { ScrapPartRequestCard } from "../components/ScrapPartRequestCard";
 import { ScrapPartRequestDetailDialog } from "../components/ScrapPartRequestDetailDialog";
 
@@ -45,7 +46,7 @@ function PartRequestSkeletonCard() {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-/** Scrap provider salvage-order browse page. */
+/** Scrap provider salvage-request browse page. */
 export function ScrapPartRequestsPage() {
   const { t } = useTranslation();
 
@@ -54,19 +55,15 @@ export function ScrapPartRequestsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { data: ordersResult, isLoading, isError, refetch } = useSalvageOrdersQuery({ pageSize: 100 });
-  const { data: myOffers } = useOffersQuery({ pageSize: 100 });
+  const { data: ordersPage, isLoading, isError, refetch } = useSalvageOrdersQuery({ pageSize: 100 });
+  const { data: quotationsPage } = useRequestQuotationsQuery({ pageSize: 100 });
 
-  const offeredOrderIds = useMemo(
-    () => new Set((myOffers?.items ?? []).map((o) => o.orderId)),
-    [myOffers],
+  const quotedOrderIds = useMemo(
+    () => new Set((quotationsPage?.items ?? []).map((q) => q.orderId)),
+    [quotationsPage],
   );
 
-  const allItems = useMemo(
-    () => (ordersResult?.kind === "ok" ? ordersResult.data.items : []),
-    [ordersResult],
-  );
-  const isForbidden = ordersResult?.kind === "forbidden";
+  const allItems = useMemo(() => ordersPage?.items ?? [], [ordersPage]);
 
   const brandOptions = useMemo<ProviderSelectOption[]>(() => {
     const brands = Array.from(new Set(allItems.map((o) => o.brand).filter(Boolean)));
@@ -80,14 +77,14 @@ export function ScrapPartRequestsPage() {
     const search = searchInput.trim().toLowerCase();
     return allItems.filter((order) => {
       if (brandFilter !== "all" && order.brand !== brandFilter) return false;
-      if (notOfferedOnly && offeredOrderIds.has(order.id)) return false;
+      if (notOfferedOnly && quotedOrderIds.has(order.id)) return false;
       if (search) {
         const haystack = `${order.partName} ${order.brand} ${order.model}`.toLowerCase();
         if (!haystack.includes(search)) return false;
       }
       return true;
     });
-  }, [allItems, brandFilter, notOfferedOnly, offeredOrderIds, searchInput]);
+  }, [allItems, brandFilter, notOfferedOnly, quotedOrderIds, searchInput]);
 
   const isFiltered = brandFilter !== "all" || notOfferedOnly || searchInput.length > 0;
 
@@ -100,33 +97,31 @@ export function ScrapPartRequestsPage() {
       />
 
       {/* Filter controls */}
-      {!isForbidden && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-          <ProviderSearchBar
-            value={searchInput}
-            onChange={setSearchInput}
-            onClear={() => setSearchInput("")}
-            placeholder={t("scrap.partRequests.searchPlaceholder")}
-            className="sm:max-w-md"
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+        <ProviderSearchBar
+          value={searchInput}
+          onChange={setSearchInput}
+          onClear={() => setSearchInput("")}
+          placeholder={t("scrap.partRequests.searchPlaceholder")}
+          className="sm:max-w-md"
+        />
+        <ProviderSelect
+          value={brandFilter}
+          onValueChange={setBrandFilter}
+          options={brandOptions}
+          label={t("scrap.partRequests.brandFilterLabel")}
+          className="sm:w-48"
+        />
+        <label className="flex items-center gap-2 pb-2.5 text-sm text-[var(--color-ink-body)]">
+          <input
+            type="checkbox"
+            checked={notOfferedOnly}
+            onChange={(e) => setNotOfferedOnly(e.target.checked)}
+            className="h-4 w-4 rounded border-[var(--color-divider)] accent-[var(--color-brand-orange)]"
           />
-          <ProviderSelect
-            value={brandFilter}
-            onValueChange={setBrandFilter}
-            options={brandOptions}
-            label={t("scrap.partRequests.brandFilterLabel")}
-            className="sm:w-48"
-          />
-          <label className="flex items-center gap-2 pb-2.5 text-sm text-[var(--color-ink-body)]">
-            <input
-              type="checkbox"
-              checked={notOfferedOnly}
-              onChange={(e) => setNotOfferedOnly(e.target.checked)}
-              className="h-4 w-4 rounded border-[var(--color-divider)] accent-[var(--color-brand-orange)]"
-            />
-            {t("scrap.partRequests.notOfferedFilterLabel")}
-          </label>
-        </div>
-      )}
+          {t("scrap.partRequests.notOfferedFilterLabel")}
+        </label>
+      </div>
 
       {/* Loading state */}
       {isLoading && (
@@ -162,17 +157,8 @@ export function ScrapPartRequestsPage() {
         />
       )}
 
-      {/* Friendly 403 state — browse endpoint not authorized yet */}
-      {!isLoading && !isError && isForbidden && (
-        <ProviderEmptyState
-          icon={<Info className="h-8 w-8" />}
-          title={t("scrap.partRequests.browsingUnavailableTitle")}
-          description={t("scrap.partRequests.browsingUnavailableDescription")}
-        />
-      )}
-
       {/* Empty state */}
-      {!isLoading && !isError && !isForbidden && filtered.length === 0 && (
+      {!isLoading && !isError && filtered.length === 0 && (
         <ProviderEmptyState
           icon={<ClipboardList className="h-8 w-8" />}
           title={isFiltered ? t("scrap.partRequests.noResultsTitle") : t("scrap.partRequests.emptyTitle")}
@@ -185,14 +171,14 @@ export function ScrapPartRequestsPage() {
       )}
 
       {/* Data state */}
-      {!isLoading && !isError && !isForbidden && filtered.length > 0 && (
+      {!isLoading && !isError && filtered.length > 0 && (
         <div className="flex flex-col gap-3">
           {filtered.map((order) => (
             <ScrapPartRequestCard
               key={order.id}
               request={order}
               onSelect={(id) => setSelectedId(id)}
-              alreadyOffered={offeredOrderIds.has(order.id)}
+              alreadyOffered={quotedOrderIds.has(order.id)}
             />
           ))}
         </div>

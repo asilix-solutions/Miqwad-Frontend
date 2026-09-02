@@ -158,13 +158,25 @@ export interface SubmitOfferPayload {
   photos?: string[];
 }
 
-// ── Salvage Orders (real Orders API, OrderType = salvage) ──────────────────────
+// ── Salvage Orders (live Orders API, OrderType = 2) ────────────────────────────
 
 /**
- * View model adapted from the real `Order` DTO (OrderType = salvage).
+ * One attachment on a salvage order — live shape is `AttachmentResponseDto`
+ * ({ filePath, originalFileName, contentType, ... }), NOT a bare string.
+ * The raw shape is isolated in `salvageOrdersApi.ts`'s adapter.
+ */
+export interface SalvageOrderAttachment {
+  id: string;
+  originalFileName: string;
+  filePath: string;
+  contentType: string;
+}
+
+/**
+ * View model adapted from the live `Order` DTO (OrderType = 2, salvage).
  * The raw backend shape is isolated in `salvageOrdersApi.ts`'s adapter — no
  * other file should assume anything about the raw `Order` fields.
- * See docs/probe-scrap-offers-2026-08-20.md §1.1/§1.4 for the source shape.
+ * Live-proven contract, PHASE B (feat/scrap-quotations-live).
  */
 export interface SalvageOrder {
   id: string;
@@ -174,56 +186,68 @@ export interface SalvageOrder {
   year: string;
   serialNumber?: string;
   description?: string;
+  attachments: SalvageOrderAttachment[];
+  /** Convenience: `filePath`s pulled from `attachments`, for quick thumbnails. */
   photos: string[];
   customerName?: string;
-  /** Raw backend order status string — label mapping is unconfirmed, shown as-is. */
-  status: string;
+  /**
+   * Raw numeric order-status code. Translated at the UI boundary via the
+   * shared `orderEnums` reverse-map (see `lib/salvageOrderStatus.ts`).
+   */
+  statusCode: number;
+  /** ISO-8601, no TZ suffix → parsed as LOCAL time by the shared formatter. */
   createdAt: string;
 }
 
-// ── Offers (real /api/Offers) ───────────────────────────────────────────────
+// ── Request Quotations (live /api/request-quotations) ──────────────────────────
 
 /**
- * Nested provider-service summary returned inside GET /api/Offers items.
- * Attachments are normalised to a plain `images` string array by the adapter.
+ * Server binds Price (and Quantity) with a WHOLE-NUMBER model binder: any
+ * decimal serialization — "0.01", "0,01", even "1.00" — fails to parse and
+ * returns 400 ("The value '…' is not valid for Price."). Only bare integer
+ * strings bind; the minimum accepted positive value is 1.
+ * Per product decision these two fields are HIDDEN in the UI; POST/PUT always
+ * send the placeholders below. 1 is a parseable positive placeholder, NOT a
+ * real quoted price.
+ * TODO: revisit if the backend switches Price to a decimal binder.
  */
-export interface OfferProviderService {
+export const QUOTATION_PLACEHOLDER_QUANTITY = 1;
+export const QUOTATION_PLACEHOLDER_PRICE = 1;
+
+/** One attachment on a request-quotation (live `attachments[]` item). */
+export interface RequestQuotationAttachment {
   id: string;
-  serviceId: string;
-  serviceName: string | null;
+  originalFileName: string;
+  filePath: string;
+  contentType: string;
+}
+
+/** A quotation the scrap provider has submitted, from GET /api/request-quotations. */
+export interface RequestQuotation {
+  id: string;
+  orderId: string;
+  name: string;
   quantity: number;
   price: number;
   notes: string | null;
   isCompatibleWith: string | null;
-  images: string[];
-}
-
-/** A submitted offer, as returned by GET /api/Offers. */
-export interface Offer {
-  id: string;
-  orderId: string;
-  providerServiceId: string;
-  startDate: string;
-  endDate: string;
-  providerService: OfferProviderService | null;
+  attachments: RequestQuotationAttachment[];
   createdAt: string;
+  updatedAt: string | null;
 }
 
-/** POST /api/Offers body — confirmed against live Swagger 2026-08-23. */
-export interface CreateOfferPayload {
+/** Fields the offer form collects — Quantity/Price are injected at submit, not here. */
+export interface QuotationFormInput {
+  name: string;
+  notes?: string;
+  isCompatibleWith?: string;
+  files?: File[];
+}
+
+/** POST /api/request-quotations input (multipart). */
+export interface CreateQuotationInput extends QuotationFormInput {
   orderId: string;
-  providerServiceId: string;
-  /** ISO-8601 date-time string — converted at the API boundary. */
-  startDate: string;
-  /** ISO-8601 date-time string — converted at the API boundary. */
-  endDate: string;
 }
 
-/** PUT /api/Offers/{id} body — orderId MUST NOT be included. */
-export interface UpdateOfferPayload {
-  providerServiceId: string;
-  /** ISO-8601 date-time string — converted at the API boundary. */
-  startDate: string;
-  /** ISO-8601 date-time string — converted at the API boundary. */
-  endDate: string;
-}
+/** PUT /api/request-quotations/{id} input (multipart) — orderId is path-bound. */
+export type UpdateQuotationInput = QuotationFormInput;
