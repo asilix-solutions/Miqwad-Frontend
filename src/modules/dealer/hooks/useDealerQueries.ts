@@ -1,11 +1,24 @@
 /**
- * Dealer React Query hooks
+ * @file useDealerQueries.ts
+ *
+ * Dealer React Query hooks. Hooks are silent — toasts live in UI components.
+ * Orders are server-state via TanStack Query only (no Redux slice) and hit
+ * the LIVE `/api/Orders`; the raw payload is mapped through
+ * `lib/orderAdapter.ts` before it reaches components.
  */
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { dealerApi } from "../api/dealerApi";
+import { adaptRawOrder, adaptRawOrderDetail } from "../lib/orderAdapter";
 import { providerServicesApi, adaptProviderService, adaptServiceCatalogItem } from "@shared/provider-services";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { Product, ServiceCatalogItem } from "../types";
+import type {
+  DealerOrdersListParams,
+  DealerShipmentsListParams,
+  Order,
+  OrderDetail,
+  Product,
+  ServiceCatalogItem,
+} from "../types";
 
 export const dealerKeys = {
   all: ["dealer"] as const,
@@ -17,12 +30,13 @@ export const dealerKeys = {
   serviceCatalog: () => [...dealerKeys.all, "serviceCatalog"] as const,
   orders: {
     all: () => [...dealerKeys.all, "orders"] as const,
-    list: (params?: Record<string, any>) => [...dealerKeys.orders.all(), "list", params] as const,
+    list: (params?: DealerOrdersListParams) => [...dealerKeys.orders.all(), "list", params] as const,
     detail: (id: string) => [...dealerKeys.orders.all(), "detail", id] as const,
   },
   shipments: {
     all: () => [...dealerKeys.all, "shipments"] as const,
-    list: (params?: Record<string, any>) => [...dealerKeys.shipments.all(), "list", params] as const,
+    list: (params?: DealerShipmentsListParams) =>
+      [...dealerKeys.shipments.all(), "list", params] as const,
   },
   dues: () => [...dealerKeys.all, "dues"] as const,
 };
@@ -60,23 +74,28 @@ export function useServiceCatalogQuery() {
   });
 }
 
-export function useDealerOrdersQuery(params?: Record<string, any>) {
+/** LIVE orders list — provider-scoped by JWT; `orderType` filter is server-side. */
+export function useDealerOrdersQuery(params: DealerOrdersListParams = {}) {
   return useQuery({
     queryKey: dealerKeys.orders.list(params),
-    queryFn: () => dealerApi.getOrders(params),
+    queryFn: async (): Promise<PaginatedResponse<Order>> => {
+      const page = await dealerApi.getOrders(params);
+      return { ...page, items: page.items.map(adaptRawOrder) };
+    },
     placeholderData: keepPreviousData,
   });
 }
 
+/** LIVE order detail (GET /api/Orders/{id}). */
 export function useDealerOrderQuery(id: string) {
   return useQuery({
     queryKey: dealerKeys.orders.detail(id),
-    queryFn: () => dealerApi.getOrder(id),
+    queryFn: async (): Promise<OrderDetail> => adaptRawOrderDetail(await dealerApi.getOrder(id)),
     enabled: !!id,
   });
 }
 
-export function useDealerShipmentsQuery(params?: Record<string, any>) {
+export function useDealerShipmentsQuery(params: DealerShipmentsListParams = {}) {
   return useQuery({
     queryKey: dealerKeys.shipments.list(params),
     queryFn: () => dealerApi.getShipments(params),

@@ -1,14 +1,18 @@
 /**
  * @file DealerOrderDetailPage.tsx
  *
- * Order detail view — customer block, items table, financial summary,
- * shipment info, and smart action buttons driven by nextStatuses().
+ * Dealer order detail — READ-ONLY (Phase B), backed by GET /api/Orders/{id}.
+ *
+ * Two-column layout: customer + products table (inline-start / visually
+ * leading in RTL), financial summary + delivery address (trailing column).
+ * Every section is null-safe and hidden when its data is absent
+ * (polymorphic-safe, like the Admin detail). No action buttons — the API
+ * exposes no status-transition endpoints. Loading skeleton + error retry.
  */
 
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ShoppingCart, User, Package, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShoppingCart, User, Package, MapPin, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   ProviderPageHeader,
@@ -19,13 +23,10 @@ import {
   ProviderSkeleton,
 } from "@shared/provider-ui";
 import type { ColumnDef, StatusPillTone } from "@shared/provider-ui";
-import { useDealerOrderQuery, useDealerShipmentsQuery } from "../hooks/useDealerQueries";
-import { useUpdateOrderStatusMutation } from "../hooks/useDealerMutations";
+import { useDealerOrderQuery } from "../hooks/useDealerQueries";
 import type { OrderItem, OrderStatus } from "../types";
-import { nextStatuses } from "../orderLifecycle";
-import { ShipOrderDialog } from "../components/ShipOrderDialog";
-import { CancelOrderDialog } from "../components/CancelOrderDialog";
-import { useToast } from "@shared/components/ui/toastContext";
+import { formatOrderDate } from "../lib/formatOrderDate";
+import { formatOrderMoney } from "../lib/formatOrderMoney";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -90,47 +91,12 @@ function FinancialRow({
 export function DealerOrderDetailPage() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams<{ id: string }>();
-  const toast = useToast();
 
-  const { data: order, isLoading, isError } = useDealerOrderQuery(id);
-  const { data: shipmentsData } = useDealerShipmentsQuery();
-  const updateStatusMutation = useUpdateOrderStatusMutation();
-
-  const [shipOpen, setShipOpen] = useState(false);
-  const [cancelOpen, setCancelOpen] = useState(false);
+  const { data: order, isLoading, isError, refetch } = useDealerOrderQuery(id);
 
   const isRTL = i18n.dir() === "rtl";
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;
-
-  // ── Formatters ────────────────────────────────────────────────────────────
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
-      style: "currency",
-      currency: "SAR",
-    }).format(amount);
-
-  const formatDate = (iso: string) =>
-    new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso));
-
-  const shortId = (rawId: string) => `#${rawId.slice(-6).toUpperCase()}`;
-
-  // ── Status change handler ─────────────────────────────────────────────────
-  const handleStatusChange = async (status: OrderStatus) => {
-    if (!order) return;
-    try {
-      await updateStatusMutation.mutateAsync({ id: order.id, status });
-      if (status === "preparing") toast.success(t("dealer.orders.toasts.startPreparingSuccess"));
-      else if (status === "delivered") toast.success(t("dealer.orders.toasts.deliveredSuccess"));
-    } catch {
-      toast.error(t("dealer.orders.toasts.actionFailed"));
-    }
-  };
+  const money = (v: number) => formatOrderMoney(v, i18n.language);
 
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoading) {
@@ -140,20 +106,18 @@ export function DealerOrderDetailPage() {
           <ProviderSkeleton width={80} height={32} variant="block" />
           <ProviderSkeleton width="50%" />
         </div>
-        <ProviderCard className="flex flex-col gap-4">
-          <ProviderSkeleton width="35%" />
-          <ProviderSkeleton width="55%" />
-        </ProviderCard>
-        <ProviderCard className="flex flex-col gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <ProviderSkeleton key={i} width={`${60 + i * 10}%`} />
-          ))}
-        </ProviderCard>
-        <ProviderCard className="flex flex-col gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <ProviderSkeleton key={i} width={`${50 + i * 8}%`} />
-          ))}
-        </ProviderCard>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <ProviderCard className="flex flex-col gap-4 lg:col-span-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <ProviderSkeleton key={i} width={`${55 + i * 8}%`} />
+            ))}
+          </ProviderCard>
+          <ProviderCard className="flex flex-col gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <ProviderSkeleton key={i} width={`${60 + i * 10}%`} />
+            ))}
+          </ProviderCard>
+        </div>
       </div>
     );
   }
@@ -166,23 +130,22 @@ export function DealerOrderDetailPage() {
         title={t("dealer.orders.detail.notFound")}
         description={t("dealer.orders.detail.notFoundDesc")}
         action={
-          <Link to="/provider/dealer/orders">
-            <Button variant="outline">
-              <BackArrow className="me-2 h-4 w-4" aria-hidden />
-              {t("dealer.orders.detail.backToOrders")}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <Button type="button" variant="outline" onClick={() => { void refetch(); }}>
+              <RotateCw className="me-2 h-4 w-4" aria-hidden />
+              {t("common.retry")}
             </Button>
-          </Link>
+            <Link to="/provider/dealer/orders">
+              <Button variant="ghost">
+                <BackArrow className="me-2 h-4 w-4" aria-hidden />
+                {t("dealer.orders.detail.backToOrders")}
+              </Button>
+            </Link>
+          </div>
         }
       />
     );
   }
-
-  // ── Derived data ──────────────────────────────────────────────────────────
-  const next = nextStatuses(order.status);
-  const isPending = updateStatusMutation.isPending;
-  const shipment = order.shipmentId
-    ? (shipmentsData?.items ?? []).find((s) => s.orderId === order.id)
-    : undefined;
 
   // ── Items columns ─────────────────────────────────────────────────────────
   const itemColumns: ColumnDef<OrderItem>[] = [
@@ -193,11 +156,11 @@ export function DealerOrderDetailPage() {
       render: (item) => (
         <div className="flex flex-col gap-0.5">
           <span className="text-sm font-medium text-[var(--color-ink-body)]">
-            {i18n.language === "ar" ? item.nameAr : item.nameEn}
+            {item.serviceName || "—"}
           </span>
-          <span className="font-mono text-xs text-[var(--color-muted)]" dir="ltr">
-            {item.sku}
-          </span>
+          {item.providerName && (
+            <span className="text-xs text-[var(--color-muted)]">{item.providerName}</span>
+          )}
         </div>
       ),
     },
@@ -206,75 +169,28 @@ export function DealerOrderDetailPage() {
       header: t("dealer.orders.detail.colPrice"),
       align: "end",
       hideOnMobile: true,
-      render: (item) => (
-        <span className="text-sm tabular-nums">{formatCurrency(item.unitPrice)}</span>
-      ),
+      render: (item) => <span className="text-sm tabular-nums" dir="ltr">{money(item.unitPrice)}</span>,
     },
     {
-      key: "qty",
+      key: "quantity",
       header: t("dealer.orders.detail.colQty"),
       align: "center",
       hideOnMobile: true,
-      render: (item) => (
-        <span className="text-sm tabular-nums">{item.qty}</span>
-      ),
+      render: (item) => <span className="text-sm tabular-nums">{item.quantity}</span>,
     },
     {
-      key: "lineTotal",
+      key: "lineSubtotal",
       header: t("dealer.orders.detail.colTotal"),
       align: "end",
       render: (item) => (
-        <span className="text-sm tabular-nums font-semibold">{formatCurrency(item.lineTotal)}</span>
+        <span className="text-sm font-semibold tabular-nums" dir="ltr">{money(item.lineSubtotal)}</span>
       ),
     },
   ];
 
-  // ── Smart action buttons ──────────────────────────────────────────────────
-  const actionButtons = (
-    <div className="flex flex-wrap items-center gap-2">
-      {next.includes("preparing") && (
-        <Button
-          type="button"
-          disabled={isPending}
-          onClick={() => { void handleStatusChange("preparing"); }}
-          className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-        >
-          {t("dealer.orders.actions.startPreparing")}
-        </Button>
-      )}
-      {next.includes("shipped") && (
-        <Button
-          type="button"
-          onClick={() => setShipOpen(true)}
-          className="bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-        >
-          {t("dealer.orders.actions.ship")}
-        </Button>
-      )}
-      {next.includes("delivered") && (
-        <Button
-          type="button"
-          disabled={isPending}
-          onClick={() => { void handleStatusChange("delivered"); }}
-          className="bg-[var(--color-success-500)] text-white hover:bg-[var(--color-success-600,#27ae60)]"
-        >
-          {t("dealer.orders.actions.markDelivered")}
-        </Button>
-      )}
-      {next.includes("cancelled") && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setCancelOpen(true)}
-          className="border-[var(--color-danger-500)] text-[var(--color-danger-500)] hover:bg-[var(--color-danger-50)]"
-        >
-          {t("dealer.orders.actions.cancel")}
-        </Button>
-      )}
-    </div>
-  );
+  const { address } = order;
+  const hasMap = address?.latitude != null && address?.longitude != null;
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Back link */}
@@ -290,174 +206,133 @@ export function DealerOrderDetailPage() {
       <div className="provider-fade-up">
         <ProviderPageHeader
           icon={<ShoppingCart className="h-5 w-5" aria-hidden />}
-          title={`${t("dealer.orders.detail.title")} ${shortId(order.id)}`}
-          subtitle={formatDate(order.createdAt)}
+          title={`${t("dealer.orders.detail.title")} ${order.code}`}
+          subtitle={formatOrderDate(order.createdAt, i18n.language)}
           actions={
-            <div className="flex flex-wrap items-center gap-3">
-              <ProviderStatusPill
-                label={t(`dealer.status.order.${order.status}`)}
-                tone={ORDER_STATUS_TONE[order.status]}
-              />
-              {actionButtons}
-            </div>
+            <ProviderStatusPill
+              label={t(`dealer.status.order.${order.status}`)}
+              tone={ORDER_STATUS_TONE[order.status]}
+            />
           }
         />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left / main column */}
+        {/* Customer + products */}
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Customer block */}
-          <ProviderCard className="provider-fade-up" style={{ animationDelay: "40ms" }}>
-            <SectionHeading>{t("dealer.orders.detail.customer")}</SectionHeading>
-            <div className="flex items-start gap-4">
-              <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-50)] text-[var(--color-brand-500)]"
-                aria-hidden
-              >
-                <User className="h-5 w-5" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-sm font-semibold text-[var(--color-ink-body)]">
+          {order.customerName && (
+            <ProviderCard className="provider-fade-up" style={{ animationDelay: "40ms" }}>
+              <SectionHeading>{t("dealer.orders.detail.customer")}</SectionHeading>
+              <div className="flex items-start gap-4">
+                <div
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-50)] text-[var(--color-brand-500)]"
+                  aria-hidden
+                >
+                  <User className="h-5 w-5" />
+                </div>
+                <span className="pt-2.5 text-sm font-semibold text-[var(--color-ink-body)]">
                   {order.customerName}
                 </span>
-                {order.customerPhone && (
-                  <span className="text-sm text-[var(--color-muted)]" dir="ltr">
-                    {order.customerPhone}
-                  </span>
-                )}
               </div>
-            </div>
-          </ProviderCard>
+            </ProviderCard>
+          )}
 
-          {/* Items */}
           <div className="provider-fade-up" style={{ animationDelay: "80ms" }}>
             <SectionHeading>{t("dealer.orders.detail.items")}</SectionHeading>
             <ProviderDataView<OrderItem>
               columns={itemColumns}
               rows={order.items}
-              getRowKey={(item) => item.productId}
+              getRowKey={(item) => item.id}
               emptyState={
                 <ProviderEmptyState
                   icon={<Package className="h-8 w-8" aria-hidden />}
-                  title={t("dealer.orders.emptyTitle")}
+                  title={t("dealer.orders.detail.noItems")}
                 />
               }
             />
           </div>
         </div>
 
-        {/* Right / sidebar column */}
+        {/* Financial summary + address */}
         <div className="flex flex-col gap-6">
-          {/* Financial summary */}
           <ProviderCard className="provider-fade-up" style={{ animationDelay: "40ms" }}>
             <SectionHeading>{t("dealer.orders.detail.financial")}</SectionHeading>
             <div className="flex flex-col gap-3">
-              <FinancialRow
-                label={t("dealer.orders.detail.subtotal")}
-                value={formatCurrency(order.subtotal)}
-              />
-              <FinancialRow
-                label={`${t("dealer.orders.detail.commissionRate")} (${order.commissionRate}%)`}
-                value={formatCurrency(order.commissionAmount)}
-                muted
-              />
+              <FinancialRow label={t("dealer.orders.detail.subtotal")} value={money(order.subtotal)} />
+              {order.discountAmount > 0 && (
+                <FinancialRow
+                  label={t("dealer.orders.detail.discount")}
+                  value={`- ${money(order.discountAmount)}`}
+                  muted
+                />
+              )}
               <div className="border-t border-[var(--color-divider)] pt-3">
                 <FinancialRow
-                  label={t("dealer.orders.detail.netToDealer")}
-                  value={formatCurrency(order.netToDealer)}
+                  label={t("dealer.orders.detail.total")}
+                  value={money(order.totalPrice)}
                   highlighted
                 />
+              </div>
+
+              {/* TEMP commission / net — front-computed, see lib/orderAdapter.ts */}
+              <div className="mt-1 flex flex-col gap-3 rounded-[var(--radius-sm)] bg-[var(--color-surface-2)] p-3">
+                <FinancialRow
+                  label={`${t("dealer.orders.detail.commissionAmount")} (${order.commissionRate}%)`}
+                  value={`- ${money(order.commissionAmount)}`}
+                  muted
+                />
+                <FinancialRow
+                  label={t("dealer.orders.detail.netToDealer")}
+                  value={money(order.netAmount)}
+                />
+                <p className="text-xs text-[var(--color-muted)]">
+                  {t("dealer.orders.detail.commissionNote")}
+                </p>
               </div>
             </div>
           </ProviderCard>
 
-          {/* Shipment info — only when a shipment exists */}
-          {order.shipmentId && (
+          {address && (
             <ProviderCard className="provider-fade-up" style={{ animationDelay: "80ms" }}>
-              <SectionHeading>{t("dealer.orders.detail.shipment")}</SectionHeading>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-brand-50)] text-[var(--color-brand-500)]"
-                    aria-hidden
-                  >
-                    <Truck className="h-4 w-4" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    {shipment?.carrier ? (
-                      <span className="text-sm font-medium text-[var(--color-ink-body)]">
-                        {shipment.carrier}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-[var(--color-muted)]">—</span>
-                    )}
-                    {shipment?.trackingNumber && (
-                      <span className="font-mono text-xs text-[var(--color-muted)]" dir="ltr">
-                        {shipment.trackingNumber}
-                      </span>
-                    )}
-                  </div>
+              <SectionHeading>{t("dealer.orders.detail.address")}</SectionHeading>
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-brand-50)] text-[var(--color-brand-500)]"
+                  aria-hidden
+                >
+                  <MapPin className="h-4 w-4" />
                 </div>
-
-                {shipment?.status && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-[var(--color-muted)]">
-                      {t("common.status")}
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  {address.title && (
+                    <span className="text-sm font-medium text-[var(--color-ink-body)]">
+                      {address.title}
                     </span>
-                    <ProviderStatusPill
-                      label={t(`dealer.status.shipment.${shipment.status}`)}
-                      tone={
-                        shipment.status === "delivered"
-                          ? "success"
-                          : shipment.status === "returned"
-                          ? "danger"
-                          : shipment.status === "in_transit"
-                          ? "brand"
-                          : "neutral"
-                      }
-                    />
-                  </div>
-                )}
-
-                {shipment?.shippedAt && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-[var(--color-muted)]">
-                      {t("dealer.orders.detail.shippedAt")}
+                  )}
+                  {address.description && (
+                    <span className="text-sm text-[var(--color-muted)]">{address.description}</span>
+                  )}
+                  {address.shortNumber && (
+                    <span className="font-mono text-xs text-[var(--color-muted)]" dir="ltr">
+                      {address.shortNumber}
                     </span>
-                    <span className="text-xs text-[var(--color-ink-body)]">
-                      {formatDate(shipment.shippedAt)}
-                    </span>
-                  </div>
-                )}
+                  )}
+                  {hasMap && (
+                    <a
+                      href={`https://maps.google.com/?q=${address.latitude},${address.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-brand-orange)] hover:underline"
+                    >
+                      <MapPin className="h-3.5 w-3.5" aria-hidden />
+                      {t("dealer.orders.detail.viewOnMap")}
+                    </a>
+                  )}
+                </div>
               </div>
             </ProviderCard>
           )}
-
-          {/* Action buttons (repeated at bottom for mobile convenience) */}
-          {next.length > 0 && (
-            <div className="provider-fade-up lg:hidden" style={{ animationDelay: "120ms" }}>
-              {actionButtons}
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Deferred-mount dialogs */}
-      {shipOpen && (
-        <ShipOrderDialog
-          orderId={order.id}
-          open
-          onOpenChange={setShipOpen}
-        />
-      )}
-      {cancelOpen && (
-        <CancelOrderDialog
-          orderId={order.id}
-          open
-          onOpenChange={setCancelOpen}
-        />
-      )}
     </div>
   );
 }

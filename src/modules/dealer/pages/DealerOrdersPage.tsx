@@ -1,78 +1,54 @@
 /**
  * @file DealerOrdersPage.tsx
  *
- * Dealer orders list — provider design system.
- * Status filter tabs + search, OrderList card stack, and smart actions
- * driven exclusively by nextStatuses() from the order lifecycle helper.
+ * Dealer orders list — READ-ONLY (Phase B), backed by the LIVE `/api/Orders`.
+ *
+ * - No order-TYPE filter: a dealer is a single provider type and `/api/Orders`
+ *   is already provider-scoped by the JWT, so every result is the same
+ *   OrderType — a client-side type filter would be a misleading no-op.
+ * - STATUS tabs are client-side over the fetched page.
+ * - Results are provider-scoped by the JWT — no client-side dealer filter.
  */
 
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ShoppingCart } from "lucide-react";
 import {
   ProviderPageHeader,
   ProviderTabs,
   ProviderEmptyState,
-  ProviderSearchBar,
 } from "@shared/provider-ui";
 import { useDealerOrdersQuery } from "../hooks/useDealerQueries";
-import { useUpdateOrderStatusMutation } from "../hooks/useDealerMutations";
-import type { Order, OrderStatus } from "../types";
-import { ShipOrderDialog } from "../components/ShipOrderDialog";
-import { CancelOrderDialog } from "../components/CancelOrderDialog";
+import type { OrderStatus } from "../types";
 import { OrderList } from "../components/OrderList";
-import { useToast } from "@shared/components/ui/toastContext";
 
-// ── Component ─────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 20;
+
+const STATUS_TAB_VALUES = ["all", "new", "preparing", "shipped", "delivered", "cancelled"] as const;
 
 export function DealerOrdersPage() {
   const { t } = useTranslation();
-  const toast = useToast();
 
-  // ── Filter state ──────────────────────────────────────────────────────────
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [pageNumber, setPageNumber] = useState(1);
 
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedSearch(search), 500);
-    return () => clearTimeout(handler);
-  }, [search]);
+  const q = useDealerOrdersQuery({ pageNumber, pageSize: PAGE_SIZE });
 
-  // ── Server state ──────────────────────────────────────────────────────────
-  const q = useDealerOrdersQuery({
-    search: debouncedSearch || undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
-  });
+  const totalPages = q.data?.totalPages ?? 1;
 
-  const updateStatusMutation = useUpdateOrderStatusMutation();
+  // Status stays client-side over the fetched page.
+  const visibleOrders = useMemo(() => {
+    const rows = q.data?.items ?? [];
+    return statusFilter === "all"
+      ? rows
+      : rows.filter((o) => o.status === (statusFilter as OrderStatus));
+  }, [q.data?.items, statusFilter]);
 
-  // ── Dialog state ──────────────────────────────────────────────────────────
-  const [shipOrderId, setShipOrderId] = useState<string | null>(null);
-  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const statusTabs = STATUS_TAB_VALUES.map((value) => ({
+    value,
+    label: value === "all" ? t("dealer.orders.filterAll") : t(`dealer.status.order.${value}`),
+  }));
 
-  // ── Status mutation handler ───────────────────────────────────────────────
-  const handleStatusChange = async (order: Order, status: OrderStatus) => {
-    try {
-      await updateStatusMutation.mutateAsync({ id: order.id, status });
-      if (status === "preparing") toast.success(t("dealer.orders.toasts.startPreparingSuccess"));
-      else if (status === "delivered") toast.success(t("dealer.orders.toasts.deliveredSuccess"));
-    } catch {
-      toast.error(t("dealer.orders.toasts.actionFailed"));
-    }
-  };
-
-  // ── Status tabs ───────────────────────────────────────────────────────────
-  const statusTabs = [
-    { value: "all",       label: t("dealer.orders.filterAll") },
-    { value: "new",       label: t("dealer.status.order.new") },
-    { value: "preparing", label: t("dealer.status.order.preparing") },
-    { value: "shipped",   label: t("dealer.status.order.shipped") },
-    { value: "delivered", label: t("dealer.status.order.delivered") },
-    { value: "cancelled", label: t("dealer.status.order.cancelled") },
-  ];
-
-  // ── Empty state ───────────────────────────────────────────────────────────
   const emptyState = (
     <ProviderEmptyState
       icon={<ShoppingCart className="h-8 w-8" aria-hidden />}
@@ -81,10 +57,8 @@ export function DealerOrdersPage() {
     />
   );
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="provider-fade-up">
         <ProviderPageHeader
           icon={<ShoppingCart className="h-5 w-5" aria-hidden />}
@@ -93,59 +67,45 @@ export function DealerOrdersPage() {
         />
       </div>
 
-      {/* Filters */}
-      <div
-        className="provider-fade-up flex flex-col gap-3"
-        style={{ animationDelay: "40ms" }}
-      >
-        <ProviderTabs
-          tabs={statusTabs}
-          value={statusFilter}
-          onChange={setStatusFilter}
-        />
-        <ProviderSearchBar
-          value={search}
-          onChange={setSearch}
-          onClear={() => setSearch("")}
-          placeholder={t("dealer.orders.search")}
-          className="sm:max-w-xs"
-        />
+      {/* Status filter */}
+      <div className="provider-fade-up" style={{ animationDelay: "40ms" }}>
+        <ProviderTabs tabs={statusTabs} value={statusFilter} onChange={setStatusFilter} />
       </div>
 
       {/* Order card list */}
-      <div
-        className="provider-fade-up"
-        style={{ animationDelay: "80ms" }}
-      >
+      <div className="provider-fade-up" style={{ animationDelay: "80ms" }}>
         <OrderList
-          orders={q.data?.items ?? []}
+          orders={visibleOrders}
           isLoading={q.isLoading}
           isError={q.isError}
           onRetry={() => { void q.refetch(); }}
           emptyState={emptyState}
-          onStartPreparing={(o) => { void handleStatusChange(o, "preparing"); }}
-          onShip={(o) => setShipOrderId(o.id)}
-          onMarkDelivered={(o) => { void handleStatusChange(o, "delivered"); }}
-          onCancel={(o) => setCancelOrderId(o.id)}
-          isStatusPending={updateStatusMutation.isPending}
         />
       </div>
 
-      {/* Deferred-mount dialogs */}
-      {shipOrderId && (
-        <ShipOrderDialog
-          orderId={shipOrderId}
-          open
-          onOpenChange={(val) => { if (!val) setShipOrderId(null); }}
-        />
-      )}
-
-      {cancelOrderId && (
-        <CancelOrderDialog
-          orderId={cancelOrderId}
-          open
-          onOpenChange={(val) => { if (!val) setCancelOrderId(null); }}
-        />
+      {/* Pagination */}
+      {!q.isError && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 text-sm text-[var(--color-muted)]">
+          <button
+            type="button"
+            disabled={pageNumber <= 1}
+            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+            className="rounded-[var(--radius-sm)] px-3 py-1.5 font-medium text-[var(--color-ink-body)] transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-40"
+          >
+            {t("common.back")}
+          </button>
+          <span className="tabular-nums">
+            {pageNumber} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={pageNumber >= totalPages}
+            onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
+            className="rounded-[var(--radius-sm)] px-3 py-1.5 font-medium text-[var(--color-ink-body)] transition-colors hover:bg-[var(--color-surface-2)] disabled:opacity-40"
+          >
+            {t("common.next")}
+          </button>
+        </div>
       )}
     </div>
   );
