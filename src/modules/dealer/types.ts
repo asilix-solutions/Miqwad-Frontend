@@ -1,7 +1,17 @@
 /**
+ * @file types.ts
+ *
  * Dealer module types.
  *
- * Represents the contract between the frontend and the future .NET backend.
+ * Orders are now backed by the LIVE `/api/Orders` backend (Phase B). The raw
+ * contract (numeric ids, numeric enum codes, envelope) lives in
+ * `api/dealerApi.ts` as `RawDealerOrder`; `lib/orderAdapter.ts` is the single
+ * translation boundary that maps a raw order into the internal view-model
+ * below. The internal model keeps the dealer-flavoured field names / status
+ * codes the screens already bind to — the mapping happens at the edge.
+ *
+ * Shipments + dues are still served by the always-mocked `/dealer/*` bridge
+ * (no live endpoints yet) and keep their original shapes.
  */
 import type { ProviderService, ServiceCategoryRef, ServiceCatalogItem } from "@shared/provider-services";
 
@@ -17,33 +27,82 @@ export type { ServiceCategoryRef, ServiceCatalogItem };
  */
 export type Product = ProviderService;
 
+// ── Orders (LIVE /api/Orders) ────────────────────────────────────────────────
+
+/**
+ * Dealer-flavoured order status. The live API speaks a NUMERIC enum
+ * (`InWaiting=1 … Canceled=5`); the adapter reuses the admin reverse-maps in
+ * `@modules/orders/lib/orderEnums` for number → code, then maps that code to
+ * the dealer names below (which drive the pill wording seen in the screens).
+ */
 export type OrderStatus = "new" | "preparing" | "shipped" | "delivered" | "cancelled";
 
+/** One purchased line (from `orderItems[]` on the list row and the detail). */
 export interface OrderItem {
-  productId: string;
-  nameAr: string; 
-  nameEn: string; // snapshot at purchase time
-  sku: string;
-  unitPrice: number; // SAR snapshot
-  qty: number;
-  lineTotal: number; // unitPrice * qty (SAR)
+  id: string;
+  serviceName: string;
+  providerName: string;
+  unitPrice: number; // SAR
+  quantity: number;
+  /** Line subtotal in SAR — the raw `subtotal` field on the item. */
+  lineSubtotal: number;
 }
 
+/** Delivery address block — null when the order carries no address at all. */
+export interface OrderAddress {
+  title: string;
+  description: string;
+  shortNumber: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/** Flat list-row shape (GET /api/Orders → data.items[]). */
 export interface Order {
   id: string;
-  dealerId: string;
+  /** `trackNumber` when present & non-empty, else `#${id}`. */
+  code: string;
+  /** `userFullName` — "" when the API returns null. */
   customerName: string;
-  customerPhone?: string;
-  items: OrderItem[];
-  subtotal: number; // SAR sum of lineTotals
-  commissionRate: number; // % snapshot taken from dealer at order time (read-only to dealer)
-  commissionAmount: number; // SAR = subtotal * rate/100
-  netToDealer: number; // SAR = subtotal - commissionAmount
   status: OrderStatus;
-  shipmentId?: string;
-  createdAt: string; 
-  updatedAt: string;
+  /** `orderItems.length` — the list row's `totalItems` is always 0, unusable. */
+  itemCount: number;
+  subtotal: number; // SAR
+  discountAmount: number; // SAR
+  totalPrice: number; // SAR
+  /** Raw ISO string with NO timezone suffix — parse as LOCAL time. */
+  createdAt: string;
 }
+
+/**
+ * Detail shape (GET /api/Orders/{id}). Adds line items + address + a
+ * TEMPORARY front-computed commission/net (the API provides neither — see
+ * `lib/orderAdapter.ts`). Every optional block is null / [] when absent so
+ * the detail view can drop its section cleanly.
+ */
+export interface OrderDetail extends Order {
+  items: OrderItem[];
+  address: OrderAddress | null;
+  /** TEMP — front-computed. `COMMISSION_RATE * 100` as a percentage. */
+  commissionRate: number;
+  /** TEMP — front-computed: `totalPrice * COMMISSION_RATE`. */
+  commissionAmount: number;
+  /** TEMP — front-computed: `totalPrice - commissionAmount`. */
+  netAmount: number;
+}
+
+/**
+ * Typed params for the live orders list query. `orderType` is the numeric
+ * OrderType enum and is sent server-side as `OrderType` (validated live: 400
+ * for bad values). "all" in the UI omits it entirely.
+ */
+export interface DealerOrdersListParams {
+  pageNumber?: number;
+  pageSize?: number;
+  orderType?: number;
+}
+
+// ── Shipments + dues (mock /dealer/* bridge — unchanged) ─────────────────────
 
 export type ShipmentStatus = "pending" | "in_transit" | "delivered" | "returned";
 
@@ -56,8 +115,15 @@ export interface Shipment {
   status: ShipmentStatus;
   shippedAt?: string;
   deliveredAt?: string;
-  createdAt: string; 
+  createdAt: string;
   updatedAt: string;
+}
+
+/** Typed params for the (still-mocked) shipments list query. */
+export interface DealerShipmentsListParams {
+  status?: string;
+  pageNumber?: number;
+  pageSize?: number;
 }
 
 /**

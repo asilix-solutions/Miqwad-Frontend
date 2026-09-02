@@ -1,12 +1,14 @@
 /**
  * @file OrderList.tsx
  *
- * Responsive stacked list of OrderCards for the dealer orders view.
- * Handles loading (skeleton cards), error, empty, and data states so the
- * page stays lean. On data, renders staggered OrderCards at full width.
+ * Responsive stacked list of read-only OrderCards for the dealer orders view.
+ * Handles loading (skeleton cards), error (inline retry), empty, and data
+ * states so the page stays lean. On data, renders staggered OrderCards at
+ * full width.
  */
 
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@shared/lib/utils";
 import { ProviderCard, ProviderSkeleton } from "@shared/provider-ui";
@@ -29,11 +31,6 @@ export interface OrderListProps {
   onRetry?: () => void;
   /** Rendered when `orders` is empty. Use {@link ProviderEmptyState}. */
   emptyState?: ReactNode;
-  onStartPreparing: (order: Order) => void;
-  onShip: (order: Order) => void;
-  onMarkDelivered: (order: Order) => void;
-  onCancel: (order: Order) => void;
-  isStatusPending?: boolean;
 }
 
 // ── Skeleton card ─────────────────────────────────────────────────────────────
@@ -41,7 +38,6 @@ export interface OrderListProps {
 function OrderSkeletonCard() {
   return (
     <ProviderCard padded={false} className="flex flex-col overflow-hidden">
-      {/* Header area */}
       <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-4">
         <div className="flex flex-col gap-2">
           <ProviderSkeleton width={72} height={14} />
@@ -51,15 +47,12 @@ function OrderSkeletonCard() {
         <ProviderSkeleton width={76} height={22} variant="block" />
       </div>
 
-      {/* Body area */}
       <div className="flex items-center justify-between border-t border-[var(--color-divider)] px-5 py-3">
         <ProviderSkeleton width={80} height={12} />
         <ProviderSkeleton width={96} height={20} />
       </div>
 
-      {/* Action area */}
-      <div className="flex items-center justify-between border-t border-[var(--color-divider)] px-4 py-3">
-        <ProviderSkeleton width={116} height={32} variant="block" />
+      <div className="flex items-center justify-end border-t border-[var(--color-divider)] px-4 py-3">
         <ProviderSkeleton width={80} height={12} />
       </div>
     </ProviderCard>
@@ -69,6 +62,7 @@ function OrderSkeletonCard() {
 // ── Error block ───────────────────────────────────────────────────────────────
 
 function ErrorBlock({ onRetry }: { onRetry?: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
       <div
@@ -80,6 +74,8 @@ function ErrorBlock({ onRetry }: { onRetry?: () => void }) {
       >
         <AlertCircle className="h-7 w-7" aria-hidden />
       </div>
+
+      <p className="text-sm text-[var(--color-muted)]">{t("dealer.orders.errorDescription")}</p>
 
       {onRetry && (
         <button
@@ -93,6 +89,7 @@ function ErrorBlock({ onRetry }: { onRetry?: () => void }) {
           )}
         >
           <RefreshCw className="h-4 w-4" aria-hidden />
+          {t("common.retry")}
         </button>
       )}
     </div>
@@ -101,19 +98,8 @@ function ErrorBlock({ onRetry }: { onRetry?: () => void }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-/** Stacked list of dealer order cards — handles all data states. */
-export function OrderList({
-  orders,
-  isLoading,
-  isError,
-  onRetry,
-  emptyState,
-  onStartPreparing,
-  onShip,
-  onMarkDelivered,
-  onCancel,
-  isStatusPending,
-}: OrderListProps) {
+/** Stacked list of read-only dealer order cards — handles all data states. */
+export function OrderList({ orders, isLoading, isError, onRetry, emptyState }: OrderListProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-3">
@@ -138,15 +124,8 @@ export function OrderList({
         <OrderCard
           key={order.id}
           order={order}
-          onStartPreparing={onStartPreparing}
-          onShip={onShip}
-          onMarkDelivered={onMarkDelivered}
-          onCancel={onCancel}
-          isStatusPending={isStatusPending}
           style={
-            index < STAGGER_CAP
-              ? { animationDelay: `${index * STAGGER_MS}ms` }
-              : undefined
+            index < STAGGER_CAP ? { animationDelay: `${index * STAGGER_MS}ms` } : undefined
           }
         />
       ))}

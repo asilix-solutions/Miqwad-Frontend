@@ -1,11 +1,17 @@
 /**
- * Dealer React Query mutations
+ * @file useDealerMutations.ts
+ *
+ * Dealer React Query mutations.
+ *
+ * Orders are READ-ONLY (Phase B): the live `/api/Orders` backend exposes no
+ * status-transition / ship / cancel endpoints, so there are no order
+ * mutations here. Shipment status is still served by the mock bridge.
  */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { dealerApi } from "../api/dealerApi";
 import { providerServicesApi, adaptToCreatePayload, adaptToUpdatePayload } from "@shared/provider-services";
 import { dealerKeys } from "./useDealerQueries";
-import type { OrderStatus, ShipmentStatus } from "../types";
+import type { ShipmentStatus } from "../types";
 import type { ProductFormValues } from "../schemas/productSchema";
 
 export function useCreateProductMutation() {
@@ -36,48 +42,6 @@ export function useDeleteProductMutation() {
     mutationFn: (id: string) => providerServicesApi.remove(Number(id)),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: dealerKeys.products.all() });
-    },
-  });
-}
-
-export function useUpdateOrderStatusMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
-      dealerApi.updateOrderStatus(id, status),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.all() });
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.detail(variables.id) });
-    },
-  });
-}
-
-export function useShipOrderMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      payload,
-    }: {
-      id: string;
-      payload: { carrier?: string; trackingNumber?: string };
-    }) => dealerApi.shipOrder(id, payload),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.all() });
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.detail(variables.id) });
-      void qc.invalidateQueries({ queryKey: dealerKeys.shipments.all() });
-    },
-  });
-}
-
-export function useCancelOrderMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
-      dealerApi.cancelOrder(id, reason),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.all() });
-      void qc.invalidateQueries({ queryKey: dealerKeys.orders.detail(variables.id) });
     },
   });
 }
