@@ -235,6 +235,18 @@ const AdminOrdersPage = lazy(() =>
   }))
 );
 
+const AdminInvoicesPage = lazy(() =>
+  import("@modules/invoices/pages/AdminInvoicesPage").then((m) => ({
+    default: m.AdminInvoicesPage,
+  }))
+);
+
+const AdminInvoiceDetailPage = lazy(() =>
+  import("@modules/invoices/pages/AdminInvoiceDetailPage").then((m) => ({
+    default: m.AdminInvoiceDetailPage,
+  }))
+);
+
 const AdminReferenceDataPage = lazy(() =>
   import("@modules/admin/pages/AdminReferenceDataPage").then((m) => ({
     default: m.AdminReferenceDataPage,
@@ -839,6 +851,14 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="orders.view" />,
                     children: [
                       { index: true, element: <AdminOrdersPage /> },
+                    ],
+                  },
+                  {
+                    path: "invoices",
+                    element: <PermissionGuard permission="invoices.view" />,
+                    children: [
+                      { index: true, element: <AdminInvoicesPage /> },
+                      { path: ":id", element: <AdminInvoiceDetailPage /> },
                     ],
                   },
                   {

@@ -23,6 +23,7 @@ import {
   TrendingUp,
   MapPin,
   ShoppingCart,
+  ReceiptText,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "users",     labelPath: "adminNav.users",     path: "/admin/users",     icon: Users },
   { key: "addresses", labelPath: "adminNav.addresses", path: "/admin/addresses", icon: MapPin },
   { key: "orders", labelPath: "adminNav.orders", path: "/admin/orders", icon: ShoppingCart },
+  { key: "invoices", labelPath: "adminNav.invoices", path: "/admin/invoices", icon: ReceiptText },
   { key: "reference", labelPath: "adminNav.reference", path: "/admin/reference", icon: FolderTree },
   { key: "taxonomy", labelPath: "adminNav.taxonomy", path: "/admin/taxonomy", icon: Layers },
   { key: "attachments", labelPath: "adminNav.attachments", path: "/admin/attachments", icon: Paperclip },
