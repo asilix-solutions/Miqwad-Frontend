@@ -179,6 +179,12 @@ export const PERMISSIONS = {
     view: "orders.view",
     manage: "orders.manage",
   },
+
+  // ── Invoices ───────────────────────────────────────────────────────────────
+  invoices: {
+    view: "invoices.view",
+    manage: "invoices.manage",
+  },
 } as const;
 
 // =============================================================================
