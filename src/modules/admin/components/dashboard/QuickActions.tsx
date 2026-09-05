@@ -39,7 +39,7 @@ const ACTIONS: QuickAction[] = [
     key: "ads",
     labelKey: "superAdmin.dashboard.quickActions.ads",
     icon: Megaphone,
-    to: "/admin/ads/campaigns/new",
+    to: "/admin/ads",
     permission: "ads.create",
     color: "var(--color-brand-orange)",
   },

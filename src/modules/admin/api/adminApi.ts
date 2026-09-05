@@ -15,7 +15,6 @@ export type CreateCategoryPayload =
   Partial<Pick<ServiceCategory, "parentId" | "level" | "providerTypeScope" | "isActive" | "sortOrder">>;
 import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
-import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
 import type { Complaint, ComplaintStatus, ComplaintsQuery } from "@modules/complaints/types";
@@ -378,51 +377,6 @@ export const adminApi = {
   getSentNotifications: async (params: { page: number; pageSize: number; status?: string }): Promise<PaginatedResponse<SentNotification>> => {
     const { data } = await apiClient.get<PaginatedResponse<SentNotification>>("/admin/notifications", { params });
     return data;
-  },
-
-  // ── Ads (Campaigns & Placements) ───────────────────────────────────────────
-
-  getPlacements: async (params?: { isActive?: boolean }): Promise<AdPlacement[]> => {
-    const { data } = await apiClient.get<AdPlacement[]>("/admin/ad-placements", { params });
-    return data;
-  },
-
-  createPlacement: async (payload: Omit<AdPlacement, "id">): Promise<AdPlacement> => {
-    const { data } = await apiClient.post<AdPlacement>("/admin/ad-placements", payload);
-    return data;
-  },
-
-  updatePlacement: async (id: number, payload: Partial<Omit<AdPlacement, "id">>): Promise<AdPlacement> => {
-    const { data } = await apiClient.put<AdPlacement>(`/admin/ad-placements/${id}`, payload);
-    return data;
-  },
-
-  deletePlacement: async (id: number): Promise<void> => {
-    await apiClient.delete(`/admin/ad-placements/${id}`);
-  },
-
-  getCampaigns: async (params: { page: number; pageSize: number; status?: string; placementId?: number }): Promise<PaginatedResponse<AdCampaign>> => {
-    const { data } = await apiClient.get<PaginatedResponse<AdCampaign>>("/admin/ad-campaigns", { params });
-    return data;
-  },
-
-  getCampaign: async (id: number): Promise<AdCampaign> => {
-    const { data } = await apiClient.get<AdCampaign>(`/admin/ad-campaigns/${id}`);
-    return data;
-  },
-
-  createCampaign: async (payload: Omit<AdCampaign, "id" | "createdAt">): Promise<AdCampaign> => {
-    const { data } = await apiClient.post<AdCampaign>("/admin/ad-campaigns", payload);
-    return data;
-  },
-
-  updateCampaign: async (id: number, payload: Partial<Omit<AdCampaign, "id" | "createdAt">>): Promise<AdCampaign> => {
-    const { data } = await apiClient.put<AdCampaign>(`/admin/ad-campaigns/${id}`, payload);
-    return data;
-  },
-
-  deleteCampaign: async (id: number): Promise<void> => {
-    await apiClient.delete(`/admin/ad-campaigns/${id}`);
   },
 
   // ── System Settings ────────────────────────────────────────────────────────

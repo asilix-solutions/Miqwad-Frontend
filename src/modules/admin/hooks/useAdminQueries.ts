@@ -11,7 +11,6 @@ import { useBrandsQuery, useModelsQuery, brandKeys } from "@modules/vehicles/hoo
 import { brandsApi } from "@modules/vehicles/api/brandsApi";
 import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
-import type { AdPlacement, AdCampaign } from "@modules/ads/types";
 import type { SettingsSection } from "@modules/settings/types";
 import type { AuditLogQuery } from "@modules/audit/types";
 import type { ComplaintsQuery, ComplaintStatus } from "@modules/complaints/types";
@@ -40,10 +39,6 @@ export const adminKeys = {
   templates: (params?: { isActive?: boolean }) => [...adminKeys.all, "templates", params] as const,
   template: (id: string) => [...adminKeys.all, "template", id] as const,
   notifications: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "notifications", params] as const,
-  placements: (params?: { isActive?: boolean }) => [...adminKeys.all, "placements", params] as const,
-  placement: (id: number) => [...adminKeys.all, "placement", id] as const,
-  campaigns: (params?: { status?: string; placementId?: number }) => [...adminKeys.all, "campaigns", params] as const,
-  campaign: (id: number) => [...adminKeys.all, "campaign", id] as const,
   settings: () => [...adminKeys.all, "settings"] as const,
   auditLogs: (params?: Partial<AuditLogQuery>) => [...adminKeys.all, "audit", params] as const,
   complaints: (params: ComplaintsQuery) => [...adminKeys.all, "complaints", params] as const,
@@ -576,125 +571,6 @@ export function useSentNotificationsQuery(params: { page: number; pageSize: numb
     queryKey: adminKeys.notifications(params),
     queryFn: () => adminApi.getSentNotifications(params),
     placeholderData: keepPreviousData,
-  });
-}
-
-// ── Ads (Campaigns & Placements) ───────────────────────────────────────────
-
-export function usePlacementsQuery(params?: { isActive?: boolean }) {
-  return useQuery({
-    queryKey: adminKeys.placements(params),
-    queryFn: () => adminApi.getPlacements(params),
-  });
-}
-
-export function useCreatePlacementMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (payload: Omit<AdPlacement, "id">) => adminApi.createPlacement(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
-  });
-}
-
-export function useUpdatePlacementMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<Omit<AdPlacement, "id">> }) =>
-      adminApi.updatePlacement(id, payload),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.placement(variables.id) });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
-  });
-}
-
-export function useDeletePlacementMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (id: number) => adminApi.deletePlacement(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "placements"] });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
-  });
-}
-
-export function useCampaignsQuery(params: { page: number; pageSize: number; status?: string; placementId?: number }) {
-  return useQuery({
-    queryKey: adminKeys.campaigns(params),
-    queryFn: () => adminApi.getCampaigns(params),
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function useCampaignQuery(id: number, enabled = true) {
-  return useQuery({
-    queryKey: adminKeys.campaign(id),
-    queryFn: () => adminApi.getCampaign(id),
-    enabled: enabled && Number.isFinite(id) && id > 0,
-  });
-}
-
-export function useCreateCampaignMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (payload: Omit<AdCampaign, "id" | "createdAt">) => adminApi.createCampaign(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
-  });
-}
-
-export function useUpdateCampaignMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<Omit<AdCampaign, "id" | "createdAt">> }) =>
-      adminApi.updateCampaign(id, payload),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.campaign(variables.id) });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
-  });
-}
-
-export function useDeleteCampaignMutation() {
-  const qc = useQueryClient();
-  const toast = useToast();
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (id: number) => adminApi.deleteCampaign(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "campaigns"] });
-    },
-    onError: () => {
-      toast.error(t("common.saveFailed") || "Save failed");
-    }
   });
 }
 
