@@ -290,11 +290,6 @@ const AdminAdsHubPage = lazy(() =>
     default: m.AdminAdsHubPage,
   }))
 );
-const AdminCampaignBuilderPage = lazy(() =>
-  import("@modules/admin/pages/AdminCampaignBuilderPage").then((m) => ({
-    default: m.AdminCampaignBuilderPage,
-  }))
-);
 const AdminSettingsHubPage = lazy(() =>
   import("@modules/admin/pages/AdminSettingsHubPage").then((m) => ({
     default: m.AdminSettingsHubPage,
@@ -914,8 +909,6 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="ads.view" />,
                     children: [
                       { index: true, element: <AdminAdsHubPage /> },
-                      { path: "campaigns/new", element: <AdminCampaignBuilderPage /> },
-                      { path: "campaigns/:id", element: <AdminCampaignBuilderPage /> },
                     ],
                   },
                   {

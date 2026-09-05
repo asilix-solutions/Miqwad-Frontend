@@ -169,38 +169,6 @@ export const sendNotificationSchema = z.object({
 
 export type SendNotificationFormValues = z.infer<typeof sendNotificationSchema>;
 
-/** Schema used by the admin ad placement create/edit dialog. */
-export const placementSchema = z.object({
-  code: z.string().min(2, { message: "common.requiredField" }),
-  nameAr: z.string().min(2, { message: "common.requiredField" }),
-  nameEn: z.string().min(2, { message: "common.requiredField" }),
-  descriptionAr: z.string().optional(),
-  descriptionEn: z.string().optional(),
-  isActive: z.boolean(),
-});
-
-export type PlacementFormValues = z.infer<typeof placementSchema>;
-
-/** Schema used by the admin ad campaign create/edit dialog. */
-export const campaignSchema = z.object({
-  titleAr: z.string().min(2, { message: "common.requiredField" }),
-  titleEn: z.string().min(2, { message: "common.requiredField" }),
-  descriptionAr: z.string().optional(),
-  descriptionEn: z.string().optional(),
-  imageUrl: z.string().optional(),
-  targetUrl: z.string().url({ message: "common.invalidUrl" }).optional().or(z.literal("")),
-  placementId: z.number({ message: "common.requiredField" }),
-  startsAt: z.string().min(1, { message: "common.requiredField" }),
-  endsAt: z.string().min(1, { message: "common.requiredField" }),
-  status: z.enum(["draft", "scheduled", "active", "paused", "ended"]),
-  priority: z.number().optional(),
-}).refine(d => !d.startsAt || !d.endsAt || new Date(d.endsAt) >= new Date(d.startsAt), {
-  message: "superAdmin.ads.errors.endBeforeStart",
-  path: ["endsAt"]
-});
-
-export type CampaignFormValues = z.infer<typeof campaignSchema>;
-
 /** Schema used by the admin system settings (general) editor. */
 export const generalSettingsSchema = z.object({
   platformNameAr: z.string().min(2, { message: "common.requiredField" }),
