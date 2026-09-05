@@ -8,7 +8,6 @@ import { tryDiscoveryMock } from "./handlers/discovery.handlers";
 import { tryAdminMock } from "./handlers/admin.handlers";
 
 import { tryAdminNotificationsMock } from "./handlers/admin.notifications.handlers";
-import { tryAdminAdsMock } from "./handlers/admin.ads.handlers";
 import { tryAdminSettingsMock } from "./handlers/admin.settings.handlers";
 import { tryAdminComplaintsMock } from "./handlers/admin.complaints.handlers";
 import { tryDealerMock } from "./handlers/dealer.handlers";
@@ -46,7 +45,7 @@ import { tryScrapMock } from "./handlers/scrap.handlers";
  *                               — the vehicle brand/model reference data
  *                               admin manages via `admin/brands` mutations.
  * These three prefixes are handled by tryAdminMock/
- * tryAdminComplaintsMock/tryAdminNotificationsMock/tryAdminAdsMock/
+ * tryAdminComplaintsMock/tryAdminNotificationsMock/
  * tryAdminSettingsMock/tryProvidersMock/tryVehiclesMock. tryProvidersMock
  * and tryVehiclesMock also implement non-admin-owned paths (e.g.
  * /ServiceProviders/register, /Vehicles CRUD) — those stay gated by
@@ -76,7 +75,6 @@ const alwaysMockHandlers: Handler[] = [
   tryAdminMock,
   tryAdminComplaintsMock,
   tryAdminNotificationsMock,
-  tryAdminAdsMock,
   tryAdminSettingsMock,
   tryProvidersMock,
   tryVehiclesMock,
