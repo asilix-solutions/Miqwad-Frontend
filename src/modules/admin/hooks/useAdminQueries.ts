@@ -9,7 +9,6 @@ import type { PricedService, ServiceCategory } from "@modules/services/types";
 import type { City } from "../types";
 import { useBrandsQuery, useModelsQuery, brandKeys } from "@modules/vehicles/hooks/useBrandsModels";
 import { brandsApi } from "@modules/vehicles/api/brandsApi";
-import type { SubscriptionPlan } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { SettingsSection } from "@modules/settings/types";
 import type { AuditLogQuery } from "@modules/audit/types";
@@ -33,9 +32,6 @@ export const adminKeys = {
   cities: () => [...adminKeys.all, "cities"] as const,
   services: (params?: { categoryId?: number; isActive?: boolean }) => [...adminKeys.all, "services", params] as const,
 
-  plans: (params?: { isActive?: boolean }) => [...adminKeys.all, "plans", params] as const,
-  plan: (id: number) => [...adminKeys.all, "plan", id] as const,
-  subscriptions: (params: { page: number; pageSize: number; status?: string; type?: string }) => [...adminKeys.all, "subscriptions", params] as const,
   templates: (params?: { isActive?: boolean }) => [...adminKeys.all, "templates", params] as const,
   template: (id: string) => [...adminKeys.all, "template", id] as const,
   notifications: (params: { page: number; pageSize: number; status?: string }) => [...adminKeys.all, "notifications", params] as const,
@@ -303,73 +299,8 @@ export function useDeleteServiceMutation() {
 
 
 
-// ── Subscription Plans ─────────────────────────────────────────────────────
-
-export function useAdminPlansQuery(params?: { isActive?: boolean }) {
-  return useQuery({
-    queryKey: adminKeys.plans(params),
-    queryFn: () => adminApi.getPlans(params),
-  });
-}
-
-export function usePlanQuery(id: number) {
-  return useQuery({
-    queryKey: adminKeys.plan(id),
-    queryFn: () => adminApi.getPlan(id),
-  });
-}
-
-export function useCreatePlanMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: Omit<SubscriptionPlan, "id">) => adminApi.createPlan(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
-    },
-  });
-}
-
-export function useUpdatePlanMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: Partial<SubscriptionPlan> }) =>
-      adminApi.updatePlan(id, payload),
-    onSuccess: (_, variables) => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.plan(variables.id) });
-    },
-  });
-}
-
-export function useDeletePlanMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => adminApi.deletePlan(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "plans"] });
-    },
-  });
-}
-
-// ── Provider Subscriptions ──────────────────────────────────────────────────
-
-export function useSubscriptionsQuery(params: { page: number; pageSize: number; status?: string; type?: string }) {
-  return useQuery({
-    queryKey: adminKeys.subscriptions(params),
-    queryFn: () => adminApi.getSubscriptions(params as any),
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function useCancelSubscriptionMutation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => adminApi.cancelSubscription(id),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: [...adminKeys.all, "subscriptions"] });
-    },
-  });
-}
+// NOTE: Subscription Plans + Provider Subscriptions hooks moved to their own
+// live module — see src/modules/subscriptions/hooks/useSubscriptionQueries.ts.
 
 // ── Cities ─────────────────────────────────────────────────────────────────
 
