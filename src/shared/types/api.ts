@@ -49,12 +49,25 @@ export class AppError extends Error {
   code: string;
   fields?: Record<string, string[]>;
   status?: number;
+  /**
+   * Flat list of already-localised error strings from the backend's
+   * `{ success:false, message, errors:string[] }` envelope. No field keys —
+   * these are surfaced verbatim as a form-level banner by the caller.
+   */
+  errors?: string[];
 
-  constructor(message: string, code = "UNKNOWN", status?: number, fields?: Record<string, string[]>) {
+  constructor(
+    message: string,
+    code = "UNKNOWN",
+    status?: number,
+    fields?: Record<string, string[]>,
+    errors?: string[],
+  ) {
     super(message);
     this.name = "AppError";
     this.code = code;
     this.status = status;
     this.fields = fields;
+    this.errors = errors;
   }
 }

@@ -151,11 +151,22 @@ apiClient.interceptors.response.use(
 function normaliseError(error: unknown): AppError {
   if (axios.isAxiosError(error)) {
     const payload = error.response?.data as
-      | { code?: string; message?: string; fields?: Record<string, string[]> }
+      | {
+          code?: string;
+          message?: string;
+          fields?: Record<string, string[]>;
+          errors?: unknown;
+        }
       | undefined;
     const message = payload?.message || error.message || "حدث خطأ غير متوقع";
     const code = payload?.code || error.code || "NETWORK_ERROR";
-    return new AppError(message, code, error.response?.status, payload?.fields);
+    // Backend validation envelope: `errors` is a flat array of already-
+    // localised strings (no field keys). Keep it only when it is exactly that.
+    const errors =
+      Array.isArray(payload?.errors) && payload.errors.every((e) => typeof e === "string")
+        ? (payload.errors as string[])
+        : undefined;
+    return new AppError(message, code, error.response?.status, payload?.fields, errors);
   }
   if (error instanceof AppError) return error;
   if (error instanceof Error) return new AppError(error.message);
