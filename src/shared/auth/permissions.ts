@@ -90,17 +90,17 @@ export const PERMISSIONS = {
 
 
   // ── Subscription Plans ─────────────────────────────────────────────────────
+  // No `delete` — the backend has no DELETE endpoint for plans.
   plans: {
     view: "plans.view",
     create: "plans.create",
     edit: "plans.edit",
-    delete: "plans.delete",
   },
 
   // ── Subscriptions ──────────────────────────────────────────────────────────
+  // Read-only for admins — the backend exposes no cancel/update endpoint.
   subscriptions: {
     view: "subscriptions.view",
-    manage: "subscriptions.manage",
   },
 
 

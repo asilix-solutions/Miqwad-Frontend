@@ -24,6 +24,7 @@ const PROVIDER_STATUS_TONES: Record<string, BadgeTone> = {
 
 const SUBSCRIPTION_STATUS_TONES: Record<string, BadgeTone> = {
   active: "success",
+  inactive: "neutral",
   expired: "neutral",
   cancelled: "danger",
   pending: "warning",

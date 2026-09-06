@@ -114,32 +114,10 @@ export type ServiceFormValues = z.infer<typeof serviceSchema>;
 
 
 
-/** Schema used by the admin plan create/edit dialog. */
-export const planSchema = z.object({
-  nameAr: z
-    .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
-  nameEn: z
-    .string()
-    .min(2, { message: "common.requiredField" })
-    .max(100),
-  descriptionAr: z.string().nullable().optional(),
-  descriptionEn: z.string().nullable().optional(),
-  price: z.number().min(0, { message: "common.requiredField" }),
-  billingCycle: z.enum(["monthly", "yearly"]),
-  features: z.array(
-    z.object({
-      id: z.string(),
-      labelAr: z.string().min(1, { message: "common.requiredField" }),
-      labelEn: z.string().min(1, { message: "common.requiredField" }),
-    })
-  ),
-  isActive: z.boolean(),
-  sortOrder: z.number().nullable().optional(),
-});
-
-export type PlanFormValues = z.infer<typeof planSchema>;
+/**
+ * Subscription plan schema moved to its own live module —
+ * see src/modules/subscriptions/schemas/subscriptionPlan.schema.ts.
+ */
 
 /** Schema used by the admin notification template create/edit dialog. */
 export const templateSchema = z.object({

@@ -1,6 +1,6 @@
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
-import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, SubscriberType, RevenueSummary, RevenueSource } from "../types";
+import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, RevenueSummary, RevenueSource } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import type { PricedService, ServiceCategory } from "@modules/services/types";
 
@@ -13,7 +13,6 @@ import type { PricedService, ServiceCategory } from "@modules/services/types";
 export type CreateCategoryPayload =
   Pick<ServiceCategory, "nameAr" | "nameEn" | "iconUrl" | "colorHint"> &
   Partial<Pick<ServiceCategory, "parentId" | "level" | "providerTypeScope" | "isActive" | "sortOrder">>;
-import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { NotificationTemplate, SentNotification } from "@modules/notifications/types";
 import type { SystemSettings, SettingsSection } from "@modules/settings/types";
 import type { AuditLogEntry, AuditLogQuery } from "@modules/audit/types";
@@ -282,43 +281,8 @@ export const adminApi = {
   },
 
 
-  // ── Subscription Plans ─────────────────────────────────────────────────────
-
-  getPlans: async (params?: { isActive?: boolean }): Promise<SubscriptionPlan[]> => {
-    const { data } = await apiClient.get<SubscriptionPlan[]>("/admin/plans", { params });
-    return data;
-  },
-
-  getPlan: async (id: number): Promise<SubscriptionPlan> => {
-    const { data } = await apiClient.get<SubscriptionPlan>(`/admin/plans/${id}`);
-    return data;
-  },
-
-  createPlan: async (payload: Omit<SubscriptionPlan, "id">): Promise<SubscriptionPlan> => {
-    const { data } = await apiClient.post<SubscriptionPlan>("/admin/plans", payload);
-    return data;
-  },
-
-  updatePlan: async (id: number, payload: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> => {
-    const { data } = await apiClient.put<SubscriptionPlan>(`/admin/plans/${id}`, payload);
-    return data;
-  },
-
-  deletePlan: async (id: number): Promise<void> => {
-    await apiClient.delete(`/admin/plans/${id}`);
-  },
-
-  // ── Provider Subscriptions ──────────────────────────────────────────────────
-
-  getSubscriptions: async (params: { page: number; pageSize: number; status?: string; type?: SubscriberType }): Promise<PaginatedResponse<ProviderSubscription>> => {
-    const { data } = await apiClient.get<PaginatedResponse<ProviderSubscription>>("/admin/subscriptions", { params });
-    return data;
-  },
-
-  cancelSubscription: async (id: number): Promise<ProviderSubscription> => {
-    const { data } = await apiClient.post<ProviderSubscription>(`/admin/subscriptions/${id}/cancel`);
-    return data;
-  },
+  // NOTE: Subscription Plans + Provider Subscriptions moved to their own live
+  // module — see src/modules/subscriptions/ (feat/subscriptions-live).
 
   getCities: async (): Promise<City[]> => {
     const { data } = await apiClient.get<City[]>("/admin/cities");
