@@ -12,6 +12,7 @@ import { adaptRawOrder, adaptRawOrderDetail } from "../lib/orderAdapter";
 import { providerServicesApi, adaptProviderService, adaptServiceCatalogItem } from "@shared/provider-services";
 import type { PaginatedResponse } from "@shared/types/api";
 import type {
+  DealerOffersListParams,
   DealerOrdersListParams,
   DealerShipmentsListParams,
   Order,
@@ -32,6 +33,11 @@ export const dealerKeys = {
     all: () => [...dealerKeys.all, "orders"] as const,
     list: (params?: DealerOrdersListParams) => [...dealerKeys.orders.all(), "list", params] as const,
     detail: (id: string) => [...dealerKeys.orders.all(), "detail", id] as const,
+  },
+  offers: {
+    all: () => [...dealerKeys.all, "offers"] as const,
+    list: (params?: DealerOffersListParams) => [...dealerKeys.offers.all(), "list", params] as const,
+    detail: (id: string) => [...dealerKeys.offers.all(), "detail", id] as const,
   },
   shipments: {
     all: () => [...dealerKeys.all, "shipments"] as const,

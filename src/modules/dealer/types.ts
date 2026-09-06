@@ -102,6 +102,103 @@ export interface DealerOrdersListParams {
   orderType?: number;
 }
 
+// ── Offers (LIVE /api/Offers — token-scoped to the logged-in dealer) ─────────
+
+/**
+ * A dealer "offer" is a titled, date-windowed bundle of 1..N fixed-SAR
+ * discount lines. There is NO percentage, store-wide, or category discount —
+ * do not add any. Backed by the token-scoped `GET /api/Offers` (list) and
+ * `GET /api/Offers/{id}` (detail); the two responses share this shape.
+ *
+ * `providerId` / `providerName` are returned by the API but the dealer UI
+ * never needs them (the server infers the owner from the JWT) — kept here
+ * only to mirror the wire contract. All date fields arrive with NO timezone
+ * suffix and are normalised to UTC ISO strings in `api/offersApi.ts`.
+ *
+ * Written to be promotable to `src/shared/provider-ui` later (workshop /
+ * scrap will reuse it) — no dealer-only assumptions leak into this shape.
+ */
+export interface Offer {
+  /** Coerced from the API's int64 to a string per project convention. */
+  id: string;
+  title: string | null;
+  /** UTC ISO string (normalised in the api layer). */
+  startDate: string;
+  /** UTC ISO string (normalised in the api layer). */
+  endDate: string;
+  /** Returned by the API; unused by the dealer UI. */
+  providerId: string;
+  providerName: string | null;
+  /**
+   * Stored flag — exact semantics (date-derived vs. an independent on/off
+   * switch) are UNCONFIRMED and settled by the Stage-2 write-probe. Consume
+   * only through `computeOfferStatus` in `offerStatus.ts`.
+   */
+  isActive: boolean;
+  /** UTC ISO string (normalised in the api layer). */
+  createdAt: string;
+  /** UTC ISO string or null (normalised in the api layer). */
+  updatedAt: string | null;
+  items: OfferItem[];
+}
+
+/**
+ * One fixed-SAR discount line on an {@link Offer}. `originalPrice` and
+ * `discountedPrice` are SERVER-COMPUTED (display only); `discountAmount` is
+ * the only value the dealer will edit — later, in Stage 3.
+ */
+export interface OfferItem {
+  id: string;
+  /** FK → a `GET /api/provider-services` row (the dealer portal's "Product"). */
+  providerServiceId: string;
+  serviceName: string | null;
+  /** SAR — server-computed, display only. */
+  originalPrice: number;
+  /** SAR — fixed amount off; the only editable line value (Stage 3). */
+  discountAmount: number;
+  /** SAR — server-computed, display only. */
+  discountedPrice: number;
+}
+
+/**
+ * One discount line on the offer WRITE DTO. `providerServiceId` is a numeric
+ * FK into `GET /api/provider-services`; `discountAmount` is a true decimal and
+ * must be `> 0` (backend 400s otherwise).
+ */
+export interface OfferLineInput {
+  providerServiceId: number;
+  discountAmount: number;
+}
+
+/**
+ * The single request DTO shared by CREATE (`POST /api/Offers`) and UPDATE
+ * (`PUT /api/Offers/{id}`) — confirmed by the Stage-2 write-probe.
+ *
+ *   - `providerId` is OMITTED — the server infers the owner from the JWT.
+ *   - `originalPrice` / `discountedPrice` / `isActive` are OMITTED —
+ *     server-computed.
+ *   - Dates are sent BARE-LOCAL (no `Z`, no offset), e.g.
+ *     `"2026-09-05T00:00:00"` — the api layer's `toBareLocal` does this.
+ *   - PUT is a FULL REPLACE of `items` — always send the complete array.
+ */
+export interface OfferWritePayload {
+  title: string;
+  /** `YYYY-MM-DD` from the form; normalised to bare-local in the api layer. */
+  startDate: string;
+  /** `YYYY-MM-DD` from the form; normalised to bare-local in the api layer. */
+  endDate: string;
+  items: OfferLineInput[];
+}
+
+/** Display status derived from an {@link Offer} — see `offerStatus.ts`. */
+export type OfferStatus = "scheduled" | "active" | "expired" | "inactive";
+
+/** Typed params for the token-scoped offers list query. */
+export interface DealerOffersListParams {
+  pageNumber?: number;
+  pageSize?: number;
+}
+
 // ── Shipments + dues (mock /dealer/* bridge — unchanged) ─────────────────────
 
 export type ShipmentStatus = "pending" | "in_transit" | "delivered" | "returned";
