@@ -37,7 +37,6 @@ import { AxiosHeaders } from "axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { DashboardStats } from "@modules/admin/types";
 import type { PricedService } from "@modules/services/types";
-import type { SubscriptionPlan, ProviderSubscription } from "@modules/subscriptions/types";
 import type { ProviderProfile } from "@modules/providers/types";
 import type { RevenueSummary, RevenueRecord } from "@modules/admin/types";
 
@@ -146,74 +145,10 @@ let SEED_SERVICES: PricedService[] = [
 ];
 
 
-let SEED_PLANS: SubscriptionPlan[] = [
-  {
-    id: 1,
-    nameAr: "الأساسية",
-    nameEn: "Basic",
-    price: 99,
-    billingCycle: "monthly",
-    features: [
-      { id: "feat_1", labelAr: "إدراج في الدليل", labelEn: "Directory listing" },
-      { id: "feat_2", labelAr: "دعم فني عادي", labelEn: "Standard support" }
-    ],
-    isActive: true,
-  },
-  {
-    id: 2,
-    nameAr: "الاحترافية",
-    nameEn: "Pro",
-    price: 199,
-    billingCycle: "monthly",
-    features: [
-      { id: "feat_3", labelAr: "ظهور متقدم", labelEn: "Featured placement" },
-      { id: "feat_4", labelAr: "دعم فني أولوية", labelEn: "Priority support" },
-      { id: "feat_5", labelAr: "تقارير متقدمة", labelEn: "Advanced analytics" }
-    ],
-    isActive: true,
-  },
-  {
-    id: 3,
-    nameAr: "الاحترافية (سنوي)",
-    nameEn: "Pro (Yearly)",
-    price: 1990,
-    billingCycle: "yearly",
-    features: [
-      { id: "feat_6", labelAr: "ظهور متقدم", labelEn: "Featured placement" },
-      { id: "feat_7", labelAr: "دعم فني أولوية", labelEn: "Priority support" },
-      { id: "feat_8", labelAr: "تقارير متقدمة", labelEn: "Advanced analytics" },
-      { id: "feat_9", labelAr: "شهرين مجاناً", labelEn: "Two months free" }
-    ],
-    isActive: true,
-  },
-  {
-    id: 4,
-    nameAr: "المميزة",
-    nameEn: "Premium",
-    price: 299,
-    billingCycle: "monthly",
-    features: [
-      { id: "feat_10", labelAr: "حساب مدير مخصص", labelEn: "Dedicated account manager" },
-      { id: "feat_11", labelAr: "ظهور في الصفحة الرئيسية", labelEn: "Homepage placement" }
-    ],
-    isActive: false,
-  }
-];
-
-let SEED_PROVIDER_SUBSCRIPTIONS: ProviderSubscription[] = [
-  { id: 1, providerId: 101, providerName: "ورشة الإبداع", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-05-01T00:00:00Z", endDate: "2025-06-01T00:00:00Z", createdAt: "2025-05-01T00:00:00Z" },
-  { id: 2, providerId: 102, providerName: "مركز العناية", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "expired", startDate: "2025-04-15T00:00:00Z", endDate: "2025-05-15T00:00:00Z", createdAt: "2025-04-15T00:00:00Z" },
-  { id: 3, providerId: 103, providerName: "ورشة الصيانة السريعة", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2025-01-10T00:00:00Z", endDate: "2026-01-10T00:00:00Z", createdAt: "2025-01-10T00:00:00Z" },
-  { id: 4, providerId: 104, providerName: "تشليح العاصمة", providerType: "scrap", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "cancelled", startDate: "2025-03-01T00:00:00Z", endDate: "2025-04-01T00:00:00Z", createdAt: "2025-03-01T00:00:00Z" },
-  { id: 5, providerId: 105, providerName: "ورشة القمة", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-06-01T00:00:00Z", endDate: "2025-07-01T00:00:00Z", createdAt: "2025-06-01T00:00:00Z" },
-  { id: 6, providerId: 106, providerName: "مركز الأمان", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "pending", startDate: "2025-06-15T00:00:00Z", endDate: "2025-07-15T00:00:00Z", createdAt: "2025-06-12T00:00:00Z" },
-  { id: 7, providerId: 107, providerName: "ورشة المحركات", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "active", startDate: "2024-08-01T00:00:00Z", endDate: "2025-08-01T00:00:00Z", createdAt: "2024-08-01T00:00:00Z" },
-  { id: 8, providerId: 108, providerName: "تشليح الرواد", providerType: "scrap", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "expired", startDate: "2025-02-01T00:00:00Z", endDate: "2025-03-01T00:00:00Z", createdAt: "2025-02-01T00:00:00Z" },
-  { id: 9, providerId: 109, providerName: "ورشة الاعتماد", providerType: "workshop", planId: 2, planName: "الاحترافية", price: 199, billingCycle: "monthly", status: "active", startDate: "2025-05-20T00:00:00Z", endDate: "2025-06-20T00:00:00Z", createdAt: "2025-05-20T00:00:00Z" },
-  { id: 10, providerId: 110, providerName: "مركز الخبراء", providerType: "workshop", planId: 4, planName: "المميزة", price: 299, billingCycle: "monthly", status: "cancelled", startDate: "2025-01-01T00:00:00Z", endDate: "2025-02-01T00:00:00Z", createdAt: "2025-01-01T00:00:00Z" },
-  { id: 11, providerId: 111, providerName: "ورشة الرواد", providerType: "workshop", planId: 1, planName: "الأساسية", price: 99, billingCycle: "monthly", status: "active", startDate: "2025-06-05T00:00:00Z", endDate: "2025-07-05T00:00:00Z", createdAt: "2025-06-05T00:00:00Z" },
-  { id: 12, providerId: 112, providerName: "مركز العاصمة", providerType: "workshop", planId: 3, planName: "الاحترافية (سنوي)", price: 1990, billingCycle: "yearly", status: "pending", startDate: "2025-07-01T00:00:00Z", endDate: "2026-07-01T00:00:00Z", createdAt: "2025-06-10T00:00:00Z" },
-];
+// NOTE: Subscription plans + provider-subscription seeds/handlers were removed
+// in Stage 1 of the live Subscriptions rebuild (feat/subscriptions-live). The
+// real endpoints (/api/SubscriptionPlans, /api/ProviderSubscriptions) are hit
+// directly by src/modules/subscriptions/ and are not mocked.
 
 
 // =============================================================================
@@ -289,26 +224,10 @@ function computeRevenue(): RevenueSummary {
     // Ignore parse errors
   }
 
-  // 2. Subscriptions
-  for (const sub of SEED_PROVIDER_SUBSCRIPTIONS) {
-    if (sub.status === "active") {
-      let amount = sub.price;
-      if (sub.billingCycle === "yearly") {
-        // Normalize yearly to monthly
-        amount = amount / 12;
-      }
-      records.push({
-        id: `sub_${sub.id}`,
-        source: "subscription",
-        providerId: sub.providerId,
-        providerName: sub.providerName,
-        providerType: sub.providerType,
-        amount,
-        detail: sub.planName
-      });
-      subscriptionTotal += amount;
-    }
-  }
+  // 2. Subscriptions — provider-subscription seed removed in Stage 1 of the
+  // live rebuild (feat/subscriptions-live). The revenue mock now reports only
+  // dealer commissions until the real /api/ProviderSubscriptions data is wired
+  // into this view in a later stage.
 
   return {
     totalMonthly: commissionTotal + subscriptionTotal,
@@ -587,121 +506,11 @@ export async function tryAdminMock(
 
 
 
-  // -- GET /admin/plans ---------------------------------------------------
-  if (url === "admin/plans" && method === "get") {
-    requireAdmin(config);
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const isActiveParam = params["isActive"] as string | undefined;
-
-    let filtered = SEED_PLANS;
-    if (isActiveParam !== undefined) {
-      const isActive = isActiveParam === "true";
-      filtered = filtered.filter(p => p.isActive === isActive);
-    }
-
-    return ok(config, filtered);
-  }
-
-  // -- GET /admin/plans/:id -----------------------------------------------
-  if (url.startsWith("admin/plans/") && method === "get") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const plan = SEED_PLANS.find(p => p.id === id);
-    if (!plan) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
-    return ok(config, plan);
-  }
-
-  // -- POST /admin/plans --------------------------------------------------
-  if (url === "admin/plans" && method === "post") {
-    requireAdmin(config);
-    const payload = JSON.parse(config.data || "{}");
-    const newId = Math.max(0, ...SEED_PLANS.map(p => p.id)) + 1;
-    const newPlan: SubscriptionPlan = {
-      id: newId,
-      nameAr: payload.nameAr,
-      nameEn: payload.nameEn,
-      descriptionAr: payload.descriptionAr ?? null,
-      descriptionEn: payload.descriptionEn ?? null,
-      price: payload.price,
-      billingCycle: payload.billingCycle,
-      features: payload.features || [],
-      isActive: payload.isActive ?? true,
-      sortOrder: payload.sortOrder ?? null,
-    };
-    SEED_PLANS.push(newPlan);
-    return ok(config, newPlan);
-  }
-
-  // -- PUT /admin/plans/:id -----------------------------------------------
-  if (url.startsWith("admin/plans/") && method === "put") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const idx = SEED_PLANS.findIndex((p) => p.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
-
-    const payload = JSON.parse(config.data || "{}");
-    SEED_PLANS[idx] = { ...SEED_PLANS[idx], ...payload };
-    return ok(config, SEED_PLANS[idx]);
-  }
-
-  // -- DELETE /admin/plans/:id --------------------------------------------
-  if (url.startsWith("admin/plans/") && method === "delete") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const idx = SEED_PLANS.findIndex((p) => p.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الخطة غير موجودة");
-
-    SEED_PLANS.splice(idx, 1);
-    return ok(config, { success: true });
-  }
-
-  // -- GET /admin/subscriptions ---------------------------------------------
-  if (url === "admin/subscriptions" && method === "get") {
-    requireAdmin(config);
-
-    const params = (config.params ?? {}) as Record<string, unknown>;
-    const page = Math.max(1, Number(params["page"] ?? 1));
-    const pageSize = Math.max(1, Math.min(100, Number(params["pageSize"] ?? 10)));
-    const statusParam = params["status"] as string | undefined;
-    const typeParam = params["type"] as string | undefined;
-
-    let filtered = SEED_PROVIDER_SUBSCRIPTIONS;
-    if (statusParam && statusParam !== "all") {
-      filtered = filtered.filter((s) => s.status === statusParam);
-    }
-    if (typeParam && typeParam !== "all") {
-      filtered = filtered.filter((s) => s.providerType === typeParam);
-    }
-
-    const total = filtered.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const startIdx = (page - 1) * pageSize;
-    const items = filtered.slice(startIdx, startIdx + pageSize);
-
-    const response: PaginatedResponse<ProviderSubscription> = {
-      items,
-      page,
-      pageSize,
-      total,
-      totalPages,
-    };
-
-    return ok(config, response);
-  }
-
-  // -- POST /admin/subscriptions/:id/cancel ---------------------------------
-  if (url.startsWith("admin/subscriptions/") && url.endsWith("/cancel") && method === "post") {
-    requireAdmin(config);
-    const id = Number(url.split("/")[2]);
-    const idx = SEED_PROVIDER_SUBSCRIPTIONS.findIndex((s) => s.id === id);
-    if (idx === -1) throw fail(config, 404, "NOT_FOUND", "الاشتراك غير موجود");
-
-    SEED_PROVIDER_SUBSCRIPTIONS[idx] = {
-      ...SEED_PROVIDER_SUBSCRIPTIONS[idx],
-      status: "cancelled",
-    };
-    return ok(config, SEED_PROVIDER_SUBSCRIPTIONS[idx]);
-  }
+  // -- Subscription Plans + Provider Subscriptions ------------------------
+  // Removed in Stage 1 of the live rebuild (feat/subscriptions-live). These
+  // paths (/admin/plans, /admin/subscriptions) are dead — the section now
+  // calls the real /api/SubscriptionPlans + /api/ProviderSubscriptions
+  // endpoints directly from src/modules/subscriptions/.
 
   // Not ours — let the next handler / real backend deal with it.
   return null;

@@ -265,14 +265,10 @@ const AttachmentsPage = lazy(() =>
   }))
 );
 
-const AdminPlansPage = lazy(() =>
-  import("@modules/admin/pages/AdminPlansPage").then((m) => ({
-    default: m.AdminPlansPage,
-  }))
-);
-const AdminSubscriptionsHubPage = lazy(() =>
-  import("@modules/admin/pages/AdminSubscriptionsHubPage").then((m) => ({
-    default: m.AdminSubscriptionsHubPage,
+// STAGE-2 PLACEHOLDER — see src/modules/subscriptions/pages/AdminSubscriptionsPage.tsx
+const AdminSubscriptionsPage = lazy(() =>
+  import("@modules/subscriptions/pages/AdminSubscriptionsPage").then((m) => ({
+    default: m.AdminSubscriptionsPage,
   }))
 );
 const AdminRevenuesPage = lazy(() =>
@@ -883,11 +879,11 @@ export const router = createBrowserRouter([
                   },
 
                   {
-                    // Subscriptions Hub — consolidated container (plans + provider subscriptions)
+                    // Subscriptions — Stage-2 placeholder (live rebuild in progress)
                     path: "subscriptions",
                     element: <PermissionGuard permission="subscriptions.view" />,
                     children: [
-                      { index: true, element: <AdminSubscriptionsHubPage /> },
+                      { index: true, element: <AdminSubscriptionsPage /> },
                     ],
                   },
                   {
@@ -931,11 +927,6 @@ export const router = createBrowserRouter([
                     children: [
                       { index: true, element: <AdminAuditLogPage /> }
                     ],
-                  },
-                  {
-                    // Legacy redirect: /admin/plans → /admin/subscriptions?tab=plans
-                    path: "plans",
-                    element: <AdminPlansPage />,
                   },
                   {
                     // Legacy redirect: /admin/categories → /admin/reference?tab=categories

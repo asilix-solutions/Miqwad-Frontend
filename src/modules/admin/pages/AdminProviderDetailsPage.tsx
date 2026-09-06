@@ -11,8 +11,12 @@ import {
   useApproveProviderMutation,
   useRejectProviderMutation,
   useUpdateProviderCommissionMutation,
-  useSubscriptionsQuery,
 } from "../hooks/useAdminQueries";
+import { useProviderSubscriptions } from "@modules/subscriptions/hooks/useSubscriptionQueries";
+import {
+  SUBSCRIPTION_STATUS,
+  SUBSCRIPTION_STATUS_LABEL_KEY,
+} from "@modules/subscriptions/types";
 import { useToast } from "@shared/components/ui/toastContext";
 import { RejectProviderDialog } from "../components/RejectProviderDialog";
 import { Can } from "@shared/auth/Can";
@@ -41,7 +45,7 @@ export function AdminProviderDetailsPage() {
   const approveMutation = useApproveProviderMutation();
   const rejectMutation = useRejectProviderMutation();
   const updateCommissionMutation = useUpdateProviderCommissionMutation();
-  const subscriptionsQ = useSubscriptionsQuery({ page: 1, pageSize: 50 });
+  const subscriptionsQ = useProviderSubscriptions({ pageNumber: 1, pageSize: 50 });
   const [showReject, setShowReject] = useState<AdminProvider | null>(null);
   const [showApprove, setShowApprove] = useState(false);
   const [viewDocument, setViewDocument] = useState<ProviderDocument | null>(null);
@@ -98,7 +102,8 @@ export function AdminProviderDetailsPage() {
   }
 
   const provider = q.data;
-  const subscription = subscriptionsQ.data?.items.find((s) => s.providerId === providerId);
+  // The live ProviderSubscription DTO keys the subscriber by `userId`.
+  const subscription = subscriptionsQ.data?.items.find((s) => s.userId === providerId);
 
   const handleSaveCommission = async () => {
     const rate = Number(tempCommission);
@@ -586,17 +591,19 @@ function SubscriptionCard({ subscription }: { subscription?: ProviderSubscriptio
           <dl className="grid grid-cols-1 gap-y-4">
             <div className="flex items-center justify-between">
               <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.plan")}</dt>
-              <dd className="text-sm font-medium">{subscription.planName}</dd>
+              <dd className="text-sm font-medium">{subscription.subscriptionPlanName ?? t("common.none")}</dd>
             </div>
-            <div className="flex items-center justify-between">
-              <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.cycle")}</dt>
-              <dd className="text-sm font-medium">{t(`admin.plans.billingCycles.${subscription.billingCycle}`)}</dd>
-            </div>
+            {/*
+              Stage-1 note: the live ProviderSubscription DTO has no billingCycle
+              field (it lives on SubscriptionPlan) — the cycle row is dropped
+              until Stage 2 decides whether to join. `status` is now a numeric
+              enum, mapped via the isolated SUBSCRIPTION_STATUS_LABEL_KEY map.
+            */}
             <div className="flex items-center justify-between">
               <dt className="text-sm text-neutral-500">{t("superAdmin.providers.detail.subscription.status")}</dt>
               <dd>
-                <Badge variant={subscription.status === "active" ? "default" : "secondary"}>
-                  {t(`superAdmin.subscriptions.status.${subscription.status}`)}
+                <Badge variant={subscription.status === SUBSCRIPTION_STATUS.active ? "default" : "secondary"}>
+                  {t(`superAdmin.subscriptions.status.${SUBSCRIPTION_STATUS_LABEL_KEY[subscription.status] ?? "expired"}`)}
                 </Badge>
               </dd>
             </div>
