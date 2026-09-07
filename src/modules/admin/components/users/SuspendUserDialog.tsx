@@ -1,4 +1,14 @@
-import { useEffect } from "react";
+/**
+ * Admin "Deactivate user" dialog.
+ *
+ * Collects a required reason (RHF field `reason`, mapped to the backend's
+ * write-only `note` at the call site) and calls the real
+ * `PATCH /api/Users/{id}/deactivate` endpoint. The response is a ghost
+ * (`data: null`) — state refreshes via query invalidation, never from the
+ * mutation result. Backend 400s arrive as a flat, already-localized
+ * `errors: string[]` and are surfaced as a form-level banner.
+ */
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -14,11 +24,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@shared/components/ui/textarea";
 import { useToast } from "@shared/components/ui/toastContext";
+import { AppError } from "@shared/types/api";
 import {
   suspendUserSchema,
   type SuspendUserFormValues,
 } from "../../schemas/admin.schemas";
-import { useSuspendUserMutation } from "../../hooks/useAdminQueries";
+import { useDeactivateUserMutation } from "../../hooks/useAdminQueries";
 
 interface Props {
   userId: string;
@@ -35,7 +46,8 @@ export function SuspendUserDialog({
 }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
-  const mutation = useSuspendUserMutation();
+  const mutation = useDeactivateUserMutation();
+  const [banner, setBanner] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -47,16 +59,25 @@ export function SuspendUserDialog({
   });
 
   useEffect(() => {
-    if (!open) reset({ reason: "" });
+    if (!open) {
+      reset({ reason: "" });
+      setBanner(null);
+    }
   }, [open, reset]);
 
   const onSubmit = async (values: SuspendUserFormValues) => {
+    setBanner(null);
     try {
-      await mutation.mutateAsync({ userId, reason: values.reason });
+      // RHF field is `reason`; the backend contract calls it `note` (write-only).
+      await mutation.mutateAsync({ id: Number(userId), note: values.reason });
       toast.success(t("superAdmin.users.suspend.success"));
       onOpenChange(false);
-    } catch {
-      toast.error(t("common.errorTitle"));
+    } catch (err) {
+      if (err instanceof AppError && err.errors?.[0]) {
+        setBanner(err.errors[0]);
+      } else {
+        toast.error(t("common.errorTitle"));
+      }
     }
   };
 
@@ -73,6 +94,14 @@ export function SuspendUserDialog({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-4">
+            {banner && (
+              <p
+                role="alert"
+                className="rounded-[var(--radius-sm)] bg-danger-50 px-3 py-2 text-xs text-danger-600"
+              >
+                {banner}
+              </p>
+            )}
             <Label htmlFor="suspend-reason">{t("superAdmin.users.suspend.reasonLabel")}</Label>
             <Textarea
               id="suspend-reason"

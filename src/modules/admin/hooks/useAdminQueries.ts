@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { adminApi, type CreateCategoryPayload, type AdminCreateRequest, type UsersSortField } from "../api/adminApi";
+import { adminApi, deactivateUser, activateUser, type CreateCategoryPayload, type AdminCreateRequest, type UsersSortField } from "../api/adminApi";
 import type { UserFormValues } from "../schemas/userSchema";
 import type { AdminProviderStatus } from "../types";
 import type { ProviderType } from "@modules/providers/types";
@@ -112,25 +112,24 @@ export function useUserQuery(id: string) {
   });
 }
 
-export function useSuspendUserMutation() {
+export function useDeactivateUserMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { userId: string; reason: string }) =>
-      adminApi.suspendUser(input.userId, input.reason),
-    onSuccess: (_, input) => {
+    mutationFn: ({ id, note }: { id: number; note: string }) => deactivateUser(id, note),
+    onSuccess: (_, { id }) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.user(input.userId) });
+      void qc.invalidateQueries({ queryKey: adminKeys.user(String(id)) });
     },
   });
 }
 
-export function useRestoreUserMutation() {
+export function useActivateUserMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (userId: string) => adminApi.restoreUser(userId),
-    onSuccess: (_, userId) => {
+    mutationFn: (id: number) => activateUser(id),
+    onSuccess: (_, id) => {
       void qc.invalidateQueries({ queryKey: [...adminKeys.all, "users"] });
-      void qc.invalidateQueries({ queryKey: adminKeys.user(userId) });
+      void qc.invalidateQueries({ queryKey: adminKeys.user(String(id)) });
     },
   });
 }
