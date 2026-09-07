@@ -3,8 +3,8 @@
  * @description User detail view on the real `GET /api/Users/{id}`. Status
  * derives from `isActive` (the real contract has no "pending" state).
  * `ordersCount` / `lastActiveAt` are gone — the backend has no source for
- * them. Suspend/restore stay wired to the mock `/admin/users/{id}/suspend|
- * restore` endpoints (out of scope for this piece — see piece b).
+ * them. Deactivate/reactivate are wired to the real
+ * `PATCH /api/Users/{id}/deactivate|activate` endpoints.
  */
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
