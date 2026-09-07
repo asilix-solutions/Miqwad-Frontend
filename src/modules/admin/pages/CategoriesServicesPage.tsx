@@ -34,8 +34,17 @@ export function CategoriesServicesPage() {
   const rawTab = searchParams.get("tab");
   const activeTab: TabKey = isValidTab(rawTab) ? rawTab : DEFAULT_TAB;
 
+  // Preserve each tab's own URL-synced page param (`catPage` / `svcPage`)
+  // when switching tabs — only the `tab` key changes here.
   const switchTab = (key: TabKey) => {
-    setSearchParams({ tab: key }, { replace: true });
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("tab", key);
+        return params;
+      },
+      { replace: true },
+    );
   };
 
   const handleSelectCategory = (category: ServiceCategory) => {
