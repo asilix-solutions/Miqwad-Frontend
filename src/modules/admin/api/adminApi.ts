@@ -177,15 +177,9 @@ export const adminApi = {
     return adaptUser(unwrapEnvelope<RawAdminUser>(data));
   },
 
-  suspendUser: async (id: string, reason: string): Promise<AdminUserRow> => {
-    const { data } = await apiClient.post<AdminUserRow>(`/admin/users/${id}/suspend`, { reason });
-    return data;
-  },
-
-  restoreUser: async (id: string): Promise<AdminUserRow> => {
-    const { data } = await apiClient.post<AdminUserRow>(`/admin/users/${id}/restore`);
-    return data;
-  },
+  // NOTE: user deactivate/reactivate now hit the real backend — see the
+  // standalone `deactivateUser` / `activateUser` exports below (bare `/Users`,
+  // not the mocked `/admin/` bridge).
 
   // TODO: wire to backend — POST /admin/users (.NET). Single swap point for
   // the admin "Add User" flow; the `type` discriminator in the payload lets
@@ -385,6 +379,27 @@ export const adminApi = {
     const { data } = await apiClient.patch<Complaint>(`/admin/complaints/${id}/status`, { status });
     return data;
   },
+};
+
+// ── User deactivate / reactivate (real backend, bare `/Users`) ──────────────
+// Live-probe-verified. Both endpoints return an envelope with `data: null`
+// ("ghost" response) — never render from the result; the mutation hooks
+// invalidate the user queries and a fresh GET provides the new `isActive`.
+
+/**
+ * Deactivate a user. `note` (the admin's reason) is REQUIRED server-side —
+ * an empty/missing note returns 400. It is write-only: it never comes back on
+ * any user DTO. Resolves to void (response body is `data: null`).
+ */
+export const deactivateUser = async (id: number, note: string): Promise<void> => {
+  await apiClient.patch(`/Users/${id}/deactivate`, { note });
+};
+
+/**
+ * Reactivate a user. No body. Resolves to void (response body is `data: null`).
+ */
+export const activateUser = async (id: number): Promise<void> => {
+  await apiClient.patch(`/Users/${id}/activate`);
 };
 
 
