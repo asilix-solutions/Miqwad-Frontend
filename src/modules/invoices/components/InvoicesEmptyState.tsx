@@ -1,8 +1,6 @@
 /**
  * @file InvoicesEmptyState.tsx
- * @description The primary visible state of the Invoices list — live data is
- * empty (totalCount: 0) today, so this must read as calm and intentional, not
- * broken. A quiet receipt/document illustration + reassuring bilingual copy.
+ * @description Calm empty register state without assumptions about live records.
  */
 import { useTranslation } from "react-i18next";
 import { ReceiptText } from "lucide-react";
