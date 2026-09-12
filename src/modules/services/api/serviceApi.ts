@@ -30,7 +30,12 @@ export let SERVICES_SOURCE: "mock" | "real" = "real";
 
 export interface ServicesQuery {
   isActive?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
 }
+
+/** Backend's hard cap on `PageSize` for `/api/Services` (1–100). */
+const SERVICES_MAX_PAGE_SIZE = 100;
 
 export interface ServiceWriteInput {
   name: string;
@@ -113,7 +118,11 @@ async function mockRemove(id: number): Promise<void> {
 
 async function realList(params?: ServicesQuery): Promise<PaginatedResponse<Service>> {
   const { data } = await apiClient.get<ApiEnvelope<RawServicesPage>>("/Services", {
-    params: params && { IsActive: params.isActive },
+    params: {
+      IsActive: params?.isActive,
+      PageNumber: params?.pageNumber,
+      PageSize: params?.pageSize,
+    },
   });
   const page = unwrap(data);
   return {
@@ -123,6 +132,24 @@ async function realList(params?: ServicesQuery): Promise<PaginatedResponse<Servi
     total: page.totalCount,
     totalPages: page.totalPages,
   };
+}
+
+/**
+ * Fetches the COMPLETE flat service list by walking every page at the
+ * backend's max `PageSize` (100). The self-join tree is assembled
+ * client-side over all rows, so a single capped call would silently
+ * truncate — and wrongly promote children whose parent fell off the page
+ * to roots — the moment services exceed one page. Drives the loop from the
+ * server's reported `totalPages` so it keeps working past 100 rows.
+ */
+async function realListAll(params?: ServicesQuery): Promise<PaginatedResponse<Service>> {
+  const first = await realList({ ...params, pageNumber: 1, pageSize: SERVICES_MAX_PAGE_SIZE });
+  const items = [...first.items];
+  for (let pageNumber = 2; pageNumber <= first.totalPages; pageNumber += 1) {
+    const next = await realList({ ...params, pageNumber, pageSize: SERVICES_MAX_PAGE_SIZE });
+    items.push(...next.items);
+  }
+  return { items, page: 1, pageSize: items.length, total: first.total, totalPages: 1 };
 }
 
 async function realGet(id: number): Promise<Service> {
@@ -150,6 +177,14 @@ async function realRemove(id: number): Promise<void> {
 export const serviceApi = {
   list: (params?: ServicesQuery): Promise<PaginatedResponse<Service>> =>
     SERVICES_SOURCE === "mock" ? mockList(params) : realList(params),
+
+  /**
+   * Complete flat list across all pages — the only safe source for
+   * `buildServiceTree`. Mock store is already whole, so it maps to
+   * `mockList`.
+   */
+  listAll: (params?: ServicesQuery): Promise<PaginatedResponse<Service>> =>
+    SERVICES_SOURCE === "mock" ? mockList(params) : realListAll(params),
 
   get: (id: number): Promise<Service> => (SERVICES_SOURCE === "mock" ? mockGet(id) : realGet(id)),
 

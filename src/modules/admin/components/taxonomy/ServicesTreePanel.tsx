@@ -8,11 +8,18 @@
  * same tree.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import { Can } from "@shared/auth/Can";
 import { useServicesTreeQuery } from "@modules/services/hooks/useServicesAdminQueries";
 import type { Service } from "@modules/services/service.types";
@@ -20,9 +27,39 @@ import { ServiceTreeRow } from "./ServiceTreeRow";
 import { ServiceFormDialog } from "./ServiceFormDialog";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
 
+/** URL param carrying this tab's root-node page (distinct from `catPage`/`tab`). */
+const PAGE_PARAM = "svcPage";
+/** Client-side page size over TOP-LEVEL nodes only — children never paginate. */
+const ROOT_PAGE_SIZE = 10;
+
 export function ServicesTreePanel() {
   const { t } = useTranslation();
   const { data: tree, isLoading, isError, refetch } = useServicesTreeQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const roots = tree ?? [];
+  const rootTotalPages = Math.max(1, Math.ceil(roots.length / ROOT_PAGE_SIZE));
+
+  const pageParam = Number(searchParams.get(PAGE_PARAM));
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? Math.min(pageParam, rootTotalPages) : 1;
+
+  function goToPage(next: number) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set(PAGE_PARAM, String(next));
+      return params;
+    });
+  }
+
+  // Normalise a stale/deep-linked page beyond the current root count.
+  useEffect(() => {
+    if (!isLoading && !isError && pageParam > rootTotalPages) {
+      goToPage(rootTotalPages);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isError, pageParam, rootTotalPages]);
+
+  const visibleRoots = roots.slice((page - 1) * ROOT_PAGE_SIZE, page * ROOT_PAGE_SIZE);
 
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const toggleExpand = (id: number) => {
@@ -99,20 +136,64 @@ export function ServicesTreePanel() {
         </div>
       )}
 
-      {!isLoading && !isError && tree && tree.length > 0 && (
-        <div role="tree">
-          {tree.map((node) => (
-            <ServiceTreeRow
-              key={node.id}
-              node={node}
-              depth={0}
-              expandedIds={expandedIds}
-              onToggleExpand={toggleExpand}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
-        </div>
+      {!isLoading && !isError && roots.length > 0 && (
+        <>
+          <div role="tree">
+            {visibleRoots.map((node) => (
+              <ServiceTreeRow
+                key={node.id}
+                node={node}
+                depth={0}
+                expandedIds={expandedIds}
+                onToggleExpand={toggleExpand}
+                onEdit={openEdit}
+                onDelete={openDelete}
+              />
+            ))}
+          </div>
+
+          {rootTotalPages > 1 && (
+            <div className="p-3 border-t border-[var(--color-divider)]">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => goToPage(Math.max(1, page - 1))}
+                      className={
+                        page === 1
+                          ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                          : "cursor-pointer gap-1 px-2.5"
+                      }
+                      aria-label={t("common.back")}
+                    >
+                      <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                      <span className="hidden sm:block">{t("common.back")}</span>
+                    </PaginationLink>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <span className="text-sm text-[var(--color-muted)] px-4">
+                      {page} / {rootTotalPages}
+                    </span>
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => goToPage(Math.min(rootTotalPages, page + 1))}
+                      className={
+                        page === rootTotalPages
+                          ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                          : "cursor-pointer gap-1 px-2.5"
+                      }
+                      aria-label={t("common.next")}
+                    >
+                      <span className="hidden sm:block">{t("common.next")}</span>
+                      <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                    </PaginationLink>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
       )}
 
       {formOpen && (

@@ -29,7 +29,7 @@ export const categoryServicesKeys = {
 export function useServicesTreeQuery(params?: ServicesQuery) {
   return useQuery({
     queryKey: [...serviceEntityKeys.all, params] as const,
-    queryFn: async (): Promise<Service[]> => buildServiceTree((await serviceApi.list(params)).items),
+    queryFn: async (): Promise<Service[]> => buildServiceTree((await serviceApi.listAll(params)).items),
   });
 }
 

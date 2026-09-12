@@ -7,11 +7,18 @@
  * `isRealParent`), so no new form logic is introduced here.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import { Can } from "@shared/auth/Can";
 import { cn } from "@shared/lib/utils";
 import { useParentCategoriesQuery } from "../../hooks/useAdminQueries";
@@ -25,11 +32,41 @@ interface Props {
   onSelect: (category: ServiceCategory) => void;
 }
 
+/** URL param carrying this tab's page (kept distinct from `svcPage`/`tab`). */
+const PAGE_PARAM = "catPage";
+/** Matches the sibling admin lists (e.g. `UsersPanel`). */
+const PAGE_SIZE = 10;
+
 export function CategoryListPanel({ selectedId, onSelect }: Props) {
   const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data, isLoading, isError } = useParentCategoriesQuery();
+  const pageParam = Number(searchParams.get(PAGE_PARAM));
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+
+  function goToPage(next: number) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set(PAGE_PARAM, String(next));
+      return params;
+    });
+  }
+
+  // Server-side pagination: the backend slices the 56 rows, we render the page.
+  const { data, isLoading, isError } = useParentCategoriesQuery({
+    pageNumber: page,
+    pageSize: PAGE_SIZE,
+  });
   const categories = data?.items ?? [];
+  const totalPages = data?.totalPages ?? 1;
+
+  // Recover from a stale/deep-linked page beyond the current range.
+  useEffect(() => {
+    if (!isLoading && !isError && page > totalPages) {
+      goToPage(totalPages);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, isError, page, totalPages]);
   const counts = useCategoryServiceCounts(categories.map((c) => c.id));
 
   const [formOpen, setFormOpen] = useState(false);
@@ -166,6 +203,48 @@ export function CategoryListPanel({ selectedId, onSelect }: Props) {
             );
           })}
         </ul>
+      )}
+
+      {!isLoading && !isError && totalPages > 1 && (
+        <div className="p-3 border-t border-[var(--color-divider)]">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => goToPage(Math.max(1, page - 1))}
+                  className={
+                    page === 1
+                      ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                      : "cursor-pointer gap-1 px-2.5"
+                  }
+                  aria-label={t("common.back")}
+                >
+                  <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                  <span className="hidden sm:block">{t("common.back")}</span>
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <span className="text-sm text-[var(--color-muted)] px-4">
+                  {page} / {totalPages}
+                </span>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => goToPage(Math.min(totalPages, page + 1))}
+                  className={
+                    page === totalPages
+                      ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                      : "cursor-pointer gap-1 px-2.5"
+                  }
+                  aria-label={t("common.next")}
+                >
+                  <span className="hidden sm:block">{t("common.next")}</span>
+                  <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       )}
 
       {formOpen && (
