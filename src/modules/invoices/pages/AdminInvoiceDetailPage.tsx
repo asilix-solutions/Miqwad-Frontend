@@ -1,32 +1,28 @@
 /**
  * @file AdminInvoiceDetailPage.tsx
- * @description Admin Invoice detail — READ-ONLY, route-based, wired to live
- * GET /api/Invoices/{id}. The backend returns a not-found business error for
- * missing ids → friendly bilingual "الفاتورة غير موجودة" + back-to-list.
- *
- * The ONLY real data is the four-field summary card, styled as a financial
- * document (issuer block + large total). Everything below is a FUTURE-VISION
- * placeholder — line items, tax/VAT, parties, payment — each an unmistakably
- * disabled "قريباً / Coming soon" frame with no fabricated values. Each frame
- * is a real component fed by an optional field on the Invoice view-model, so
- * it lights up automatically when the DTO grows.
- * TODO: wire when backend enriches InvoiceResponseDto (lineItems, tax, parties, orderId, status)
+ * @description Read-only invoice document with authoritative parties and amounts.
  */
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ReceiptText, ListTree, Percent, Users, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { isAxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@shared/lib/formatCurrency";
+import { AppError } from "@shared/types/api";
 import { formatOrderDate } from "@shared/lib/formatOrderDate";
 import { useInvoice } from "../hooks/useInvoicesQueries";
-import { ComingSoonSection } from "../components/ComingSoonSection";
+import { InvoiceItemsTable } from "../components/InvoiceItemsTable";
+import { InvoiceQrCode } from "../components/InvoiceQrCode";
+import { formatInvoiceAmount, formatInvoiceRate } from "../lib/formatInvoiceAmount";
 
-function PlaceholderRow({ label }: { label: string }) {
+function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] py-2.5 last:border-0">
-      <span className="text-sm text-[var(--color-ink-body)]">{label}</span>
-      <span className="text-sm tabular-nums text-[var(--color-muted)]">—</span>
+    <div className="min-w-0">
+      <dt className="text-xs text-[var(--color-muted)]">{label}</dt>
+      <dd className="mt-1 text-sm break-words whitespace-pre-line">
+        <bdi>{children}</bdi>
+      </dd>
     </div>
   );
 }
@@ -34,165 +30,157 @@ function PlaceholderRow({ label }: { label: string }) {
 export function AdminInvoiceDetailPage() {
   const { t, i18n } = useTranslation();
   const { id = "" } = useParams<{ id: string }>();
-  const isRTL = i18n.dir() === "rtl";
-  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
-
-  const { data: invoice, isLoading, isError } = useInvoice(id);
-
+  const q = useInvoice(id);
+  const invoice = q.data;
+  const BackArrow = i18n.dir() === "rtl" ? ArrowRight : ArrowLeft;
   const backLink = (
-    <Link
-      to="/admin/invoices"
-      className="inline-flex items-center gap-1.5 text-sm text-[var(--color-muted)] transition-colors hover:text-[var(--color-ink-body)]"
-    >
-      <BackArrow className="h-4 w-4" aria-hidden />
-      {t("invoices.backToList")}
-    </Link>
+    <Button asChild variant="ghost" size="sm">
+      <Link to="/admin/invoices">
+        <BackArrow aria-hidden />
+        {t("invoices.backToList")}
+      </Link>
+    </Button>
   );
+  const status =
+    q.error instanceof AppError
+      ? q.error.status
+      : isAxiosError(q.error)
+        ? q.error.response?.status
+        : undefined;
+  const notFound = !/^[1-9]\d*$/.test(id) || status === 404;
 
-  if (isLoading) {
+  if (q.isLoading)
     return (
-      <div className="space-y-6 p-6">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-40 w-full rounded-[var(--radius-lg)]" />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-36 w-full rounded-[var(--radius-md)]" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !invoice) {
-    return (
-      <div className="space-y-6 p-6">
+      <div className="space-y-5 p-4 sm:p-6" role="status" aria-label={t("invoices.loading")}>
         {backLink}
-        <div className="flex flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[var(--color-divider)] bg-[var(--color-surface)] px-6 py-16 text-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-2)]" aria-hidden>
-            <ReceiptText className="h-7 w-7 text-[var(--color-muted)]" />
-          </div>
-          <h2 className="text-base font-semibold text-[var(--color-ink-body)]">
-            {t("invoices.notFoundTitle")}
-          </h2>
-          <p className="mt-1.5 max-w-sm text-sm text-[var(--color-muted)]">
-            {t("invoices.notFoundDescription")}
-          </p>
-          <Link to="/admin/invoices" className="mt-5">
-            <Button type="button" variant="outline">
-              <BackArrow className="size-4" aria-hidden />
-              {t("invoices.backToList")}
-            </Button>
-          </Link>
+        <Skeleton className="h-36 w-full" />
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
         </div>
+        <Skeleton className="h-64 w-full" />
       </div>
     );
-  }
+  if (notFound || q.isError || !invoice)
+    return (
+      <div className="space-y-5 p-4 sm:p-6">
+        {backLink}
+        <section
+          role="alert"
+          className="rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-8 text-center"
+        >
+          <h1 className="font-semibold">
+            {t(notFound ? "invoices.notFoundTitle" : "invoices.errorTitle")}
+          </h1>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            {t(notFound ? "invoices.notFoundDescription" : "invoices.errorDescription")}
+          </p>
+          {!notFound && (
+            <Button className="mt-5" variant="outline" onClick={() => void q.refetch()}>
+              {t("invoices.retry")}
+            </Button>
+          )}
+        </section>
+      </div>
+    );
 
+  const missing = t("invoices.unavailable");
+  const facility = invoice.facilityInformation;
+  const buyer = invoice.buyerInformation;
+  const totals = [
+    ["subtotal", invoice.subtotal],
+    ["discount", invoice.discountAmount],
+    ["taxable", invoice.taxableAmount],
+    ["vat", invoice.taxAmount],
+  ] as const;
   return (
-    <div className="space-y-6 p-6">
+    <div className="min-w-0 space-y-4 p-4 sm:p-6">
       {backLink}
-
-      {/* ── Real data: the financial-document summary card ────────────────── */}
-      <article className="overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)] shadow-[var(--shadow-1)]">
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-divider)] bg-[var(--color-surface-2)] px-6 py-5">
-          <div className="flex items-start gap-3">
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface)] text-[var(--color-brand-blue)] shadow-[var(--shadow-1)]"
-              aria-hidden
-            >
-              <ReceiptText className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
-                {t("invoices.summaryTitle")}
-              </p>
-              <h1 className="mt-0.5 font-mono text-lg font-bold text-[var(--color-ink-body)]" dir="ltr">
-                {t("invoices.codeLabel", { code: invoice.code })}
-              </h1>
-            </div>
-          </div>
-          <div className="text-end">
-            <p className="text-xs text-[var(--color-muted)]">{t("invoices.colDate")}</p>
-            <p className="mt-0.5 text-sm tabular-nums text-[var(--color-ink-body)]">
-              {formatOrderDate(invoice.createdAt, i18n.language)}
-            </p>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 gap-6 px-6 py-6 sm:grid-cols-2">
+      <article className="min-w-0 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-ink-body)] shadow-[var(--shadow-1)]">
+        <header className="space-y-6 border-b border-[var(--color-divider)] bg-[var(--color-surface-2)] p-4 sm:p-6">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
-              {t("invoices.colName")}
-            </p>
-            <p className="mt-1 text-sm font-semibold text-[var(--color-ink-body)]">
-              {invoice.fullName || "—"}
-            </p>
+            <p className="mb-1 text-sm text-[var(--color-muted)]">{t("invoices.detailTitle")}</p>
+            <h1 className="text-xl font-bold break-words sm:text-2xl">
+              <bdi>{invoice.invoiceNumber}</bdi>
+            </h1>
           </div>
-          <div className="sm:text-end">
-            <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
-              {t("invoices.colAmount")}
-            </p>
-            <p
-              className="mt-1 text-2xl font-bold tabular-nums text-[var(--color-brand-orange)]"
-              dir="ltr"
-            >
-              {formatCurrency(invoice.totalPrice, i18n.language)}
-            </p>
+          <dl className="grid gap-4 sm:grid-cols-3">
+            <Fact label={t("invoices.colDate")}>
+              {formatOrderDate(invoice.issueDate, i18n.language)}
+            </Fact>
+            <Fact label={t("invoices.supplyDate")}>
+              {formatOrderDate(invoice.supplyDate, i18n.language)}
+            </Fact>
+            {invoice.orderNumber && (
+              <Fact label={t("invoices.orderReference")}>{invoice.orderNumber}</Fact>
+            )}
+          </dl>
+        </header>
+        <div className="space-y-8 p-4 sm:p-6">
+          <div className="grid gap-6 border-b border-[var(--color-divider)] pb-6 md:grid-cols-2">
+            <section className="min-w-0 space-y-4">
+              <h2 className="text-base font-semibold">{t("invoices.facility")}</h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <Fact label={t("invoices.partyName")}>{facility.name || missing}</Fact>
+                <Fact label={t("invoices.taxId")}>{facility.taxIdNumber || missing}</Fact>
+                <Fact label={t("invoices.register")}>{facility.commercialRegister || missing}</Fact>
+                <Fact label={t("invoices.address")}>{facility.address || missing}</Fact>
+              </dl>
+            </section>
+            <section className="min-w-0 space-y-4">
+              <h2 className="text-base font-semibold">{t("invoices.buyer")}</h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <Fact label={t("invoices.colName")}>{invoice.customerName || missing}</Fact>
+                {buyer && (
+                  <>
+                    <Fact label={t("invoices.partyName")}>{buyer.name || missing}</Fact>
+                    <Fact label={t("invoices.taxId")}>{buyer.vatNumber || missing}</Fact>
+                    <Fact label={t("invoices.register")}>
+                      {buyer.commercialRegister || missing}
+                    </Fact>
+                    <Fact label={t("invoices.address")}>{buyer.address || missing}</Fact>
+                  </>
+                )}
+              </dl>
+              {!buyer && (
+                <p className="text-sm text-[var(--color-muted)]">{t("invoices.noBuyerFiscal")}</p>
+              )}
+            </section>
+          </div>
+          <InvoiceItemsTable items={invoice.items} quantity={invoice.itemCount} />
+          <div className="grid items-start gap-8 border-t border-[var(--color-divider)] pt-6 lg:grid-cols-2">
+            <InvoiceQrCode payload={invoice.qrCode} />
+            <section aria-labelledby="invoice-totals" className="min-w-0">
+              <h2 id="invoice-totals" className="mb-3 font-semibold">
+                {t("invoices.sections.taxBreakdown")}
+              </h2>
+              <dl className="space-y-3">
+                {totals.map(([key, value]) => (
+                  <div key={key} className="flex flex-wrap justify-between gap-2 text-sm">
+                    <dt>
+                      {t(`invoices.tax.${key}`)}
+                      {key === "vat" && (
+                        <span className="ms-2 text-[var(--color-muted)]">
+                          <bdi>{formatInvoiceRate(invoice.taxRate, i18n.language)}</bdi>
+                        </span>
+                      )}
+                    </dt>
+                    <dd className="font-medium tabular-nums">
+                      <bdi>{formatInvoiceAmount(value, i18n.language)}</bdi>
+                    </dd>
+                  </div>
+                ))}
+                <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-[var(--color-divider)] pt-4">
+                  <dt className="font-semibold">{t("invoices.tax.total")}</dt>
+                  <dd className="text-xl font-bold text-[var(--color-brand-blue)] tabular-nums">
+                    <bdi>{formatInvoiceAmount(invoice.totalPrice, i18n.language)}</bdi>
+                  </dd>
+                </div>
+              </dl>
+            </section>
           </div>
         </div>
       </article>
-
-      {/* ── Future-vision placeholders (clearly not yet available) ────────── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <ComingSoonSection icon={ListTree} title={t("invoices.sections.lineItems")} ready={!!invoice.lineItems}>
-          <div className="space-y-2">
-            {invoice.lineItems
-              ? invoice.lineItems.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between gap-4 rounded-[var(--radius-sm)] bg-[var(--color-surface-2)] px-3 py-2.5">
-                    <span className="text-sm text-[var(--color-ink-body)]">
-                      {row.description || "—"}
-                      {row.quantity > 1 ? ` × ${row.quantity}` : ""}
-                    </span>
-                    <span className="text-sm tabular-nums text-[var(--color-ink-body)]" dir="ltr">
-                      {formatCurrency(row.subtotal, i18n.language)}
-                    </span>
-                  </div>
-                ))
-              : ["a", "b", "c"].map((k) => (
-                  <div key={k} className="flex items-center justify-between gap-4 rounded-[var(--radius-sm)] bg-[var(--color-surface-2)] px-3 py-2.5">
-                    <span className="text-sm text-[var(--color-muted)]">—</span>
-                    <span className="text-sm tabular-nums text-[var(--color-muted)]">—</span>
-                  </div>
-                ))}
-          </div>
-        </ComingSoonSection>
-
-        <ComingSoonSection icon={Percent} title={t("invoices.sections.taxBreakdown")} ready={!!invoice.tax}>
-          <div>
-            <PlaceholderRow label={t("invoices.tax.subtotal")} />
-            <PlaceholderRow label={t("invoices.tax.discount")} />
-            <PlaceholderRow label={t("invoices.tax.vat")} />
-            <div className="flex items-center justify-between gap-4 pt-2.5">
-              <span className="text-sm font-bold text-[var(--color-ink-body)]">{t("invoices.tax.total")}</span>
-              <span className="text-sm font-bold tabular-nums text-[var(--color-muted)]">—</span>
-            </div>
-          </div>
-        </ComingSoonSection>
-
-        <ComingSoonSection icon={Users} title={t("invoices.sections.parties")} ready={!!invoice.parties}>
-          <div>
-            <PlaceholderRow label={t("invoices.parties.customer")} />
-            <PlaceholderRow label={t("invoices.parties.provider")} />
-          </div>
-        </ComingSoonSection>
-
-        <ComingSoonSection icon={CreditCard} title={t("invoices.sections.payment")} ready={!!invoice.payment}>
-          <div>
-            <PlaceholderRow label={t("invoices.payment.method")} />
-            <PlaceholderRow label={t("invoices.payment.status")} />
-          </div>
-        </ComingSoonSection>
-      </div>
     </div>
   );
 }

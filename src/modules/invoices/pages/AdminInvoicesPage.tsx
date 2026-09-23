@@ -1,204 +1,156 @@
 /**
  * @file AdminInvoicesPage.tsx
- * @description Admin Invoices list — READ-ONLY, wired to live GET /api/Invoices.
- *
- * The backend `InvoiceResponseDto` is a four-field scaffold (id, fullName,
- * totalPrice, createdAt) and live data is currently empty, so the polished
- * empty state is the primary visible UI. A subtle date/amount sort control is
- * wired to the live-validated SortBy / SortDescending params; changing it
- * resets to page 1. No status/order filters exist server-side.
- *
- * Financial-document identity: numeric-forward, tabular-nums amounts, right-
- * aligned money column, calm surfaces — deliberately not a clone of Orders.
+ * @description Read-only invoice register using real document references.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { ArrowDownUp, ArrowDown, ArrowUp, ReceiptText, RotateCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-} from "@/components/ui/pagination";
 import { DataTable, type DataTableColumn } from "@shared/components/DataTable";
-import { formatCurrency } from "@shared/lib/formatCurrency";
 import { formatOrderDate } from "@shared/lib/formatOrderDate";
 import { useInvoicesList } from "../hooks/useInvoicesQueries";
+import { formatInvoiceAmount } from "../lib/formatInvoiceAmount";
 import type { Invoice } from "../types";
 import { InvoicesEmptyState } from "../components/InvoicesEmptyState";
 
-const PAGE_SIZE = 20;
-
-type SortField = "createdAt" | "totalPrice";
-
 export function AdminInvoicesPage() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-
   const [pageNumber, setPageNumber] = useState(1);
-  const [sortBy, setSortBy] = useState<SortField>("createdAt");
-  const [sortDescending, setSortDescending] = useState(true);
-
-  useEffect(() => {
-    setPageNumber(1);
-  }, [sortBy, sortDescending]);
-
+  const [sort, setSort] = useState("default");
   const q = useInvoicesList({
     pageNumber,
-    pageSize: PAGE_SIZE,
-    sortBy,
-    sortDescending,
+    pageSize: 20,
+    ...(sort === "default"
+      ? {}
+      : { sortBy: "totalPrice" as const, sortDescending: sort === "desc" }),
   });
-
-  const items = q.data?.items ?? [];
-  const totalPages = q.data?.totalPages ?? 1;
-  const isEmpty = !q.isLoading && !q.isError && items.length === 0;
-
-  const toggleSort = (field: SortField) => {
-    if (sortBy === field) {
-      setSortDescending((d) => !d);
-    } else {
-      setSortBy(field);
-      setSortDescending(true);
-    }
-  };
-
-  const sortIcon = (field: SortField) => {
-    if (sortBy !== field) return <ArrowDownUp className="size-3.5" aria-hidden />;
-    return sortDescending ? (
-      <ArrowDown className="size-3.5" aria-hidden />
-    ) : (
-      <ArrowUp className="size-3.5" aria-hidden />
-    );
-  };
-
   const columns: DataTableColumn<Invoice>[] = [
     {
-      key: "code",
+      key: "invoiceNumber",
       header: t("invoices.colCode"),
       render: (row) => (
-        <span className="font-mono text-[13px] text-[var(--color-muted)]" dir="ltr">
-          {row.code}
-        </span>
+        <Link
+          className="font-semibold text-[var(--color-brand-blue)] underline-offset-4 hover:underline focus-visible:outline-2"
+          to={`/admin/invoices/${row.id}`}
+        >
+          <bdi>{row.invoiceNumber}</bdi>
+        </Link>
       ),
     },
     {
-      key: "fullName",
+      key: "customerName",
       header: t("invoices.colName"),
-      render: (row) => row.fullName || "—",
+      className: "min-w-40 max-w-72 whitespace-normal break-words",
+      render: (row) => <bdi>{row.customerName || t("invoices.unavailable")}</bdi>,
+    },
+    {
+      key: "orderNumber",
+      header: t("invoices.orderReference"),
+      render: (row) => <bdi>{row.orderNumber ?? t("invoices.noOrder")}</bdi>,
+    },
+    {
+      key: "issueDate",
+      header: t("invoices.colDate"),
+      render: (row) => formatOrderDate(row.issueDate, i18n.language),
+    },
+    {
+      key: "itemCount",
+      header: t("invoices.totalQuantity"),
+      render: (row) => row.itemCount.toLocaleString(i18n.language),
     },
     {
       key: "totalPrice",
       header: t("invoices.colAmount"),
-      className: "text-end",
-      render: (row) => (
-        <span className="font-semibold tabular-nums text-[var(--color-ink-body)]" dir="ltr">
-          {formatCurrency(row.totalPrice, i18n.language)}
-        </span>
-      ),
-    },
-    {
-      key: "createdAt",
-      header: t("invoices.colDate"),
-      render: (row) => (
-        <span className="tabular-nums text-[var(--color-muted)]">
-          {formatOrderDate(row.createdAt, i18n.language)}
-        </span>
-      ),
+      className: "text-end font-semibold tabular-nums",
+      render: (row) => <bdi>{formatInvoiceAmount(row.totalPrice, i18n.language)}</bdi>,
     },
   ];
-
+  const totalPages = q.data?.totalPages ?? 0;
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="min-w-0 space-y-5 p-4 sm:p-6">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div
-            className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface-2)] text-[var(--color-brand-blue)]"
+          <ReceiptText
+            className="mt-1 size-6 shrink-0 text-[var(--color-brand-blue)]"
             aria-hidden
-          >
-            <ReceiptText className="h-5 w-5" />
-          </div>
+          />
           <div>
-            <h1 className="text-xl font-bold text-[var(--color-ink-body)]">{t("invoices.title")}</h1>
-            <p className="text-sm text-[var(--color-muted)]">{t("invoices.subtitle")}</p>
+            <h1 className="text-xl font-bold">{t("invoices.title")}</h1>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">{t("invoices.subtitle")}</p>
           </div>
         </div>
-
-        {q.isError ? (
-          <Button type="button" variant="outline" onClick={() => q.refetch()}>
-            <RotateCw className="size-4" />
-            {t("invoices.retry")}
-          </Button>
-        ) : (
-          !isEmpty && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-[var(--color-muted)]">{t("invoices.sortLabel")}</span>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleSort("createdAt")}>
-                {t("invoices.colDate")}
-                {sortIcon("createdAt")}
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => toggleSort("totalPrice")}>
-                {t("invoices.colAmount")}
-                {sortIcon("totalPrice")}
-              </Button>
-            </div>
-          )
-        )}
+        <label className="flex items-center gap-2 text-sm">
+          {t("invoices.sortLabel")}
+          <select
+            className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-2"
+            value={sort}
+            onChange={(event) => {
+              setSort(event.target.value);
+              setPageNumber(1);
+            }}
+          >
+            <option value="default">{t("invoices.sortDefault")}</option>
+            <option value="desc">{t("invoices.sortHighest")}</option>
+            <option value="asc">{t("invoices.sortLowest")}</option>
+          </select>
+        </label>
+      </header>
+      <div role="status" className="min-h-5 text-sm text-[var(--color-muted)]">
+        {q.isFetching
+          ? t("invoices.loading")
+          : q.isError
+            ? ""
+            : t("invoices.recordCount", { count: q.data?.total ?? 0 })}
       </div>
-
-      {isEmpty ? (
+      {q.isError && (
+        <Button variant="outline" onClick={() => void q.refetch()}>
+          {t("invoices.retry")}
+        </Button>
+      )}
+      {!q.isLoading && !q.isError && q.data?.items.length === 0 ? (
         <InvoicesEmptyState />
       ) : (
-        <DataTable<Invoice>
-          columns={columns}
-          rows={items}
-          isLoading={q.isLoading}
-          isError={q.isError}
-          errorText={t("invoices.errorTitle")}
-          emptyText={t("invoices.empty.title")}
-          getRowKey={(row) => row.id}
-          onRowClick={(row) => navigate(`/admin/invoices/${row.id}`)}
-        />
+        <div aria-busy={q.isFetching}>
+          <DataTable
+            columns={columns}
+            rows={q.data?.items ?? []}
+            isLoading={q.isLoading}
+            isError={q.isError}
+            errorText={t("invoices.errorTitle")}
+            emptyText={t("invoices.empty.title")}
+            getRowKey={(row) => String(row.id)}
+          />
+        </div>
       )}
-
-      {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationLink
-                onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-                className={
-                  pageNumber === 1
-                    ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
-                    : "cursor-pointer gap-1 px-2.5"
-                }
-                aria-label={t("common.back")}
-              >
-                {t("common.back")}
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <span className="px-4 text-sm text-[var(--color-muted)]">
-                {pageNumber} / {totalPages}
-              </span>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink
-                onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
-                className={
-                  pageNumber === totalPages
-                    ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
-                    : "cursor-pointer gap-1 px-2.5"
-                }
-                aria-label={t("common.next")}
-              >
-                {t("common.next")}
-              </PaginationLink>
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+      {!q.isError && (totalPages > 1 || pageNumber > 1) && (
+        <nav
+          aria-label={t("invoices.pagination")}
+          className="flex flex-wrap items-center justify-between gap-3"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pageNumber <= 1 || q.isFetching}
+            onClick={() => setPageNumber((p) => p - 1)}
+          >
+            {t("common.back")}
+          </Button>
+          <span className="text-sm tabular-nums">
+            {t("invoices.pageOf", {
+              page: q.data?.page ?? pageNumber,
+              total: Math.max(totalPages, 1),
+            })}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pageNumber >= totalPages || q.isFetching}
+            onClick={() => setPageNumber((p) => p + 1)}
+          >
+            {t("common.next")}
+          </Button>
+        </nav>
       )}
     </div>
   );

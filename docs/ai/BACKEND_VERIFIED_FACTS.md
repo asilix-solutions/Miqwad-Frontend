@@ -455,22 +455,51 @@ Verified attachment items are objects such as:
 
 ## 12. Invoices
 
-Verified invoice DTO at the time of implementation was minimal:
+### Rich read-only invoice contract
 
-```text
-id
-fullName
-totalPrice
-createdAt
-```
+**Verified behavior:** Current live verification supplied by the user for the
+Invoices migration (2026-09-12) supersedes the former four-field DTO. This entry
+records that supplied evidence; it does not claim a new agent-authenticated probe.
 
-List and detail were effectively the same minimal shape.
+- GET `/api/Invoices`: `{success,message,data:{items,pageNumber,pageSize,totalCount,totalPages},errors}`.
+- GET `/api/Invoices/{id}`: the same rich invoice entity inside `data`.
+- Identity: numeric `id`, real `invoiceNumber`, numeric `invoiceType`,
+  `customerName`, `issueDate`, `supplyDate`, `itemCount`, encoded `qrCode`.
+- `buyerId`, `sellerId`, `orderId`, and `orderNumber` can be null.
+- `facilityInformation`: `name`, `taxIdNumber`, `commercialRegister`, `address`.
+- `buyerInformation` can be null; otherwise it contains `name`, `vatNumber`,
+  `address`, and `commercialRegister`.
+- `items[]`: numeric `id`, `providerServiceId`, `price`, `quantity`,
+  `grossAmount`, `netAmount`; `serviceName`, `providerName`; nullable `offer`
+  and `offerName`.
+- Totals: `subtotal`, `discountAmount`, `taxableAmount`, `taxRate`,
+  `taxAmount`, and `totalPrice` are numbers.
 
-No line items, tax, payment detail, or party detail were available in the verified DTO.
+Observed arithmetic is consistent with `grossAmount = price × quantity`,
+`taxableAmount = subtotal - discountAmount`,
+`taxAmount = taxableAmount × taxRate`, and
+`totalPrice = taxableAmount + taxAmount`. Display server amounts rather than
+recomputing financial truth from these observations.
 
-The UI intentionally avoids fabricating these values.
+`itemCount` appears to mean total quantity: three lines with quantities 6, 6,
+and 3 return 15. Use `items.length` for line count. `offer` appears to be a
+line-level monetary discount, not a percentage.
 
-Re-probe before activating richer invoice sections.
+**Frontend consequence:** Use the real invoice number, rich parties, lines, and
+financial summary. Preserve decimal money; do not default absent amounts to zero.
+Dates have no timezone suffix; retain established date handling. The QR payload
+is encoded text, not an image URL. Invoice type values 1 and 2 were observed but
+their semantic names remain unverified. No payment/status fields or write UI are
+justified by this read contract.
+
+Swagger exposes PageNumber, PageSize, SortBy, SortDescending, FilterBy,
+FilterValue, DateFilterBy, FromDate, and ToDate. Accepted filter field/value
+semantics still need live confirmation before exposing filters. POST exists,
+but no POST probe or invoice mutation is authorized for this migration.
+
+**Re-verification trigger:** Changes to invoice DTOs, type semantics, QR encoding,
+currency/timezone rules, filtering/sorting, or financial calculations. The API
+does not provide a currency field; SAR remains the established frontend convention.
 
 ---
 

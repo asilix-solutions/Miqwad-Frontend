@@ -1,93 +1,66 @@
 /**
  * @file types.ts
- * @description Type contract for the admin Invoices module.
- *
- * LIVE-CONFIRMED contract (2026-09-03): the backend `InvoiceResponseDto` is a
- * bare scaffold — list AND detail return the SAME four fields. There are no
- * enums, no status, no order/provider/customer ids, no line items, no
- * tax/VAT/discount, and no human invoice number. `totalPrice` is declared
- * `double` server-side but (per the Orders precedent) may be int-bound — it is
- * typed as `number` and rendered via `formatCurrency`, never assumed decimal.
- *
- * The view-model carries OPTIONAL forward-looking fields (lineItems, tax,
- * parties, payment, status, orderId) so the detail page's "coming soon"
- * sections light up automatically once the DTO grows.
- * TODO: wire when backend enriches InvoiceResponseDto (lineItems, tax, parties, orderId, status)
+ * @description Rich read-only contract supplied from live verification.
+ * Dates retain the timezone-less representation; amounts are server-authoritative.
  */
-
-/** Exact raw shape returned by GET /api/Invoices and GET /api/Invoices/{id}. */
-export interface RawInvoice {
-  /** int64 */
-  id: number;
-  fullName: string | null;
-  /** Declared double; may be int-bound. Render via formatCurrency. */
-  totalPrice: number;
-  /** ISO-8601 with NO timezone suffix — parsed as local time. */
-  createdAt: string;
+export interface InvoiceFacility {
+  name: string | null;
+  taxIdNumber: string | null;
+  commercialRegister: string | null;
+  address: string | null;
 }
-
-/**
- * A single invoice line item. Not yet returned by the backend — present so the
- * detail "coming soon" section is a real component fed by optional data.
- */
+export interface InvoiceBuyer {
+  name: string | null;
+  vatNumber: string | null;
+  address: string | null;
+  commercialRegister: string | null;
+}
 export interface InvoiceLineItem {
-  id: string;
-  description: string | null;
+  id: number;
+  providerServiceId: number;
+  serviceName: string | null;
+  providerName: string | null;
+  price: number;
   quantity: number;
-  unitPrice: number;
-  subtotal: number;
+  /** Observed monetary discount, not a percentage. */
+  offer: number | null;
+  offerName: string | null;
+  grossAmount: number;
+  netAmount: number;
 }
+/** TODO(backend): confirm meanings of values 1 and 2 before labeling. */
+export type InvoiceType = number;
 
-/** Tax / VAT breakdown. Not yet returned by the backend. */
-export interface InvoiceTaxBreakdown {
+/** List and detail share this entity; no duplicate presentation type is needed. */
+export interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  invoiceType: InvoiceType;
+  buyerId: number | null;
+  sellerId: number | null;
+  orderId: number | null;
+  customerName: string;
+  orderNumber: string | null;
+  issueDate: string;
+  supplyDate: string;
+  /** Observed sum of quantities; items.length is the number of lines. */
+  itemCount: number;
+  qrCode: string;
+  facilityInformation: InvoiceFacility;
+  buyerInformation: InvoiceBuyer | null;
+  items: InvoiceLineItem[];
   subtotal: number;
-  discount: number;
+  discountAmount: number;
+  taxableAmount: number;
+  /** Fractional rate: 0.15 is displayed as 15%. */
   taxRate: number;
   taxAmount: number;
-  total: number;
-}
-
-/** Customer / provider parties block. Not yet returned by the backend. */
-export interface InvoiceParties {
-  customerName: string | null;
-  providerName: string | null;
-}
-
-/** Payment leg. Not yet returned by the backend. */
-export interface InvoicePayment {
-  method: string | null;
-  status: string | null;
-}
-
-/** View-model consumed by the pages. Real data = the first four fields. */
-export interface Invoice {
-  id: string;
-  /** Display code, e.g. `#42`. See lib/invoiceCode.ts. */
-  code: string;
-  fullName: string | null;
   totalPrice: number;
-  /** Raw local ISO string; format at render time with formatOrderDate. */
-  createdAt: string;
-
-  // ── Forward-looking, all optional (backend does not send these yet) ──
-  status?: string;
-  orderId?: string;
-  lineItems?: InvoiceLineItem[];
-  tax?: InvoiceTaxBreakdown;
-  parties?: InvoiceParties;
-  payment?: InvoicePayment;
 }
-
-/**
- * Typed params for GET /api/Invoices. Live-validated: PageNumber, PageSize
- * (1–100), SortBy, SortDescending, FromDate/ToDate are accepted; a bad
- * SortBy/FilterBy returns HTTP 400. No status/order filter exists.
- */
 export interface InvoicesListParams {
   pageNumber?: number;
   pageSize?: number;
-  sortBy?: string;
+  /** Existing implementation supports amount sorting; new fields need probes. */
+  sortBy?: "totalPrice";
   sortDescending?: boolean;
-  fromDate?: string;
-  toDate?: string;
 }
