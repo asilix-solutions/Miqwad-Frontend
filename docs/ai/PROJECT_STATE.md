@@ -9,6 +9,31 @@
 > Stable backend quirks verified through live behavior belong in `docs/ai/BACKEND_VERIFIED_FACTS.md`.
 > Historical `HANDOVER_*.md` files are reference material only.
 
+## Active task — Dealer Dashboard loading fix (2026-09-24)
+
+- Fetched integration baseline: `Develop` at
+  `4d7986d867bb3ed0fa69b36f821f3b2c0cb9097a`; `main` at
+  `178763bea610bc9fd4b4cead6e06c29c53eda578`. Their file trees match.
+  PR #74 completed synchronization, including the rich Invoices implementation.
+  The pre-reconciliation baseline/blocker below is historical, not current.
+- Isolated local branch: `fix/dealer-dashboard-loading`. Existing dirty worktrees,
+  including the prior PROJECT_STATE edit and Coupons work, are preserved.
+- DealerGuard previously waited on obsolete `/provider/me` before consulting the
+  known session subtype. The fix removes that dependency for known Dealers and
+  verifies legacy subtype-less sessions using `/Dashboard/me` with failure UI.
+- Dashboard metrics load independently; product count is live, development dues
+  are explicitly demo data, and unsupported financial/order metrics stay unavailable.
+- User visual QA remains required; browser automation is intentionally excluded.
+  No commit, push, merge, or backend write is authorized in this task.
+- Validation: typecheck/build/diff-check PASS. Full lint retains the baseline
+  107 errors / 24 warnings; focused changed-source lint PASS. Full format still
+  fails on existing debt including UTF-16 swagger.json. Changed Dealer files and
+  docs pass Prettier; i18n.ts retains pre-existing formatting debt, with all ten
+  new entries matching Prettier output. Five offline regression/contract/render
+  check groups pass; no automated `test` script exists.
+- Seller-order and revenue semantics need backend confirmation before wiring
+  those metrics. Admin Dashboard integration is not begun.
+
 ---
 
 ## 1. Last Verified Baseline
@@ -18,12 +43,12 @@
 
 ### Environment branches
 
-| Branch | Verified SHA | Relationship at last audit |
-|---|---:|---|
-| `main` | `bf49bcf` | Production baseline; latest merge was PR #70 |
-| `Develop` | `3ab270b` | 25 commits behind `main`; no unique commits |
-| `Test` | `6f2755d` | 84 commits behind `Develop` |
-| `Stage` | `2cd5af8` | 113 commits behind `Develop` |
+| Branch    | Verified SHA | Relationship at last audit                   |
+| --------- | -----------: | -------------------------------------------- |
+| `main`    |    `bf49bcf` | Production baseline; latest merge was PR #70 |
+| `Develop` |    `3ab270b` | 25 commits behind `main`; no unique commits  |
+| `Test`    |    `6f2755d` | 84 commits behind `Develop`                  |
+| `Stage`   |    `2cd5af8` | 113 commits behind `Develop`                 |
 
 ### Pull requests and branches
 

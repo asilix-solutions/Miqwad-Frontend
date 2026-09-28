@@ -446,7 +446,9 @@ Do not assume the binder has been fixed without re-verification.
 Verified attachment items are objects such as:
 
 ```ts
-{ filePath: string }
+{
+  filePath: string;
+}
 ```
 
 —not plain URL strings.
@@ -726,3 +728,39 @@ Use this format:
 Do not record guesses as facts.
 
 If uncertain, put the issue in `PROJECT_STATE.md` as a blocker/question instead.
+
+## 21. Dealer Dashboard (2026-09-24)
+
+**LIVE VERIFIED:** GET-only requests with a Dealer credential (account 33,
+roleId 2) returned:
+
+- `/api/Dashboard/me`: HTTP 200, `{success,message,data,errors}` with
+  `data.user`, `orders`, `vehicles`, `addresses`, `invoices`, `engagement`,
+  and a populated `providerMetrics` object. `errors` was null.
+- `providerMetrics`: `totalServices: 7`, `totalDiscounts: 1`,
+  `activeDiscounts: 0`, `totalOffers: 1`, `activeOffers: 0`,
+  `averageRating: 0`, `ratingCount: 0`, `hasActiveSubscription: false`,
+  `activeSubscriptionPlanName: null`.
+- `orders`: totalOrders 4, inWaitingOrders 4, other status counts 0,
+  totalSpent 0; lastOrderDate was a timezone-less timestamp.
+- `/api/provider-services`: HTTP 200; envelope `data` was an array.
+- `/api/provider/me` and `/api/dealer/dues`: HTTP 404.
+
+**Frontend consequence:** Use `providerMetrics.totalServices` for the product
+count, with the existing live provider-services list as an independent fallback.
+The normal Dealer session already contains its provider subtype; do not block
+its route on the obsolete `/provider/me` call. For sessions missing that subtype,
+verify the current account ID and Dealer role through `/Dashboard/me`, failing
+closed with a recoverable error when verification is unavailable.
+
+**MOCK/FALLBACK:** Dues remain the existing `/dealer/dues` development-only mock,
+explicitly labelled as demo data on the Dashboard. Production shows unavailable,
+not a fabricated zero. The global production mock safety gate is unchanged.
+
+**NOT VERIFIED:** Whether `orders` describes buyer or seller activity for this
+account; open seller-order semantics; monthly seller revenue; a real dues ledger.
+Do not interpret `totalSpent` or invoice totals as Dealer sales. No mutations,
+other Dealer accounts, inactive accounts, or browser behavior were probed.
+
+**Re-verification trigger:** Dashboard DTO/scoping changes, production settlement
+endpoints, or backend confirmation of seller-order/revenue semantics.

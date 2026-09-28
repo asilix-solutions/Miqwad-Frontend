@@ -1,12 +1,9 @@
 /**
  * @file DealerDashboardPage.tsx
  *
- * Dealer store overview — provider design system re-skin.
- * - ProviderPageHeader with personalised greeting.
- * - Four ProviderStatCards: products count is real (from useDealerProductsQuery);
- *   orders, sales, dues show an honest "—" with a "قريباً" trend annotation.
- * - Quick-actions card linking to the products page.
- * - Staggered provider-fade-up entrance animation. RTL / bilingual throughout.
+ * Dealer overview with independently loaded metrics. Live provider-service
+ * counts take priority; the existing dues mock is DEV-only and labelled.
+ * Unsupported sales/order semantics remain explicitly unavailable.
  */
 
 import { useTranslation } from "react-i18next";
@@ -19,23 +16,21 @@ import {
   Wallet,
   ChevronRight,
 } from "lucide-react";
-import {
-  ProviderPageHeader,
-  ProviderStatCard,
-  ProviderCard,
-} from "@shared/provider-ui";
-import { useDealerProductsQuery, useDealerDuesQuery } from "../hooks/useDealerQueries";
-import { useMyProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
+import { ProviderPageHeader, ProviderStatCard, ProviderCard } from "@shared/provider-ui";
+import { useDealerDashboardData } from "../hooks/useDealerDashboardQuery";
 import { useAppSelector } from "@app/store";
+import { Button } from "@shared/components/ui/button";
 
 export function DealerDashboardPage() {
   const { t, i18n } = useTranslation();
   const user = useAppSelector((s) => s.auth.user);
-  const { data: profile } = useMyProviderProfileQuery();
-  const productsQuery = useDealerProductsQuery();
-  const duesQuery = useDealerDuesQuery();
-
-  const companyName = profile?.companyName || user?.fullName || "";
+  const { summary, products, dues, serviceCount } = useDealerDashboardData();
+  const companyName = summary.data?.user.fullName || user?.fullName || "";
+  const productCount = serviceCount ?? products.data;
+  const productsLoading = productCount == null && (summary.isLoading || products.isLoading);
+  const productUnavailable = productCount == null && !productsLoading;
+  const demoDebt = dues.data?.outstandingDebt;
+  const hasDemoDebt = typeof demoDebt === "number" && Number.isFinite(demoDebt);
 
   const fmtDebt = (amount: number) =>
     new Intl.NumberFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
@@ -62,49 +57,68 @@ export function DealerDashboardPage() {
         starts, so the stagger appears natural.
       */}
       <div
-        className="provider-fade-up grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="provider-fade-up grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
         style={{ animationDelay: "40ms" }}
       >
         <ProviderStatCard
           label={t("dealer.dashboard.kpiProducts")}
-          value={productsQuery.data?.total ?? 0}
+          value={
+            productCount == null ? "—" : new Intl.NumberFormat(i18n.language).format(productCount)
+          }
           icon={<Package className="h-5 w-5" aria-hidden />}
           tone="brand"
-          loading={productsQuery.isLoading}
+          loading={productsLoading}
+          trend={productUnavailable ? t("dealer.dashboard.metricUnavailable") : undefined}
         />
         <ProviderStatCard
           label={t("dealer.dashboard.kpiOpenOrders")}
           value="—"
           icon={<ShoppingCart className="h-5 w-5" aria-hidden />}
           tone="info"
-          trend={t("dealer.dashboard.comingSoon")}
+          trend={t("dealer.dashboard.metricUnsupported")}
         />
         <ProviderStatCard
           label={t("dealer.dashboard.kpiMonthlySales")}
           value="—"
           icon={<TrendingUp className="h-5 w-5" aria-hidden />}
           tone="success"
-          trend={t("dealer.dashboard.comingSoon")}
+          trend={t("dealer.dashboard.metricUnsupported")}
         />
         <ProviderStatCard
           label={t("dealer.dashboard.kpiOutstandingDues")}
-          value={
-            duesQuery.isLoading
-              ? ""
-              : fmtDebt(duesQuery.data?.outstandingDebt ?? 0)
-          }
+          value={hasDemoDebt ? fmtDebt(demoDebt) : "—"}
           icon={<Wallet className="h-5 w-5" aria-hidden />}
-          tone={duesQuery.data?.debtAlert ? "danger" : "warning"}
-          loading={duesQuery.isLoading}
+          tone={hasDemoDebt && dues.data?.debtAlert ? "danger" : "warning"}
+          loading={dues.isLoading}
+          trend={t(
+            hasDemoDebt ? "dealer.dashboard.demoData" : "dealer.dashboard.metricUnsupported",
+          )}
         />
       </div>
 
+      {productUnavailable && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-muted)]"
+        >
+          <span>{t("dealer.dashboard.metricUnavailable")}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={summary.isFetching || products.isFetching}
+            onClick={() => {
+              void summary.refetch();
+              void products.refetch();
+            }}
+          >
+            {t("common.retry")}
+          </Button>
+        </div>
+      )}
+
       {/* ── Quick actions ────────────────────────────────────────────────── */}
-      <div
-        className="provider-fade-up space-y-3"
-        style={{ animationDelay: "100ms" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--color-muted)]">
+      <div className="provider-fade-up space-y-3" style={{ animationDelay: "100ms" }}>
+        <h2 className="text-xs font-semibold tracking-widest text-[var(--color-muted)] uppercase">
           {t("dealer.dashboard.quickActionsTitle")}
         </h2>
 
@@ -114,7 +128,7 @@ export function DealerDashboardPage() {
             to="/provider/dealer/products"
             className={[
               "flex items-center gap-4 p-5",
-              "rounded-[var(--radius-lg)]",         // match card radius for focus ring
+              "rounded-[var(--radius-lg)]", // match card radius for focus ring
               "focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-inset",
               "focus-visible:ring-[var(--color-brand-orange)]/40",
@@ -129,11 +143,11 @@ export function DealerDashboardPage() {
             </div>
 
             {/* Text */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--color-ink-body)]">
                 {t("dealer.dashboard.manageProducts")}
               </p>
-              <p className="text-xs text-[var(--color-muted)] truncate">
+              <p className="truncate text-xs text-[var(--color-muted)]">
                 {t("dealer.dashboard.manageProductsHint")}
               </p>
             </div>

@@ -1,30 +1,50 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useMyProviderProfileQuery } from "@modules/providers/hooks/useProviderQueries";
+import { useTranslation } from "react-i18next";
 import { Spinner } from "@shared/components/ui/spinner";
-import { defaultHomeFor, isProviderApproved, resolveProviderType } from "@shared/guards/RoleGuard";
+import { ErrorState } from "@shared/components/feedback/ErrorState";
+import { defaultHomeFor, isProviderApproved } from "@shared/guards/RoleGuard";
 import { useAppSelector } from "@app/store";
+import { useDealerDashboardQuery } from "../hooks/useDealerDashboardQuery";
 
-export function DealerGuard() {
-  const user = useAppSelector((s) => s.auth.user);
-  const { data: myProfile, isLoading } = useMyProviderProfileQuery();
-
-  if (isLoading) {
+/** Used only for older sessions that lack the provider subtype. */
+function ResolveDealerContext() {
+  const { t } = useTranslation();
+  const query = useDealerDashboardQuery();
+  if (query.isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner className="w-8 h-8 text-brand-orange" />
+      <div
+        className="flex min-h-[400px] items-center justify-center"
+        role="status"
+        aria-label={t("common.loading")}
+      >
+        <Spinner className="text-brand-orange h-8 w-8" />
       </div>
     );
   }
+  if (!query.data || query.data.user.roleId !== 2) {
+    return (
+      <ErrorState
+        title={t("dealer.dashboard.contextUnavailable")}
+        description={t("dealer.dashboard.contextUnavailableHint")}
+        onRetry={() => void query.refetch()}
+      />
+    );
+  }
+  return <Outlet />;
+}
 
-  // If not a provider or not a dealer, fallback to the role's default home
-  if (!user || user.role !== "provider" || resolveProviderType(user, myProfile?.type) !== "dealer") {
+export function DealerGuard() {
+  const user = useAppSelector((state) => state.auth.user);
+  if (!user || user.role !== "provider") {
     return <Navigate to={defaultHomeFor(user?.role ?? "customer")} replace />;
   }
-
-  // If dealer but not approved, send to pending
+  if (user.providerType && user.providerType !== "dealer") {
+    return <Navigate to={defaultHomeFor(user.role)} replace />;
+  }
   if (!isProviderApproved(user)) {
     return <Navigate to="/provider/pending" replace />;
   }
-
-  return <Outlet />;
+  // The login session already resolves normal Dealer accounts. An optional,
+  // obsolete /provider/me request must never hold their route behind a spinner.
+  return user.providerType === "dealer" ? <Outlet /> : <ResolveDealerContext />;
 }
