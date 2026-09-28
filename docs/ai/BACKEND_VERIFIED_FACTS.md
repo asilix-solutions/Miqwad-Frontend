@@ -446,7 +446,9 @@ Do not assume the binder has been fixed without re-verification.
 Verified attachment items are objects such as:
 
 ```ts
-{ filePath: string }
+{
+  filePath: string;
+}
 ```
 
 —not plain URL strings.
@@ -726,3 +728,66 @@ Use this format:
 Do not record guesses as facts.
 
 If uncertain, put the issue in `PROJECT_STATE.md` as a blocker/question instead.
+
+---
+
+## 21. Admin Coupons
+
+### LIVE VERIFIED — reads and query behavior
+
+**Verified behavior:** The pre-implementation Admin GET audit (2026-09-23),
+provided in the approved Coupons task, observed:
+
+- GET `/api/Coupons`: `{success,message,data:{items,pageNumber,pageSize,totalCount,totalPages},errors}`.
+- GET `/api/Coupons/{id}`: the same Coupon entity in `data`.
+- Entity: numeric `id`, `discountPercentage`, `minimumOrderAmount`, `usageLimit`,
+  `usedCount`; `code`, `startDate`, `endDate`, `createdAt`; boolean `isActive`.
+  `minimumOrderAmount` was observed null. Preserve Swagger's wider nullable
+  contract for `code`, `minimumOrderAmount`, `usageLimit`, and `endDate`.
+- An enabled coupon had already expired: `isActive` is administrative activation,
+  not proof of temporal validity or remaining usage.
+- Dates have no timezone suffix. The frontend preserves bare-local calendar/time
+  values, following existing date handling; it does not append `Z`. Unchanged
+  edit dates retain the original seconds/fractional precision.
+- Nonexistent detail: HTTP 404, `success:false`, `data:null`, `errors:null`.
+- `FilterBy=code&FilterValue=<full or partial code>` works; a nonmatching value
+  returns an empty page. `FilterBy=isActive&FilterValue=true|false` works.
+- `FilterBy=discountPercentage` and invalid filter fields returned HTTP 400.
+- `DateFilterBy=createdAt` with `FromDate`/`ToDate` was tested successfully.
+  `startDate`/`endDate` date queries were accepted; precise boundaries remain
+  unverified. The UI exposes only created-at ranges.
+- `SortBy=createdAt|endDate|usedCount` was accepted with `SortDescending`.
+  One returned record proves field acceptance, not multi-record sort correctness.
+- Beyond-last-page requests return HTTP 200, empty items and correct totals.
+
+**Frontend consequence:** Use server pagination and recover an out-of-range page
+with one bounded re-read. Code search and activation are alternative modes because
+there is only one documented generic filter pair; do not invent combined filters.
+Derive temporal status separately from activation and display usage independently.
+Null limits/expiry are shown as “not set”, not as verified unlimited/never-expiring
+semantics. No discount-percentage filter is exposed.
+
+### SWAGGER DOCUMENTED — NOT LIVE-MUTATION-VERIFIED
+
+Swagger request schemas were re-inspected on 2026-09-23. These are documentation
+facts, not observed write behavior:
+
+- POST `/api/Coupons`: `code` required, 1–50 characters;
+  `discountPercentage` required, 1–100; `startDate` required date-time;
+  nullable `minimumOrderAmount` (at least 0.01 when supplied), `usageLimit`
+  (integer 1–2147483647), and `endDate` (date-time). **No `isActive` field.**
+- PUT `/api/Coupons/{id}` uses the same rule/date fields but **neither `code`
+  nor `isActive`**. The frontend constructs this body explicitly.
+- PATCH `/api/Coupons/{id}/toggle-active` has no request body.
+- DELETE `/api/Coupons/{id}` exists. Its live response and deletion constraints
+  remain unverified.
+- Read DTOs document nullable code/minimum/usage limit/end date. Page size is
+  documented as 1–100. Frontend page choices are 10/20/50.
+- Write responses are not treated as authoritative entities. Validate the success
+  envelope, invalidate the affected lists/detail and re-GET. No live write probe
+  was performed during implementation. Runtime write validation and response
+  compatibility remain a release gate.
+
+**Re-verification trigger:** Write deployment, date/timezone or boundary semantics,
+multiple simultaneous generic filters, null business semantics, authorization,
+sort correctness with multiple records, or any DTO/envelope change.

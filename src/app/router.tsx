@@ -41,30 +41,30 @@ import { useAppSelector } from "@app/store";
 
 // ─── Auth Pages ───────────────────────────────────────────────────────────────
 const LoginPage = lazy(() =>
-  import("@modules/auth/pages/LoginPage").then((m) => ({ default: m.LoginPage }))
+  import("@modules/auth/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
 );
 const OtpPage = lazy(() =>
-  import("@modules/auth/pages/OtpPage").then((m) => ({ default: m.OtpPage }))
+  import("@modules/auth/pages/OtpPage").then((m) => ({ default: m.OtpPage })),
 );
 const RegisterPage = lazy(() =>
   import("@modules/auth/pages/RegisterPage").then((m) => ({
     default: m.RegisterPage,
-  }))
+  })),
 );
 const RegisterProviderPage = lazy(() =>
   import("@modules/auth/pages/RegisterProviderPage").then((m) => ({
     default: m.RegisterProviderPage,
-  }))
+  })),
 );
 const ForgotPasswordPage = lazy(() =>
   import("@modules/auth/pages/ForgotPasswordPage").then((m) => ({
     default: m.ForgotPasswordPage,
-  }))
+  })),
 );
 const ResetPasswordPage = lazy(() =>
   import("@modules/auth/pages/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
-  }))
+  })),
 );
 // ===== FROZEN: client/EndUser lazy imports — re-enable when client web app is needed =====
 // const DashboardPlaceholderPage = lazy(() =>
@@ -124,194 +124,193 @@ const ResetPasswordPage = lazy(() =>
 const AdminOnlyNoticePage = lazy(() =>
   import("@modules/auth/pages/AdminOnlyNoticePage").then((m) => ({
     default: m.AdminOnlyNoticePage,
-  }))
+  })),
 );
 
 // ─── Provider Pages ───────────────────────────────────────────────────────────
 const ProviderRegisterPage = lazy(() =>
   import("@modules/providers/pages/ProviderRegisterPage").then((m) => ({
     default: m.ProviderRegisterPage,
-  }))
+  })),
 );
 const ProviderPendingPage = lazy(() =>
   import("@modules/providers/pages/ProviderPendingPage").then((m) => ({
     default: m.ProviderPendingPage,
-  }))
+  })),
 );
 const ProviderServicesPage = lazy(() =>
   import("@modules/providers/pages/ProviderServicesPage").then((m) => ({
     default: m.ProviderServicesPage,
-  }))
+  })),
 );
 const ProviderIndexRedirect = lazy(() =>
   import("@modules/providers/pages/ProviderIndexRedirect").then((m) => ({
     default: m.ProviderIndexRedirect,
-  }))
+  })),
 );
 const AddProviderServicePage = lazy(() =>
   import("@modules/providers/pages/AddProviderServicePage").then((m) => ({
     default: m.AddProviderServicePage,
-  }))
+  })),
 );
 const EditProviderServicePage = lazy(() =>
   import("@modules/providers/pages/EditProviderServicePage").then((m) => ({
     default: m.EditProviderServicePage,
-  }))
+  })),
 );
 const ProviderAccountPage = lazy(() =>
   import("@modules/profile/pages/ProviderAccountPage").then((m) => ({
     default: m.ProviderAccountPage,
-  }))
+  })),
 );
 
 // ─── Provider Onboarding Pages ────────────────────────────────────────────────
 const OnboardingLoadingPage = lazy(() =>
-  import("@modules/providers/onboarding/pages/OnboardingLoadingPage").then(
-    (m) => ({ default: m.OnboardingLoadingPage }),
-  )
+  import("@modules/providers/onboarding/pages/OnboardingLoadingPage").then((m) => ({
+    default: m.OnboardingLoadingPage,
+  })),
 );
 const OnboardingAccountPage = lazy(() =>
-  import("@modules/providers/onboarding/pages/OnboardingAccountPage").then(
-    (m) => ({ default: m.OnboardingAccountPage }),
-  )
+  import("@modules/providers/onboarding/pages/OnboardingAccountPage").then((m) => ({
+    default: m.OnboardingAccountPage,
+  })),
 );
 const OnboardingServicesPage = lazy(() =>
-  import("@modules/providers/onboarding/components/RegisterStepServices").then(
-    (m) => ({ default: m.RegisterStepServices }),
-  )
+  import("@modules/providers/onboarding/components/RegisterStepServices").then((m) => ({
+    default: m.RegisterStepServices,
+  })),
 );
 const OnboardingDocumentsPage = lazy(() =>
-  import("@modules/providers/onboarding/pages/OnboardingDocumentsPage").then(
-    (m) => ({ default: m.OnboardingDocumentsPage }),
-  )
+  import("@modules/providers/onboarding/pages/OnboardingDocumentsPage").then((m) => ({
+    default: m.OnboardingDocumentsPage,
+  })),
 );
 const OnboardingReviewPage = lazy(() =>
-  import("@modules/providers/onboarding/pages/OnboardingReviewPage").then(
-    (m) => ({ default: m.OnboardingReviewPage }),
-  )
+  import("@modules/providers/onboarding/pages/OnboardingReviewPage").then((m) => ({
+    default: m.OnboardingReviewPage,
+  })),
 );
 
 const AdminLayout = lazy(() =>
   import("@modules/admin/components/layout/AdminLayout").then((m) => ({
     default: m.AdminLayout,
-  }))
+  })),
 );
 const AdminDashboardPage = lazy(() =>
   import("@modules/admin/pages/AdminDashboardPage").then((m) => ({
     default: m.AdminDashboardPage,
-  }))
+  })),
 );
 const AdminProvidersPage = lazy(() =>
   import("@modules/admin/pages/AdminProvidersPage").then((m) => ({
     default: m.AdminProvidersPage,
-  }))
+  })),
 );
 const AdminProviderDetailsPage = lazy(() =>
   import("@modules/admin/pages/AdminProviderDetailsPage").then((m) => ({
     default: m.AdminProviderDetailsPage,
-  }))
+  })),
 );
 const AdminUsersPage = lazy(() =>
   import("@modules/admin/pages/AdminUsersPage").then((m) => ({
     default: m.AdminUsersPage,
-  }))
+  })),
 );
 const AdminUserDetailsPage = lazy(() =>
   import("@modules/admin/pages/AdminUserDetailsPage").then((m) => ({
     default: m.AdminUserDetailsPage,
-  }))
+  })),
 );
-
 
 const AdminAddressesPage = lazy(() =>
   import("@modules/addresses/pages/AddressesPage").then((m) => ({
     default: m.AddressesPage,
-  }))
+  })),
 );
 
 const AdminOrdersPage = lazy(() =>
   import("@modules/orders/pages/OrdersPage").then((m) => ({
     default: m.OrdersPage,
-  }))
+  })),
 );
 
 const AdminInvoicesPage = lazy(() =>
   import("@modules/invoices/pages/AdminInvoicesPage").then((m) => ({
     default: m.AdminInvoicesPage,
-  }))
+  })),
 );
 
 const AdminInvoiceDetailPage = lazy(() =>
   import("@modules/invoices/pages/AdminInvoiceDetailPage").then((m) => ({
     default: m.AdminInvoiceDetailPage,
-  }))
+  })),
 );
 
 const AdminReferenceDataPage = lazy(() =>
   import("@modules/admin/pages/AdminReferenceDataPage").then((m) => ({
     default: m.AdminReferenceDataPage,
-  }))
+  })),
 );
 
 const CategoriesServicesPage = lazy(() =>
   import("@modules/admin/pages/CategoriesServicesPage").then((m) => ({
     default: m.CategoriesServicesPage,
-  }))
+  })),
 );
 
 const AttachmentsPage = lazy(() =>
   import("@modules/attachments/pages/AttachmentsPage").then((m) => ({
     default: m.AttachmentsPage,
-  }))
+  })),
 );
 
 // STAGE-2 PLACEHOLDER — see src/modules/subscriptions/pages/AdminSubscriptionsPage.tsx
 const AdminSubscriptionsPage = lazy(() =>
   import("@modules/subscriptions/pages/AdminSubscriptionsPage").then((m) => ({
     default: m.AdminSubscriptionsPage,
-  }))
+  })),
 );
 const AdminRevenuesPage = lazy(() =>
   import("@modules/admin/pages/AdminRevenuesPage").then((m) => ({
     default: m.AdminRevenuesPage,
-  }))
+  })),
 );
 const AdminNotificationsHubPage = lazy(() =>
   import("@modules/admin/pages/AdminNotificationsHubPage").then((m) => ({
     default: m.AdminNotificationsHubPage,
-  }))
+  })),
 );
 const AdminAdsHubPage = lazy(() =>
   import("@modules/admin/pages/AdminAdsHubPage").then((m) => ({
     default: m.AdminAdsHubPage,
-  }))
+  })),
 );
 const AdminSettingsHubPage = lazy(() =>
   import("@modules/admin/pages/AdminSettingsHubPage").then((m) => ({
     default: m.AdminSettingsHubPage,
-  }))
+  })),
 );
 const AdminAuditLogPage = lazy(() =>
   import("@modules/admin/pages/AdminAuditLogPage").then((m) => ({
     default: m.AdminAuditLogPage,
-  }))
+  })),
 );
 const AdminComplaintsPage = lazy(() =>
   import("@modules/admin/pages/AdminComplaintsPage").then((m) => ({
     default: m.AdminComplaintsPage,
-  }))
+  })),
 );
 const AdminProfilePage = lazy(() =>
   import("@modules/admin/pages/AdminProfilePage").then((m) => ({
     default: m.AdminProfilePage,
-  }))
+  })),
 );
 
 // ─── Reference Data Playground (temporary NHTSA verification page) ────────────
 const ReferencePlaygroundPage = lazy(() =>
   import("@modules/reference/pages/ReferencePlaygroundPage").then((m) => ({
     default: m.ReferencePlaygroundPage,
-  }))
+  })),
 );
 
 // ─── Suspense wrapper helper ──────────────────────────────────────────────────
@@ -462,9 +461,8 @@ export const router = createBrowserRouter([
       {
         path: "/provider/onboarding",
         async lazy() {
-          const { OnboardingLayout } = await import(
-            "@modules/providers/onboarding/components/OnboardingLayout"
-          );
+          const { OnboardingLayout } =
+            await import("@modules/providers/onboarding/components/OnboardingLayout");
           return { Component: OnboardingLayout };
         },
         children: [
@@ -506,9 +504,7 @@ export const router = createBrowserRouter([
       {
         path: "/provider/dealer",
         async lazy() {
-          const { DealerLayout } = await import(
-            "@modules/dealer/components/layout/DealerLayout"
-          );
+          const { DealerLayout } = await import("@modules/dealer/components/layout/DealerLayout");
           return { Component: DealerLayout };
         },
         children: [
@@ -528,72 +524,64 @@ export const router = createBrowserRouter([
                       {
                         path: "dashboard",
                         async lazy() {
-                          const { DealerDashboardPage } = await import(
-                            "@modules/dealer/pages/DealerDashboardPage"
-                          );
+                          const { DealerDashboardPage } =
+                            await import("@modules/dealer/pages/DealerDashboardPage");
                           return { Component: DealerDashboardPage };
                         },
                       },
                       {
                         path: "products",
                         async lazy() {
-                          const { DealerProductsPage } = await import(
-                            "@modules/dealer/pages/DealerProductsPage"
-                          );
+                          const { DealerProductsPage } =
+                            await import("@modules/dealer/pages/DealerProductsPage");
                           return { Component: DealerProductsPage };
                         },
                       },
                       {
                         path: "orders",
                         async lazy() {
-                          const { DealerOrdersPage } = await import(
-                            "@modules/dealer/pages/DealerOrdersPage"
-                          );
+                          const { DealerOrdersPage } =
+                            await import("@modules/dealer/pages/DealerOrdersPage");
                           return { Component: DealerOrdersPage };
                         },
                       },
                       {
                         path: "orders/:id",
                         async lazy() {
-                          const { DealerOrderDetailPage } = await import(
-                            "@modules/dealer/pages/DealerOrderDetailPage"
-                          );
+                          const { DealerOrderDetailPage } =
+                            await import("@modules/dealer/pages/DealerOrderDetailPage");
                           return { Component: DealerOrderDetailPage };
                         },
                       },
                       {
                         path: "offers",
                         async lazy() {
-                          const { DealerOffersPage } = await import(
-                            "@modules/dealer/pages/DealerOffersPage"
-                          );
+                          const { DealerOffersPage } =
+                            await import("@modules/dealer/pages/DealerOffersPage");
                           return { Component: DealerOffersPage };
                         },
                       },
                       {
                         path: "offers/:offerId",
                         async lazy() {
-                          const { DealerOfferDetailPage } = await import(
-                            "@modules/dealer/pages/DealerOfferDetailPage"
-                          );
+                          const { DealerOfferDetailPage } =
+                            await import("@modules/dealer/pages/DealerOfferDetailPage");
                           return { Component: DealerOfferDetailPage };
                         },
                       },
                       {
                         path: "shipments",
                         async lazy() {
-                          const { DealerShipmentsPage } = await import(
-                            "@modules/dealer/pages/DealerShipmentsPage"
-                          );
+                          const { DealerShipmentsPage } =
+                            await import("@modules/dealer/pages/DealerShipmentsPage");
                           return { Component: DealerShipmentsPage };
                         },
                       },
                       {
                         path: "dues",
                         async lazy() {
-                          const { DealerDuesPage } = await import(
-                            "@modules/dealer/pages/DealerDuesPage"
-                          );
+                          const { DealerDuesPage } =
+                            await import("@modules/dealer/pages/DealerDuesPage");
                           return { Component: DealerDuesPage };
                         },
                       },
@@ -608,9 +596,8 @@ export const router = createBrowserRouter([
       {
         path: "/provider/workshop",
         async lazy() {
-          const { WorkshopLayout } = await import(
-            "@modules/workshop/components/layout/WorkshopLayout"
-          );
+          const { WorkshopLayout } =
+            await import("@modules/workshop/components/layout/WorkshopLayout");
           return { Component: WorkshopLayout };
         },
         children: [
@@ -623,43 +610,40 @@ export const router = createBrowserRouter([
                 children: [
                   {
                     async lazy() {
-                      const { WorkshopGuard } = await import("@modules/workshop/guards/WorkshopGuard");
+                      const { WorkshopGuard } =
+                        await import("@modules/workshop/guards/WorkshopGuard");
                       return { Component: WorkshopGuard };
                     },
                     children: [
                       {
                         path: "dashboard",
                         async lazy() {
-                          const { WorkshopDashboardPage } = await import(
-                            "@modules/workshop/pages/WorkshopDashboardPage"
-                          );
+                          const { WorkshopDashboardPage } =
+                            await import("@modules/workshop/pages/WorkshopDashboardPage");
                           return { Component: WorkshopDashboardPage };
                         },
                       },
                       {
                         path: "conversations",
                         async lazy() {
-                          const { WorkshopConversationsPage } = await import(
-                            "@modules/workshop/pages/WorkshopConversationsPage"
-                          );
+                          const { WorkshopConversationsPage } =
+                            await import("@modules/workshop/pages/WorkshopConversationsPage");
                           return { Component: WorkshopConversationsPage };
                         },
                       },
                       {
                         path: "subscription",
                         async lazy() {
-                          const { WorkshopSubscriptionPage } = await import(
-                            "@modules/workshop/pages/WorkshopSubscriptionPage"
-                          );
+                          const { WorkshopSubscriptionPage } =
+                            await import("@modules/workshop/pages/WorkshopSubscriptionPage");
                           return { Component: WorkshopSubscriptionPage };
                         },
                       },
                       {
                         path: "profile",
                         async lazy() {
-                          const { WorkshopProfilePage } = await import(
-                            "@modules/workshop/pages/WorkshopProfilePage"
-                          );
+                          const { WorkshopProfilePage } =
+                            await import("@modules/workshop/pages/WorkshopProfilePage");
                           return { Component: WorkshopProfilePage };
                         },
                       },
@@ -674,9 +658,7 @@ export const router = createBrowserRouter([
       {
         path: "/provider/scrap",
         async lazy() {
-          const { ScrapLayout } = await import(
-            "@modules/scrap/components/layout/ScrapLayout"
-          );
+          const { ScrapLayout } = await import("@modules/scrap/components/layout/ScrapLayout");
           return { Component: ScrapLayout };
         },
         children: [
@@ -696,81 +678,72 @@ export const router = createBrowserRouter([
                       {
                         path: "dashboard",
                         async lazy() {
-                          const { ScrapDashboardPage } = await import(
-                            "@modules/scrap/pages/ScrapDashboardPage"
-                          );
+                          const { ScrapDashboardPage } =
+                            await import("@modules/scrap/pages/ScrapDashboardPage");
                           return { Component: ScrapDashboardPage };
                         },
                       },
                       {
                         path: "part-requests",
                         async lazy() {
-                          const { ScrapPartRequestsPage } = await import(
-                            "@modules/scrap/pages/ScrapPartRequestsPage"
-                          );
+                          const { ScrapPartRequestsPage } =
+                            await import("@modules/scrap/pages/ScrapPartRequestsPage");
                           return { Component: ScrapPartRequestsPage };
                         },
                       },
                       {
                         path: "part-requests/:id",
                         async lazy() {
-                          const { ScrapPartRequestDetailPage } = await import(
-                            "@modules/scrap/pages/ScrapPartRequestDetailPage"
-                          );
+                          const { ScrapPartRequestDetailPage } =
+                            await import("@modules/scrap/pages/ScrapPartRequestDetailPage");
                           return { Component: ScrapPartRequestDetailPage };
                         },
                       },
                       {
                         path: "my-offers",
                         async lazy() {
-                          const { ScrapMyOffersPage } = await import(
-                            "@modules/scrap/pages/ScrapMyOffersPage"
-                          );
+                          const { ScrapMyOffersPage } =
+                            await import("@modules/scrap/pages/ScrapMyOffersPage");
                           return { Component: ScrapMyOffersPage };
                         },
                       },
                       {
                         path: "parts",
                         async lazy() {
-                          const { ScrapPartsPage } = await import(
-                            "@modules/scrap/pages/ScrapPartsPage"
-                          );
+                          const { ScrapPartsPage } =
+                            await import("@modules/scrap/pages/ScrapPartsPage");
                           return { Component: ScrapPartsPage };
                         },
                       },
                       {
                         path: "conversations",
                         async lazy() {
-                          const { ScrapConversationsPage } = await import(
-                            "@modules/scrap/pages/ScrapConversationsPage"
-                          );
+                          const { ScrapConversationsPage } =
+                            await import("@modules/scrap/pages/ScrapConversationsPage");
                           return { Component: ScrapConversationsPage };
                         },
                       },
                       {
                         path: "notifications",
                         async lazy() {
-                          const { NotificationsPage } = await import(
-                            "@modules/notifications/pages/NotificationsPage"
-                          );
+                          const { NotificationsPage } =
+                            await import("@modules/notifications/pages/NotificationsPage");
                           return { Component: NotificationsPage };
                         },
                       },
                       {
                         path: "subscription",
                         async lazy() {
-                          const { ScrapSubscriptionPage } = await import(
-                            "@modules/scrap/pages/ScrapSubscriptionPage"
-                          );
+                          const { ScrapSubscriptionPage } =
+                            await import("@modules/scrap/pages/ScrapSubscriptionPage");
                           return { Component: ScrapSubscriptionPage };
                         },
                       },
                       {
                         path: "profile",
                         async lazy() {
-                          const { ScrapProfilePage } = await import(
-                            "@modules/scrap/pages/ScrapProfilePage"
-                          );
+                          const { ScrapProfilePage } =
+                            await import("@modules/scrap/pages/ScrapProfilePage");
                           return { Component: ScrapProfilePage };
                         },
                       },
@@ -847,19 +820,28 @@ export const router = createBrowserRouter([
                     ],
                   },
 
-
                   {
                     path: "addresses",
                     element: <PermissionGuard permission="addresses.view" />,
-                    children: [
-                      { index: true, element: <AdminAddressesPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminAddressesPage /> }],
                   },
                   {
                     path: "orders",
                     element: <PermissionGuard permission="orders.view" />,
+                    children: [{ index: true, element: <AdminOrdersPage /> }],
+                  },
+                  {
+                    path: "coupons",
+                    element: <PermissionGuard permission="coupons.view" />,
                     children: [
-                      { index: true, element: <AdminOrdersPage /> },
+                      {
+                        index: true,
+                        lazy: async () => {
+                          const { AdminCouponsPage } =
+                            await import("@modules/coupons/pages/AdminCouponsPage");
+                          return { Component: AdminCouponsPage };
+                        },
+                      },
                     ],
                   },
                   {
@@ -874,77 +856,57 @@ export const router = createBrowserRouter([
                     // Reference Data — consolidated container (categories + cities)
                     path: "reference",
                     element: <PermissionGuard permission="categories.view" />,
-                    children: [
-                      { index: true, element: <AdminReferenceDataPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminReferenceDataPage /> }],
                   },
 
                   {
                     // Categories & Services — flat categories + category<->service assignment
                     path: "taxonomy",
                     element: <PermissionGuard permission="categories.view" />,
-                    children: [
-                      { index: true, element: <CategoriesServicesPage /> },
-                    ],
+                    children: [{ index: true, element: <CategoriesServicesPage /> }],
                   },
 
                   {
                     path: "attachments",
                     element: <PermissionGuard permission="attachments.view" />,
-                    children: [
-                      { index: true, element: <AttachmentsPage /> },
-                    ],
+                    children: [{ index: true, element: <AttachmentsPage /> }],
                   },
 
                   {
                     // Subscriptions — Stage-2 placeholder (live rebuild in progress)
                     path: "subscriptions",
                     element: <PermissionGuard permission="subscriptions.view" />,
-                    children: [
-                      { index: true, element: <AdminSubscriptionsPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminSubscriptionsPage /> }],
                   },
                   {
                     path: "revenues",
                     element: <PermissionGuard permission="subscriptions.view" />,
-                    children: [
-                      { index: true, element: <AdminRevenuesPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminRevenuesPage /> }],
                   },
                   {
                     path: "notifications",
                     element: <PermissionGuard permission="notifications.view" />,
-                    children: [
-                      { index: true, element: <AdminNotificationsHubPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminNotificationsHubPage /> }],
                   },
                   {
                     path: "ads",
                     element: <PermissionGuard permission="ads.view" />,
-                    children: [
-                      { index: true, element: <AdminAdsHubPage /> },
-                    ],
+                    children: [{ index: true, element: <AdminAdsHubPage /> }],
                   },
                   {
                     path: "settings",
                     element: <PermissionGuard permission="settings.view" />,
-                    children: [
-                      { index: true, element: <AdminSettingsHubPage /> }
-                    ],
+                    children: [{ index: true, element: <AdminSettingsHubPage /> }],
                   },
                   {
                     path: "complaints",
                     element: <PermissionGuard permission="complaints.view" />,
-                    children: [
-                      { index: true, element: <AdminComplaintsPage /> }
-                    ],
+                    children: [{ index: true, element: <AdminComplaintsPage /> }],
                   },
                   {
                     path: "audit",
                     element: <PermissionGuard permission="audit.view" />,
-                    children: [
-                      { index: true, element: <AdminAuditLogPage /> }
-                    ],
+                    children: [{ index: true, element: <AdminAuditLogPage /> }],
                   },
                   {
                     // Legacy redirect: /admin/categories → /admin/reference?tab=categories
