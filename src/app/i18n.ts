@@ -3,6 +3,111 @@ import { initReactI18next } from "react-i18next";
 import { storage, StorageKeys } from "@shared/lib/storage";
 
 const ar = {
+  coupons: {
+    title: "كوبونات الخصم",
+    subtitle: "إدارة قواعد الخصم والاستخدام ومواعيد الصلاحية.",
+    create: "إنشاء كوبون",
+    edit: "تعديل الكوبون",
+    details: "تفاصيل الكوبون",
+    createDescription: "حدّد الكود وقواعد الخصم وفترة الصلاحية. الحقول المعلّمة بنجمة مطلوبة.",
+    code: "كود الكوبون",
+    codeHint: "من حرف واحد إلى 50 حرفًا.",
+    codeReadonly: "الكود ثابت بعد الإنشاء؛ التفعيل إجراء مستقل.",
+    discount: "الخصم",
+    discountPercentage: "نسبة الخصم (%)",
+    minimumOrder: "الحد الأدنى للطلب",
+    minimumOrderAmount: "الحد الأدنى للطلب (ر.س)",
+    noMinimum: "لا يوجد حد أدنى مُحدّد",
+    usage: "الاستخدام",
+    usageLimit: "حد الاستخدام",
+    usedCount: "مرات الاستخدام",
+    usedOfLimit: "المستخدم / الحد المُحدّد",
+    usageReached: "بلغ الاستخدام الحد المُحدّد",
+    limitNotSet: "لم يُحدّد حد الاستخدام",
+    validity: "فترة الصلاحية",
+    startDate: "بداية الصلاحية",
+    endDate: "نهاية الصلاحية",
+    createdAt: "تاريخ الإنشاء",
+    endNotSet: "لم يُحدّد تاريخ انتهاء",
+    endNotSetHint: "اختياري؛ اتركه فارغًا لعدم تحديد تاريخ انتهاء.",
+    localDateHint: "التاريخ والوقت كما يُعرضان، دون تحويل المنطقة الزمنية.",
+    starts: "من {{date}}",
+    ends: "حتى {{date}}",
+    notSet: "غير مُحدّد",
+    enabled: "مفعّل إداريًا",
+    disabled: "معطّل إداريًا",
+    activation: "تفعيل الكوبون",
+    activate: "تفعيل",
+    deactivate: "تعطيل",
+    lifecycleHint:
+      "التفعيل الإداري مستقل عن فترة الصلاحية وحد الاستخدام. التفعيل لا يمدّد تاريخ الانتهاء.",
+    lifecycle: {
+      active: "ضمن فترة الصلاحية",
+      scheduled: "مجدول",
+      expired: "منتهي الصلاحية",
+      disabled: "معطّل",
+      unknown: "تعذّر تحديد الصلاحية",
+    },
+    actionsFor: "إجراءات الكوبون {{code}}",
+    deleteTitle: "حذف الكوبون",
+    deleteDescription: "هل تريد حذف الكوبون «{{code}}»؟ قد يتعذّر التراجع عن هذا الإجراء.",
+    activateDescription: "تفعيل الكوبون «{{code}}» إداريًا؟",
+    deactivateDescription: "تعطيل الكوبون «{{code}}» إداريًا؟",
+    filters: "البحث والتصفية",
+    filterBy: "طريقة التصفية",
+    filterModes: {
+      all: "جميع الكوبونات",
+      code: "البحث بالكود",
+      enabled: "المفعّلة إداريًا",
+      disabled: "المعطّلة إداريًا",
+    },
+    codeSearch: "الكود أو جزء منه",
+    filterHint: "اختر البحث بالكود أو التصفية بالتفعيل. يمكنك إضافة نطاق تاريخ الإنشاء لأي منهما.",
+    createdFrom: "أُنشئ من تاريخ ووقت",
+    createdTo: "أُنشئ حتى تاريخ ووقت",
+    sortBy: "ترتيب حسب",
+    sortDirection: "اتجاه الترتيب",
+    descending: "تنازلي",
+    ascending: "تصاعدي",
+    apply: "تطبيق",
+    reset: "مسح التصفية",
+    loading: "جارٍ تحميل الكوبونات…",
+    saving: "جارٍ الحفظ…",
+    results: "عدد النتائج: {{total}}",
+    empty: "لا توجد كوبونات بعد",
+    emptyHint: "ستظهر الكوبونات هنا بعد إنشائها.",
+    noResults: "لا توجد كوبونات مطابقة",
+    noResultsHint: "جرّب كودًا آخر أو امسح التصفية.",
+    pagination: "صفحات الكوبونات",
+    pageSize: "لكل صفحة",
+    pageOf: "صفحة {{page}} من {{total}}",
+    hints: {
+      discountPercentage: "من 1 إلى 100 بالمئة.",
+      minimumOrderAmount: "اختياري؛ عند تحديده يجب ألا يقل عن 0.01 ر.س.",
+      usageLimit: "اختياري؛ عدد صحيح موجب.",
+    },
+    validation: {
+      date: "أدخل تاريخًا ووقتًا صالحين.",
+      number: "أدخل رقمًا صالحًا.",
+      discount: "يجب أن تكون النسبة بين 1 و100.",
+      minimum: "يجب ألا يقل الحد الأدنى عن 0.01.",
+      usage: "أدخل عددًا صحيحًا بين 1 و2147483647.",
+      code: "الحد الأقصى للكود 50 حرفًا.",
+    },
+    success: {
+      created: "تم إنشاء الكوبون.",
+      updated: "تم تحديث الكوبون.",
+      deleted: "تم حذف الكوبون.",
+      toggled: "تم تغيير التفعيل الإداري للكوبون.",
+    },
+    errors: {
+      notFound: "الكوبون غير موجود أو تم حذفه. أعد تحميل القائمة.",
+      forbidden: "ليست لديك صلاحية لتنفيذ هذا الإجراء.",
+      conflict: "تعذّر تنفيذ الإجراء بسبب تعارض في البيانات. أعد تحميل الكوبون قبل المحاولة.",
+      validation: "رفض الخادم الطلب. راجع القيم ثم حاول مجددًا.",
+      request: "تعذّر إكمال الطلب. تحقّق من الاتصال وأعد تحميل البيانات قبل المحاولة مجددًا.",
+    },
+  },
   common: {
     appName: "مقود",
     save: "حفظ",
@@ -74,7 +179,8 @@ const ar = {
       emailPlaceholder: "أدخل بريدك الإلكتروني",
       submitButton: "إرسال رابط إعادة التعيين",
       sentTitle: "تحقق من بريدك الإلكتروني",
-      sentBody: "إذا كان البريد الإلكتروني مسجلاً لدينا، فسنرسل إليك رابطاً لإعادة تعيين كلمة المرور.",
+      sentBody:
+        "إذا كان البريد الإلكتروني مسجلاً لدينا، فسنرسل إليك رابطاً لإعادة تعيين كلمة المرور.",
       resendButton: "إعادة إرسال الرابط",
       backToLogin: "العودة لتسجيل الدخول",
       errors: {
@@ -126,7 +232,8 @@ const ar = {
       otpLabel: "رمز التحقق",
       submitButton: "تفعيل",
       resendButton: "إعادة إرسال الرمز",
-      resendDisabledHint: "خدمة إعادة الإرسال ستكون متاحة قريباً. إذا لم يصلك الرمز، تواصل مع الدعم.",
+      resendDisabledHint:
+        "خدمة إعادة الإرسال ستكون متاحة قريباً. إذا لم يصلك الرمز، تواصل مع الدعم.",
       successToast: "تم تفعيل بريدك الإلكتروني بنجاح، يمكنك تسجيل الدخول الآن",
       errors: {
         invalidOtp: "الرمز غير صحيح أو منتهي الصلاحية",
@@ -442,7 +549,8 @@ const ar = {
       },
       account: {
         title: "رائع! أكملت الخطوة الأولى",
-        subtitle: "حسابك جاهز. الآن نحتاج بعض المستندات الرسمية حتى نتمكّن من التحقّق من نشاطك واعتمادك.",
+        subtitle:
+          "حسابك جاهز. الآن نحتاج بعض المستندات الرسمية حتى نتمكّن من التحقّق من نشاطك واعتمادك.",
         accountType: "نوع الحساب",
         owner: "صاحب النشاط",
         email: "البريد",
@@ -475,7 +583,8 @@ const ar = {
       },
       review: {
         title: "طلبك قيد المراجعة",
-        subtitle: "شكراً لإرسال مستنداتك. فريقنا يراجع طلبك خلال 12 إلى 24 ساعة عادةً. ستصلك رسالة فور صدور القرار.",
+        subtitle:
+          "شكراً لإرسال مستنداتك. فريقنا يراجع طلبك خلال 12 إلى 24 ساعة عادةً. ستصلك رسالة فور صدور القرار.",
         received: "تم استلام الطلب",
         checking: "فريق المراجعة يتحقّق من المستندات",
         notify: "إشعار بقرار الاعتماد",
@@ -815,7 +924,8 @@ const ar = {
   },
   adminOnly: {
     title: "هذا التطبيق مخصص للمسؤولين",
-    description: "لوحة التحكم الحالية مخصصة لمسؤولي النظام فقط. إن كنت تبحث عن خدمات مقود للعملاء فستتوفر قريبًا.",
+    description:
+      "لوحة التحكم الحالية مخصصة لمسؤولي النظام فقط. إن كنت تبحث عن خدمات مقود للعملاء فستتوفر قريبًا.",
     logout: "تسجيل الخروج",
   },
   adminNav: {
@@ -881,7 +991,7 @@ const ar = {
     },
     delete: {
       title: "حذف المرفق",
-      confirm: "هل أنت متأكد من حذف \"{{name}}\"؟ لا يمكن التراجع عن هذا الإجراء.",
+      confirm: 'هل أنت متأكد من حذف "{{name}}"؟ لا يمكن التراجع عن هذا الإجراء.',
     },
     filters: {
       searchPlaceholder: "ابحث باسم الملف…",
@@ -1168,7 +1278,7 @@ const ar = {
       tabs: { commissions: "عمولات التجار", subscriptions: "الاشتراكات" },
       columns: { provider: "مقدم الخدمة", detail: "التفاصيل", amount: "المبلغ" },
       empty: "لا توجد إيرادات مسجلة بعد",
-      error: "تعذر تحميل الإيرادات"
+      error: "تعذر تحميل الإيرادات",
     },
     complaints: {
       title: "الشكاوى",
@@ -1209,20 +1319,72 @@ const ar = {
       exported: "تم تصدير السجل بنجاح",
       empty: "لا توجد سجلات تدقيق لعرضها",
       pageOf: "صفحة {{page}} من {{total}}",
-      columns: { time: "الوقت", actor: "المستخدم", action: "الإجراء", module: "الوحدة", summary: "الملخص", details: "التفاصيل" },
-      filters: { allModules: "كل الوحدات", allActions: "كل الإجراءات", dateFrom: "من تاريخ", dateTo: "إلى تاريخ" },
-      actions: { create: "أنشأ", update: "عدّل", delete: "حذف", approve: "اعتمد", reject: "رفض", suspend: "علّق", restore: "استعاد", send: "أرسل", cancel: "ألغى", login: "سجّل دخول" },
-      modules: { users: "المستخدمون", providers: "المزودون", services: "الخدمات", plans: "الخطط", subscriptions: "الاشتراكات", notifications: "الإشعارات", ads: "الإعلانات", settings: "الإعدادات", auth: "المصادقة" },
-      detail: { title: "تفاصيل الحدث", actor: "المستخدم", role: "الدور", entity: "الكيان", ip: "عنوان IP", summary: "الملخص", metadata: "البيانات الإضافية", time: "الوقت" },
+      columns: {
+        time: "الوقت",
+        actor: "المستخدم",
+        action: "الإجراء",
+        module: "الوحدة",
+        summary: "الملخص",
+        details: "التفاصيل",
+      },
+      filters: {
+        allModules: "كل الوحدات",
+        allActions: "كل الإجراءات",
+        dateFrom: "من تاريخ",
+        dateTo: "إلى تاريخ",
+      },
+      actions: {
+        create: "أنشأ",
+        update: "عدّل",
+        delete: "حذف",
+        approve: "اعتمد",
+        reject: "رفض",
+        suspend: "علّق",
+        restore: "استعاد",
+        send: "أرسل",
+        cancel: "ألغى",
+        login: "سجّل دخول",
+      },
+      modules: {
+        users: "المستخدمون",
+        providers: "المزودون",
+        services: "الخدمات",
+        plans: "الخطط",
+        subscriptions: "الاشتراكات",
+        notifications: "الإشعارات",
+        ads: "الإعلانات",
+        settings: "الإعدادات",
+        auth: "المصادقة",
+      },
+      detail: {
+        title: "تفاصيل الحدث",
+        actor: "المستخدم",
+        role: "الدور",
+        entity: "الكيان",
+        ip: "عنوان IP",
+        summary: "الملخص",
+        metadata: "البيانات الإضافية",
+        time: "الوقت",
+      },
     },
     ads: {
       title: "الإعلانات",
       subtitle: "إدارة الإعلانات الترويجية المعروضة للمستخدمين",
       create: "إنشاء إعلان",
-      columns: { image: "الصورة", title: "العنوان", deepLink: "الرابط", isActive: "الحالة", createdAt: "تاريخ الإنشاء", actions: "إجراءات" },
+      columns: {
+        image: "الصورة",
+        title: "العنوان",
+        deepLink: "الرابط",
+        isActive: "الحالة",
+        createdAt: "تاريخ الإنشاء",
+        actions: "إجراءات",
+      },
       status: { active: "مُفعّل", inactive: "غير مُفعّل" },
       errorTitle: "تعذّر تحميل الإعلانات",
-      empty: { title: "لا توجد إعلانات", description: "لم يتم إنشاء أي إعلان بعد. ابدأ بإضافة أول إعلان." },
+      empty: {
+        title: "لا توجد إعلانات",
+        description: "لم يتم إنشاء أي إعلان بعد. ابدأ بإضافة أول إعلان.",
+      },
       viewMode: { cards: "عرض البطاقات", table: "عرض الجدول" },
       card: {
         noImage: "لا توجد صورة",
@@ -1264,7 +1426,10 @@ const ar = {
         deactivated: "تم إلغاء تفعيل الإعلان",
         toggleFailed: "تعذّر تحديث حالة الإعلان",
       },
-      deleteConfirm: { title: "حذف الإعلان", message: "سيتم حذف الإعلان \"{{title}}\" نهائياً. هل أنت متأكد؟" },
+      deleteConfirm: {
+        title: "حذف الإعلان",
+        message: 'سيتم حذف الإعلان "{{title}}" نهائياً. هل أنت متأكد؟',
+      },
     },
 
     notifications: {
@@ -1359,9 +1524,10 @@ const ar = {
         error: "تعذّر إرسال الإشعار",
         confirm: {
           title: "تأكيد الإرسال",
-          message: "أنت على وشك إرسال هذا الإشعار إلى {{audience}} عبر {{channel}}. هل تريد المتابعة؟",
-          confirm: "إرسال"
-        }
+          message:
+            "أنت على وشك إرسال هذا الإشعار إلى {{audience}} عبر {{channel}}. هل تريد المتابعة؟",
+          confirm: "إرسال",
+        },
       },
     },
     subscriptions: {
@@ -1375,19 +1541,19 @@ const ar = {
       tabs: {
         all: "الكل",
         plans: "الخطط",
-        providers: "اشتراكات المزودين"
+        providers: "اشتراكات المزودين",
       },
       status: {
         active: "نشط",
         inactive: "غير مفعّل",
         pending: "قيد الانتظار",
         expired: "منتهي",
-        cancelled: "ملغى"
+        cancelled: "ملغى",
       },
       stage3: {
         badge: "المرحلة 3",
         title: "اشتراكات المزودين",
-        description: "سيتم بناء عرض اشتراكات المزودين في المرحلة الثالثة."
+        description: "سيتم بناء عرض اشتراكات المزودين في المرحلة الثالثة.",
       },
       columns: {
         providerName: "مقدم الخدمة",
@@ -1397,16 +1563,16 @@ const ar = {
         billingCycle: "دورة الفوترة",
         status: "الحالة",
         startDate: "تاريخ البدء",
-        endDate: "تاريخ الانتهاء"
+        endDate: "تاريخ الانتهاء",
       },
       cancelConfirm: {
         title: "إلغاء الاشتراك",
         description: "هل أنت متأكد من إلغاء اشتراك {{provider}} في خطة {{plan}}؟ لا يمكن التراجع.",
-        confirm: "تأكيد الإلغاء"
+        confirm: "تأكيد الإلغاء",
       },
       success: {
-        cancelled: "تم إلغاء الاشتراك بنجاح"
-      }
+        cancelled: "تم إلغاء الاشتراك بنجاح",
+      },
     },
     plans: {
       title: "خطط الاشتراك",
@@ -1511,7 +1677,8 @@ const ar = {
         search: "ابحث عن خدمة...",
         empty: "لا توجد خدمات متاحة",
         error: "تعذّر تحميل شجرة الخدمات",
-        mockNotice: "قائمة الخدمات ما زالت تجريبية؛ قد يرفض الخادم إسناد خدمة تجريبية حتى يتم ربط واجهة الخدمات الحقيقية.",
+        mockNotice:
+          "قائمة الخدمات ما زالت تجريبية؛ قد يرفض الخادم إسناد خدمة تجريبية حتى يتم ربط واجهة الخدمات الحقيقية.",
         alreadyAssigned: "مُسنَدة",
         done: "تم",
       },
@@ -1546,19 +1713,27 @@ const ar = {
         providers: "مراجعة المزودين",
         notifications: "إرسال إشعار",
         ads: "الإعلانات",
-        settings: "الإعدادات"
+        settings: "الإعدادات",
       },
       totalUsers: "إجمالي المستخدمين",
       activeProviders: "المزودون النشطون",
       pendingVerifications: "توثيقات معلّقة",
       monthlyRevenue: "الإيراد الشهري",
       error: "تعذّر تحميل البيانات",
-      charts: { revenue:"اتجاه الإيراد", users:"المستخدمون الجدد",
-            providerStatus:"حالات المزودين", revenueTrendSoon:"سيتوفّر اتجاه الإيراد مع البيانات التاريخية" },
-      providerStatus: { approved:"مقبول", pending:"معلّق", rejected:"مرفوض" },
-      widgets: { recentActivity:"آخر النشاطات", pendingProviders:"مزودون بانتظار المراجعة",
-                 viewAll:"عرض الكل", empty:"لا يوجد" },
-      trendVsLastMonth:"مقارنة بالشهر السابق"
+      charts: {
+        revenue: "اتجاه الإيراد",
+        users: "المستخدمون الجدد",
+        providerStatus: "حالات المزودين",
+        revenueTrendSoon: "سيتوفّر اتجاه الإيراد مع البيانات التاريخية",
+      },
+      providerStatus: { approved: "مقبول", pending: "معلّق", rejected: "مرفوض" },
+      widgets: {
+        recentActivity: "آخر النشاطات",
+        pendingProviders: "مزودون بانتظار المراجعة",
+        viewAll: "عرض الكل",
+        empty: "لا يوجد",
+      },
+      trendVsLastMonth: "مقارنة بالشهر السابق",
     },
     categories: {
       title: "التصنيفات",
@@ -1585,11 +1760,12 @@ const ar = {
           purple: "بنفسجي",
           red: "أحمر",
           navy: "كحلي",
-        }
+        },
       },
       deleteConfirm: {
         title: "حذف التصنيف",
-        description: "هل أنت متأكد من حذف التصنيف: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات والخدمات المرتبطة به.",
+        description:
+          "هل أنت متأكد من حذف التصنيف: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات والخدمات المرتبطة به.",
         confirm: "حذف التصنيف",
         cancel: "إلغاء",
       },
@@ -1632,7 +1808,7 @@ const ar = {
         scopeLabel: "نوع مقدم الخدمة",
         allProviders: "كل الأنواع",
         inheritedLabel: "موروث",
-      }
+      },
     },
     cities: {
       title: "المدن",
@@ -1651,7 +1827,8 @@ const ar = {
       },
       deleteConfirm: {
         title: "حذف المدينة",
-        description: "هل أنت متأكد من حذف المدينة: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات المرتبطين بها.",
+        description:
+          "هل أنت متأكد من حذف المدينة: {{name}}؟ قد يؤثر هذا الإجراء على مزودي الخدمات المرتبطين بها.",
         confirm: "حذف المدينة",
         cancel: "إلغاء",
       },
@@ -1659,7 +1836,7 @@ const ar = {
         created: "تمت إضافة المدينة بنجاح",
         updated: "تم تعديل المدينة بنجاح",
         deleted: "تم حذف المدينة بنجاح",
-      }
+      },
     },
     brands: {
       title: "الماركات",
@@ -1681,7 +1858,8 @@ const ar = {
       },
       deleteConfirm: {
         title: "حذف الماركة",
-        description: "حذف الماركة {{name}} سيحذف جميع موديلاتها ({{count}} موديل) وقد يؤثّر على المركبات المرتبطة",
+        description:
+          "حذف الماركة {{name}} سيحذف جميع موديلاتها ({{count}} موديل) وقد يؤثّر على المركبات المرتبطة",
         confirm: "حذف الماركة",
         cancel: "إلغاء",
         blocked: "لا يمكن حذف هذه الماركة لوجود موديلات أو مركبات مرتبطة بها",
@@ -1690,7 +1868,7 @@ const ar = {
         created: "تمت إضافة الماركة بنجاح",
         updated: "تم تعديل الماركة بنجاح",
         deleted: "تم حذف الماركة بنجاح",
-      }
+      },
     },
     models: {
       title: "الموديلات",
@@ -1710,7 +1888,8 @@ const ar = {
       },
       deleteConfirm: {
         title: "حذف الموديل",
-        description: "هل أنت متأكد من حذف الموديل: {{name}}؟ قد يؤثّر هذا الإجراء على المركبات المرتبطة.",
+        description:
+          "هل أنت متأكد من حذف الموديل: {{name}}؟ قد يؤثّر هذا الإجراء على المركبات المرتبطة.",
         confirm: "حذف الموديل",
         cancel: "إلغاء",
         blocked: "لا يمكن حذف هذا الموديل لوجود مركبات مرتبطة به",
@@ -1719,7 +1898,7 @@ const ar = {
         created: "تمت إضافة الموديل بنجاح",
         updated: "تم تعديل الموديل بنجاح",
         deleted: "تم حذف الموديل بنجاح",
-      }
+      },
     },
     services: {
       title: "الخدمات",
@@ -1827,11 +2006,38 @@ const ar = {
           cancel: "إلغاء",
           success: "تمت الموافقة بنجاح",
         },
-        commission: { title: "العمولة والمستحقات", rate: "نسبة العمولة", edit: "تعديل النسبة", save: "حفظ", estimatedDues: "مستحقات تقديرية", debtAlert: "تجاوز حد الدين 500 ر.س" },
-        workshop: { profileTitle: "ملف الورشة", specialization: "التخصص", rating: "التقييم", photos: "الصور", location: "الموقع", viewMap: "عرض على الخريطة" },
+        commission: {
+          title: "العمولة والمستحقات",
+          rate: "نسبة العمولة",
+          edit: "تعديل النسبة",
+          save: "حفظ",
+          estimatedDues: "مستحقات تقديرية",
+          debtAlert: "تجاوز حد الدين 500 ر.س",
+        },
+        workshop: {
+          profileTitle: "ملف الورشة",
+          specialization: "التخصص",
+          rating: "التقييم",
+          photos: "الصور",
+          location: "الموقع",
+          viewMap: "عرض على الخريطة",
+        },
         scrap: { specializationTitle: "التخصص", brands: "العلامات التجارية" },
-        subscription: { title: "الاشتراك", plan: "الباقة", cycle: "دورة الدفع", status: "حالة الاشتراك", start: "تاريخ البدء", end: "تاريخ الانتهاء", none: "لا يوجد اشتراك" },
-        dealer: { storeSpecTitle: "تخصص المتجر", productsTitle: "المنتجات والمخزون", productsCount: "عدد المنتجات", inventoryCount: "إجمالي المخزون" },
+        subscription: {
+          title: "الاشتراك",
+          plan: "الباقة",
+          cycle: "دورة الدفع",
+          status: "حالة الاشتراك",
+          start: "تاريخ البدء",
+          end: "تاريخ الانتهاء",
+          none: "لا يوجد اشتراك",
+        },
+        dealer: {
+          storeSpecTitle: "تخصص المتجر",
+          productsTitle: "المنتجات والمخزون",
+          productsCount: "عدد المنتجات",
+          inventoryCount: "إجمالي المخزون",
+        },
       },
     },
     users: {
@@ -1956,24 +2162,47 @@ const ar = {
       error: "تعذّر تحميل المستخدمين",
     },
 
-
     settings: {
-      title:"الإعدادات", subtitle:"إدارة إعدادات النظام وتفعيل الميزات",
-      maintenanceActive:"تنبيه: وضع الصيانة مُفعّل حالياً — المنصّة غير متاحة للمستخدمين.",
-      tabs:{ general:"عام", contact:"التواصل", flags:"الميزات" },
-      general:{ heading:"الإعدادات العامة", platformNameAr:"اسم المنصّة (عربي)",
-        platformNameEn:"اسم المنصّة (إنجليزي)", logoUrl:"رابط الشعار",
-        supportEmail:"بريد الدعم", supportPhone:"جوال الدعم",
-        defaultCurrency:"العملة الافتراضية", defaultLanguage:"اللغة الافتراضية",
-        timezone:"المنطقة الزمنية", saved:"تم حفظ الإعدادات العامة" },
-      contact:{ heading:"إعدادات التواصل", termsUrlAr:"رابط الشروط (عربي)",
-        termsUrlEn:"رابط الشروط (إنجليزي)", privacyUrlAr:"رابط الخصوصية (عربي)",
-        privacyUrlEn:"رابط الخصوصية (إنجليزي)", twitterUrl:"رابط تويتر",
-        instagramUrl:"رابط إنستغرام", whatsappNumber:"رقم واتساب", saved:"تم حفظ إعدادات التواصل" },
-      flags:{ heading:"الميزات التجريبية", add:"إضافة ميزة", key:"المفتاح التقني",
-        labelAr:"الاسم (عربي)", labelEn:"الاسم (إنجليزي)", descAr:"الوصف (عربي)",
-        descEn:"الوصف (إنجليزي)", enabled:"مُفعّل", remove:"حذف",
-        maintenanceWarn:"تفعيل هذه الميزة يوقف المنصّة عن المستخدمين", saved:"تم حفظ الميزات" }
+      title: "الإعدادات",
+      subtitle: "إدارة إعدادات النظام وتفعيل الميزات",
+      maintenanceActive: "تنبيه: وضع الصيانة مُفعّل حالياً — المنصّة غير متاحة للمستخدمين.",
+      tabs: { general: "عام", contact: "التواصل", flags: "الميزات" },
+      general: {
+        heading: "الإعدادات العامة",
+        platformNameAr: "اسم المنصّة (عربي)",
+        platformNameEn: "اسم المنصّة (إنجليزي)",
+        logoUrl: "رابط الشعار",
+        supportEmail: "بريد الدعم",
+        supportPhone: "جوال الدعم",
+        defaultCurrency: "العملة الافتراضية",
+        defaultLanguage: "اللغة الافتراضية",
+        timezone: "المنطقة الزمنية",
+        saved: "تم حفظ الإعدادات العامة",
+      },
+      contact: {
+        heading: "إعدادات التواصل",
+        termsUrlAr: "رابط الشروط (عربي)",
+        termsUrlEn: "رابط الشروط (إنجليزي)",
+        privacyUrlAr: "رابط الخصوصية (عربي)",
+        privacyUrlEn: "رابط الخصوصية (إنجليزي)",
+        twitterUrl: "رابط تويتر",
+        instagramUrl: "رابط إنستغرام",
+        whatsappNumber: "رقم واتساب",
+        saved: "تم حفظ إعدادات التواصل",
+      },
+      flags: {
+        heading: "الميزات التجريبية",
+        add: "إضافة ميزة",
+        key: "المفتاح التقني",
+        labelAr: "الاسم (عربي)",
+        labelEn: "الاسم (إنجليزي)",
+        descAr: "الوصف (عربي)",
+        descEn: "الوصف (إنجليزي)",
+        enabled: "مُفعّل",
+        remove: "حذف",
+        maintenanceWarn: "تفعيل هذه الميزة يوقف المنصّة عن المستخدمين",
+        saved: "تم حفظ الميزات",
+      },
     },
   },
   providerService: {
@@ -2642,7 +2871,8 @@ const ar = {
       alreadyOfferedBadge: "قدّمت عرضاً",
       statusUnknown: "قيد المعالجة",
       browsingUnavailableTitle: "تصفح الطلبات غير متاح حالياً",
-      browsingUnavailableDescription: "يعمل فريقنا على تفعيل تصفح طلبات القطع من قبل التشليح. ستظهر هنا فور تفعيلها.",
+      browsingUnavailableDescription:
+        "يعمل فريقنا على تفعيل تصفح طلبات القطع من قبل التشليح. ستظهر هنا فور تفعيلها.",
       offer: {
         price: "سعر القطعة (ر.س)",
         note: "ملاحظة للعميل",
@@ -2871,7 +3101,8 @@ const ar = {
     composerPlaceholder: "اكتب رسالتك...",
     send: "إرسال",
     emptyListTitle: "لا توجد محادثات في هذه الجلسة",
-    emptyListDescription: "ستظهر هنا المحادثات التي ترسل أو تستقبل فيها رسالة. استخدم \"محادثة جديدة\" للبدء.",
+    emptyListDescription:
+      'ستظهر هنا المحادثات التي ترسل أو تستقبل فيها رسالة. استخدم "محادثة جديدة" للبدء.',
     emptyThreadTitle: "اختر محادثة",
     emptyThreadDescription: "اختر محادثة من القائمة لعرض الرسائل",
     noMessagesTitle: "لا توجد رسائل بعد",
@@ -2928,6 +3159,114 @@ const ar = {
 };
 
 const en: typeof ar = {
+  coupons: {
+    title: "Coupons",
+    subtitle: "Manage discount rules, usage and validity windows.",
+    create: "Create coupon",
+    edit: "Edit coupon",
+    details: "Coupon details",
+    createDescription:
+      "Set the code, discount rules and validity window. Fields marked with an asterisk are required.",
+    code: "Coupon code",
+    codeHint: "Between 1 and 50 characters.",
+    codeReadonly: "The code cannot be changed after creation. Activation is a separate action.",
+    discount: "Discount",
+    discountPercentage: "Discount percentage (%)",
+    minimumOrder: "Minimum order",
+    minimumOrderAmount: "Minimum order amount (SAR)",
+    noMinimum: "No minimum configured",
+    usage: "Usage",
+    usageLimit: "Usage limit",
+    usedCount: "Times used",
+    usedOfLimit: "Used / configured limit",
+    usageReached: "Configured usage limit reached",
+    limitNotSet: "Usage limit not set",
+    validity: "Validity window",
+    startDate: "Starts at",
+    endDate: "Ends at",
+    createdAt: "Created at",
+    endNotSet: "End date not set",
+    endNotSetHint: "Optional; leave blank to leave the end date unset.",
+    localDateHint: "Dates and times are kept as displayed, without timezone conversion.",
+    starts: "From {{date}}",
+    ends: "Until {{date}}",
+    notSet: "Not set",
+    enabled: "Administratively enabled",
+    disabled: "Administratively disabled",
+    activation: "Coupon activation",
+    activate: "Enable",
+    deactivate: "Disable",
+    lifecycleHint:
+      "Administrative activation is separate from the validity window and usage limit. Enabling does not extend expiry.",
+    lifecycle: {
+      active: "Within validity window",
+      scheduled: "Scheduled",
+      expired: "Expired",
+      disabled: "Disabled",
+      unknown: "Validity unavailable",
+    },
+    actionsFor: "Actions for coupon {{code}}",
+    deleteTitle: "Delete coupon",
+    deleteDescription: "Delete coupon “{{code}}”? This action may not be reversible.",
+    activateDescription: "Administratively enable coupon “{{code}}”?",
+    deactivateDescription: "Administratively disable coupon “{{code}}”?",
+    filters: "Search and filters",
+    filterBy: "Filter mode",
+    filterModes: {
+      all: "All coupons",
+      code: "Search by code",
+      enabled: "Administratively enabled",
+      disabled: "Administratively disabled",
+    },
+    codeSearch: "Full or partial code",
+    filterHint:
+      "Choose code search or activation filtering. A created-at range can be added to either.",
+    createdFrom: "Created from date and time",
+    createdTo: "Created to date and time",
+    sortBy: "Sort by",
+    sortDirection: "Sort direction",
+    descending: "Descending",
+    ascending: "Ascending",
+    apply: "Apply",
+    reset: "Clear filters",
+    loading: "Loading coupons…",
+    saving: "Saving…",
+    results: "Results: {{total}}",
+    empty: "No coupons yet",
+    emptyHint: "Coupons will appear here after they are created.",
+    noResults: "No matching coupons",
+    noResultsHint: "Try another code or clear your filters.",
+    pagination: "Coupon pages",
+    pageSize: "Per page",
+    pageOf: "Page {{page}} of {{total}}",
+    hints: {
+      discountPercentage: "Between 1 and 100 percent.",
+      minimumOrderAmount: "Optional; at least SAR 0.01 when specified.",
+      usageLimit: "Optional; a positive whole number.",
+    },
+    validation: {
+      date: "Enter a valid date and time.",
+      number: "Enter a valid number.",
+      discount: "Percentage must be between 1 and 100.",
+      minimum: "Minimum order must be at least 0.01.",
+      usage: "Enter a whole number between 1 and 2147483647.",
+      code: "Code must be no longer than 50 characters.",
+    },
+    success: {
+      created: "Coupon created.",
+      updated: "Coupon updated.",
+      deleted: "Coupon deleted.",
+      toggled: "Coupon administrative activation changed.",
+    },
+    errors: {
+      notFound: "Coupon not found or deleted. Reload the list.",
+      forbidden: "You do not have permission to perform this action.",
+      conflict: "A data conflict prevented this action. Reload the coupon before trying again.",
+      validation: "The server rejected the request. Review the values and try again.",
+      request:
+        "The request could not be completed. Check your connection and reload the data before retrying.",
+    },
+  },
   common: {
     appName: "Maqwad",
     save: "Save",
@@ -2989,7 +3328,8 @@ const en: typeof ar = {
       showPassword: "Show password",
       hidePassword: "Hide password",
       invalidCredentials: "Incorrect email or password",
-      emailNotVerified: "This account is not verified yet. Please verify your email or contact support.",
+      emailNotVerified:
+        "This account is not verified yet. Please verify your email or contact support.",
       forgotPassword: "Forgot password?",
     },
     forgotPassword: {
@@ -3051,7 +3391,8 @@ const en: typeof ar = {
       otpLabel: "Verification code",
       submitButton: "Verify",
       resendButton: "Resend code",
-      resendDisabledHint: "Resend will be available soon. If you didn't get a code, contact support.",
+      resendDisabledHint:
+        "Resend will be available soon. If you didn't get a code, contact support.",
       successToast: "Your email has been verified. You can now sign in.",
       errors: {
         invalidOtp: "Incorrect or expired code",
@@ -3234,9 +3575,11 @@ const en: typeof ar = {
     registerTitle: "Register as provider",
     registerSubtitle: "Quick steps to activate your workshop account",
     pendingTitle: "Your account is under review",
-    pendingMessage: "Thanks for signing up! Our team is reviewing your details. You will get notified once approved.",
+    pendingMessage:
+      "Thanks for signing up! Our team is reviewing your details. You will get notified once approved.",
     rejectedTitle: "Your request was rejected",
-    rejectedMessage: "Your details did not pass review this time. You can update the information and resubmit.",
+    rejectedMessage:
+      "Your details did not pass review this time. You can update the information and resubmit.",
     rejectedReason: "Rejection reason",
     resubmit: "Resubmit",
     approvedBanner: "Your account is approved ✨ You can now manage your services.",
@@ -3368,7 +3711,8 @@ const en: typeof ar = {
       },
       account: {
         title: "Great! You completed the first step",
-        subtitle: "Your account is ready. We now need some official documents to verify and accredit your activity.",
+        subtitle:
+          "Your account is ready. We now need some official documents to verify and accredit your activity.",
         accountType: "Account type",
         owner: "Business owner",
         email: "Email",
@@ -3401,7 +3745,8 @@ const en: typeof ar = {
       },
       review: {
         title: "Your request is under review",
-        subtitle: "Thanks for submitting your documents. Our team typically reviews within 12–24 hours. You will be notified once a decision is made.",
+        subtitle:
+          "Thanks for submitting your documents. Our team typically reviews within 12–24 hours. You will be notified once a decision is made.",
         received: "Request received",
         checking: "Review team is verifying documents",
         notify: "Accreditation decision notification",
@@ -3513,7 +3858,8 @@ const en: typeof ar = {
       addressLabel: "Address",
       addressPlaceholder: "Enter address",
       confirmGrantLabel: "I confirm granting this user full administrative privileges",
-      otpNotice: "The new admin will receive an activation email to confirm their account and set a password.",
+      otpNotice:
+        "The new admin will receive an activation email to confirm their account and set a password.",
       submitButton: "Create Admin",
       successToast: "Admin account created; an activation email has been sent to them.",
       errors: {
@@ -3741,7 +4087,8 @@ const en: typeof ar = {
   },
   adminOnly: {
     title: "This app is for administrators",
-    description: "The current dashboard is restricted to system administrators. If you are looking for Maqwad customer services, they will be available soon.",
+    description:
+      "The current dashboard is restricted to system administrators. If you are looking for Maqwad customer services, they will be available soon.",
     logout: "Sign out",
   },
   adminNav: {
@@ -3807,7 +4154,7 @@ const en: typeof ar = {
     },
     delete: {
       title: "Delete Attachment",
-      confirm: "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+      confirm: 'Are you sure you want to delete "{{name}}"? This action cannot be undone.',
     },
     filters: {
       searchPlaceholder: "Search by file name…",
@@ -4090,11 +4437,15 @@ const en: typeof ar = {
     revenues: {
       title: "Revenues",
       subtitle: "Overview of subscription and commission revenues",
-      summary: { total: "Total Revenues", commissions: "Commissions", subscriptions: "Subscriptions" },
+      summary: {
+        total: "Total Revenues",
+        commissions: "Commissions",
+        subscriptions: "Subscriptions",
+      },
       tabs: { commissions: "Commissions", subscriptions: "Subscriptions" },
       columns: { provider: "Provider", detail: "Detail", amount: "Amount" },
       empty: "No revenues recorded yet",
-      error: "Failed to load revenues"
+      error: "Failed to load revenues",
     },
     complaints: {
       title: "Complaints",
@@ -4135,20 +4486,72 @@ const en: typeof ar = {
       exported: "Audit log exported successfully",
       empty: "No audit logs to display",
       pageOf: "Page {{page}} of {{total}}",
-      columns: { time: "Time", actor: "Actor", action: "Action", module: "Module", summary: "Summary", details: "Details" },
-      filters: { allModules: "All Modules", allActions: "All Actions", dateFrom: "Date From", dateTo: "Date To" },
-      actions: { create: "Create", update: "Update", delete: "Delete", approve: "Approve", reject: "Reject", suspend: "Suspend", restore: "Restore", send: "Send", cancel: "Cancel", login: "Login" },
-      modules: { users: "Users", providers: "Providers", services: "Services", plans: "Plans", subscriptions: "Subscriptions", notifications: "Notifications", ads: "Ads", settings: "Settings", auth: "Auth" },
-      detail: { title: "Event details", actor: "Actor", role: "Role", entity: "Entity", ip: "IP Address", summary: "Summary", metadata: "Metadata", time: "Time" },
+      columns: {
+        time: "Time",
+        actor: "Actor",
+        action: "Action",
+        module: "Module",
+        summary: "Summary",
+        details: "Details",
+      },
+      filters: {
+        allModules: "All Modules",
+        allActions: "All Actions",
+        dateFrom: "Date From",
+        dateTo: "Date To",
+      },
+      actions: {
+        create: "Create",
+        update: "Update",
+        delete: "Delete",
+        approve: "Approve",
+        reject: "Reject",
+        suspend: "Suspend",
+        restore: "Restore",
+        send: "Send",
+        cancel: "Cancel",
+        login: "Login",
+      },
+      modules: {
+        users: "Users",
+        providers: "Providers",
+        services: "Services",
+        plans: "Plans",
+        subscriptions: "Subscriptions",
+        notifications: "Notifications",
+        ads: "Ads",
+        settings: "Settings",
+        auth: "Auth",
+      },
+      detail: {
+        title: "Event details",
+        actor: "Actor",
+        role: "Role",
+        entity: "Entity",
+        ip: "IP Address",
+        summary: "Summary",
+        metadata: "Metadata",
+        time: "Time",
+      },
     },
     ads: {
       title: "Advertisements",
       subtitle: "Manage the promotional ads shown to users",
       create: "Create Ad",
-      columns: { image: "Image", title: "Title", deepLink: "Link", isActive: "Status", createdAt: "Created", actions: "Actions" },
+      columns: {
+        image: "Image",
+        title: "Title",
+        deepLink: "Link",
+        isActive: "Status",
+        createdAt: "Created",
+        actions: "Actions",
+      },
       status: { active: "Active", inactive: "Inactive" },
       errorTitle: "Failed to load advertisements",
-      empty: { title: "No advertisements", description: "No ad has been created yet. Start by adding your first one." },
+      empty: {
+        title: "No advertisements",
+        description: "No ad has been created yet. Start by adding your first one.",
+      },
       viewMode: { cards: "Cards view", table: "Table view" },
       card: {
         noImage: "No image",
@@ -4190,7 +4593,10 @@ const en: typeof ar = {
         deactivated: "Advertisement deactivated",
         toggleFailed: "Failed to update advertisement status",
       },
-      deleteConfirm: { title: "Delete Advertisement", message: "The advertisement \"{{title}}\" will be permanently deleted. Are you sure?" },
+      deleteConfirm: {
+        title: "Delete Advertisement",
+        message: 'The advertisement "{{title}}" will be permanently deleted. Are you sure?',
+      },
     },
 
     notifications: {
@@ -4239,7 +4645,8 @@ const en: typeof ar = {
           variableExample: "Example:",
           addVariable: "Add Variable",
         },
-        deleteConfirm: "Are you sure you want to delete the template '{{name}}'? This action cannot be undone.",
+        deleteConfirm:
+          "Are you sure you want to delete the template '{{name}}'? This action cannot be undone.",
         success: {
           created: "Template created successfully",
           updated: "Template updated successfully",
@@ -4285,9 +4692,10 @@ const en: typeof ar = {
         error: "Failed to send notification",
         confirm: {
           title: "Confirm send",
-          message: "You are about to send this notification to {{audience}} via {{channel}}. Continue?",
-          confirm: "Send"
-        }
+          message:
+            "You are about to send this notification to {{audience}} via {{channel}}. Continue?",
+          confirm: "Send",
+        },
       },
     },
     subscriptions: {
@@ -4301,19 +4709,19 @@ const en: typeof ar = {
       tabs: {
         all: "All",
         plans: "Plans",
-        providers: "Provider Subscriptions"
+        providers: "Provider Subscriptions",
       },
       status: {
         active: "Active",
         inactive: "Inactive",
         pending: "Pending",
         expired: "Expired",
-        cancelled: "Cancelled"
+        cancelled: "Cancelled",
       },
       stage3: {
         badge: "Stage 3",
         title: "Provider Subscriptions",
-        description: "The provider subscriptions view will be built in Stage 3."
+        description: "The provider subscriptions view will be built in Stage 3.",
       },
       columns: {
         providerName: "Provider Name",
@@ -4323,16 +4731,17 @@ const en: typeof ar = {
         billingCycle: "Billing Cycle",
         status: "Status",
         startDate: "Start Date",
-        endDate: "End Date"
+        endDate: "End Date",
       },
       cancelConfirm: {
         title: "Cancel Subscription",
-        description: "Are you sure you want to cancel {{provider}}'s subscription to the {{plan}} plan? This action cannot be undone.",
-        confirm: "Confirm Cancellation"
+        description:
+          "Are you sure you want to cancel {{provider}}'s subscription to the {{plan}} plan? This action cannot be undone.",
+        confirm: "Confirm Cancellation",
       },
       success: {
-        cancelled: "Subscription cancelled successfully"
-      }
+        cancelled: "Subscription cancelled successfully",
+      },
     },
     plans: {
       title: "Subscription Plans",
@@ -4362,7 +4771,8 @@ const en: typeof ar = {
       errorTitle: "Failed to load subscription plans",
       empty: {
         title: "No subscription plans yet",
-        description: "Create your first plan to define pricing and billing cycles for service providers.",
+        description:
+          "Create your first plan to define pricing and billing cycles for service providers.",
       },
       card: {
         quickToggleLabel: "Activate or deactivate plan",
@@ -4437,7 +4847,8 @@ const en: typeof ar = {
         search: "Search for a service...",
         empty: "No services available",
         error: "Failed to load the service tree",
-        mockNotice: "The service list is still mock data; the real backend may reject assigning a mock service until the real Services API ships.",
+        mockNotice:
+          "The service list is still mock data; the real backend may reject assigning a mock service until the real Services API ships.",
         alreadyAssigned: "Assigned",
         done: "Done",
       },
@@ -4472,19 +4883,27 @@ const en: typeof ar = {
         providers: "Review providers",
         notifications: "Send notification",
         ads: "Advertisements",
-        settings: "Settings"
+        settings: "Settings",
       },
       totalUsers: "Total Users",
       activeProviders: "Active Providers",
       pendingVerifications: "Pending Verifications",
       monthlyRevenue: "Monthly Revenue",
       error: "Could not load data",
-      charts: { revenue:"Revenue Trend", users:"New Users",
-            providerStatus:"Provider Statuses", revenueTrendSoon:"Revenue trend will be available with historical data" },
-      providerStatus: { approved:"Approved", pending:"Pending", rejected:"Rejected" },
-      widgets: { recentActivity:"Recent Activity", pendingProviders:"Pending Providers",
-                 viewAll:"View All", empty:"Empty" },
-      trendVsLastMonth:"Compared to last month"
+      charts: {
+        revenue: "Revenue Trend",
+        users: "New Users",
+        providerStatus: "Provider Statuses",
+        revenueTrendSoon: "Revenue trend will be available with historical data",
+      },
+      providerStatus: { approved: "Approved", pending: "Pending", rejected: "Rejected" },
+      widgets: {
+        recentActivity: "Recent Activity",
+        pendingProviders: "Pending Providers",
+        viewAll: "View All",
+        empty: "Empty",
+      },
+      trendVsLastMonth: "Compared to last month",
     },
     categories: {
       title: "Categories",
@@ -4511,11 +4930,12 @@ const en: typeof ar = {
           purple: "Purple",
           red: "Red",
           navy: "Navy",
-        }
+        },
       },
       deleteConfirm: {
         title: "Delete Category",
-        description: "Are you sure you want to delete the category: {{name}}? Warning: This may affect providers and services linked to it.",
+        description:
+          "Are you sure you want to delete the category: {{name}}? Warning: This may affect providers and services linked to it.",
         confirm: "Delete Category",
         cancel: "Cancel",
       },
@@ -4558,7 +4978,7 @@ const en: typeof ar = {
         scopeLabel: "Provider Type",
         allProviders: "All Types",
         inheritedLabel: "inherited",
-      }
+      },
     },
     cities: {
       title: "Cities",
@@ -4577,7 +4997,8 @@ const en: typeof ar = {
       },
       deleteConfirm: {
         title: "Delete City",
-        description: "Are you sure you want to delete the city: {{name}}? This may affect associated service providers.",
+        description:
+          "Are you sure you want to delete the city: {{name}}? This may affect associated service providers.",
         confirm: "Delete City",
         cancel: "Cancel",
       },
@@ -4585,7 +5006,7 @@ const en: typeof ar = {
         created: "City created successfully",
         updated: "City updated successfully",
         deleted: "City deleted successfully",
-      }
+      },
     },
     brands: {
       title: "Brands",
@@ -4607,7 +5028,8 @@ const en: typeof ar = {
       },
       deleteConfirm: {
         title: "Delete Brand",
-        description: "Deleting the brand {{name}} will delete all its models ({{count}} models) and may affect associated vehicles.",
+        description:
+          "Deleting the brand {{name}} will delete all its models ({{count}} models) and may affect associated vehicles.",
         confirm: "Delete Brand",
         cancel: "Cancel",
         blocked: "This brand can't be deleted — it still has models or vehicles linked to it",
@@ -4616,7 +5038,7 @@ const en: typeof ar = {
         created: "Brand created successfully",
         updated: "Brand updated successfully",
         deleted: "Brand deleted successfully",
-      }
+      },
     },
     models: {
       title: "Models",
@@ -4636,7 +5058,8 @@ const en: typeof ar = {
       },
       deleteConfirm: {
         title: "Delete Model",
-        description: "Are you sure you want to delete the model: {{name}}? Warning: This may affect associated vehicles.",
+        description:
+          "Are you sure you want to delete the model: {{name}}? Warning: This may affect associated vehicles.",
         confirm: "Delete Model",
         cancel: "Cancel",
         blocked: "This model can't be deleted — it still has vehicles linked to it",
@@ -4645,7 +5068,7 @@ const en: typeof ar = {
         created: "Model created successfully",
         updated: "Model updated successfully",
         deleted: "Model deleted successfully",
-      }
+      },
     },
     services: {
       title: "Services",
@@ -4747,17 +5170,45 @@ const en: typeof ar = {
         },
         approveConfirm: {
           title: "Approve Provider",
-          description: "Are you sure you want to approve {{name}}? The provider will become visible to customers.",
+          description:
+            "Are you sure you want to approve {{name}}? The provider will become visible to customers.",
           button: "Approve",
           confirm: "Approve",
           cancel: "Cancel",
           success: "Approved successfully",
         },
-        commission: { title: "Commission & Dues", rate: "Commission Rate", edit: "Edit Rate", save: "Save", estimatedDues: "Estimated Dues", debtAlert: "Debt limit exceeded 500 SAR" },
-        workshop: { profileTitle: "Workshop Profile", specialization: "Specialization", rating: "Rating", photos: "Photos", location: "Location", viewMap: "View on Map" },
+        commission: {
+          title: "Commission & Dues",
+          rate: "Commission Rate",
+          edit: "Edit Rate",
+          save: "Save",
+          estimatedDues: "Estimated Dues",
+          debtAlert: "Debt limit exceeded 500 SAR",
+        },
+        workshop: {
+          profileTitle: "Workshop Profile",
+          specialization: "Specialization",
+          rating: "Rating",
+          photos: "Photos",
+          location: "Location",
+          viewMap: "View on Map",
+        },
         scrap: { specializationTitle: "Specialization", brands: "Brands" },
-        subscription: { title: "Subscription", plan: "Plan", cycle: "Billing Cycle", status: "Subscription Status", start: "Start Date", end: "End Date", none: "No Subscription" },
-        dealer: { storeSpecTitle: "Store Specialization", productsTitle: "Products & Inventory", productsCount: "Products", inventoryCount: "Total Inventory" },
+        subscription: {
+          title: "Subscription",
+          plan: "Plan",
+          cycle: "Billing Cycle",
+          status: "Subscription Status",
+          start: "Start Date",
+          end: "End Date",
+          none: "No Subscription",
+        },
+        dealer: {
+          storeSpecTitle: "Store Specialization",
+          productsTitle: "Products & Inventory",
+          productsCount: "Products",
+          inventoryCount: "Total Inventory",
+        },
       },
     },
     users: {
@@ -4821,7 +5272,8 @@ const en: typeof ar = {
       },
       restore: {
         title: "Restore user account",
-        description: "Are you sure you want to restore {{name}}'s account? The user will return to active status.",
+        description:
+          "Are you sure you want to restore {{name}}'s account? The user will return to active status.",
         button: "Restore account",
         confirm: "Restore account",
         cancel: "Cancel",
@@ -4882,24 +5334,48 @@ const en: typeof ar = {
       error: "Could not load users",
     },
 
-
     settings: {
-      title:"Settings", subtitle:"Manage system settings and toggle features",
-      maintenanceActive:"Alert: Maintenance mode is currently active — the platform is unavailable to users.",
-      tabs:{ general:"General", contact:"Contact", flags:"Features" },
-      general:{ heading:"General Settings", platformNameAr:"Platform Name (Arabic)",
-        platformNameEn:"Platform Name (English)", logoUrl:"Logo URL",
-        supportEmail:"Support Email", supportPhone:"Support Phone",
-        defaultCurrency:"Default Currency", defaultLanguage:"Default Language",
-        timezone:"Timezone", saved:"General settings saved" },
-      contact:{ heading:"Contact Settings", termsUrlAr:"Terms URL (Arabic)",
-        termsUrlEn:"Terms URL (English)", privacyUrlAr:"Privacy URL (Arabic)",
-        privacyUrlEn:"Privacy URL (English)", twitterUrl:"Twitter URL",
-        instagramUrl:"Instagram URL", whatsappNumber:"WhatsApp Number", saved:"Contact settings saved" },
-      flags:{ heading:"Experimental Features", add:"Add Feature", key:"Technical Key",
-        labelAr:"Name (Arabic)", labelEn:"Name (English)", descAr:"Description (Arabic)",
-        descEn:"Description (English)", enabled:"Enabled", remove:"Remove",
-        maintenanceWarn:"Enabling this feature stops the platform for users", saved:"Features saved" }
+      title: "Settings",
+      subtitle: "Manage system settings and toggle features",
+      maintenanceActive:
+        "Alert: Maintenance mode is currently active — the platform is unavailable to users.",
+      tabs: { general: "General", contact: "Contact", flags: "Features" },
+      general: {
+        heading: "General Settings",
+        platformNameAr: "Platform Name (Arabic)",
+        platformNameEn: "Platform Name (English)",
+        logoUrl: "Logo URL",
+        supportEmail: "Support Email",
+        supportPhone: "Support Phone",
+        defaultCurrency: "Default Currency",
+        defaultLanguage: "Default Language",
+        timezone: "Timezone",
+        saved: "General settings saved",
+      },
+      contact: {
+        heading: "Contact Settings",
+        termsUrlAr: "Terms URL (Arabic)",
+        termsUrlEn: "Terms URL (English)",
+        privacyUrlAr: "Privacy URL (Arabic)",
+        privacyUrlEn: "Privacy URL (English)",
+        twitterUrl: "Twitter URL",
+        instagramUrl: "Instagram URL",
+        whatsappNumber: "WhatsApp Number",
+        saved: "Contact settings saved",
+      },
+      flags: {
+        heading: "Experimental Features",
+        add: "Add Feature",
+        key: "Technical Key",
+        labelAr: "Name (Arabic)",
+        labelEn: "Name (English)",
+        descAr: "Description (Arabic)",
+        descEn: "Description (English)",
+        enabled: "Enabled",
+        remove: "Remove",
+        maintenanceWarn: "Enabling this feature stops the platform for users",
+        saved: "Features saved",
+      },
     },
   },
   providerService: {
@@ -4929,7 +5405,8 @@ const en: typeof ar = {
       emptyTitle: "No products yet",
       emptyDescription: "Add your first product by picking a service from the catalog",
       deleteConfirmTitle: "Delete Product",
-      deleteConfirmBody: "Are you sure you want to delete the product {{name}}? This cannot be undone.",
+      deleteConfirmBody:
+        "Are you sure you want to delete the product {{name}}? This cannot be undone.",
       form: {
         createTitle: "Add New Product",
         createSubtitle: "Pick a service from the catalog, then set price and quantity",
@@ -5198,7 +5675,8 @@ const en: typeof ar = {
         body: "Your outstanding dues have exceeded 500 SAR, which may trigger an admin review of your account. Please contact the platform to settle the balance.",
       },
       emptyTitle: "No earnings yet",
-      emptyDescription: "Your earnings and commissions will appear here once your first order is delivered",
+      emptyDescription:
+        "Your earnings and commissions will appear here once your first order is delivered",
       breakdownTitle: "Earnings Breakdown",
       breakdownGross: "Gross Sales",
       breakdownMinus: "Platform Commission",
@@ -5270,7 +5748,8 @@ const en: typeof ar = {
       title: "Conversations",
       subtitle: "Connect with customers through Maqwad",
       openChat: "Open chat",
-      comingSoonNote: "Customer conversations reach you via Maqwad's chat system — available here soon",
+      comingSoonNote:
+        "Customer conversations reach you via Maqwad's chat system — available here soon",
     },
     subscription: {
       title: "Subscription",
@@ -5421,7 +5900,8 @@ const en: typeof ar = {
       emptyTitle: "No parts yet",
       emptyDescription: "Add your first part by picking a service from the catalog",
       deleteConfirmTitle: "Delete Part",
-      deleteConfirmBody: "Are you sure you want to delete the part {{name}}? This cannot be undone.",
+      deleteConfirmBody:
+        "Are you sure you want to delete the part {{name}}? This cannot be undone.",
       form: {
         createTitle: "Add New Part",
         createSubtitle: "Pick a service from the catalog, then set price and quantity",
@@ -5568,7 +6048,8 @@ const en: typeof ar = {
       alreadyOfferedBadge: "You offered",
       statusUnknown: "In progress",
       browsingUnavailableTitle: "Browsing requests isn't available yet",
-      browsingUnavailableDescription: "We're working on enabling salvage part requests browsing for scrap providers. It will appear here once ready.",
+      browsingUnavailableDescription:
+        "We're working on enabling salvage part requests browsing for scrap providers. It will appear here once ready.",
       offer: {
         price: "Part Price (SAR)",
         note: "Note to Customer",
@@ -5750,7 +6231,8 @@ const en: typeof ar = {
     conversations: {
       title: "Conversations",
       subtitle: "Connect with customers through Maqwad",
-      comingSoonNote: "Customer conversations reach you via Maqwad's chat system — available here soon",
+      comingSoonNote:
+        "Customer conversations reach you via Maqwad's chat system — available here soon",
     },
   },
   providerUi: {
@@ -5797,7 +6279,8 @@ const en: typeof ar = {
     composerPlaceholder: "Type your message...",
     send: "Send",
     emptyListTitle: "No conversations this session",
-    emptyListDescription: "Conversations you send or receive a message in will appear here. Use \"New chat\" to start one.",
+    emptyListDescription:
+      'Conversations you send or receive a message in will appear here. Use "New chat" to start one.',
     emptyThreadTitle: "Select a conversation",
     emptyThreadDescription: "Choose a conversation from the list to view messages",
     noMessagesTitle: "No messages yet",
