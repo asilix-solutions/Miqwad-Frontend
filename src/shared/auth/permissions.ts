@@ -19,6 +19,13 @@
 // =============================================================================
 
 export const PERMISSIONS = {
+  coupons: {
+    view: "coupons.view",
+    create: "coupons.create",
+    edit: "coupons.edit",
+    toggle: "coupons.toggle",
+    delete: "coupons.delete",
+  },
   // ── Providers ──────────────────────────────────────────────────────────────
   providers: {
     view: "providers.view",
@@ -87,8 +94,6 @@ export const PERMISSIONS = {
     delete: "services.delete",
   },
 
-
-
   // ── Subscription Plans ─────────────────────────────────────────────────────
   // No `delete` — the backend has no DELETE endpoint for plans.
   plans: {
@@ -102,9 +107,6 @@ export const PERMISSIONS = {
   subscriptions: {
     view: "subscriptions.view",
   },
-
-
-
 
   // ── Bookings ───────────────────────────────────────────────────────────────
   bookings: {
@@ -204,7 +206,7 @@ export const PERMISSIONS = {
  */
 type ObjectValues<T> = T[keyof T];
 export type PermissionCode = ObjectValues<{
-  [K in keyof typeof PERMISSIONS]: ObjectValues<typeof PERMISSIONS[K]>
+  [K in keyof typeof PERMISSIONS]: ObjectValues<(typeof PERMISSIONS)[K]>;
 }>;
 
 // =============================================================================
