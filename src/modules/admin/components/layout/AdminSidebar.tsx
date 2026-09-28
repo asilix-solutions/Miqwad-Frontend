@@ -27,8 +27,15 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
 
+import {
+  getAdminRoute,
+  isAdminRouteVisible,
+  type AdminRoute,
+} from "../../config/featureCapabilities";
+import { usePermissions } from "@shared/auth/usePermissions";
+
 interface NavItem {
-  key: string;
+  key: AdminRoute;
   labelPath: string;
   path: string;
   icon: LucideIcon;
@@ -88,6 +95,11 @@ const NAV_ITEMS: NavItem[] = [
 
 export function AdminSidebar() {
   const { t } = useTranslation();
+  const { can } = usePermissions();
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    const route = getAdminRoute(item.path);
+    return route && isAdminRouteVisible(route) && (!route.permission || can(route.permission));
+  });
 
   return (
     <aside
@@ -111,7 +123,7 @@ export function AdminSidebar() {
 
       {/* Navigation Links */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6">
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.key}
             to={item.path}

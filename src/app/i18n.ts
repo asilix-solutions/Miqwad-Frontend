@@ -605,6 +605,11 @@ const ar = {
     empty: "لا توجد فئات للعرض",
   },
   admin: {
+    featureUnavailable: {
+      badge: "قريبًا",
+      title: "هذه الميزة غير متاحة حاليًا",
+      description: "سيصبح هذا القسم متاحًا بعد اكتمال تجهيزه.",
+    },
     title: "لوحة المسؤول",
     logout: "تسجيل الخروج",
     profileMenuItem: "الملف الشخصي",
@@ -3767,6 +3772,11 @@ const en: typeof ar = {
     empty: "No categories to display",
   },
   admin: {
+    featureUnavailable: {
+      badge: "Coming soon",
+      title: "This feature is not available yet",
+      description: "This section will become available once it is ready.",
+    },
     title: "Admin",
     logout: "Log out",
     profileMenuItem: "Profile",

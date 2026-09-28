@@ -3,6 +3,29 @@
 > Operational snapshot; repository history and verified runtime behavior take precedence.
 > Engineering rules: `/AGENTS.md`. Backend evidence: `BACKEND_VERIFIED_FACTS.md`.
 
+## Current work — Admin production availability, 2026-09-28
+
+- Refinement baseline: `origin/main` / HEAD `f82a7b864e47e6a27b64bbf9fba8bdd901f95624`
+  (PR #77). The existing availability work started at `347e466` and was preserved
+  byte-for-byte while fast-forwarding this same branch to the requested baseline.
+- Branch: `fix/admin-production-feature-availability`; isolated worktree.
+  Existing dirty worktrees were not modified or copied into this change.
+- Explicit capability gating keeps LIVE sections and real request errors;
+  MOCK_ONLY implementations require explicitly enabled development mocks.
+  Providers, Revenues, Notifications, Complaints and Settings stay visible under
+  existing RBAC and show a neutral COMING_SOON page when unavailable, without
+  mounting their original pages/queries. Other unsupported widgets, actions and
+  reference tabs remain hidden. PARTIAL pages retain live portions; STATIC stays;
+  UNKNOWN mappings need an audit, never a guessed endpoint substitution.
+- Full route/widget classification, flag precedence, constraints and manual QA:
+  [ADMIN_FEATURE_AVAILABILITY.md](ADMIN_FEATURE_AVAILABILITY.md).
+- Refinement validation: typecheck/build/focused lint/focused format/diff-check
+  pass; isolated rendering checks cover route presentation and existing RBAC.
+  Manual Arabic/English and network-panel QA remains required.
+- The original safety patch is untouched; this refinement is uncommitted.
+  No new commit or push; no protected branch changed. Visual QA is left to the user.
+  No fresh authenticated backend behavior is claimed by this source audit.
+
 ## Verified baseline — 2026-09-23
 
 - Repository: `asilix-solutions/Miqwad-Frontend`.
@@ -14,7 +37,7 @@
 - Test/Stage and historical branches were not changed or re-audited for this task.
 - `p6-dropdown-theme` remains intentionally preserved for separate manual UI review.
 
-## Active work
+## Historical Coupons work (now incorporated in main)
 
 - Branch: `feat/admin-coupons-live-contract`, based exactly on the Develop SHA above.
 - Admin Coupons implemented as an uncommitted patch: list/detail, verified query

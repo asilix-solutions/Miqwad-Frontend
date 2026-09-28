@@ -16,8 +16,9 @@ export const servicesKeys = {
 
 const STABLE = 30 * 60 * 1000;
 
-export function useServiceCategoriesQuery() {
+export function useServiceCategoriesQuery(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: servicesKeys.categories(),
     queryFn: () => servicesApi.categories(),
     staleTime: STABLE,

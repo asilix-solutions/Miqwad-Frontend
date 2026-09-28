@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useAppSelector } from "@app/store";
 import { usePermissions } from "@shared/auth/usePermissions";
 
+import { isAdminFeatureAvailable } from "../config/featureCapabilities";
 import { UsersPanel } from "../components/users/UsersPanel";
 import { AddUserDialog } from "../components/users/AddUserDialog";
 import { AddAdminDialog } from "../components/users/AddAdminDialog";
@@ -28,7 +29,8 @@ export function AdminUsersPage() {
 
   // UX gating only — the real authorization boundary is server-side
   // ([Authorize(Roles=Admin)] on POST /api/Users). See adminApi.createAdmin.
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin, can } = usePermissions();
+  const canCreateUser = isAdminFeatureAvailable("createUser") && can("users.create");
   const currentUser = useAppSelector((s) => s.auth.user);
   const canManageAdmins =
     isSuperAdmin || currentUser?.role === "admin" || currentUser?.role === "super_admin";
@@ -40,18 +42,18 @@ export function AdminUsersPage() {
           <h1 className="text-3xl font-bold tracking-tight text-[var(--color-ink-body)]">
             {t("superAdmin.users.title")}
           </h1>
-          <p className="text-muted-foreground">
-            {t("superAdmin.users.subtitle")}
-          </p>
+          <p className="text-muted-foreground">{t("superAdmin.users.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setAddUserOpen(true)}
-            className="gap-2 bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            {t("superAdmin.users.create.trigger")}
-          </Button>
+          {canCreateUser && (
+            <Button
+              onClick={() => setAddUserOpen(true)}
+              className="gap-2 bg-[var(--color-brand-orange)] text-white hover:bg-[var(--color-brand-orange-hover)]"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              {t("superAdmin.users.create.trigger")}
+            </Button>
+          )}
           {canManageAdmins && (
             <Button
               onClick={() => setAddAdminOpen(true)}
@@ -65,13 +67,11 @@ export function AdminUsersPage() {
         </div>
       </div>
 
-      {addUserOpen && (
+      {canCreateUser && addUserOpen && (
         <AddUserDialog open={addUserOpen} onOpenChange={setAddUserOpen} />
       )}
 
-      {addAdminOpen && (
-        <AddAdminDialog open={addAdminOpen} onOpenChange={setAddAdminOpen} />
-      )}
+      {addAdminOpen && <AddAdminDialog open={addAdminOpen} onOpenChange={setAddAdminOpen} />}
 
       <UsersPanel />
     </div>

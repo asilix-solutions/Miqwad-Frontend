@@ -28,6 +28,7 @@
  *   fallback/catch UIs
  */
 
+import { AdminFeatureGuard } from "@modules/admin/components/shared/AdminFeatureGuard";
 import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { AppLayout } from "@shared/components/layout/AppLayout";
@@ -795,8 +796,12 @@ export const router = createBrowserRouter([
         ),
         children: [
           {
-            // Suspense boundary for all /admin/* pages
-            element: <SuspenseOutlet />,
+            // Availability is separate from the role/permission guards below.
+            element: (
+              <AdminFeatureGuard>
+                <SuspenseOutlet />
+              </AdminFeatureGuard>
+            ),
             children: [
               { index: true, element: <Navigate to="dashboard" replace /> },
               {
