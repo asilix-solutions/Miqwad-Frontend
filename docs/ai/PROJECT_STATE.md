@@ -13,9 +13,13 @@
 - Explicit capability gating keeps LIVE sections and real request errors;
   MOCK_ONLY implementations require explicitly enabled development mocks.
   Providers, Revenues, Notifications, Complaints and Settings stay visible under
-  existing RBAC and show a neutral COMING_SOON page when unavailable, without
+  existing RBAC and show a neutral COMING_SOON page only in production when
+  unavailable, without
   mounting their original pages/queries. Other unsupported widgets, actions and
-  reference tabs remain hidden. PARTIAL pages retain live portions; STATIC stays;
+  reference tabs remain hidden. Local development always opens original known
+  routes, never Coming Soon; explicit mocks are needed for mock-backed behavior.
+  With local mocks OFF, unsupported endpoint requests may fail normally.
+  PARTIAL pages retain live portions; STATIC stays;
   UNKNOWN mappings need an audit, never a guessed endpoint substitution.
 - Full route/widget classification, flag precedence, constraints and manual QA:
   [ADMIN_FEATURE_AVAILABILITY.md](ADMIN_FEATURE_AVAILABILITY.md).

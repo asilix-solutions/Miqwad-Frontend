@@ -63,11 +63,21 @@ export interface AdminRouteDefinition {
   unavailableBehavior?: UnavailableRouteBehavior;
 }
 
+/** Production presentation only; this never changes implementation availability. */
+export function shouldShowAdminComingSoon(route: AdminRouteDefinition): boolean {
+  return (
+    import.meta.env.PROD &&
+    route.unavailableBehavior === "COMING_SOON" &&
+    adminFeatureCapabilities[route.feature] === "MOCK_ONLY" &&
+    !isAdminFeatureAvailable(route.feature)
+  );
+}
+
 export function isAdminRouteVisible(route: AdminRouteDefinition): boolean {
   return (
+    import.meta.env.DEV ||
     isAdminFeatureAvailable(route.feature) ||
-    (adminFeatureCapabilities[route.feature] === "MOCK_ONLY" &&
-      route.unavailableBehavior === "COMING_SOON")
+    shouldShowAdminComingSoon(route)
   );
 }
 

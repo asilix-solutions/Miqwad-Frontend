@@ -69,9 +69,13 @@ and its queries are `admin/hooks/useAdminQueries.ts` unless noted otherwise.
 permissions. LIVE, PARTIAL and intentional STATIC content remain available.
 MOCK_ONLY implementations still require explicit development mocks. Route
 presentation is independent: Providers, Revenues, Notifications, Complaints and
-Settings use COMING_SOON when unavailable, so their authorized sidebar entries
+Settings use COMING_SOON only in production when unavailable, so their authorized sidebar entries
 remain clickable in their original order. Other unavailable routes default to
-HIDDEN. UNKNOWN fails closed pending audit. No status depends on network failures or query results.
+HIDDEN in production. UNKNOWN fails closed pending audit. Local development
+passes known routes through to their original pages and normal RBAC, never
+substituting AdminFeatureUnavailablePage. Sidebar route visibility is separate
+from widget/action availability: local route access does not enable mocks or
+restore gated partial-page widgets. No status depends on network failures or query results.
 
 `shared/config/mockMode.ts` resolves
 `DEV && (VITE_ENABLE_MOCKS ?? VITE_USE_MOCKS) === "true"`.
@@ -92,13 +96,13 @@ uses `isAdminRouteVisible` AND the existing route permission. Quick actions
 and widgets still use `isAdminFeatureAvailable`, never route visibility.
 The five selected routes remain MOCK_ONLY, not STATIC or LIVE.
 
-AdminFeatureGuard sits above the existing role/permission tree. For COMING_SOON
+AdminFeatureGuard sits above the existing role/permission tree. For production COMING_SOON
 it checks authenticated Admin/super_admin identity and the route permission
 before returning the neutral page. Unauthorized visitors continue into the
 existing guards for login, wrong-role redirect or permission-denied handling;
 the original feature page remains protected. Authorized visitors receive the
 fallback without mounting children, including `/admin/providers/:id`.
-Other unavailable routes still redirect to `/admin/dashboard` with replace.
+Other unavailable routes in production still redirect to `/admin/dashboard` with replace.
 
 The unavailable page uses neutral tokens, a static Lucide icon, a Coming soon
 badge and three Arabic/English i18n keys. It has no retry, loading animation,
@@ -126,6 +130,12 @@ exclusion are unchanged. No new API request or dependency was introduced.
 
 ## Coming-soon refinement validation
 
+- Production-only matrix: isolated rendering checks pass for DEV mocks ON,
+  DEV mocks OFF, and production with either flag value, including nested
+  provider detail, original-page mount prevention in production, unchanged
+  widget gates, unknown/HIDDEN routes, and existing role/permission guards.
+  Browser/preview visual and network-panel QA remains a user gate.
+
 - Typecheck, production build, focused ESLint/Prettier on this refinement's
   source files and `git diff --check`: PASS.
 - Build retains the npm `http-proxy` environment warning and >500 kB chunk
@@ -141,7 +151,8 @@ exclusion are unchanged. No new API request or dependency was introduced.
 
 ## Manual QA — coming-soon refinement (user required)
 
-1. Set `VITE_ENABLE_MOCKS=false`, restart and sign in as Admin. Subject to RBAC,
+1. Run `npm run build` then `npm run preview` and sign in as Admin. Mocks are
+   always disabled in this production build. Subject to RBAC,
    all 17 original top-level entries remain: Dashboard, Providers, Users,
    Addresses, Orders, Coupons, Invoices, Reference, Taxonomy, Attachments,
    Subscriptions, Revenues, Notifications, Ads, Complaints, Audit and Settings.
@@ -160,9 +171,13 @@ exclusion are unchanged. No new API request or dependency was introduced.
 5. Reference cities/services tab deep links fall back to Categories; live
    categories/brands remain and legacy tree actions stay hidden. `/admin/cities`
    still redirects safely. Live taxonomy services remain available.
-6. With `VITE_ENABLE_MOCKS=true` in development, the five original mock pages
-   mount normally and Coming soon is absent. Explicit false overrides the
-   legacy true flag; production always disables mocks regardless of flags.
+6. With `VITE_ENABLE_MOCKS=true` and `npm run dev`, the five original mock
+   pages mount normally and Coming soon is absent. Repeat with the flag false:
+   original pages still mount, but requests use real transport, so unsupported
+   endpoints may produce normal request errors. This dev-only mode is not a
+   promise of a working backend. Partial-page gates remain unchanged. No mocks
+   are implicitly enabled. Explicit false overrides the legacy true flag;
+   production always disables mocks regardless of flags.
 7. Check Arabic RTL and English LTR, keyboard navigation and narrow layouts.
    The fixed 260px Admin sidebar is an existing limitation, not redesigned.
 

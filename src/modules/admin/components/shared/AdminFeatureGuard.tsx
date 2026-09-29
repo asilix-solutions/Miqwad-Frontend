@@ -5,7 +5,7 @@ import { usePermissions } from "@shared/auth/usePermissions";
 import {
   getAdminRoute,
   isAdminFeatureAvailable,
-  isAdminRouteVisible,
+  shouldShowAdminComingSoon,
 } from "../../config/featureCapabilities";
 import { AdminFeatureUnavailablePage } from "./AdminFeatureUnavailablePage";
 
@@ -16,9 +16,11 @@ export function AdminFeatureGuard({ children }: { children: ReactNode }) {
   const { can } = usePermissions();
   const route = getAdminRoute(pathname);
   if (!route) return <Navigate to="/admin/dashboard" replace />;
-  if (isAdminFeatureAvailable(route.feature)) return children;
+  // Local route inspection is allowed even without mocks. Requests then use
+  // real transport and may fail; never disguise that with production UX.
+  if (isAdminFeatureAvailable(route.feature) || import.meta.env.DEV) return children;
 
-  if (isAdminRouteVisible(route)) {
+  if (shouldShowAdminComingSoon(route)) {
     // This guard sits ABOVE RoleGuard/PermissionGuard. Only authorized Admins
     // may see the fallback. Otherwise delegate to those existing guards so
     // login, wrong-role redirects and the permission-denied screen stay intact.
