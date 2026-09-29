@@ -16,6 +16,7 @@ export const adminFeatureCapabilities = {
   orders: "LIVE",
   coupons: "LIVE",
   invoices: "LIVE",
+  transactions: "LIVE",
   reference: "PARTIAL",
   referenceCategories: "PARTIAL",
   legacyCategoryTree: "MOCK_ONLY",
@@ -94,6 +95,8 @@ export const adminRoutes = {
   orders: { feature: "orders", permission: "orders.view" },
   coupons: { feature: "coupons", permission: "coupons.view" },
   invoices: { feature: "invoices", permission: "invoices.view" },
+  // No dedicated Transactions permission exists; the router retains Admin RoleGuard.
+  transactions: { feature: "transactions" },
   reference: { feature: "reference", permission: "categories.view" },
   taxonomy: { feature: "taxonomy", permission: "categories.view" },
   attachments: { feature: "attachments", permission: "attachments.view" },

@@ -809,6 +809,15 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "dashboard", element: <AdminDashboardPage /> },
                   {
+                    path: "transactions",
+                    // Admin-level protection above; no unrelated permission substitution.
+                    lazy: async () => {
+                      const { AdminTransactionsPage } =
+                        await import("@modules/transactions/pages/AdminTransactionsPage");
+                      return { Component: AdminTransactionsPage };
+                    },
+                  },
+                  {
                     path: "users",
                     element: <PermissionGuard permission="users.view" />,
                     children: [

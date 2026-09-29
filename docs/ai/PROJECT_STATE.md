@@ -3,32 +3,30 @@
 > Operational snapshot; repository history and verified runtime behavior take precedence.
 > Engineering rules: `/AGENTS.md`. Backend evidence: `BACKEND_VERIFIED_FACTS.md`.
 
-## Current work — Admin production availability, 2026-09-28
+## Current work — Admin Dealer Balances, 2026-09-29
 
-- Refinement baseline: `origin/main` / HEAD `f82a7b864e47e6a27b64bbf9fba8bdd901f95624`
-  (PR #77). The existing availability work started at `347e466` and was preserved
-  byte-for-byte while fast-forwarding this same branch to the requested baseline.
-- Branch: `fix/admin-production-feature-availability`; isolated worktree.
-  Existing dirty worktrees were not modified or copied into this change.
-- Explicit capability gating keeps LIVE sections and real request errors;
-  MOCK_ONLY implementations require explicitly enabled development mocks.
-  Providers, Revenues, Notifications, Complaints and Settings stay visible under
-  existing RBAC and show a neutral COMING_SOON page only in production when
-  unavailable, without
-  mounting their original pages/queries. Other unsupported widgets, actions and
-  reference tabs remain hidden. Local development always opens original known
-  routes, never Coming Soon; explicit mocks are needed for mock-backed behavior.
-  With local mocks OFF, unsupported endpoint requests may fail normally.
-  PARTIAL pages retain live portions; STATIC stays;
-  UNKNOWN mappings need an audit, never a guessed endpoint substitution.
-- Full route/widget classification, flag precedence, constraints and manual QA:
-  [ADMIN_FEATURE_AVAILABILITY.md](ADMIN_FEATURE_AVAILABILITY.md).
-- Refinement validation: typecheck/build/focused lint/focused format/diff-check
-  pass; isolated rendering checks cover route presentation and existing RBAC.
-  Manual Arabic/English and network-panel QA remains required.
-- The original safety patch is untouched; this refinement is uncommitted.
-  No new commit or push; no protected branch changed. Visual QA is left to the user.
-  No fresh authenticated backend behavior is claimed by this source audit.
+- Source of truth: `origin/main`; Develop is no longer the integration baseline
+  for this work. Exact base: `e5014281cbb31526de5f0b3ec30ef0d0593d5f59` (PR #78).
+- Admin Production Feature Availability is now merged, including production-only
+  Coming Soon. Existing classifications, guards and mock restrictions remain intact.
+- Branch: `feat/admin-transactions-live-contract`; isolated worktree rebuilt from
+  current main. Other dirty worktrees remain untouched.
+- New LIVE `/admin/transactions`: Dealer Balances / أرصدة التجار, with paginated
+  reads, detail, create, final-balance/status editing and confirmed deletion.
+  Admin-level RBAC is preserved; no Transactions permission currently exists.
+- Users.id for roleId=2 is sent as dealerId. Final balance is SAR, never a delta.
+  Explicit paginated Dealer selection; no unsupported global filters/search.
+- V1 one-record-per-dealer UX uses uncached preflight; backend uniqueness remains
+  unconfirmed. Mutation responses/authorization have not been live write-tested.
+- Delivery: self-contained patch against the exact base above. No commit, push,
+  merge, live writes, browser automation or claimed visual QA.
+- Validation: typecheck/build pass; new module and non-router touched sources
+  pass focused ESLint; all touched source passes Prettier. Router retains its
+  43 baseline Fast Refresh errors. Full lint matches clean main (106 errors,
+  24 warnings); full format retains baseline failures, including UTF-16 Swagger.
+  Seven offline contract/domain check groups pass; no automated test script exists.
+- Manual Arabic/English, responsive, error and CRUD QA remains a release gate.
+  Existing fixed-width Admin sidebar behavior is outside this module's scope.
 
 ## Verified baseline — 2026-09-23
 

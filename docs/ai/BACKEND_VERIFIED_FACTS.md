@@ -791,3 +791,58 @@ facts, not observed write behavior:
 **Re-verification trigger:** Write deployment, date/timezone or boundary semantics,
 multiple simultaneous generic filters, null business semantics, authorization,
 sort correctness with multiple records, or any DTO/envelope change.
+
+## 22. Transactions / Dealer Balances
+
+### LIVE VERIFIED — supplied pre-implementation audit
+
+The approved task reports GET `/api/transaction` returning
+`{success,message,data:{items,pageNumber,pageSize,totalCount,totalPages},errors}`;
+PageNumber starts at 1 and PageSize is at most 100. Missing detail and dealer
+lookup return 404. GET `/api/transaction/dealer/{dealerId}` returns a single
+entity, not a collection. Users filtered with `FilterBy=roleId&FilterValue=2`
+return Dealer users. These are the supplied prior audit findings, not new
+authenticated probes during this implementation.
+
+### BACKEND BUSINESS CLARIFICATION — 2026-09-29
+
+- `balance` is the FINAL stored balance; POST and PUT set/replace it. No delta,
+  deposit, withdrawal, settlement, payment history, or ledger semantics.
+- Currency is SAR. Display formatting does not round or alter the write value.
+- `dealerId` is `Users.id` for `roleId=2`; there is no separate Dealer identity.
+  The existing Users adapter calls the wire `roleId` field `role`.
+
+### SWAGGER DOCUMENTED — re-read 2026-09-29, NOT LIVE-MUTATED
+
+- Entity: `id`, `dealerId` (int64); nullable `dealerName`; `balance` (double);
+  `isActive` (boolean); `createdAt` and nullable `updatedAt` (date-time).
+- POST `/api/transaction`: required `dealerId`, `balance`.
+- PUT `/api/transaction/{id}`: required `balance`, plus `isActive` (always sent
+  explicitly by this UI). No dealer reassignment field.
+- Neither write DTO specifies a minimum balance: negative/fractional finite
+  numbers are accepted by the form, without client arithmetic or rounding.
+- POST documents 200/201, PUT 200 with entity envelope; DELETE 200 with a
+  Task-shaped `data` envelope. Validate success and refetch; do not display the
+  mutation body as financial truth. No live POST/PUT/DELETE was performed.
+- Generic filter/sort parameters are documented but their semantics are not
+  proven; only pagination is exposed. Nullable page `items` is tolerated only
+  when totalCount is zero, never used to conceal a populated response failure.
+- Bare date strings retain existing formatting; no timezone suffix is appended.
+
+### IMPLEMENTATION ASSUMPTION — V1, not backend uniqueness proof
+
+One record per Dealer is a conservative UI policy isolated in
+`createDealerBalance.ts`. Before POST, re-read the selected User (must still
+be roleId=2) and perform an uncached dealer lookup. Existing record blocks POST
+and offers editing; only a JSON failure-envelope 404 with null data establishes
+absence. Other errors abort. The loaded list is an additional local warning,
+not a complete uniqueness index. A concurrent external creation can still race
+this preflight: backend uniqueness enforcement is unconfirmed.
+
+Transactions has no dedicated permission in the current frontend permission
+registry. The route remains inside the authenticated Admin/super_admin role
+guard; server write authorization is still the security boundary. No unrelated
+permission is substituted. Production availability is LIVE, independent of mocks.
+
+**Re-verification trigger:** live mutation behavior, concurrency/uniqueness,
+permission deployment, new query semantics, or DTO/currency/timezone changes.

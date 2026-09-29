@@ -3,6 +3,65 @@ import { initReactI18next } from "react-i18next";
 import { storage, StorageKeys } from "@shared/lib/storage";
 
 const ar = {
+  transactions: {
+    title: "أرصدة التجار",
+    subtitle: "إدارة أرصدة حسابات التجار وحالة تفعيلها",
+    create: "إضافة رصيد تاجر",
+    edit: "تعديل رصيد التاجر",
+    details: "التفاصيل",
+    deleteTitle: "حذف سجل رصيد التاجر",
+    dialogHint: "الرصيد قيمة نهائية للحساب بالريال السعودي، وليس مبلغ إضافة أو خصم.",
+    dealer: "التاجر",
+    balance: "الرصيد الحالي",
+    finalBalance: "الرصيد النهائي (ر.س)",
+    balanceHelp:
+      "أدخل الرصيد النهائي لحساب التاجر. سيحل هذا المبلغ محل الرصيد السابق، دون إضافة أو طرح.",
+    active: "نشط",
+    inactive: "غير نشط",
+    createdAt: "تاريخ الإنشاء",
+    updatedAt: "آخر تحديث",
+    notUpdated: "لم يُحدّث",
+    recordId: "معرّف سجل الرصيد",
+    dealerUserId: "معرّف مستخدم التاجر",
+    userId: "مستخدم #{{id}}",
+    unnamed: "اسم التاجر غير متوفر",
+    dealerHelp:
+      "تجار من قائمة المستخدمين الفعلية. تنقّل بين الصفحات للوصول إلى بقية التجار؛ هذه ليست قائمة كاملة.",
+    selected: "التاجر المحدد: {{name}} — #{{id}}",
+    noDealersPage: "لا يوجد تجار قابلون للاختيار في هذه الصفحة.",
+    checking: "جارٍ التحقق من وجود سجل رصيد للتاجر…",
+    exists: "يوجد بالفعل سجل رصيد لهذا التاجر. عدّل السجل الموجود بدل إنشاء سجل آخر.",
+    editExisting: "تعديل السجل الموجود",
+    created: "تم إنشاء سجل رصيد التاجر.",
+    updated: "تم تحديث الرصيد النهائي وحالة التفعيل.",
+    deleted: "تم حذف سجل رصيد التاجر.",
+    deleteDescription:
+      "سيُحذف سجل الرصيد هذا. لا يفترض هذا الإجراء حذف الطلبات أو الفواتير أو أي سجلات أخرى.",
+    empty: "لا توجد أرصدة تجار بعد",
+    emptyHint: "أضف سجل رصيد، ثم حدّد التاجر وقيمة الرصيد النهائي.",
+    emptyPage: "لا توجد سجلات في هذه الصفحة.",
+    results: "عدد سجلات الأرصدة: {{count}}",
+    pageSize: "عدد السجلات في الصفحة",
+    pagination: "صفحات السجلات",
+    pageOf: "صفحة {{page}} من {{total}}",
+    detailRecord: "عرض رصيد {{name}}",
+    editRecord: "تعديل رصيد {{name}}",
+    deleteRecord: "حذف سجل رصيد {{name}}",
+    validation: {
+      balance: "أدخل رصيدًا نهائيًا رقميًا صالحًا. الكسور والقيم السالبة مسموحة.",
+      dealer: "اختر تاجرًا من قائمة المستخدمين.",
+    },
+    errors: {
+      request:
+        "تعذّر إكمال الطلب. تحقّق من الاتصال وأعد المحاولة. إذا فشلت عملية حفظ، تحقّق من البيانات قبل تكرارها.",
+      dealer: "الحساب المحدد لم يعد حساب تاجر صالحًا. اختر تاجرًا آخر.",
+      contract: "استجابة الخادم لا تطابق العقد المتوقع. لم نفترض نجاح العملية أو غياب السجل.",
+      unauthorized: "انتهت صلاحية الجلسة. سجّل الدخول مجددًا قبل المتابعة.",
+      forbidden: "لا يسمح الخادم بهذا الإجراء لحسابك.",
+      notFound: "لم يُعثر على سجل الرصيد. حدّث القائمة.",
+      conflict: "تعذّر حفظ السجل بسبب تعارض. تحقّق من الرصيد الموجود وحدّث البيانات.",
+    },
+  },
   coupons: {
     title: "كوبونات الخصم",
     subtitle: "إدارة قواعد الخصم والاستخدام ومواعيد الصلاحية.",
@@ -3164,6 +3223,68 @@ const ar = {
 };
 
 const en: typeof ar = {
+  transactions: {
+    title: "Dealer Balances",
+    subtitle: "Manage dealer account balances and activation status.",
+    create: "Add dealer balance",
+    edit: "Edit dealer balance",
+    details: "Details",
+    deleteTitle: "Delete dealer balance record",
+    dialogHint: "The balance is the final account value in SAR, not an amount to add or subtract.",
+    dealer: "Dealer",
+    balance: "Current balance",
+    finalBalance: "Final balance (SAR)",
+    balanceHelp:
+      "Enter the dealer account’s final balance. This replaces the previous value; it does not add or subtract an amount.",
+    active: "Active",
+    inactive: "Inactive",
+    createdAt: "Created at",
+    updatedAt: "Last updated",
+    notUpdated: "Not updated",
+    recordId: "Balance record ID",
+    dealerUserId: "Dealer user ID",
+    userId: "User #{{id}}",
+    unnamed: "Dealer name unavailable",
+    dealerHelp:
+      "Dealers from the real Users directory. Browse the pages for more dealers; this is not an exhaustive list.",
+    selected: "Selected dealer: {{name}} — #{{id}}",
+    noDealersPage: "No selectable dealers on this page.",
+    checking: "Checking for an existing dealer balance…",
+    exists:
+      "A balance record already exists for this dealer. Edit the existing record instead of creating another.",
+    editExisting: "Edit existing record",
+    created: "Dealer balance record created.",
+    updated: "Final balance and activation status updated.",
+    deleted: "Dealer balance record deleted.",
+    deleteDescription:
+      "This removes this balance record. It does not imply deletion of orders, invoices, or other records.",
+    empty: "No dealer balances yet",
+    emptyHint: "Add a balance record, then select a dealer and enter the final balance.",
+    emptyPage: "No records on this page.",
+    results: "Balance records: {{count}}",
+    pageSize: "Records per page",
+    pagination: "Record pages",
+    pageOf: "Page {{page}} of {{total}}",
+    detailRecord: "View balance for {{name}}",
+    editRecord: "Edit balance for {{name}}",
+    deleteRecord: "Delete balance record for {{name}}",
+    validation: {
+      balance: "Enter a valid numeric final balance. Decimals and negative values are allowed.",
+      dealer: "Select a dealer from the Users directory.",
+    },
+    errors: {
+      request:
+        "The request could not be completed. Check your connection and retry. After a failed save, check the records before submitting again.",
+      dealer: "The selected account is no longer a valid Dealer. Select another dealer.",
+      contract:
+        "The server response does not match the expected contract. Success or record absence was not assumed.",
+      unauthorized: "Your session has expired. Sign in again before continuing.",
+      forbidden: "The server does not permit this action for your account.",
+      notFound: "The balance record was not found. Refresh the list.",
+      conflict:
+        "The record could not be saved due to a conflict. Check the existing balance and refresh the data.",
+    },
+  },
   coupons: {
     title: "Coupons",
     subtitle: "Manage discount rules, usage and validity windows.",
