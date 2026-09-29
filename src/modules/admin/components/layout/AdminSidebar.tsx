@@ -23,6 +23,7 @@ import {
   ShoppingCart,
   ReceiptText,
   TicketPercent,
+  Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -73,6 +74,12 @@ const NAV_ITEMS: NavItem[] = [
     labelPath: "adminNav.subscriptions",
     path: "/admin/subscriptions",
     icon: CreditCard,
+  },
+  {
+    key: "transactions",
+    labelPath: "transactions.title",
+    path: "/admin/transactions",
+    icon: Wallet,
   },
   { key: "revenues", labelPath: "adminNav.revenues", path: "/admin/revenues", icon: TrendingUp },
 
