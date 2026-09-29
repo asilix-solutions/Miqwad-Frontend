@@ -13,13 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Can } from "@shared/auth/Can";
 import { useToast } from "@shared/components/ui/toastContext";
 import { getCategoryTree } from "@modules/services/lib/categoryTree";
-import type { CategoryTreeNode as CategoryNodeData, ServiceCategory } from "@modules/services/types";
+import type {
+  CategoryTreeNode as CategoryNodeData,
+  ServiceCategory,
+} from "@modules/services/types";
 import type { ProviderType } from "@modules/providers/types";
 import {
-  useAdminCategoriesQuery,
   usePatchCategoryActiveMutation,
   useParentCategoriesQuery,
 } from "../../../hooks/useAdminQueries";
+import { isAdminFeatureAvailable } from "../../../config/featureCapabilities";
+import { useServiceCategoriesQuery } from "@modules/services/hooks/useServicesQueries";
 import { CategoryTreeNode } from "./CategoryTreeNode";
 import { CategoryFormDialog } from "../CategoryFormDialog";
 import { DeleteCategoryDialog } from "../DeleteCategoryDialog";
@@ -79,13 +83,13 @@ function SkeletonRows() {
   return (
     <div className="divide-y divide-[var(--color-divider)]">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex items-center gap-3 px-3 py-3 animate-pulse">
+        <div key={i} className="flex animate-pulse items-center gap-3 px-3 py-3">
           <span className="h-4 w-4 rounded bg-[var(--color-surface-2)]" />
           <span className="h-4 w-4 rounded bg-[var(--color-surface-2)]" />
           <div className="flex-1 space-y-1">
             <span
               className="block h-3.5 rounded bg-[var(--color-surface-2)]"
-              style={{ width: `${40 + (i * 13) % 30}%` }}
+              style={{ width: `${40 + ((i * 13) % 30)}%` }}
             />
             <span className="block h-2.5 w-24 rounded bg-[var(--color-surface-2)]" />
           </div>
@@ -139,7 +143,8 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 export function CategoryTree() {
   const { t } = useTranslation();
   const toast = useToast();
-  const q = useAdminCategoriesQuery();
+  const legacyTreeEnabled = isAdminFeatureAvailable("legacyCategoryTree");
+  const q = useServiceCategoriesQuery(legacyTreeEnabled);
   const parentsQuery = useParentCategoriesQuery({ pageSize: 100 });
   const patchActiveMutation = usePatchCategoryActiveMutation();
 
@@ -159,22 +164,15 @@ export function CategoryTree() {
     isRealParent: false,
   });
 
-  const isLoading = q.isLoading || parentsQuery.isLoading;
-  const isError = q.isError || parentsQuery.isError;
+  const isLoading = (legacyTreeEnabled && q.isLoading) || parentsQuery.isLoading;
+  const isError = (legacyTreeEnabled && q.isError) || parentsQuery.isError;
 
-  // Real parent categories (level 1, from /api/Categories) merged with the
-  // existing mocked tree (all levels, including legacy mock L1 roots) —
-  // mock L2/L3 keep resolving their parent chain through the mock roots,
-  // so nothing there can break; real parents show up as additional roots.
+  // Live parents must render without a successful legacy/mock tree request.
   const realParents = parentsQuery.data?.items;
-  const realParentIds = useMemo(
-    () => new Set((realParents ?? []).map((c) => c.id)),
-    [realParents],
-  );
+  const realParentIds = useMemo(() => new Set((realParents ?? []).map((c) => c.id)), [realParents]);
   const mergedCategories = useMemo((): ServiceCategory[] => {
-    if (!q.data) return [];
-    return [...(realParents ?? []), ...q.data];
-  }, [realParents, q.data]);
+    return [...(realParents ?? []), ...(legacyTreeEnabled ? (q.data ?? []) : [])];
+  }, [realParents, q.data, legacyTreeEnabled]);
 
   // Build tree from flat list, filtered by selected scope
   const tree = useMemo(() => {
@@ -185,7 +183,7 @@ export function CategoryTree() {
 
   // Initialize: expand L1 nodes on first data load
   useEffect(() => {
-    if (q.data && !initializedRef.current) {
+    if (mergedCategories.length > 0 && !initializedRef.current) {
       initializedRef.current = true;
       const l1Ids = new Set(mergedCategories.filter((c) => c.level === 1).map((c) => c.id));
       setExpandedIds(l1Ids);
@@ -200,8 +198,7 @@ export function CategoryTree() {
     const matched = new Set<number>();
 
     function check(node: CategoryNodeData): boolean {
-      const selfMatch =
-        node.nameAr.includes(q) || node.nameEn.toLowerCase().includes(q);
+      const selfMatch = node.nameAr.includes(q) || node.nameEn.toLowerCase().includes(q);
       let childMatch = false;
       for (const child of node.children) {
         if (check(child)) {
@@ -237,10 +234,22 @@ export function CategoryTree() {
 
   // Dialog openers
   const openAddRoot = () =>
-    setFormDialog({ open: true, mode: "add-root", parentNode: undefined, category: undefined, isRealParent: true });
+    setFormDialog({
+      open: true,
+      mode: "add-root",
+      parentNode: undefined,
+      category: undefined,
+      isRealParent: true,
+    });
 
   const openAddChild = (parent: CategoryNodeData) =>
-    setFormDialog({ open: true, mode: "add-child", parentNode: parent, category: undefined, isRealParent: false });
+    setFormDialog({
+      open: true,
+      mode: "add-child",
+      parentNode: parent,
+      category: undefined,
+      isRealParent: false,
+    });
 
   const openEdit = (cat: ServiceCategory) =>
     setFormDialog({
@@ -272,26 +281,24 @@ export function CategoryTree() {
   };
 
   // Determine visible tree (search-filtered)
-  const visibleRoots = matchingIds
-    ? tree.filter((r) => matchingIds.has(r.id))
-    : tree;
+  const visibleRoots = matchingIds ? tree.filter((r) => matchingIds.has(r.id)) : tree;
 
   return (
     <div className="space-y-4">
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-2">
         {/* Scope filter tabs */}
-        <div className="flex gap-1 flex-shrink-0 flex-wrap">
-          {SCOPE_TABS.map((tab) => (
+        <div className="flex flex-shrink-0 flex-wrap gap-1">
+          {SCOPE_TABS.filter((tab) => legacyTreeEnabled || tab.key === null).map((tab) => (
             <button
               key={tab.key ?? "all"}
               type="button"
               onClick={() => setSelectedScope(tab.key)}
               className={cn(
-                "text-[13px] py-1.5 px-3.5 rounded-full border transition-colors duration-150 whitespace-nowrap font-medium",
+                "rounded-full border px-3.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors duration-150",
                 selectedScope === tab.key
                   ? tab.activeClass
-                  : "bg-transparent text-[var(--color-muted)] border-[var(--color-divider)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+                  : "border-[var(--color-divider)] bg-transparent text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
               )}
             >
               {t(tab.i18nKey)}
@@ -300,14 +307,14 @@ export function CategoryTree() {
         </div>
 
         {/* Search box */}
-        <div className="relative flex-1 min-w-[160px]">
-          <Search className="absolute top-1/2 -translate-y-1/2 start-3 h-4 w-4 text-[var(--color-muted)] pointer-events-none" />
+        <div className="relative min-w-[160px] flex-1">
+          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("superAdmin.categories.tree.search")}
-            className="w-full h-9 border border-[var(--color-divider)] rounded-[var(--radius-md)] bg-white ps-9 pe-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)]/30 placeholder:text-[var(--color-muted)]"
+            className="h-9 w-full rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-white ps-9 pe-3 text-sm placeholder:text-[var(--color-muted)] focus:ring-2 focus:ring-[var(--color-brand-orange)]/30 focus:outline-none"
           />
         </div>
 
@@ -316,7 +323,7 @@ export function CategoryTree() {
           variant="ghost"
           size="sm"
           onClick={expandAll}
-          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-ink-body)] gap-1"
+          className="gap-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-ink-body)]"
         >
           <ChevronsDown className="h-3.5 w-3.5" />
           {t("superAdmin.categories.tree.expandAll")}
@@ -325,7 +332,7 @@ export function CategoryTree() {
           variant="ghost"
           size="sm"
           onClick={collapseAll}
-          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-ink-body)] gap-1"
+          className="gap-1 text-xs text-[var(--color-muted)] hover:text-[var(--color-ink-body)]"
         >
           <ChevronsUp className="h-3.5 w-3.5" />
           {t("superAdmin.categories.tree.collapseAll")}
@@ -335,7 +342,7 @@ export function CategoryTree() {
         <Can permission="categories.create">
           <Button
             onClick={openAddRoot}
-            className="ms-auto bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90 gap-1"
+            className="ms-auto gap-1 bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90"
           >
             <Plus className="h-4 w-4" />
             {t("superAdmin.categories.tree.addRoot")}
@@ -344,13 +351,13 @@ export function CategoryTree() {
       </div>
 
       {/* ── Tree panel ── */}
-      <div className="rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-white shadow-sm">
         {isLoading ? (
           <SkeletonRows />
         ) : isError ? (
           <ErrorState
             onRetry={() => {
-              void q.refetch();
+              if (legacyTreeEnabled) void q.refetch();
               void parentsQuery.refetch();
             }}
           />

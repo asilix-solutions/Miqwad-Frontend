@@ -11,6 +11,7 @@
  *   inactive → transparent / muted with hover highlight
  */
 
+import { isAdminFeatureAvailable, type AdminFeature } from "../config/featureCapabilities";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { CategoriesPanel } from "../components/reference/CategoriesPanel";
@@ -29,10 +30,18 @@ interface TabDef {
 
 const TABS: readonly TabDef[] = [
   { key: "categories", labelI18n: "superAdmin.reference.tabs.categories" },
-  { key: "cities",     labelI18n: "superAdmin.reference.tabs.cities" },
-  { key: "brands",     labelI18n: "superAdmin.reference.tabs.brands" },
-  { key: "services",   labelI18n: "superAdmin.reference.tabs.services" },
+  { key: "cities", labelI18n: "superAdmin.reference.tabs.cities" },
+  { key: "brands", labelI18n: "superAdmin.reference.tabs.brands" },
+  { key: "services", labelI18n: "superAdmin.reference.tabs.services" },
 ] as const;
+
+const TAB_FEATURES = {
+  categories: "referenceCategories",
+  cities: "referenceCities",
+  brands: "referenceBrands",
+  services: "referenceServices",
+} as const satisfies Record<TabKey, AdminFeature>;
+const visibleTabs = TABS.filter((tab) => isAdminFeatureAvailable(TAB_FEATURES[tab.key]));
 
 const DEFAULT_TAB: TabKey = "categories";
 
@@ -47,7 +56,8 @@ export function AdminReferenceDataPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const rawTab = searchParams.get("tab");
-  const activeTab: TabKey = isValidTab(rawTab) ? rawTab : DEFAULT_TAB;
+  const activeTab: TabKey =
+    isValidTab(rawTab) && isAdminFeatureAvailable(TAB_FEATURES[rawTab]) ? rawTab : DEFAULT_TAB;
 
   const switchTab = (key: TabKey) => {
     setSearchParams({ tab: key }, { replace: true });
@@ -60,14 +70,14 @@ export function AdminReferenceDataPage() {
         <h1 className="text-[22px] font-bold text-[var(--color-ink-body)]">
           {t("superAdmin.reference.title")}
         </h1>
-        <p className="text-[14px] text-[var(--color-muted)] mt-1">
+        <p className="mt-1 text-[14px] text-[var(--color-muted)]">
           {t("superAdmin.reference.subtitle")}
         </p>
       </header>
 
       {/* ── Pill tabs (same style as AdminProvidersPage) ── */}
-      <div className="flex gap-2 bg-transparent overflow-x-auto">
-        {TABS.map((tab) => {
+      <div className="flex gap-2 overflow-x-auto bg-transparent">
+        {visibleTabs.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <button
@@ -76,11 +86,11 @@ export function AdminReferenceDataPage() {
               id={`ref-tab-${tab.key}`}
               onClick={() => switchTab(tab.key)}
               className={[
-                "text-[14px] py-2 px-4 rounded-full border border-transparent",
-                "cursor-pointer transition-colors duration-150 whitespace-nowrap",
+                "rounded-full border border-transparent px-4 py-2 text-[14px]",
+                "cursor-pointer whitespace-nowrap transition-colors duration-150",
                 isActive
-                  ? "bg-[var(--color-brand-orange)] text-white font-semibold"
-                  : "bg-transparent text-[var(--color-muted)] font-medium hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+                  ? "bg-[var(--color-brand-orange)] font-semibold text-white"
+                  : "bg-transparent font-medium text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
               ].join(" ")}
             >
               {t(tab.labelI18n)}

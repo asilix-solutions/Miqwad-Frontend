@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Store, Bell, Megaphone, Settings, ArrowLeft } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Can } from "@shared/auth/Can";
+import { usePermissions } from "@shared/auth/usePermissions";
+import { getAdminRoute, isAdminFeatureAvailable } from "../../config/featureCapabilities";
 import type { PermissionCode } from "@shared/auth/permissions";
 
 interface QuickAction {
@@ -58,13 +59,28 @@ export function QuickActions() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
+  const { can } = usePermissions();
+  const actions = ACTIONS.filter((action) => {
+    const route = getAdminRoute(action.to);
+    return (
+      route &&
+      isAdminFeatureAvailable(route.feature) &&
+      can(action.permission) &&
+      (!route.permission || can(route.permission))
+    );
+  });
+  if (actions.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-      {ACTIONS.map((action) => (
-        <Can key={action.key} permission={action.permission}>
+    <section className="flex flex-col gap-3">
+      <h2 className="text-base font-[var(--font-main)] font-semibold text-[var(--color-ink-body)]">
+        {t("superAdmin.dashboard.quickActions.title")}
+      </h2>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,240px),1fr))] gap-4">
+        {actions.map((action) => (
           <button
+            key={action.key}
             onClick={() => navigate(action.to)}
-            className="group relative flex items-center gap-4 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-start cursor-pointer shadow-[var(--shadow-1)] transition-all duration-200 hover:shadow-[var(--shadow-2)]"
+            className="group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-divider)] bg-[var(--color-surface)] p-4 text-start shadow-[var(--shadow-1)] transition-all duration-200 hover:shadow-[var(--shadow-2)]"
           >
             <span
               className="absolute inset-y-0 start-0 w-[3px] opacity-70 transition-opacity group-hover:opacity-100"
@@ -84,11 +100,11 @@ export function QuickActions() {
             </span>
             <ArrowLeft
               size={18}
-              className="text-[var(--color-muted)] shrink-0 -translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 rtl:rotate-0 ms-auto"
+              className="ms-auto shrink-0 -translate-x-1 text-[var(--color-muted)] opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100 rtl:rotate-0"
             />
           </button>
-        </Can>
-      ))}
-    </div>
+        ))}
+      </div>
+    </section>
   );
 }
