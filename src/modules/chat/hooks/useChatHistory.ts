@@ -1,47 +1,55 @@
-/**
- * @file useChatHistory.ts
- *
- * TanStack Query hooks for chat history: the REST-hydrated conversation
- * list (`GET /api/Conversations`) and a single conversation's message
- * history (`GET /api/Conversations/{conversationId}`, ascending). Silent
- * hooks — toasts live in UI components, not here.
- */
-
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { chatApi } from "../api/chatApi";
 
 export const chatKeys = {
-  all: ["chat"] as const,
-  conversations: () => [...chatKeys.all, "conversations"] as const,
-  messages: (conversationId: number) => [...chatKeys.all, "messages", conversationId] as const,
+  all: (userId: number) => ["chat", userId] as const,
+  lists: (userId: number) => ["chat", userId, "conversations"] as const,
+  conversations: (userId: number, page: number) => ["chat", userId, "conversations", page] as const,
+  messages: (userId: number, id: number) => ["chat", userId, "messages", id] as const,
+  unread: (userId: number) => ["chat", userId, "unread"] as const,
 };
-
-export function useConversationsQuery() {
+export function useConversationsQuery(userId: number, page: number) {
   return useQuery({
-    queryKey: chatKeys.conversations(),
-    queryFn: () => chatApi.listConversations(),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryKey: chatKeys.conversations(userId, page),
+    queryFn: ({ signal }) => chatApi.listConversations(page, signal),
+    enabled: userId > 0,
   });
 }
-
-/** `conversationId` is null for a peer with no conversation yet (a freshly-started "new chat") — the query stays disabled until one exists. */
-export function useMessagesQuery(conversationId: number | null) {
+export function useMessagesQuery(userId: number, id: number | null, visible: boolean) {
+  const cache = useQueryClient();
+  useEffect(() => {
+    // Disabling a query alone does not abort an already running request.
+    return () => {
+      if (visible && id !== null)
+        void cache.cancelQueries({ queryKey: chatKeys.messages(userId, id) });
+    };
+  }, [cache, userId, id, visible]);
   return useQuery({
-    queryKey: chatKeys.messages(conversationId ?? -1),
-    queryFn: () => chatApi.listMessages(conversationId as number),
-    enabled: conversationId != null,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryKey: chatKeys.messages(userId, id ?? -1),
+    queryFn: async ({ signal }) => {
+      const detail = await chatApi.getConversation(id ?? -1, signal);
+      // GET itself marks read; refresh counts even if the explicit read mutation fails.
+      if (!signal.aborted) {
+        void cache.invalidateQueries({ queryKey: chatKeys.lists(userId) });
+        void cache.invalidateQueries({ queryKey: chatKeys.unread(userId) });
+      }
+      return detail;
+    },
+    retry: false,
+    enabled: userId > 0 && id !== null && visible,
   });
 }
-
-/**
- * Global unread total (`GET /api/Conversations/unread-count`) — ready to
- * wire into a subtle nav badge once a provider layout has a slot for it.
- * // TODO: wire to backend — no existing nav slot for a chat badge was
- * // found on the workshop/scrap provider layouts; surface this hook's
- * // `data` there when one exists.
- */
-export function useUnreadCountQuery() {
+export function useUnreadCountQuery(userId: number) {
   return useQuery({
-    queryKey: [...chatKeys.all, "unread-count"] as const,
-    queryFn: () => chatApi.getUnreadCount(),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    queryKey: chatKeys.unread(userId),
+    queryFn: ({ signal }) => chatApi.getUnreadCount(signal),
+    enabled: userId > 0,
   });
 }

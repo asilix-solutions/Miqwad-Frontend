@@ -18,7 +18,7 @@ import { cn } from "@shared/lib/utils";
 import { ChatConnectionBanner } from "./ChatConnectionBanner";
 import { DaySeparator } from "./DaySeparator";
 import { MessageBubble } from "./MessageBubble";
-import { MessageComposer } from "./MessageComposer";
+import type { ReactNode } from "react";
 import type { ChatMessage, ConnectionStatus, Conversation } from "../types";
 
 export interface ChatWindowProps {
@@ -26,7 +26,9 @@ export interface ChatWindowProps {
   messages: ChatMessage[];
   currentUserId: number;
   status: ConnectionStatus;
-  onSend: (content: string) => Promise<void>;
+  composer: ReactNode;
+  onEdit: (id: number, text: string) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
   /** Shown on mobile only; returns to the conversation list. */
   onBack?: () => void;
 }
@@ -34,7 +36,16 @@ export interface ChatWindowProps {
 /** Within this many px of the bottom counts as "already there" for auto-scroll purposes. */
 const NEAR_BOTTOM_PX = 120;
 
-export function ChatWindow({ peer, messages, currentUserId, status, onSend, onBack }: ChatWindowProps) {
+export function ChatWindow({
+  peer,
+  messages,
+  currentUserId,
+  status,
+  composer,
+  onEdit,
+  onDelete,
+  onBack,
+}: ChatWindowProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -80,13 +91,6 @@ export function ChatWindow({ peer, messages, currentUserId, status, onSend, onBa
     prevLengthRef.current = messages.length;
   }, [messages, peer?.peerId, currentUserId]);
 
-  const handleSend = async (content: string) => {
-    await onSend(content);
-    isNearBottomRef.current = true;
-    setShowJumpPill(false);
-    requestAnimationFrame(() => scrollToBottom("smooth"));
-  };
-
   if (!peer) {
     return (
       <div className="flex h-full flex-1 flex-col">
@@ -116,7 +120,7 @@ export function ChatWindow({ peer, messages, currentUserId, status, onSend, onBa
           </button>
         )}
         <span className="truncate text-sm font-semibold text-[var(--color-ink-body)]">
-          {peer.peerName}
+          {peer.peerName || t("chat.media.unknownPeer")}
         </span>
       </div>
 
@@ -150,9 +154,11 @@ export function ChatWindow({ peer, messages, currentUserId, status, onSend, onBa
                   <DaySeparator date={group.dayKey} />
                   {group.messages.map((message) => (
                     <MessageBubble
-                      key={messageKey(message)}
+                      key={message.id}
                       message={message}
                       isOwn={message.senderId === currentUserId}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
                     />
                   ))}
                 </div>
@@ -184,9 +190,7 @@ export function ChatWindow({ peer, messages, currentUserId, status, onSend, onBa
         )}
       </div>
 
-      <div className="shrink-0">
-        <MessageComposer status={status} onSend={handleSend} />
-      </div>
+      <div className="shrink-0">{composer}</div>
     </div>
   );
 }
@@ -208,8 +212,4 @@ function groupByDay(messages: ChatMessage[]): DayGroup[] {
     }
   }
   return groups;
-}
-
-function messageKey(message: ChatMessage): string {
-  return `${message.senderId}-${message.receiverId}-${message.sentAt}-${message.content}`;
 }
