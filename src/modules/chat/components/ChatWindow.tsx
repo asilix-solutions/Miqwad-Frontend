@@ -12,7 +12,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowDown, ArrowRight, MessageSquare } from "lucide-react";
+import { ArrowDown, ArrowLeft, MessageSquare } from "lucide-react";
 import { ProviderEmptyState } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
 import { ChatConnectionBanner } from "./ChatConnectionBanner";
@@ -48,14 +48,19 @@ export function ChatWindow({
 }: ChatWindowProps) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const prevPeerIdRef = useRef<number | null>(null);
-  const prevLengthRef = useRef(0);
+  const previous = useRef({ first: 0, last: 0, height: 0 });
   const [showJumpPill, setShowJumpPill] = useState(false);
 
   const scrollToBottom = (behavior: ScrollBehavior) => {
-    bottomRef.current?.scrollIntoView({ block: "end", behavior });
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : behavior,
+    });
   };
 
   const handleScroll = () => {
@@ -70,16 +75,27 @@ export function ChatWindow({
   useLayoutEffect(() => {
     const peerChanged = prevPeerIdRef.current !== (peer?.peerId ?? null);
     const lastMessage = messages[messages.length - 1];
-    const isOwnLastMessage = lastMessage != null && lastMessage.senderId === currentUserId;
-    const hasNewMessages = messages.length > prevLengthRef.current;
+    const el = scrollRef.current;
+    const prior = previous.current;
+    const first = messages[0]?.id ?? 0;
+    const last = lastMessage?.id ?? 0;
+    const prepended =
+      prior.first !== 0 &&
+      first !== prior.first &&
+      last === prior.last &&
+      messages.some((m) => m.id === prior.first);
+    const appended =
+      last !== prior.last && (prior.last === 0 || messages.some((m) => m.id === prior.last));
 
     if (peerChanged) {
       isNearBottomRef.current = true;
       setShowJumpPill(false);
       scrollToBottom("auto");
-    } else if (hasNewMessages) {
-      if (isNearBottomRef.current || isOwnLastMessage) {
-        scrollToBottom(prevLengthRef.current === 0 ? "auto" : "smooth");
+    } else if (prepended && el) {
+      el.scrollTop += el.scrollHeight - prior.height;
+    } else if (appended) {
+      if (isNearBottomRef.current || lastMessage?.senderId === currentUserId) {
+        scrollToBottom(prior.last === 0 ? "auto" : "smooth");
         isNearBottomRef.current = true;
         setShowJumpPill(false);
       } else {
@@ -88,12 +104,27 @@ export function ChatWindow({
     }
 
     prevPeerIdRef.current = peer?.peerId ?? null;
-    prevLengthRef.current = messages.length;
+    previous.current = { first, last, height: el?.scrollHeight ?? 0 };
   }, [messages, peer?.peerId, currentUserId]);
+
+  // Keep the bottom visible when previews/composer or the viewport change height.
+  // Never scroll the page or pull someone away from older messages.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    const content = contentRef.current;
+    if (!el || !content) return;
+    const observer = new ResizeObserver(() => {
+      if (isNearBottomRef.current) el.scrollTop = el.scrollHeight;
+      previous.current.height = el.scrollHeight;
+    });
+    observer.observe(el);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [peer?.peerId]);
 
   if (!peer) {
     return (
-      <div className="flex h-full flex-1 flex-col">
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
         <ProviderEmptyState
           icon={<MessageSquare className="h-8 w-8" aria-hidden />}
           title={t("chat.emptyThreadTitle")}
@@ -107,19 +138,19 @@ export function ChatWindow({
   const groups = groupByDay(messages);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-3 border-b border-[var(--color-divider)] px-4 py-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-[var(--color-divider)] px-3 py-2">
         {onBack && (
           <button
             type="button"
             onClick={onBack}
             aria-label={t("chat.back")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-body)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)] md:hidden rtl:rotate-180"
+            className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--color-ink-body)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--color-brand-orange)] md:hidden rtl:rotate-180"
           >
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowLeft className="h-4 w-4" aria-hidden />
           </button>
         )}
-        <span className="truncate text-sm font-semibold text-[var(--color-ink-body)]">
+        <span className="min-w-0 truncate text-sm font-semibold text-[var(--color-ink-body)]">
           {peer.peerName || t("chat.media.unknownPeer")}
         </span>
       </div>
@@ -128,44 +159,45 @@ export function ChatWindow({
         <ChatConnectionBanner status={status} />
       </div>
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1">
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          style={{ scrollbarWidth: "thin" }}
+          style={{ scrollbarWidth: "thin", overflowAnchor: "none" }}
           className={cn(
-            "h-full overflow-y-auto scroll-smooth px-4 py-3",
+            "h-full min-w-0 overflow-y-auto overscroll-contain px-2 py-3 sm:px-4",
             "[&::-webkit-scrollbar]:w-1.5",
             "[&::-webkit-scrollbar-track]:bg-transparent",
             "[&::-webkit-scrollbar-thumb]:rounded-full",
             "[&::-webkit-scrollbar-thumb]:bg-[var(--color-divider)]",
           )}
         >
-          {messages.length === 0 ? (
-            <ProviderEmptyState
-              icon={<MessageSquare className="h-8 w-8" aria-hidden />}
-              title={t("chat.noMessagesTitle")}
-              description={t("chat.noMessagesDescription")}
-            />
-          ) : (
-            <div className="flex flex-col gap-2">
-              {groups.map((group) => (
-                <div key={group.dayKey} className="flex flex-col gap-2">
-                  <DaySeparator date={group.dayKey} />
-                  {group.messages.map((message) => (
-                    <MessageBubble
-                      key={message.id}
-                      message={message}
-                      isOwn={message.senderId === currentUserId}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
-                  ))}
-                </div>
-              ))}
-              <div ref={bottomRef} />
-            </div>
-          )}
+          <div ref={contentRef} className="min-w-0">
+            {messages.length === 0 ? (
+              <ProviderEmptyState
+                icon={<MessageSquare className="h-8 w-8" aria-hidden />}
+                title={t("chat.noMessagesTitle")}
+                description={t("chat.noMessagesDescription")}
+              />
+            ) : (
+              <div className="flex min-w-0 flex-col gap-2">
+                {groups.map((group) => (
+                  <div key={group.dayKey} className="flex min-w-0 flex-col gap-2">
+                    <DaySeparator date={group.dayKey} />
+                    {group.messages.map((message) => (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isOwn={message.senderId === currentUserId}
+                        onEdit={onEdit}
+                        onDelete={onDelete}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {showJumpPill && (
@@ -177,8 +209,8 @@ export function ChatWindow({
               setShowJumpPill(false);
             }}
             className={cn(
-              "absolute bottom-3 left-1/2 -translate-x-1/2",
-              "provider-fade-up flex items-center gap-1.5 rounded-[var(--radius-pill)]",
+              "absolute bottom-3 left-1/2 max-w-[calc(100%-1rem)] -translate-x-1/2",
+              "flex min-h-11 items-center gap-1.5 rounded-[var(--radius-pill)]",
               "border border-[var(--color-divider)] bg-[var(--color-surface)] px-3.5 py-1.5 shadow-sm",
               "text-xs font-medium text-[var(--color-ink-body)]",
               "transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)]",
@@ -190,7 +222,9 @@ export function ChatWindow({
         )}
       </div>
 
-      <div className="shrink-0">{composer}</div>
+      <div className="max-h-[60%] min-w-0 shrink-0 overflow-y-auto overscroll-contain">
+        {composer}
+      </div>
     </div>
   );
 }

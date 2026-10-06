@@ -1,7 +1,14 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Pencil, Trash2, Check, CheckCheck } from "lucide-react";
+import { Pencil, Trash2, Check, CheckCheck, Ellipsis } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { useMessageLongPress } from "../hooks/useMessageLongPress";
 import { ProviderTextarea } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
 import { mutationUncertain } from "../hooks/useChatDrafts";
@@ -21,6 +28,12 @@ export function MessageBubble({ message, isOwn, onEdit, onDelete }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lock = useRef(false);
+  const actionButton = useRef<HTMLButtonElement>(null);
+  const openingDialog = useRef(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const longPress = useMessageLongPress(isOwn && !menuOpen && mode === null, () =>
+    setMenuOpen(true),
+  );
   const date = new Date(message.sentAt);
   const time = Number.isNaN(date.getTime())
     ? ""
@@ -29,6 +42,7 @@ export function MessageBubble({ message, isOwn, onEdit, onDelete }: Props) {
         minute: "2-digit",
       }).format(date);
   const open = (next: "edit" | "delete") => {
+    openingDialog.current = true;
     setText(message.content);
     setError(null);
     setMode(next);
@@ -50,19 +64,61 @@ export function MessageBubble({ message, isOwn, onEdit, onDelete }: Props) {
     }
   };
   return (
-    <div className={cn("flex w-full", isOwn ? "justify-end" : "justify-start")}>
+    <div
+      className={cn(
+        "group flex w-full min-w-0 items-start gap-1",
+        isOwn ? "justify-end" : "justify-start",
+      )}
+    >
+      {isOwn && (
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} dir={i18n.dir()}>
+          <DropdownMenuTrigger asChild>
+            <button
+              ref={actionButton}
+              type="button"
+              aria-label={t("chat.media.actions")}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--color-muted)] hover:bg-[var(--color-surface-2)] focus-visible:outline-2 focus-visible:outline-[var(--color-brand-orange)] data-[state=open]:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100 [@media(pointer:coarse)]:size-11"
+            >
+              <Ellipsis size={18} aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            collisionPadding={8}
+            onCloseAutoFocus={(event) => {
+              if (openingDialog.current) {
+                event.preventDefault();
+                openingDialog.current = false;
+              }
+            }}
+          >
+            {message.attachments.length === 0 && !!message.content && (
+              <DropdownMenuItem className="min-h-11" onSelect={() => open("edit")}>
+                <Pencil aria-hidden />
+                {t("chat.media.edit")}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              className="min-h-11"
+              variant="destructive"
+              onSelect={() => open("delete")}
+            >
+              <Trash2 aria-hidden />
+              {t("chat.media.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <div
+        {...longPress}
         className={cn(
-          "flex max-w-[90%] min-w-0 flex-col gap-2 rounded-[var(--radius-md)] px-3 py-2.5 sm:max-w-[75%]",
-          message.attachments.length > 0 && "w-72",
+          "flex w-fit max-w-[min(85%,32rem)] min-w-0 flex-col gap-1.5 rounded-[var(--radius-md)] px-3 py-2",
           isOwn
             ? "bg-[var(--color-brand-orange)] text-white"
             : "border border-[var(--color-divider)] bg-[var(--color-surface)] text-[var(--color-ink-body)]",
         )}
       >
-        {message.attachments.map((a) => (
-          <MessageMedia key={`${a.id}:${a.filePath}`} attachment={a} />
-        ))}
+        <MessageMedia attachments={message.attachments} />
         {message.content && (
           <p
             dir="auto"
@@ -72,33 +128,13 @@ export function MessageBubble({ message, isOwn, onEdit, onDelete }: Props) {
           </p>
         )}
         <div className="flex items-center justify-end gap-1 text-[11px]">
-          <time dateTime={message.sentAt}>{time}</time>
+          <time dir="auto" dateTime={message.sentAt}>
+            {time}
+          </time>
           {isOwn && message.isRead !== undefined && (
             <span aria-label={t(message.isRead ? "chat.media.read" : "chat.media.sent")}>
               {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
             </span>
-          )}
-          {isOwn && (
-            <>
-              {message.attachments.length === 0 && !!message.content && (
-                <button
-                  type="button"
-                  className="ms-1 flex size-9 items-center justify-center rounded focus-visible:outline-2"
-                  aria-label={t("chat.media.edit")}
-                  onClick={() => open("edit")}
-                >
-                  <Pencil size={14} />
-                </button>
-              )}
-              <button
-                type="button"
-                className="flex size-9 items-center justify-center rounded focus-visible:outline-2"
-                aria-label={t("chat.media.delete")}
-                onClick={() => open("delete")}
-              >
-                <Trash2 size={14} />
-              </button>
-            </>
           )}
         </div>
       </div>
@@ -108,7 +144,15 @@ export function MessageBubble({ message, isOwn, onEdit, onDelete }: Props) {
           if (!busy && !value) setMode(null);
         }}
       >
-        <DialogContent showCloseButton={false} dir={i18n.dir()}>
+        <DialogContent
+          showCloseButton={false}
+          dir={i18n.dir()}
+          className="max-h-[calc(100dvh-2rem)] min-w-0 overflow-y-auto p-4 sm:p-6"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            actionButton.current?.focus();
+          }}
+        >
           <DialogTitle>{t(mode === "edit" ? "chat.media.edit" : "chat.media.delete")}</DialogTitle>
           <DialogDescription>
             {t(mode === "edit" ? "chat.media.editDescription" : "chat.media.deleteDescription")}

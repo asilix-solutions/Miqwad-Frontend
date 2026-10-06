@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { RefreshCw, ArrowRight } from "lucide-react";
+import { RefreshCw, ArrowLeft } from "lucide-react";
 import { useAppSelector } from "@app/store";
 import { ProviderPageHeader, ProviderSkeleton } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
@@ -181,11 +181,18 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
   return (
     <div
       dir={i18n.dir()}
-      className="flex h-[calc(100dvh-112px)] min-h-[360px] min-w-0 flex-col gap-3 overflow-hidden"
+      className="flex h-[calc(100dvh-112px)] min-h-0 w-full min-w-0 flex-col gap-2 [contain:inline-size] sm:gap-3"
     >
-      <ProviderPageHeader title={t(`chat.title.${role}`)} subtitle={t(`chat.subtitle.${role}`)} />
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span role="status">
+      <ProviderPageHeader
+        title={t(`chat.title.${role}`)}
+        subtitle={t(`chat.subtitle.${role}`)}
+        className={cn(
+          "shrink-0 [&_h1]:text-xl md:[&_h1]:text-2xl [&_p]:hidden md:[&_p]:block",
+          mobileOpen && "sr-only md:not-sr-only",
+        )}
+      />
+      <div className="flex min-w-0 shrink-0 items-center justify-between gap-2 text-xs">
+        <span role="status" className="min-w-0 [overflow-wrap:anywhere]">
           {unread.isError
             ? t("chat.media.unreadFailed")
             : unread.data !== undefined
@@ -195,16 +202,16 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
         <button
           type="button"
           onClick={reload}
-          className="inline-flex min-h-9 items-center gap-1 rounded border px-2"
+          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded border px-2"
         >
           <RefreshCw size={14} />
           {t("chat.media.refresh")}
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)]">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)]">
         <div
           className={cn(
-            "flex w-full shrink-0 flex-col border-[var(--color-divider)] md:flex md:w-72 md:border-e",
+            "flex min-h-0 w-full min-w-0 shrink-0 flex-col border-[var(--color-divider)] md:flex md:w-56 md:border-e xl:w-72",
             mobileOpen && "hidden",
           )}
         >
@@ -219,7 +226,7 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
               {retryButton(() => void list.refetch())}
             </div>
           ) : (
-            <div className="min-h-0 flex-1">
+            <div className="min-h-0 min-w-0 flex-1">
               <ConversationList
                 conversations={list.data.items}
                 activeConversationId={id}
@@ -232,7 +239,7 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
           {list.data && (list.data.totalPages > 1 || page > 1) && (
             <nav
               aria-label={t("chat.media.pages")}
-              className="flex items-center justify-between gap-2 border-t p-2 text-sm"
+              className="flex shrink-0 flex-wrap items-center justify-between gap-1 border-t p-2 text-xs"
             >
               <button
                 className="min-h-11 px-2"
@@ -241,7 +248,7 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
               >
                 {t("chat.media.previous")}
               </button>
-              <span>
+              <span dir="ltr">
                 {page} / {list.data.totalPages}
               </span>
               <button
@@ -254,7 +261,12 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
             </nav>
           )}
         </div>
-        <div className={cn("flex min-w-0 flex-1 flex-col", mobileOpen ? "flex" : "hidden md:flex")}>
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col",
+            mobileOpen ? "flex" : "hidden md:flex",
+          )}
+        >
           {readError !== null && readError === id && (
             <div role="alert" className="flex flex-wrap items-center gap-2 p-2 text-xs">
               {t("chat.media.readFailed")}
@@ -268,7 +280,7 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
                 onClick={() => setMobileOpen(false)}
                 className="flex min-h-11 items-center gap-2 md:hidden"
               >
-                <ArrowRight size={18} />
+                <ArrowLeft size={18} className="rtl:rotate-180" />
                 {t("chat.back")}
               </button>
               {history.isError ? (

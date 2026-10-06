@@ -73,8 +73,8 @@ export function ConversationList({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-2 border-b border-[var(--color-divider)] p-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="flex min-w-0 shrink-0 flex-col gap-2 border-b border-[var(--color-divider)] p-3">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <ProviderSearchBar
@@ -141,7 +141,7 @@ export function ConversationList({
           className="flex-1"
         />
       ) : (
-        <ul className="flex-1 overflow-y-auto">
+        <ul className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
           {filtered.length === 0 && (
             <li className="p-4 text-sm text-[var(--color-muted)]">{t("chat.media.noMatches")}</li>
           )}
@@ -163,7 +163,7 @@ export function ConversationList({
                   onClick={() => onSelect(conversation)}
                   aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "flex w-full items-start gap-3 border-b border-[var(--color-divider)] px-4 py-3.5 text-start",
+                    "flex w-full min-w-0 items-start gap-3 border-b border-[var(--color-divider)] px-4 py-3.5 text-start",
                     "transition-colors duration-[var(--dur-fast)]",
                     isActive ? "bg-[var(--color-brand-50)]" : "hover:bg-[var(--color-surface-2)]",
                   )}

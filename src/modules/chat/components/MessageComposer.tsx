@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Send, Paperclip, Music, X, LoaderCircle } from "lucide-react";
 import { ProviderTextarea } from "@shared/provider-ui";
 import type { ChatDraft } from "../hooks/useChatDrafts";
+import { cn } from "@shared/lib/utils";
 import { isAudio } from "../lib/mediaPolicy";
 import type { ConnectionStatus } from "../types";
 
@@ -43,24 +44,27 @@ export function MessageComposer({
   const buttonClass =
     "flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] border border-[var(--color-divider)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-orange)] disabled:opacity-40";
   return (
-    <div className="min-w-0 space-y-2 border-t border-[var(--color-divider)] bg-[var(--color-surface)] p-3">
+    <div className="min-w-0 space-y-2 border-t border-[var(--color-divider)] bg-[var(--color-surface)] p-3 [overflow-wrap:anywhere]">
       {draft.attachments.length > 0 && (
         <ul
-          className="flex max-h-44 gap-2 overflow-x-auto py-1"
+          className="grid max-h-[min(20dvh,9rem)] min-w-0 grid-cols-[repeat(auto-fill,minmax(min(100%,7rem),1fr))] gap-2 overflow-y-auto overscroll-contain p-1"
           aria-label={t("chat.media.attachments")}
         >
           {draft.attachments.map((a) => (
             <li
               key={a.id}
-              className="w-36 shrink-0 rounded-lg border border-[var(--color-divider)] p-2"
+              className={cn(
+                "relative min-w-0 rounded-lg border border-[var(--color-divider)] p-1.5",
+                isAudio(a.file.type) && "col-span-full",
+              )}
             >
-              <div className="flex items-center justify-between gap-1">
-                <bdi className="truncate text-xs" title={a.file.name}>
+              <div className="flex min-w-0 items-center gap-1">
+                <bdi className="block min-w-0 flex-1 truncate pe-10 text-xs" title={a.file.name}>
                   {a.file.name}
                 </bdi>
                 <button
                   type="button"
-                  className="flex size-9 shrink-0 items-center justify-center"
+                  className="absolute end-0 top-0 z-10 flex size-11 items-center justify-center rounded-lg bg-[var(--color-surface)]/90 focus-visible:outline-2 focus-visible:outline-[var(--color-brand-orange)] disabled:opacity-40"
                   aria-label={t("chat.media.remove", { name: a.file.name })}
                   onClick={() => onRemove(a.id)}
                   disabled={locked}
@@ -74,16 +78,18 @@ export function MessageComposer({
                   preload="metadata"
                   src={a.previewUrl}
                   aria-label={a.file.name}
-                  className="h-10 w-full min-w-0"
+                  dir="ltr"
+                  className="mt-7 block h-10 w-full max-w-full min-w-0"
                 />
               ) : (
                 <img
                   src={a.previewUrl}
                   alt={t("chat.media.preview")}
-                  className="h-16 w-full rounded object-contain"
+                  loading="lazy"
+                  className="h-12 w-full min-w-0 rounded object-contain"
                 />
               )}
-              <p className="mt-1 text-xs" role="status">
+              <p className="mt-1 text-[11px]" role="status">
                 {t(`chat.media.${a.status}`)}
               </p>
               {a.status === "uploading" && (
@@ -91,7 +97,7 @@ export function MessageComposer({
                   value={a.progress}
                   max={100}
                   aria-label={t("chat.media.uploading")}
-                  className="w-full"
+                  className="block h-1 w-full"
                 />
               )}
             </li>
@@ -105,10 +111,11 @@ export function MessageComposer({
         disabled={locked || hasAudio}
         aria-label={t("chat.composerPlaceholder")}
         placeholder={hasAudio ? t("chat.media.audioSeparate") : t("chat.composerPlaceholder")}
-        rows={2}
-        className="max-h-36 min-h-0 resize-y"
+        rows={1}
+        dir="auto"
+        className="max-h-24 min-h-11 min-w-0 resize-y"
       />
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <input
           ref={images}
           className="hidden"
@@ -164,7 +171,11 @@ export function MessageComposer({
           aria-label={t(draft.busy ? "chat.media.sending" : "chat.send")}
           onClick={() => void onSend()}
         >
-          {draft.busy ? <LoaderCircle size={18} className="animate-spin" /> : <Send size={18} />}
+          {draft.busy ? (
+            <LoaderCircle size={18} className="animate-spin" />
+          ) : (
+            <Send size={18} className="rtl:rotate-180" />
+          )}
         </button>
       </div>
       {draft.text.length > 2000 && (
