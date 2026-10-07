@@ -1,77 +1,104 @@
-/**
- * React bridge between the SignalR chat hub transport and Redux chat state.
- * Owns the connection lifecycle for as long as the consuming component is
- * mounted. Receive-only as of the REST cutover — inbound `ReceiveMessage`
- * events are dispatched into Redux here, but sending goes through
- * `chatApi` (see ChatScreen.tsx), not this hub. No JSX here.
- */
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAppDispatch, useAppSelector } from "@app/store";
 import { chatHubManager } from "../lib/chatHub";
-import { messageReceived, selectChatStatus, setStatus } from "../store/chatSlice";
-import type { ConnectionStatus } from "../types";
+import { mapHubMessage, mergeReceivedMessage, upsertMessage } from "../lib/chatAdapter";
+import { selectChatStatus, setStatus } from "../store/chatSlice";
+import { chatKeys } from "./useChatHistory";
+import type { ChatMessage, ConversationDetail } from "../types";
 
-interface UseChatHubResult {
-  status: ConnectionStatus;
-}
-
-// Module-level counter (not component-scoped) so that a late resolution from
-// an EARLIER useChatHub mount (e.g. a StrictMode double-mount, or a fast
-// unmount/remount across a route change) can never win over a dispatch made
-// by a later mount — each effect run captures the generation current at its
-// start, and only the run that still owns the latest generation may dispatch
-// "connected" from its connect().then().
 let connectGeneration = 0;
-
-export function useChatHub(): UseChatHubResult {
+export function useChatHub(userId: number, visible: boolean, conversationId: number | null) {
   const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const status = useAppSelector(selectChatStatus);
-
+  // This hook is remounted with the user session; IDs never cross accounts.
+  const deletedIds = useRef(new Set<number>());
+  const confirmDeleted = useCallback((id: number) => {
+    deletedIds.current.add(id);
+  }, []);
+  const reconcileMessage = useCallback((messages: ChatMessage[], message: ChatMessage) => {
+    // A late edit/send response must not undo a subsequently confirmed deletion.
+    return upsertMessage(messages, message, deletedIds.current);
+  }, []);
   useEffect(() => {
-    const generation = ++connectGeneration;
-
-    const unsubscribeMessage = chatHubManager.onMessage((message) => {
-      dispatch(messageReceived(message));
+    if (userId <= 0) return;
+    let mounted = true;
+    const refresh = () => {
+      void queryClient.invalidateQueries({ queryKey: chatKeys.lists(userId) });
+      void queryClient.invalidateQueries({ queryKey: chatKeys.unread(userId) });
+    };
+    const unsubscribe = chatHubManager.onMessage((raw) => {
+      const message = mapHubMessage(raw);
+      if (!message) {
+        refresh();
+        if (visible && conversationId !== null)
+          void queryClient.invalidateQueries({
+            queryKey: chatKeys.messages(userId, conversationId),
+          });
+        return;
+      }
+      if (message.senderId !== userId && message.receiverId !== userId) return;
+      const id = message.conversationId;
+      if (id !== undefined) {
+        // Cancel a stale in-flight snapshot before merging the newer event.
+        // An unopened thread must never be fetched: detail GET marks it read.
+        const key = chatKeys.messages(userId, id);
+        if (queryClient.getQueryData(key) || (visible && id === conversationId)) {
+          void queryClient.cancelQueries({ queryKey: key }).then(() => {
+            if (!mounted) return;
+            const existing = queryClient.getQueryData<ConversationDetail>(key);
+            if (existing) {
+              queryClient.setQueryData<ConversationDetail>(key, (old) =>
+                old
+                  ? {
+                      ...old,
+                      messages: mergeReceivedMessage(old.messages, message, deletedIds.current),
+                    }
+                  : undefined,
+              );
+            } else if (visible && id === conversationId) {
+              void queryClient.invalidateQueries({ queryKey: key });
+            }
+          });
+        }
+      }
+      refresh();
     });
-    const unsubscribeReconnecting = chatHubManager.onReconnecting(() =>
-      dispatch(setStatus("reconnecting")),
-    );
-    const unsubscribeReconnected = chatHubManager.onReconnected(() =>
-      dispatch(setStatus("connected")),
-    );
-    const unsubscribeClosed = chatHubManager.onClosed(() => dispatch(setStatus("disconnected")));
-
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [userId, queryClient, visible, conversationId]);
+  useEffect(() => {
+    if (userId <= 0) return;
+    const generation = ++connectGeneration;
+    const reconnecting = chatHubManager.onReconnecting(() => dispatch(setStatus("reconnecting")));
+    const reconnected = chatHubManager.onReconnected(() => {
+      dispatch(setStatus("connected"));
+      // Only enabled/observed history is refetched; unopened threads remain unread.
+      void queryClient.invalidateQueries({ queryKey: chatKeys.all(userId) });
+    });
+    const closed = chatHubManager.onClosed(() => dispatch(setStatus("disconnected")));
     dispatch(setStatus("connecting"));
-    chatHubManager
+    void chatHubManager
       .connect()
       .then(() => {
-        // Only dispatch "connected" if this is still the latest connect
-        // attempt AND the hub is still actually connected right now — a
-        // resolved start() promise does not mean the connection is still
-        // open; onClosed may have already fired (and dispatched
-        // "disconnected") by the time this .then() runs, and that live
-        // signal must win, not this stale promise resolution.
         if (generation === connectGeneration && chatHubManager.isConnected()) {
           dispatch(setStatus("connected"));
+          void queryClient.invalidateQueries({ queryKey: chatKeys.all(userId) });
         }
       })
       .catch(() => {
         if (generation === connectGeneration) dispatch(setStatus("disconnected"));
       });
-
-    // Deliberately do NOT disconnect the hub here. The hub is an app-level
-    // singleton whose lifetime is owned at app/auth scope (torn down only on
-    // logout, see useLogout.ts), not at screen scope — a screen unmount, a
-    // route change, or React StrictMode's mount→unmount→mount must not kill
-    // a connection that's still needed. Only unsubscribe this effect's own
-    // listeners so a remount doesn't stack duplicate dispatches.
     return () => {
-      unsubscribeMessage();
-      unsubscribeReconnecting();
-      unsubscribeReconnected();
-      unsubscribeClosed();
+      if (generation === connectGeneration) connectGeneration += 1;
+      // Auth owns the singleton connection; screen cleanup removes only its listeners.
+      reconnecting();
+      reconnected();
+      closed();
     };
-  }, [dispatch]);
-
-  return { status };
+  }, [dispatch, queryClient, userId]);
+  return { status, confirmDeleted, reconcileMessage };
 }

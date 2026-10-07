@@ -1,255 +1,338 @@
-/**
- * @file ChatScreen.tsx
- *
- * Chat screen assembly for a provider role (workshop/scrap). REST
- * (`chatApi`) is the source of truth for the conversation list, message
- * history, and read-state — confirmed live, see
- * ../../../../CHAT_REST_PROBE_REPORT.md. SignalR (`useChatHub`) stays
- * receive-only for live inbound delivery; sending goes through
- * `chatApi.sendMessage`/`createConversation`, which return a real message
- * id immediately instead of waiting on a refetch. History persists across
- * refresh since it's REST-backed, not session-only.
- *
- * Responsive shell: two-pane on desktop (list + window both visible),
- * single-pane push navigation on mobile (list, then window with a back
- * control).
- */
-
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@app/store";
+import { RefreshCw, ArrowLeft } from "lucide-react";
+import { useAppSelector } from "@app/store";
 import { ProviderPageHeader, ProviderSkeleton } from "@shared/provider-ui";
 import { cn } from "@shared/lib/utils";
 import { chatApi } from "../api/chatApi";
 import { useChatHub } from "../hooks/useChatHub";
-import { useConversationsQuery, useMessagesQuery } from "../hooks/useChatHistory";
-import { resolveCurrentUserId } from "../lib/currentUser";
 import {
-  clearUnread,
-  messageReconciled,
-  messageSendFailed,
-  messageSent,
-  selectActivePeerId,
-  selectConversations,
-  selectMessagesFor,
-  setActivePeer,
-  setConversations,
-  upsertConversation,
-} from "../store/chatSlice";
+  chatKeys,
+  useConversationsQuery,
+  useMessagesQuery,
+  useUnreadCountQuery,
+} from "../hooks/useChatHistory";
+import { useChatDrafts } from "../hooks/useChatDrafts";
+import { resolveCurrentUserId } from "../lib/currentUser";
 import { ConversationList } from "./ConversationList";
 import { ChatWindow } from "./ChatWindow";
-import type { ChatMessage, Conversation } from "../types";
+import { MessageComposer } from "./MessageComposer";
+import type { Conversation, ConversationDetail, MessageInput } from "../types";
 
-export interface ChatScreenProps {
-  role: "workshop" | "scrap";
+function subscribeVisibility(callback: () => void) {
+  const media = window.matchMedia("(min-width: 768px)");
+  media.addEventListener("change", callback);
+  document.addEventListener("visibilitychange", callback);
+  return () => {
+    media.removeEventListener("change", callback);
+    document.removeEventListener("visibilitychange", callback);
+  };
 }
-
-export function ChatScreen({ role }: ChatScreenProps) {
-  const { t } = useTranslation();
-  const dispatch = useAppDispatch();
-
-  // null when unavailable/non-numeric — falls back to a sentinel that never
-  // matches a real senderId, so own/peer disambiguation defaults to "peer"
-  // instead of crashing.
-  const currentUserId = resolveCurrentUserId(useAppSelector((state) => state.auth.user?.id));
-
-  const { status } = useChatHub();
-  const activePeerId = useAppSelector(selectActivePeerId);
-  const liveMessages = useAppSelector(selectMessagesFor(activePeerId ?? -1));
-  const conversations = useAppSelector(selectConversations);
-
-  const {
-    data: fetchedConversations,
-    isLoading: isConversationsLoading,
-    isError: isConversationsError,
-    refetch: refetchConversations,
-  } = useConversationsQuery();
-
+const getVisibility = () =>
+  `${document.visibilityState}:${window.matchMedia("(min-width: 768px)").matches}`;
+export function ChatScreen({ role }: { role: "workshop" | "scrap" }) {
+  const userId = resolveCurrentUserId(useAppSelector((state) => state.auth.user?.id)) ?? -1;
+  // Remount drafts on account change; no media/draft state can cross users.
+  return <ChatSession key={userId} role={role} userId={userId} />;
+}
+function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: number }) {
+  const { t, i18n } = useTranslation();
+  const cache = useQueryClient();
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Conversation | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const visibility = useSyncExternalStore(subscribeVisibility, getVisibility, () => "hidden:false");
+  const visible = visibility.startsWith("visible:") && (visibility.endsWith("true") || mobileOpen);
+  const list = useConversationsQuery(userId, page);
+  const unread = useUnreadCountQuery(userId);
+  const peer =
+    list.data?.items.find((c) => c.conversationId === selected?.conversationId) ?? selected;
+  const id = peer?.conversationId ?? null;
+  const draftKey = id !== null ? `conversation:${id}` : `new:${peer?.peerId}`;
+  const history = useMessagesQuery(userId, id, visible);
+  const { status, confirmDeleted, reconcileMessage } = useChatHub(userId, visible, id);
+  const drafts = useChatDrafts();
+  const alive = useRef(true);
   useEffect(() => {
-    if (fetchedConversations) dispatch(setConversations(fetchedConversations));
-  }, [fetchedConversations, dispatch]);
-
-  const activeConversationId = useMemo(
-    () => conversations.find((c) => c.peerId === activePeerId)?.conversationId ?? null,
-    [conversations, activePeerId],
-  );
-
-  const {
-    data: historyMessages,
-    isLoading: isMessagesLoading,
-    isError: isMessagesError,
-    refetch: refetchMessages,
-  } = useMessagesQuery(activeConversationId);
-
-  // Merge strategy: REST history (authoritative, ascending, has ids) is the
-  // base thread; live Redux messages for the same peer (received via
-  // SignalR, sent optimistically, or reconciled with a real REST id) are
-  // appended after it. De-dup by `id` when the live message carries one
-  // (already reconciled against REST); otherwise by
-  // senderId+receiverId+sentAt+content (a SignalR-origin message not yet
-  // reconciled has no id to match against).
-  const mergedMessages = useMemo<ChatMessage[]>(() => {
-    const base = historyMessages ?? [];
-    const baseIds = new Set(base.map((m) => m.id).filter((id): id is number => id != null));
-    const baseContentKeys = new Set(base.map(contentKey));
-    const appended = liveMessages.filter((m) =>
-      m.id != null ? !baseIds.has(m.id) : !baseContentKeys.has(contentKey(m)),
-    );
-    return [...base, ...appended];
-  }, [historyMessages, liveMessages]);
-
-  const [showWindowOnMobile, setShowWindowOnMobile] = useState(false);
-
-  const activePeer = useMemo<Conversation | null>(() => {
-    if (activePeerId == null) return null;
-    const known = conversations.find((c) => c.peerId === activePeerId);
-    // A freshly-started chat (via "New chat") has no conversation yet, so it
-    // won't appear in the REST-hydrated list — show a minimal stand-in
-    // until the first message round-trips and creates one.
-    return known ?? { peerId: activePeerId, peerName: String(activePeerId), unreadCount: 0 };
-  }, [conversations, activePeerId]);
-
-  const handleSelect = (peerId: number) => {
-    dispatch(setActivePeer(peerId));
-    dispatch(clearUnread(peerId));
-    setShowWindowOnMobile(true);
-
-    const conversationId = conversations.find((c) => c.peerId === peerId)?.conversationId;
-    if (conversationId != null) {
-      void chatApi.markRead(conversationId).catch(() => {
-        // Best-effort — local unread is already cleared; a failed server
-        // sync just means the badge could reappear on the next
-        // listConversations() refetch, which is acceptable.
-      });
-    }
-  };
-
-  const handleSend = async (content: string) => {
-    if (activePeerId == null || currentUserId == null) return;
-
-    // Optimistic append — shown immediately, reconciled with the real REST
-    // message (real id) once the send resolves, or rolled back on failure.
-    // Negative ids never collide with a real REST id (always positive).
-    const tempId = -Date.now();
-    const optimistic: ChatMessage = {
-      id: tempId,
-      senderId: currentUserId,
-      receiverId: activePeerId,
-      content,
-      sentAt: new Date().toISOString(),
-      isRead: false,
+    alive.current = true;
+    return () => {
+      alive.current = false;
     };
-    dispatch(messageSent(optimistic));
-
-    try {
-      const existingConversationId = conversations.find(
-        (c) => c.peerId === activePeerId,
-      )?.conversationId;
-
-      if (existingConversationId != null) {
-        const real = await chatApi.sendMessage(existingConversationId, content);
-        dispatch(messageReconciled({ peerId: activePeerId, tempId, message: real }));
-      } else {
-        // Brand-new peer, no conversation yet — create-or-return (confirmed
-        // live: POSTing to a peer who already has a conversation reopens it
-        // rather than duplicating it, see the probe report).
-        const { conversation, firstMessage } = await chatApi.createConversation({
-          receiverId: activePeerId,
-          message: content,
-        });
-        dispatch(messageReconciled({ peerId: activePeerId, tempId, message: firstMessage }));
-        dispatch(upsertConversation(conversation));
-        void refetchConversations();
-      }
-    } catch (error) {
-      dispatch(messageSendFailed({ peerId: activePeerId, tempId }));
-      throw error;
+  }, []);
+  const refreshSummaries = useCallback(async () => {
+    await Promise.all([
+      cache.invalidateQueries({ queryKey: chatKeys.lists(userId) }),
+      cache.invalidateQueries({ queryKey: chatKeys.unread(userId) }),
+    ]);
+  }, [cache, userId]);
+  const [readError, setReadError] = useState<number | null>(null);
+  const [readRetry, setReadRetry] = useState(0);
+  const attempted = useRef("");
+  const incoming = (history.data?.messages ?? [])
+    .filter((m) => m.receiverId === userId)
+    .map((m) => m.id)
+    .join(",");
+  useEffect(() => {
+    if (!visible || id === null || !history.isSuccess) {
+      attempted.current = "";
+      return;
     }
+    const attempt = `${id}:${incoming}:${readRetry}`;
+    if (attempted.current === attempt) return;
+    attempted.current = attempt;
+    const viewedIds = new Set(incoming.split(",").filter(Boolean).map(Number));
+    void chatApi
+      .markRead(id)
+      .then(() => {
+        if (!alive.current) return;
+        setReadError((failedId) => (failedId === id ? null : failedId));
+        cache.setQueryData<ConversationDetail>(chatKeys.messages(userId, id), (old) =>
+          old
+            ? {
+                ...old,
+                messages: old.messages.map((m) =>
+                  m.receiverId === userId && viewedIds.has(m.id) ? { ...m, isRead: true } : m,
+                ),
+              }
+            : undefined,
+        );
+        void refreshSummaries();
+      })
+      .catch(() => {
+        if (alive.current) setReadError(id);
+      });
+  }, [visible, id, incoming, readRetry, history.isSuccess, cache, userId, refreshSummaries]);
+  const select = (conversation: Conversation) => {
+    setSelected(conversation);
+    setMobileOpen(true);
+    setReadError(null);
   };
-
+  const start = (peerId: number) => {
+    select(
+      list.data?.items.find((c) => c.peerId === peerId) ?? { peerId, peerName: "", unreadCount: 0 },
+    );
+  };
+  const send = async (input: MessageInput) => {
+    if (!alive.current) return;
+    if (!peer || userId <= 0) throw new Error("Missing chat identity");
+    let createdDraftKey: string | undefined;
+    if (id !== null) {
+      const message = await chatApi.sendMessage(id, input);
+      if (!alive.current) return;
+      await cache.cancelQueries({ queryKey: chatKeys.messages(userId, id) });
+      if (!alive.current) return;
+      cache.setQueryData<ConversationDetail>(chatKeys.messages(userId, id), (old) =>
+        old
+          ? { ...old, messages: reconcileMessage(old.messages, message) }
+          : { conversation: peer, messages: reconcileMessage([], message) },
+      );
+    } else {
+      const result = await chatApi.createConversation({ ...input, receiverId: peer.peerId });
+      if (!alive.current) return;
+      const createdId = result.conversation.conversationId;
+      if (createdId !== undefined) {
+        cache.setQueryData(chatKeys.messages(userId, createdId), result);
+        createdDraftKey = `conversation:${createdId}`;
+      }
+      setSelected((current) => (current === selected ? result.conversation : current));
+    }
+    void refreshSummaries();
+    return createdDraftKey;
+  };
+  const edit = async (messageId: number, text: string) => {
+    if (id === null) return;
+    const updated = await chatApi.editMessage(messageId, text);
+    if (!alive.current) return;
+    await cache.cancelQueries({ queryKey: chatKeys.messages(userId, id) });
+    if (!alive.current) return;
+    cache.setQueryData<ConversationDetail>(chatKeys.messages(userId, id), (old) =>
+      old
+        ? { ...old, messages: reconcileMessage(old.messages, { ...updated, conversationId: id }) }
+        : undefined,
+    );
+    void refreshSummaries();
+  };
+  const remove = async (messageId: number) => {
+    if (id === null) return;
+    await chatApi.deleteMessage(messageId);
+    if (!alive.current) return;
+    confirmDeleted(messageId);
+    await cache.cancelQueries({ queryKey: chatKeys.messages(userId, id) });
+    if (!alive.current) return;
+    cache.setQueryData<ConversationDetail>(chatKeys.messages(userId, id), (old) =>
+      old ? { ...old, messages: old.messages.filter((m) => m.id !== messageId) } : undefined,
+    );
+    void refreshSummaries();
+  };
+  const reload = () => {
+    void list.refetch();
+    void unread.refetch();
+    if (id !== null && visible) void history.refetch();
+  };
+  const retryButton = (onClick: () => void) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-11 items-center gap-2 rounded border px-3 text-sm"
+    >
+      <RefreshCw size={16} />
+      {t("chat.errorRetry")}
+    </button>
+  );
+  const draft = peer
+    ? (drafts.drafts[draftKey] ?? { text: "", attachments: [], busy: false, uncertain: false })
+    : null;
   return (
-    <div className="flex h-[calc(100dvh-112px)] min-h-[420px] flex-col gap-4 overflow-hidden">
+    <div
+      dir={i18n.dir()}
+      className="flex h-[calc(100dvh-112px)] min-h-0 w-full min-w-0 flex-col gap-2 [contain:inline-size] sm:gap-3"
+    >
       <ProviderPageHeader
         title={t(`chat.title.${role}`)}
         subtitle={t(`chat.subtitle.${role}`)}
+        className={cn(
+          "shrink-0 [&_h1]:text-xl md:[&_h1]:text-2xl [&_p]:hidden md:[&_p]:block",
+          mobileOpen && "sr-only md:not-sr-only",
+        )}
       />
-
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)]">
-        {/* Conversation list — always visible on desktop; on mobile, hidden once a peer is selected */}
+      <div className="flex min-w-0 shrink-0 items-center justify-between gap-2 text-xs">
+        <span role="status" className="min-w-0 [overflow-wrap:anywhere]">
+          {unread.isError
+            ? t("chat.media.unreadFailed")
+            : unread.data !== undefined
+              ? t("chat.media.unreadTotal", { count: unread.data })
+              : ""}
+        </span>
+        <button
+          type="button"
+          onClick={reload}
+          className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded border px-2"
+        >
+          <RefreshCw size={14} />
+          {t("chat.media.refresh")}
+        </button>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[var(--radius-lg)] border border-[var(--color-divider)] bg-[var(--color-surface)]">
         <div
           className={cn(
-            "w-full shrink-0 border-[var(--color-divider)] md:block md:w-[320px] md:border-e",
-            showWindowOnMobile ? "hidden md:block" : "block",
+            "flex min-h-0 w-full min-w-0 shrink-0 flex-col border-[var(--color-divider)] md:flex md:w-56 md:border-e xl:w-72",
+            mobileOpen && "hidden",
           )}
         >
-          {isConversationsLoading ? (
-            <div className="flex flex-col gap-3 p-4">
-              <ProviderSkeleton variant="block" height={56} />
+          {list.isPending ? (
+            <div className="space-y-3 p-4">
               <ProviderSkeleton variant="block" height={56} />
               <ProviderSkeleton variant="block" height={56} />
             </div>
-          ) : isConversationsError ? (
-            <div className="flex flex-col items-center gap-3 p-8 text-center">
-              <AlertCircle className="h-6 w-6 text-[var(--color-danger-500)]" aria-hidden />
-              <p className="text-sm text-[var(--color-ink-body)]">{t("chat.errorTitle")}</p>
-              <button
-                type="button"
-                onClick={() => void refetchConversations()}
-                className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--color-divider)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-body)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)]"
-              >
-                <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-                {t("chat.errorRetry")}
-              </button>
+          ) : list.isError ? (
+            <div role="alert" className="space-y-3 p-4">
+              <p>{t("chat.errorTitle")}</p>
+              {retryButton(() => void list.refetch())}
             </div>
           ) : (
-            <ConversationList
-              conversations={conversations}
-              activePeerId={activePeerId}
-              currentUserId={currentUserId}
-              onSelect={handleSelect}
-              onStartChat={handleSelect}
-            />
+            <div className="min-h-0 min-w-0 flex-1">
+              <ConversationList
+                conversations={list.data.items}
+                activeConversationId={id}
+                currentUserId={userId > 0 ? userId : null}
+                onSelect={select}
+                onStartChat={start}
+              />
+            </div>
+          )}
+          {list.data && (list.data.totalPages > 1 || page > 1) && (
+            <nav
+              aria-label={t("chat.media.pages")}
+              className="flex shrink-0 flex-wrap items-center justify-between gap-1 border-t p-2 text-xs"
+            >
+              <button
+                className="min-h-11 px-2"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                {t("chat.media.previous")}
+              </button>
+              <span dir="ltr">
+                {page} / {list.data.totalPages}
+              </span>
+              <button
+                className="min-h-11 px-2"
+                disabled={page >= list.data.totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                {t("chat.media.next")}
+              </button>
+            </nav>
           )}
         </div>
-
-        {/* Chat window — hidden on mobile until a peer is selected */}
-        <div className={cn("min-w-0 flex-1", showWindowOnMobile ? "block" : "hidden md:block")}>
-          {activePeerId != null && isMessagesLoading ? (
-            <div className="flex h-full flex-col gap-3 p-4">
-              <ProviderSkeleton variant="block" height={40} />
-              <ProviderSkeleton variant="block" height={64} />
-              <ProviderSkeleton variant="block" height={64} />
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col",
+            mobileOpen ? "flex" : "hidden md:flex",
+          )}
+        >
+          {readError !== null && readError === id && (
+            <div role="alert" className="flex flex-wrap items-center gap-2 p-2 text-xs">
+              {t("chat.media.readFailed")}
+              {retryButton(() => setReadRetry((n) => n + 1))}
             </div>
-          ) : activePeerId != null && isMessagesError ? (
-            <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-              <AlertCircle className="h-6 w-6 text-[var(--color-danger-500)]" aria-hidden />
-              <p className="text-sm text-[var(--color-ink-body)]">{t("chat.errorTitle")}</p>
+          )}
+          {history.isError && history.data && (
+            <div role="alert" className="flex shrink-0 flex-wrap items-center gap-2 p-2 text-xs">
+              {t("chat.errorTitle")}
+              {retryButton(() => void history.refetch())}
+            </div>
+          )}
+          {id !== null && !history.data && (history.isPending || history.isError) ? (
+            <div className="space-y-3 p-4">
               <button
                 type="button"
-                onClick={() => void refetchMessages()}
-                className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--color-divider)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-body)] transition-colors duration-[var(--dur-fast)] hover:bg-[var(--color-surface-2)]"
+                onClick={() => setMobileOpen(false)}
+                className="flex min-h-11 items-center gap-2 md:hidden"
               >
-                <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-                {t("chat.errorRetry")}
+                <ArrowLeft size={18} className="rtl:rotate-180" />
+                {t("chat.back")}
               </button>
+              {history.isError ? (
+                <>
+                  <p role="alert">{t("chat.errorTitle")}</p>
+                  {retryButton(() => void history.refetch())}
+                </>
+              ) : (
+                <ProviderSkeleton variant="block" height={64} />
+              )}
             </div>
           ) : (
             <ChatWindow
-              peer={activePeer}
-              messages={mergedMessages}
-              currentUserId={currentUserId ?? Number.NaN}
+              key={draftKey}
+              peer={peer}
+              messages={history.data?.messages ?? []}
+              currentUserId={userId}
               status={status}
-              onSend={handleSend}
-              onBack={() => setShowWindowOnMobile(false)}
+              onEdit={edit}
+              onDelete={remove}
+              onBack={() => setMobileOpen(false)}
+              composer={
+                peer && draft ? (
+                  <MessageComposer
+                    key={draftKey}
+                    status={status}
+                    isVisible={visible}
+                    draft={draft}
+                    onText={(value) => drafts.changeText(draftKey, value)}
+                    onFiles={(files, duration) => drafts.add(draftKey, files, duration)}
+                    onRemove={(attachmentId) => drafts.remove(draftKey, attachmentId)}
+                    onSend={() => drafts.send(draftKey, send)}
+                    onCheck={reload}
+                    onDiscard={() => drafts.discard(draftKey)}
+                  />
+                ) : null
+              }
             />
           )}
         </div>
       </div>
     </div>
   );
-}
-
-function contentKey(message: ChatMessage): string {
-  return `${message.senderId}:${message.receiverId}:${message.sentAt}:${message.content}`;
 }

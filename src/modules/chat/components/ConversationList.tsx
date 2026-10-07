@@ -18,17 +18,17 @@ import type { Conversation } from "../types";
 
 export interface ConversationListProps {
   conversations: Conversation[];
-  activePeerId: number | null;
-  /** Current user's numeric id — used to reject a self-chat before it reaches the hub. */
+  activeConversationId: number | null;
+  /** Current user's numeric id — used to reject a self-chat before REST submission. */
   currentUserId: number | null;
-  onSelect: (peerId: number) => void;
+  onSelect: (conversation: Conversation) => void;
   /** Starts (or resumes) a conversation with a peer entered by numeric id. */
   onStartChat: (peerId: number) => void;
 }
 
 export function ConversationList({
   conversations,
-  activePeerId,
+  activeConversationId,
   currentUserId,
   onSelect,
   onStartChat,
@@ -44,7 +44,7 @@ export function ConversationList({
     if (!query) return conversations;
     return conversations.filter(
       (c) =>
-        c.peerName.toLowerCase().includes(query) ||
+        (c.peerName || "").toLowerCase().includes(query) ||
         (c.lastMessage ?? "").toLowerCase().includes(query),
     );
   }, [conversations, search]);
@@ -56,11 +56,11 @@ export function ConversationList({
   };
 
   // TODO: wire to backend — replace manual id entry with real context (order/offer
-  //       party or user search) once the backend exposes a conversation-list / start-chat source.
+  //       party or user search) once a verified recipient-discovery source is available.
   const handleNewChatSubmit = (e: FormEvent) => {
     e.preventDefault();
     const parsed = Number(newChatId);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
       setNewChatError(t("chat.newChat.invalidId"));
       return;
     }
@@ -73,15 +73,15 @@ export function ConversationList({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-2 border-b border-[var(--color-divider)] p-3">
+    <div className="flex h-full min-h-0 min-w-0 flex-col">
+      <div className="flex min-w-0 shrink-0 flex-col gap-2 border-b border-[var(--color-divider)] p-3">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
             <ProviderSearchBar
               value={search}
               onChange={setSearch}
               onClear={() => setSearch("")}
-              placeholder={t("chat.searchPlaceholder")}
+              placeholder={t("chat.media.searchPage")}
             />
           </div>
           <button
@@ -115,6 +115,7 @@ export function ConversationList({
                   if (newChatError) setNewChatError(null);
                 }}
                 placeholder={t("chat.newChat.placeholder")}
+                aria-label={t("chat.newChat.placeholder")}
                 error={newChatError ?? undefined}
               />
             </div>
@@ -140,24 +141,29 @@ export function ConversationList({
           className="flex-1"
         />
       ) : (
-        <ul className="flex-1 overflow-y-auto">
+        <ul className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain">
+          {filtered.length === 0 && (
+            <li className="p-4 text-sm text-[var(--color-muted)]">{t("chat.media.noMatches")}</li>
+          )}
           {filtered.map((conversation) => {
-            const isActive = conversation.peerId === activePeerId;
-            const lastAt = conversation.lastAt
-              ? new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                  hour12: true,
-                }).format(new Date(conversation.lastAt))
-              : "";
+            const isActive = conversation.conversationId === activeConversationId;
+            const lastAt =
+              conversation.lastAt && !Number.isNaN(new Date(conversation.lastAt).getTime())
+                ? new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-SA" : "en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  }).format(new Date(conversation.lastAt))
+                : "";
 
             return (
-              <li key={conversation.peerId}>
+              <li key={conversation.conversationId}>
                 <button
                   type="button"
-                  onClick={() => onSelect(conversation.peerId)}
+                  onClick={() => onSelect(conversation)}
+                  aria-current={isActive ? "true" : undefined}
                   className={cn(
-                    "flex w-full items-start gap-3 border-b border-[var(--color-divider)] px-4 py-3.5 text-start",
+                    "flex w-full min-w-0 items-start gap-3 border-b border-[var(--color-divider)] px-4 py-3.5 text-start",
                     "transition-colors duration-[var(--dur-fast)]",
                     isActive ? "bg-[var(--color-brand-50)]" : "hover:bg-[var(--color-surface-2)]",
                   )}
@@ -165,15 +171,17 @@ export function ConversationList({
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-sm font-semibold text-[var(--color-ink-body)]">
-                        {conversation.peerName}
+                        {conversation.peerName || t("chat.media.unknownPeer")}
                       </span>
                       {lastAt && (
-                        <span className="shrink-0 text-[11px] text-[var(--color-muted)]">{lastAt}</span>
+                        <span className="shrink-0 text-[11px] text-[var(--color-muted)]">
+                          {lastAt}
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate text-xs text-[var(--color-muted)]">
-                        {conversation.lastMessage}
+                        {conversation.lastMessage || t("chat.media.noTextPreview")}
                       </span>
                       {conversation.unreadCount > 0 && (
                         <span

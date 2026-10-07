@@ -597,29 +597,189 @@ mutation
 
 ---
 
-## 16. Chat
+## 16. Conversations / multimedia — verified 2026-10-05
 
-Verified architecture:
+Evidence labels below distinguish live requests, Swagger, source and unknowns.
+Tests used only authorized Scrap and Workshop test accounts and newly created
+QA messages/media. Credentials and private message bodies are not recorded.
 
-- sending messages uses REST;
-- SignalR is receive/realtime transport;
-- loss of hub connection must not block a REST send action.
+### Route surface and authenticated results
 
-Do not gate a REST mutation on SignalR connection state unless the transport architecture changes.
+**VERIFIED BY LIVE REQUEST** on `https://miqwad-test.runasp.net`:
 
-### Conversation list inconsistency
+| Route                                               | Scrap              | Workshop                 | Observed result                                                                       |
+| --------------------------------------------------- | ------------------ | ------------------------ | ------------------------------------------------------------------------------------- |
+| GET `/api/Conversations`                            | 200                | 200                      | Paginated conversation summaries                                                      |
+| POST `/api/Conversations`                           | 201                | Not independently tested | Creates conversation + initial message                                                |
+| GET `/api/Conversations/{id}`                       | 200                | 200                      | Peer metadata + messages; also marks inbound messages read                            |
+| POST `/api/Conversations/{conversationId}/messages` | 200                | 200                      | Persisted message DTO                                                                 |
+| GET `/api/Conversations/messages/{messageId}`       | 200                | 200                      | Participant can read the message                                                      |
+| PUT `/api/Conversations/messages/{messageId}`       | 200 own            | 200 own                  | Text edit persists; receiver editing sender's message returned 401                    |
+| DELETE `/api/Conversations/messages/{messageId}`    | 200 own            | 200 own                  | Removed from history; subsequent message GET 404; receiver delete 401                 |
+| GET `/api/Conversations/unread-count`               | 200                | 200                      | `data: { unreadCount: number }`                                                       |
+| PUT `/api/Conversations/{conversationId}/read`      | 200                | 200                      | No request body; `data: null`; inbound unread clears                                  |
+| POST `/api/Conversations/media`                     | 200                | 200                      | One multipart `File`; attachment DTO returned                                         |
+| DELETE `/api/Conversations/media/{id}`              | 200 own unattached | 401 other's unattached   | Attached media deletion returned 400; post-message-delete media deletion returned 404 |
 
-A verified account returned a paginated envelope when populated, while an empty account returned a bare array.
+These results establish participant/ownership behavior for this pair only.
+Non-participant access and all possible role combinations were not probed.
+A 401 on a mutation can be ownership rejection, not necessarily token expiry.
 
-The mapper must remain tolerant of both until backend behavior is standardized.
+### Request contracts
 
-### Peer presence
+**VERIFIED BY SWAGGER**, with successful live payloads for the tested flows:
 
-The existing hub connection state is **not** proof that the other user is online.
+- Create conversation: `{ receiverId: number, message: string | null,
+attachmentIds: number[] | null }`.
+- Send message: `{ message: string | null, attachmentIds: number[] | null }`.
+- Edit message: `{ message: string }`; documented length 1–2000. Attachment
+  replacement is not in the documented edit DTO and is not implemented.
+- Create/send text maximum: 2000 characters (Swagger). No boundary stress tests.
+- Media: `multipart/form-data`, one binary **`File`**, capital F. Upload first,
+  then use returned numeric IDs in **`attachmentIds`**. The upload is persisted
+  before sending a message. Do not use Blob URLs or `mediaIds` in message JSON.
+- List parameters: `PageNumber`, `PageSize` (documented 1–100), `SortBy`,
+  `SortDescending`, `FilterBy`, `FilterValue`, `DateFilterBy`, `FromDate`, `ToDate`.
+  Only page/size are used by this implementation; field/value semantics of the
+  remaining parameters are **UNKNOWN**.
+- Swagger documents upload 201; both roles actually returned **200**.
 
-Do not display peer-presence status using the client’s own hub connection.
+### Exact response structure
 
-Real peer presence requires a backend presence capability.
+**VERIFIED BY LIVE REQUEST**:
+
+```text
+Envelope: { success: boolean, message: string, data: T, errors: null }
+List data: { items: Summary[], pageNumber, pageSize, totalCount, totalPages }
+Summary: { conversationId, receiverId, receiverName, phoneNumber,
+           lastMessage, date, unreadCount }
+Detail data: { conversationId, receiverId, receiverName, phoneNumber,
+               messages: Message[] }
+Message: { id, senderId, receiverId, message, isRead, isSent, date,
+           attachments: Attachment[] }
+Attachment: { id, originalFileName, filePath, contentType, type,
+              fileSize, createdAt, userName }
+```
+
+- IDs, counts, `fileSize` and `type` are JSON numbers; `isRead`/`isSent` booleans;
+  names, paths, content, MIME and dates strings. Successful tests had `errors:null`.
+- Media-only message text can be empty; request text can be null. No attachment
+  thumbnail, duration, dimensions, participant avatar/role, edited timestamp,
+  edited indicator or deletion marker was observed. Do not fabricate these.
+- **SWAGGER DOCUMENTED nullable**: message, attachment array, attachment filename,
+  path, MIME and userName. Adapters also tolerate null peer names/phone/preview
+  and the historical bare-array empty list. The current live list
+  was paginated; the historical array compatibility is not a new live finding.
+- Immediate message responses used UTC `Z`; subsequent GET dates omitted the
+  timezone suffix. Preserve established date parsing; timezone meaning is
+  **UNKNOWN** for bare timestamps.
+- `isSent` is perspective-dependent in the tested responses. Identify ownership
+  using `senderId === currentUserId`, not `isSent`.
+- Attachment `type:8` occurred for both images and audio. Swagger enumerates
+  numeric values 1–8; meanings are **UNKNOWN**. Render using `contentType`.
+
+### Supported flows and media lifecycle
+
+**VERIFIED BY LIVE REQUEST**:
+
+- PNG (`image/png`) and WAV (`audio/wav`) upload successfully.
+  Tiny non-sensitive image files and a short silent PCM WAV were used.
+- Text-only, image-only, two images + text, and audio-only messages persist and
+  are readable by the opposite role. Scrap and Workshop both sent audio-only.
+- Audio + text returned 400; empty text + no attachments returned 400.
+- Direct unauthenticated GET of the returned test media URLs succeeded (200,
+  matching MIME/byte count). **Do not claim these URLs enforce private access.**
+  Backend clarification is needed before treating attachments as access-protected.
+- Own unattached upload deletion returned 200; the other participant received 401. Deleting an attached upload returned 400 and left its message intact.
+  After deleting its message, media deletion returned 404. This does not prove
+  physical storage erasure, retention policy, or hard-versus-soft DB deletion.
+- There is no conversation DELETE in current Swagger. Empty QA conversation
+  `10019` remains after removal of all created messages.
+
+**UNKNOWN**: JPEG live acceptance. An earlier draft claimed JPEG was tested, but
+no concrete request/response evidence was recoverable; the 2026-10-06 review
+removed JPEG from the upload allowlist without repeating live writes. General
+Swagger multipart support does not prove JPEG acceptance.
+
+**UNKNOWN**: other MIME/extension acceptance (including MP3/WebM/Ogg/MP4), video,
+PDF/documents, size/count limits, audio duration limit, MediaRecorder-compatible
+formats, orphan retention/automatic cleanup, physical deletion semantics.
+
+**VERIFIED BY SOURCE CODE** for the new shared frontend:
+
+- Composer exposes only the two live-tested MIME types. Audio is offered as
+  one separate attachment without text; this is a UI policy, not a verified
+  backend one-audio/count limit. No microphone/recording capability is claimed.
+- Drafts distinguish local File/Blob URL from uploaded server attachment ID.
+  Upload timeout is 120 seconds, progress comes from Axios, and no multipart
+  boundary is manually set. Successful uploads are reused after definite failures.
+- Mutations disable the shared interceptor's automatic 401 replay. Unknown
+  delivery (timeout/network/5xx/unexpected contract) locks automatic resending;
+  users must refresh/review before explicitly discarding the local draft.
+- Removing an uploaded draft reference or leaving the page does **not** silently
+  delete server media. The UI states this; orphan cleanup is a remaining lifecycle
+  limitation. Blob previews are revoked on removal, confirmed send and unmount.
+- Only own text-only messages expose editing; own messages expose confirmed
+  deletion. Failed edits retain text. No optimistic message deletion.
+
+### SignalR, cache and read behavior
+
+**VERIFIED BY LIVE REQUEST**: authenticated `/hubs/chat` `ReceiveMessage` events
+arrived at the recipient with:
+
+```text
+{ id, conversationId, senderId, senderName, receiverId, content, sentAt,
+  attachments: Attachment[] }
+```
+
+- LongPolling succeeded for both test connections. The Node probe's initial SSE
+  handshake failed; production/browser transport selection was not changed.
+- No sender echo, edit/delete/read event was observed in the controlled probe.
+  Their absence is not proof the backend can never emit such events.
+- GET detail itself marked inbound messages read. Background preload of unopened
+  conversations is therefore unsafe for unread UX.
+- REST sends remain independent of hub connection status. The client's connection
+  is not evidence that the peer is online.
+
+**VERIFIED BY SOURCE CODE**: both portals share one chat UI/API. TanStack Query
+owns server messages, summaries and unread state; Redux only owns connection
+state. REST and hub merge by numeric message ID, never content/time windows.
+Missing-ID/legacy events invalidate queries instead of inventing IDs. Queries
+are user-scoped; only visible selected history is enabled. Refresh, focus and
+reconnect reconcile server snapshots; no polling is introduced. Logout retains
+existing hub teardown/cache clearing. Offline adapter assertions passed both
+REST/event arrival orders and preservation of confirmed read state.
+
+**2026-10-06 review — VERIFIED BY SOURCE CODE, no new live requests**:
+
+- Selection and draft identity use conversation IDs; a new recipient uses a
+  separate temporary recipient key until creation succeeds. Draft data stays in
+  memory for the mounted account session, not across reloads or route unmounts.
+- Duplicate ReceiveMessage creation events preserve existing REST content and
+  attachments. Confirmed local deletions have session-local tombstones, preventing
+  delayed creation events from resurrecting deleted messages while mounted.
+  Late REST edit/send responses also respect confirmed-deletion tombstones.
+  No edit/delete event name or remote event ordering is assumed.
+- Only a selected, visible detail query is enabled. Disabled histories are not
+  refetched by active-query invalidation. Detail retries are disabled, and
+  requests are cancelled when hidden/switched/unmounted. Cancellation cannot
+  undo an already processed server read. Conversation-wide read semantics cannot
+  guarantee that only messages already painted on screen are marked read.
+  A successful detail GET invalidates list/unread counts independently of PUT read.
+- Offline current-source tests covered both attachment arrival orders, stale
+  creation events after edit/delete, partial upload retry without repeating a
+  successful upload, uncertain POST suppression, per-conversation drafts,
+  audio/text restriction, Blob URL cleanup, unmount during upload, and disabled
+  history invalidation with the actual TanStack QueryObserver.
+- Prior documentation records controlled message/media cleanup and remaining
+  empty conversation `10019`. Retained scripts show the cleanup logic; raw live
+  response logs were not recovered. Cleanup was not repeated in this review,
+  and physical media erasure remains UNKNOWN.
+
+**NOT TESTED in a browser**: live component rendering, playback, RTL, mobile,
+keyboard interaction, reconnect/HMR lifecycle, failed-upload interaction and
+logout while a request is pending. Local browser tooling was unavailable;
+Cloud Browser denied localhost with `ERR_BLOCKED_BY_CLIENT`. These remain QA gates.
 
 ---
 

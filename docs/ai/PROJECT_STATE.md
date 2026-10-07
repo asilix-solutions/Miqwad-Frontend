@@ -3,7 +3,110 @@
 > Operational snapshot; repository history and verified runtime behavior take precedence.
 > Engineering rules: `/AGENTS.md`. Backend evidence: `BACKEND_VERIFIED_FACTS.md`.
 
-## Current work — Admin Dealer Balances, 2026-09-29
+## Current work — Chat voice recording / attachment picker, 2026-10-07
+
+- Existing checkout and branch `feat/conversations-multimedia`; starting HEAD
+  `0c3b813971a9c05f3f15d94f8e427cbc6c02d022` contains the completed responsive refinement.
+  The original feature is its parent `1f672734e2795f5979b2ab82c4dff912675eab25`.
+- Current enhancement is uncommitted. No branch/worktree/clone creation, reset,
+  stash application, push, PR or merge. Historical stash remains untouched.
+- Paperclip now opens the existing accessible Radix menu for PNG images and WAV
+  audio files. Both have prior **VERIFIED BY LIVE REQUEST** evidence in backend
+  facts §16. JPEG, Video and generic File remain **UNKNOWN** and are not offered.
+  No fresh authenticated upload probes were performed for this enhancement.
+- Explicit microphone action uses `getUserMedia({ audio: true })`, AudioWorklet
+  mono PCM capture and RIFF/WAVE PCM16 encoding into `audio/wav`. No MediaRecorder
+  container assumptions, transcoding dependency or new MIME allowlist. Sample
+  rate is the actual AudioContext rate; prior live PCM WAV was 8 kHz mono/16-bit.
+  New browser-captured WAV output is source/offline verified, **not live tested**.
+- Stop releases microphone tracks immediately, then creates a draft preview;
+  upload and standalone message POST happen only on explicit Send. Native audio
+  controls, duration, discard and localized Voice message labels are provided.
+- Text is preserved for the next message while audio is sent with `message:null`
+  and existing `attachmentIds`. New-conversation draft-key migration also
+  preserves carried text if another destination send is already in flight.
+- Capture cancels on composer unmount. Hidden tab/view, window focus loss, device interruption or
+  suspended audio context stop capture and retain already received PCM as a
+  preview when possible. Late permission results are stopped after cancellation.
+  Timers, audio nodes, contexts and tracks are released; the existing draft owner
+  revokes preview URLs on removal, successful send or account-session unmount.
+- Completed previews survive conversation switches within the mounted chat
+  session; active recording is cancelled on conversation replacement. Reload or
+  leaving the chat session does not persist drafts. No duration limit is invented;
+  PCM uses memory proportional to duration. Pause/resume is intentionally omitted.
+- A failed history refresh with cached messages keeps the composer mounted and
+  shows a retry banner, so a transient read failure cannot discard active capture.
+- REST API, media policy, SignalR reconciliation and read/unread hooks are unchanged.
+  Prior image mosaic, responsive grids, ownership menus and long press remain.
+- Validation: typecheck, affected-file ESLint, focused formatting and production
+  build pass (existing large-chunk warning). Offline source tests cover encoding,
+  capture lifecycle/errors, draft recovery/text retention, reconciliation and
+  active-only read behavior. Worklet is emitted as a standalone production asset.
+- Browser/MIME capability probing: **BLOCKED BY ENVIRONMENT**, Chromium missing;
+  no install/download retried. Real microphone, permission UI, playback, mobile
+  320/360/390px, desktop, Arabic/English and keyboard/focus QA remain pending.
+  No generated recordings, secrets or scratchpad artifacts are proposed for commit.
+
+## Historical work — Conversations / multimedia, reviewed 2026-10-06
+
+- Existing checkout only; branch `feat/conversations-multimedia` from verified
+  `origin/main` / HEAD `c071bb68a49db10781971258627552aa66bb0dfe`.
+- The unrelated prior PROJECT_STATE edit remains in the named
+  `preexisting-project-state-do-not-touch` stash. It was not popped or copied.
+  This update starts from committed main documentation.
+- Scrap and Workshop retain their existing routes and share the upgraded Chat
+  module: paginated conversations, rich messages, image/WAV attachments,
+  upload/draft recovery, own text editing, confirmed deletion and unread handling.
+- TanStack Query is the sole message/server cache; Redux retains connection
+  state. REST and SignalR reconcile by server message IDs, with no polling.
+- Live verification used authorized test accounts in both directions. Multipart
+  field `File`, numeric `attachmentIds`, PNG/WAV, image-only, images+text,
+  audio-only, own edit/delete and read/unread were verified. Audio+text is rejected.
+  The exact evidence and unknowns are in BACKEND_VERIFIED_FACTS §16.
+- No recording, unverified upload formats, fabricated avatars/presence, invented
+  media limits or edit/delete SignalR event names were added.
+- Important backend constraints: detail GET marks messages read; media URLs were
+  publicly fetchable; no conversation-delete endpoint exists; orphan retention
+  is unknown. UI draft removal does not claim to delete uploaded server media.
+- Test-created messages/media were cleaned; empty conversation `10019` remains.
+  No historical messages/media were edited/deleted.
+- Validation: typecheck/build and focused source ESLint/Prettier pass; full lint
+  matches baseline (106 errors, 24 warnings); full format has existing failures
+  including UTF-16 swagger.json. No automated test script exists.
+- Live API/SignalR and source adapter checks passed. Browser interaction/visual
+  QA remains blocked: Chromium download failed and Cloud Browser denied the
+  local dev URL. Arabic/English, 320/360/390px, desktop, playback, error/retry,
+  keyboard, reconnect and logout-in-flight must still be verified before commit.
+- No dependencies, commits, pushes, PRs or merges. Implementation is uncommitted
+  and awaits review; no release-ready visual claim is made.
+- Recovery review confirmed that all content outside this Conversations section
+  equals origin/main (apart from the historical-section heading). Read-only
+  comparison of the stash found no historical content mixed into this change.
+  Preserved stash SHA: `953838a68295564d0cf061dd931a5e13dc063fea`.
+- JPEG live evidence could not be recovered. The previous claim was corrected;
+  JPEG is UNKNOWN and removed from the upload allowlist. No backend probes were
+  repeated. Historical server media still renders by MIME when the browser supports it.
+- Review fixes: conversation-ID selection/draft keys, delayed creation-event
+  protection for edited/deleted messages, cancellation of hidden/switched detail
+  requests, post-await unmount guards, and removal of unused Redux selection.
+- Current-source checks rerun: typecheck PASS; focused ESLint PASS; full ESLint
+  BASELINE FAILURE (106 errors / 24 warnings, zero new diagnostics); all 19 changed
+  and new files pass focused formatting; production build PASS with chunk warning.
+  Secret scan found no credentials or persisted test response dumps in the feature.
+- Offline recovered-source checks PASS for attachment reconciliation in both
+  orders, stale creation events, draft retry/uncertainty/unmount, preview cleanup,
+  and active-only QueryObserver invalidation. These use in-memory transport and a
+  hook lifecycle harness, not browser rendering or live backend requests.
+- One browser launch check: BLOCKED BY ENVIRONMENT (Chromium executable missing).
+  No install/download retried. Existing cleanup statements above are retained
+  historical evidence, not a new verification of backend state.
+- Read limitations: cancellation cannot undo a request already processed by the
+  server; a conversation-wide read may include arrivals during the request. Drafts
+  survive conversation changes only within this mounted account session, not reloads.
+  Remote edit/delete notifications remain unverified; refresh/focus/reconnect is
+  required to reconcile changes made elsewhere.
+
+## Historical work — Admin Dealer Balances, 2026-09-29
 
 - Source of truth: `origin/main`; Develop is no longer the integration baseline
   for this work. Exact base: `e5014281cbb31526de5f0b3ec30ef0d0593d5f59` (PR #78).

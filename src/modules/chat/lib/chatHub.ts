@@ -17,7 +17,6 @@ import {
   LogLevel,
 } from "@microsoft/signalr";
 import { storage, StorageKeys } from "@shared/lib/storage";
-import type { ChatMessage } from "../types";
 
 /**
  * Hub origin resolution, in priority order:
@@ -37,7 +36,7 @@ export const CHAT_HUB_URL = `${
   import.meta.env.VITE_CHAT_HUB_URL ?? apiOrigin ?? "https://miqwad-test.runasp.net"
 }/hubs/chat`;
 
-type MessageHandler = (message: ChatMessage) => void;
+type MessageHandler = (message: unknown) => void;
 type VoidHandler = () => void;
 type Unsubscribe = () => void;
 
@@ -83,10 +82,10 @@ class ChatHubManager {
             : {}),
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(LogLevel.Information)
+        .configureLogging(LogLevel.None)
         .build();
 
-      connection.on("ReceiveMessage", (message: ChatMessage) => {
+      connection.on("ReceiveMessage", (message: unknown) => {
         this.messageListeners.forEach((cb) => cb(message));
       });
       connection.onreconnecting(() => {
