@@ -3153,6 +3153,36 @@ const ar = {
     modelsEmpty: "لا توجد موديلات متاحة لهذه الماركة",
   },
   chat: {
+    voice: {
+      attach: "إضافة مرفق",
+      imageOption: "صورة PNG",
+      audioOption: "ملف صوت WAV",
+      start: "تسجيل رسالة صوتية",
+      stop: "إيقاف التسجيل ومعاينته",
+      cancel: "إلغاء التسجيل",
+      discard: "حذف التسجيل من المسودة",
+      send: "إرسال الصوت منفردًا",
+      title: "رسالة صوتية",
+      duration: "مدة التسجيل",
+      requesting: "جارٍ تجهيز الميكروفون…",
+      recording: "جارٍ التسجيل",
+      stopping: "جارٍ تجهيز المعاينة…",
+      textRetained: "سيُرسل الصوت منفردًا. نصك محفوظ للرسالة التالية.",
+      standalone: "استمع للصوت قبل إرساله منفردًا.",
+      permissionDenied:
+        "لم يُسمح باستخدام الميكروفون. يمكنك السماح به من إعدادات المتصفح والمحاولة مجددًا، أو الكتابة وإرفاق ملف WAV.",
+      noMicrophone: "لم يُعثر على ميكروفون. وصّل جهازًا أو أرفق ملف WAV.",
+      deviceFailed:
+        "تعذّر الوصول إلى الميكروفون أو انقطع اتصاله. راجع أي معاينة محفوظة قبل الإرسال.",
+      unsupported:
+        "التسجيل غير متاح في هذا المتصفح أو الاتصال. افتح الصفحة عبر HTTPS في متصفح حديث، أو أرفق ملف WAV.",
+      recordingFailed: "تعذّر تسجيل الصوت. راجع أي معاينة محفوظة أو حاول التسجيل مجددًا.",
+      encodingFailed: "تعذّر تحويل التسجيل إلى WAV. لم يُرسل شيء؛ حاول التسجيل مجددًا.",
+      emptyRecording: "لم يُلتقط صوت للتسجيل. تحقق من الميكروفون ثم حاول مجددًا.",
+      interrupted:
+        "توقف التسجيل عند مغادرة العرض أو انقطاع الالتقاط. راجع الجزء المحفوظ قبل إرساله.",
+      previewFailed: "تعذّر تشغيل المعاينة في المتصفح. يمكنك إزالة الصوت واختيار ملف آخر.",
+    },
     media: {
       discardDraft: "مراجعة المسودة العالقة",
       discardWarning:
@@ -6457,6 +6487,38 @@ const en: typeof ar = {
     modelsEmpty: "No models available for this make",
   },
   chat: {
+    voice: {
+      attach: "Add attachment",
+      imageOption: "PNG image",
+      audioOption: "WAV audio file",
+      start: "Record a voice message",
+      stop: "Stop recording and preview",
+      cancel: "Cancel recording",
+      discard: "Discard recorded audio",
+      send: "Send audio separately",
+      title: "Voice message",
+      duration: "Recording duration",
+      requesting: "Preparing microphone…",
+      recording: "Recording",
+      stopping: "Preparing preview…",
+      textRetained: "Audio will be sent separately. Your text is saved for the next message.",
+      standalone: "Listen before sending this audio on its own.",
+      permissionDenied:
+        "Microphone permission was denied. Allow it in browser settings and try again, or type and attach a WAV file.",
+      noMicrophone: "No microphone was found. Connect one or attach a WAV file.",
+      deviceFailed:
+        "The microphone could not be accessed or was disconnected. Review any saved preview before sending.",
+      unsupported:
+        "Recording is unavailable in this browser or connection. Open this page over HTTPS in a modern browser, or attach a WAV file.",
+      recordingFailed: "Audio recording failed. Review any saved preview or try recording again.",
+      encodingFailed:
+        "The recording could not be encoded as WAV. Nothing was sent; try recording again.",
+      emptyRecording: "No audio was captured. Check your microphone and try again.",
+      interrupted:
+        "Recording stopped when you left the view or capture was interrupted. Review the saved portion before sending.",
+      previewFailed:
+        "This browser could not play the preview. You can remove the audio and choose another file.",
+    },
     media: {
       discardDraft: "Review the blocked draft",
       discardWarning:

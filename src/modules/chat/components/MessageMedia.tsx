@@ -195,23 +195,25 @@ function FileMedia({ attachment }: { attachment: ChatAttachment }) {
   const url = safeMediaUrl(attachment.filePath);
   const name = attachment.originalFileName || t("chat.media.attachment");
   if (!url || failed) return <MediaUnavailable />;
-  if (attachment.contentType?.startsWith("audio/"))
+  if (attachment.contentType?.startsWith("audio/")) {
+    const label = /^voice-message-\d+\.wav$/i.test(name) ? t("chat.voice.title") : name;
     return (
       <div className="w-64 max-w-full min-w-0 space-y-1">
         <bdi className="block truncate text-xs" title={name}>
-          {name}
+          {label}
         </bdi>
         <audio
           controls
           preload="metadata"
           src={url}
           onError={() => setFailed(true)}
-          aria-label={name}
+          aria-label={label}
           dir="ltr"
           className="block h-10 w-full max-w-full min-w-0"
         />
       </div>
     );
+  }
   // Existing server media remains readable; this does not expand the upload allowlist.
   return (
     <a

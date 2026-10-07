@@ -3,7 +3,51 @@
 > Operational snapshot; repository history and verified runtime behavior take precedence.
 > Engineering rules: `/AGENTS.md`. Backend evidence: `BACKEND_VERIFIED_FACTS.md`.
 
-## Current work — Conversations / multimedia, reviewed 2026-10-06
+## Current work — Chat voice recording / attachment picker, 2026-10-07
+
+- Existing checkout and branch `feat/conversations-multimedia`; starting HEAD
+  `0c3b813971a9c05f3f15d94f8e427cbc6c02d022` contains the completed responsive refinement.
+  The original feature is its parent `1f672734e2795f5979b2ab82c4dff912675eab25`.
+- Current enhancement is uncommitted. No branch/worktree/clone creation, reset,
+  stash application, push, PR or merge. Historical stash remains untouched.
+- Paperclip now opens the existing accessible Radix menu for PNG images and WAV
+  audio files. Both have prior **VERIFIED BY LIVE REQUEST** evidence in backend
+  facts §16. JPEG, Video and generic File remain **UNKNOWN** and are not offered.
+  No fresh authenticated upload probes were performed for this enhancement.
+- Explicit microphone action uses `getUserMedia({ audio: true })`, AudioWorklet
+  mono PCM capture and RIFF/WAVE PCM16 encoding into `audio/wav`. No MediaRecorder
+  container assumptions, transcoding dependency or new MIME allowlist. Sample
+  rate is the actual AudioContext rate; prior live PCM WAV was 8 kHz mono/16-bit.
+  New browser-captured WAV output is source/offline verified, **not live tested**.
+- Stop releases microphone tracks immediately, then creates a draft preview;
+  upload and standalone message POST happen only on explicit Send. Native audio
+  controls, duration, discard and localized Voice message labels are provided.
+- Text is preserved for the next message while audio is sent with `message:null`
+  and existing `attachmentIds`. New-conversation draft-key migration also
+  preserves carried text if another destination send is already in flight.
+- Capture cancels on composer unmount. Hidden tab/view, window focus loss, device interruption or
+  suspended audio context stop capture and retain already received PCM as a
+  preview when possible. Late permission results are stopped after cancellation.
+  Timers, audio nodes, contexts and tracks are released; the existing draft owner
+  revokes preview URLs on removal, successful send or account-session unmount.
+- Completed previews survive conversation switches within the mounted chat
+  session; active recording is cancelled on conversation replacement. Reload or
+  leaving the chat session does not persist drafts. No duration limit is invented;
+  PCM uses memory proportional to duration. Pause/resume is intentionally omitted.
+- A failed history refresh with cached messages keeps the composer mounted and
+  shows a retry banner, so a transient read failure cannot discard active capture.
+- REST API, media policy, SignalR reconciliation and read/unread hooks are unchanged.
+  Prior image mosaic, responsive grids, ownership menus and long press remain.
+- Validation: typecheck, affected-file ESLint, focused formatting and production
+  build pass (existing large-chunk warning). Offline source tests cover encoding,
+  capture lifecycle/errors, draft recovery/text retention, reconciliation and
+  active-only read behavior. Worklet is emitted as a standalone production asset.
+- Browser/MIME capability probing: **BLOCKED BY ENVIRONMENT**, Chromium missing;
+  no install/download retried. Real microphone, permission UI, playback, mobile
+  320/360/390px, desktop, Arabic/English and keyboard/focus QA remain pending.
+  No generated recordings, secrets or scratchpad artifacts are proposed for commit.
+
+## Historical work — Conversations / multimedia, reviewed 2026-10-06
 
 - Existing checkout only; branch `feat/conversations-multimedia` from verified
   `origin/main` / HEAD `c071bb68a49db10781971258627552aa66bb0dfe`.

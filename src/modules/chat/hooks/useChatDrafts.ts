@@ -11,6 +11,7 @@ export interface DraftAttachment {
   status: "selected" | "uploading" | "uploaded" | "failed";
   progress: number;
   server?: ChatAttachment;
+  recordingDuration?: number;
 }
 export interface ChatDraft {
   text: string;
@@ -51,16 +52,16 @@ export function useChatDrafts() {
   };
   const changeText = (key: string, text: string) =>
     update(key, (d) => (d.busy || d.uncertain ? d : { ...d, text, error: undefined }));
-  const add = (key: string, files: File[]) => {
+  const add = (key: string, files: File[], recordingDuration?: number) => {
     const d = current.current[key] ?? emptyDraft();
-    if (d.busy || d.uncertain) return;
+    if (!files.length || d.busy || d.uncertain) return;
     if (files.some((f) => !supportedFile(f))) {
       update(key, (d) => ({ ...d, error: "chat.media.unsupported" }));
       return;
     }
     // This composer sends voice files separately; it is not a claim about server attachment-count limits.
     const combined = [...d.attachments.map((a) => a.file), ...files];
-    if (combined.some((f) => isAudio(f.type)) && (combined.length > 1 || d.text.trim())) {
+    if (combined.some((f) => isAudio(f.type)) && combined.length > 1) {
       update(key, (d) => ({ ...d, error: "chat.media.audioSeparate" }));
       return;
     }
@@ -73,6 +74,7 @@ export function useChatDrafts() {
         previewUrl,
         status: "selected" as const,
         progress: 0,
+        recordingDuration,
       };
     });
     update(key, (d) => ({ ...d, attachments: [...d.attachments, ...selected], error: undefined }));
@@ -90,16 +92,17 @@ export function useChatDrafts() {
       error: undefined,
     }));
   };
-  const send = async (key: string, onSend: (input: MessageInput) => Promise<void>) => {
+  const send = async (key: string, onSend: (input: MessageInput) => Promise<string | void>) => {
     const draft = current.current[key] ?? emptyDraft();
+    const audioOnly = draft.attachments.some((a) => isAudio(a.file.type));
     if (
       draft.busy ||
       draft.uncertain ||
       (!draft.text.trim() && !draft.attachments.length) ||
-      draft.text.length > 2000
+      (!audioOnly && draft.text.length > 2000)
     )
       return;
-    if (draft.attachments.some((a) => isAudio(a.file.type)) && draft.text.trim()) {
+    if (audioOnly && draft.attachments.length !== 1) {
       update(key, (d) => ({ ...d, error: "chat.media.audioSeparate" }));
       return;
     }
@@ -130,9 +133,30 @@ export function useChatDrafts() {
       }
       if (!alive.current) return;
       phase = "send";
-      await onSend({ message: draft.text.trim() || null, attachmentIds: ids });
+      const destination = await onSend({
+        message: audioOnly ? null : draft.text.trim() || null,
+        attachmentIds: ids,
+      });
+      if (!alive.current) return;
       draft.attachments.forEach((a) => revoke(a.previewUrl));
-      update(key, () => emptyDraft());
+      const latestText = current.current[key]?.text ?? draft.text;
+      // Another newly created conversation can resolve to this ID while a send is in flight.
+      // Remove only the submitted text, preserving any text carried here in the meantime.
+      const text = audioOnly
+        ? latestText
+        : latestText === draft.text
+          ? ""
+          : latestText.startsWith(`${draft.text}\n`)
+            ? latestText.slice(draft.text.length + 1)
+            : latestText;
+      // Creating a conversation replaces new:<peer> with conversation:<id>.
+      // Carry the unsent text to that key without overwriting another local draft.
+      if (destination && destination !== key && text) {
+        update(destination, (d) => ({ ...d, text: d.text ? `${d.text}\n${text}` : text }));
+        update(key, () => emptyDraft());
+      } else {
+        update(key, () => ({ ...emptyDraft(), text }));
+      }
     } catch (error) {
       const uncertain = mutationUncertain(error);
       update(key, (d) => ({
@@ -151,7 +175,10 @@ export function useChatDrafts() {
     const draft = current.current[key];
     if (!draft || draft.busy) return;
     draft.attachments.forEach((item) => revoke(item.previewUrl));
-    update(key, () => emptyDraft());
+    update(key, () => ({
+      ...emptyDraft(),
+      text: draft.attachments.some((a) => isAudio(a.file.type)) ? draft.text : "",
+    }));
   };
   return { drafts, changeText, add, remove, send, discard };
 }

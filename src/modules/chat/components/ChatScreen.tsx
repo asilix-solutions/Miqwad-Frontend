@@ -116,6 +116,7 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
   const send = async (input: MessageInput) => {
     if (!alive.current) return;
     if (!peer || userId <= 0) throw new Error("Missing chat identity");
+    let createdDraftKey: string | undefined;
     if (id !== null) {
       const message = await chatApi.sendMessage(id, input);
       if (!alive.current) return;
@@ -130,10 +131,14 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
       const result = await chatApi.createConversation({ ...input, receiverId: peer.peerId });
       if (!alive.current) return;
       const createdId = result.conversation.conversationId;
-      if (createdId !== undefined) cache.setQueryData(chatKeys.messages(userId, createdId), result);
+      if (createdId !== undefined) {
+        cache.setQueryData(chatKeys.messages(userId, createdId), result);
+        createdDraftKey = `conversation:${createdId}`;
+      }
       setSelected((current) => (current === selected ? result.conversation : current));
     }
     void refreshSummaries();
+    return createdDraftKey;
   };
   const edit = async (messageId: number, text: string) => {
     if (id === null) return;
@@ -273,7 +278,13 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
               {retryButton(() => setReadRetry((n) => n + 1))}
             </div>
           )}
-          {id !== null && (history.isPending || history.isError) ? (
+          {history.isError && history.data && (
+            <div role="alert" className="flex shrink-0 flex-wrap items-center gap-2 p-2 text-xs">
+              {t("chat.errorTitle")}
+              {retryButton(() => void history.refetch())}
+            </div>
+          )}
+          {id !== null && !history.data && (history.isPending || history.isError) ? (
             <div className="space-y-3 p-4">
               <button
                 type="button"
@@ -307,9 +318,10 @@ function ChatSession({ role, userId }: { role: "workshop" | "scrap"; userId: num
                   <MessageComposer
                     key={draftKey}
                     status={status}
+                    isVisible={visible}
                     draft={draft}
                     onText={(value) => drafts.changeText(draftKey, value)}
-                    onFiles={(files) => drafts.add(draftKey, files)}
+                    onFiles={(files, duration) => drafts.add(draftKey, files, duration)}
                     onRemove={(attachmentId) => drafts.remove(draftKey, attachmentId)}
                     onSend={() => drafts.send(draftKey, send)}
                     onCheck={reload}
