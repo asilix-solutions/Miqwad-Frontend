@@ -331,7 +331,7 @@ export function MessageComposer({
               {draft.busy ? (
                 <LoaderCircle size={18} className="animate-spin" />
               ) : (
-                <Send size={18} className="rtl:rotate-180" />
+                <Send size={18} className="rtl:-scale-x-100" />
               )}
             </button>
           </div>
