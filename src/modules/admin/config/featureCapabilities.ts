@@ -14,6 +14,7 @@ export const adminFeatureCapabilities = {
   createUser: "MOCK_ONLY",
   addresses: "LIVE",
   orders: "LIVE",
+  towTruck: "PARTIAL",
   coupons: "LIVE",
   invoices: "LIVE",
   transactions: "LIVE",
@@ -93,6 +94,7 @@ export const adminRoutes = {
   users: { feature: "users", permission: "users.view" },
   addresses: { feature: "addresses", permission: "addresses.view" },
   orders: { feature: "orders", permission: "orders.view" },
+  "tow-truck": { feature: "towTruck", permission: "orders.view" },
   coupons: { feature: "coupons", permission: "coupons.view" },
   invoices: { feature: "invoices", permission: "invoices.view" },
   // No dedicated Transactions permission exists; the router retains Admin RoleGuard.

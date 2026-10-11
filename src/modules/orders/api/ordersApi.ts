@@ -15,6 +15,8 @@
  * type workaround is obsolete. Status filtering stays client-side
  * (unchanged); trackNumber search stays FilterBy=trackNumber (unchanged).
  */
+import type { AxiosRequestConfig } from "axios";
+import { AppError } from "@shared/types/api";
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { ApiEnvelope } from "@modules/services/lib/categoryAdapter";
@@ -45,6 +47,19 @@ export interface RawAttachment {
 
 export interface RawOrder {
   id: number;
+  /** Tow-truck fields observed in list and detail GET, 2026-10-08. */
+  orderNumber?: string | null;
+  customerPhoneNumber?: string | null;
+  vehicleId?: number | null;
+  plateNumber?: string | null;
+  destinationAddressTitle?: string | null;
+  destinationAddressDescription?: string | null;
+  destinationLatitude?: number | null;
+  destinationLongitude?: number | null;
+  towTruckDriverId?: number | null;
+  towTruckDriverFullName?: string | null;
+  duration?: string | null;
+  notes?: string | null;
   userId: number;
   userFullName: string;
   /** Numeric OrderType enum (SpareParts=1…Mojaz=5). */
@@ -79,6 +94,8 @@ export interface RawOrder {
   serialNumber?: string | null;
 }
 
+export type OrdersReadPage<T> = PaginatedResponse<T> & { serverPaginated: boolean };
+
 interface RawPage<T> {
   items: T[];
   pageNumber: number;
@@ -92,6 +109,13 @@ export interface OrderWritePayload {
   paymentMethod: number;
   status: number;
   trackNumber: string;
+}
+
+/** Initial tow-truck quote; only the dedicated dispatch flow may call this. */
+export interface TowTruckAssignmentPayload {
+  towTruckDriverId: number;
+  cost: number;
+  duration: string;
 }
 
 export interface OrdersListParams {
@@ -115,14 +139,29 @@ function unwrap<T>(envelope: ApiEnvelope<T>): T {
   return envelope.data;
 }
 
-function fromRawPage<T>(page: RawPage<T> | T[] | null | undefined): PaginatedResponse<T> {
+function fromRawPage<T>(page: RawPage<T> | T[] | null | undefined): OrdersReadPage<T> {
   if (!page) {
-    return { items: [], page: 1, pageSize: DEFAULT_PAGE_SIZE, total: 0, totalPages: 0 };
+    return {
+      serverPaginated: false,
+      items: [],
+      page: 1,
+      pageSize: DEFAULT_PAGE_SIZE,
+      total: 0,
+      totalPages: 0,
+    };
   }
   if (Array.isArray(page)) {
-    return { items: page, page: 1, pageSize: DEFAULT_PAGE_SIZE, total: page.length, totalPages: page.length ? 1 : 0 };
+    return {
+      serverPaginated: false,
+      items: page,
+      page: 1,
+      pageSize: DEFAULT_PAGE_SIZE,
+      total: page.length,
+      totalPages: page.length ? 1 : 0,
+    };
   }
   return {
+    serverPaginated: Array.isArray(page.items),
     items: page.items ?? [],
     page: page.pageNumber,
     pageSize: page.pageSize,
@@ -132,10 +171,14 @@ function fromRawPage<T>(page: RawPage<T> | T[] | null | undefined): PaginatedRes
 }
 
 export const ordersApi = {
-  list: async (params: OrdersListParams = {}): Promise<PaginatedResponse<RawOrder>> => {
+  list: async (
+    params: OrdersListParams = {},
+    signal?: AbortSignal,
+  ): Promise<OrdersReadPage<RawOrder>> => {
     const { data } = await apiClient.get<ApiEnvelope<RawPage<RawOrder> | RawOrder[] | null>>(
       "/Orders",
       {
+        signal,
         params: {
           PageNumber: params.pageNumber ?? 1,
           PageSize: Math.min(params.pageSize ?? DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZE),
@@ -155,9 +198,35 @@ export const ordersApi = {
     return fromRawPage(unwrap(data));
   },
 
-  get: async (id: string): Promise<RawOrder> => {
-    const { data } = await apiClient.get<ApiEnvelope<RawOrder>>(`/Orders/${id}`);
+  get: async (id: string, signal?: AbortSignal): Promise<RawOrder> => {
+    const { data } = await apiClient.get<ApiEnvelope<RawOrder>>(`/Orders/${id}`, { signal });
     return unwrap(data);
+  },
+
+  assignTowTruckDriver: async (id: string, payload: TowTruckAssignmentPayload): Promise<void> => {
+    // Keep shared auth/language interceptors, but never refresh-and-replay a PUT.
+    const config: AxiosRequestConfig & { _retry: boolean } = { _retry: true };
+    const { data } = await apiClient.put<ApiEnvelope<unknown>>(
+      `/Orders/${id}/tow-truck-driver`,
+      payload,
+      config,
+    );
+    if (data?.success === false) {
+      const errors = Array.isArray(data.errors)
+        ? data.errors.filter((value): value is string => typeof value === "string")
+        : undefined;
+      throw new AppError(
+        data.message || "Assignment rejected",
+        "ASSIGNMENT_REJECTED",
+        422,
+        undefined,
+        errors,
+      );
+    }
+    // The documented acknowledgment is {success:true}. A malformed 2xx is an
+    // uncertain outcome, not permission to repeat the write.
+    if (data?.success !== true)
+      throw new AppError("Unconfirmed assignment response", "ASSIGNMENT_UNCERTAIN");
   },
 
   update: async (id: string, payload: OrderWritePayload): Promise<RawOrder> => {
