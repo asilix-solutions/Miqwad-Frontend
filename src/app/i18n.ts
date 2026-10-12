@@ -1,8 +1,10 @@
 import i18n from "i18next";
+import { towTruckAr, towTruckEn } from "@modules/tow-truck/i18n";
 import { initReactI18next } from "react-i18next";
 import { storage, StorageKeys } from "@shared/lib/storage";
 
 const ar = {
+  towTruck: towTruckAr,
   transactions: {
     title: "أرصدة التجار",
     subtitle: "إدارة أرصدة حسابات التجار وحالة تفعيلها",
@@ -3312,6 +3314,7 @@ const ar = {
 };
 
 const en: typeof ar = {
+  towTruck: towTruckEn,
   transactions: {
     title: "Dealer Balances",
     subtitle: "Manage dealer account balances and activation status.",

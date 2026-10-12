@@ -5,7 +5,13 @@
  * invalidate the order list/detail query keys. No create hook — orders are
  * created by customers, not admins.
  */
-import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+  queryOptions,
+} from "@tanstack/react-query";
 import { ordersApi, type OrdersListParams } from "../api/ordersApi";
 import { adaptRawOrder, adaptRawOrderDetail, adaptToUpdatePayload } from "../lib/orderAdapter";
 import type { UpdateOrderInput } from "../types";
@@ -16,23 +22,30 @@ export const orderKeys = {
   detail: (id: string) => [...orderKeys.all, "detail", id] as const,
 };
 
+/** Cache raw GET data once; each screen selects its own presentation model. */
+export const orderListOptions = (params: OrdersListParams = {}) =>
+  queryOptions({
+    queryKey: orderKeys.list(params),
+    queryFn: ({ signal }) => ordersApi.list(params, signal),
+    placeholderData: keepPreviousData,
+  });
+
+export const orderDetailOptions = (id: string) =>
+  queryOptions({
+    queryKey: orderKeys.detail(id),
+    queryFn: ({ signal }) => ordersApi.get(id, signal),
+    enabled: !!id,
+  });
+
 export function useOrdersList(params: OrdersListParams = {}) {
   return useQuery({
-    queryKey: orderKeys.list(params),
-    queryFn: async () => {
-      const page = await ordersApi.list(params);
-      return { ...page, items: page.items.map(adaptRawOrder) };
-    },
-    placeholderData: keepPreviousData,
+    ...orderListOptions(params),
+    select: (page) => ({ ...page, items: page.items.map(adaptRawOrder) }),
   });
 }
 
 export function useOrder(id: string) {
-  return useQuery({
-    queryKey: orderKeys.detail(id),
-    queryFn: async () => adaptRawOrderDetail(await ordersApi.get(id)),
-    enabled: !!id,
-  });
+  return useQuery({ ...orderDetailOptions(id), select: adaptRawOrderDetail });
 }
 
 export function useUpdateOrder() {

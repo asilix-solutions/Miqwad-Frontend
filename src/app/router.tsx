@@ -840,6 +840,20 @@ export const router = createBrowserRouter([
                     children: [{ index: true, element: <AdminAddressesPage /> }],
                   },
                   {
+                    path: "tow-truck",
+                    element: <PermissionGuard permission="orders.view" />,
+                    children: [
+                      {
+                        path: ":orderId?",
+                        lazy: async () => {
+                          const { TowTruckOperationsPage } =
+                            await import("@modules/tow-truck/pages/TowTruckOperationsPage");
+                          return { Component: TowTruckOperationsPage };
+                        },
+                      },
+                    ],
+                  },
+                  {
                     path: "orders",
                     element: <PermissionGuard permission="orders.view" />,
                     children: [{ index: true, element: <AdminOrdersPage /> }],

@@ -24,6 +24,7 @@ import {
   ReceiptText,
   TicketPercent,
   Wallet,
+  Truck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -57,6 +58,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   { key: "users", labelPath: "adminNav.users", path: "/admin/users", icon: Users },
   { key: "addresses", labelPath: "adminNav.addresses", path: "/admin/addresses", icon: MapPin },
+  { key: "tow-truck", labelPath: "towTruck.title", path: "/admin/tow-truck", icon: Truck },
   { key: "orders", labelPath: "adminNav.orders", path: "/admin/orders", icon: ShoppingCart },
   { key: "coupons", labelPath: "coupons.title", path: "/admin/coupons", icon: TicketPercent },
   { key: "invoices", labelPath: "adminNav.invoices", path: "/admin/invoices", icon: ReceiptText },
@@ -100,7 +102,13 @@ const NAV_ITEMS: NavItem[] = [
   { key: "settings", labelPath: "adminNav.settings", path: "/admin/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  mobile = false,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
   const { t } = useTranslation();
   const { can } = usePermissions();
   const visibleItems = NAV_ITEMS.filter((item) => {
@@ -111,7 +119,9 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 start-0 z-20 flex w-[260px] flex-col",
+        mobile
+          ? "flex h-full min-h-0 w-full flex-col"
+          : "fixed inset-y-0 start-0 z-20 hidden w-[260px] flex-col lg:flex",
         "border-e border-[var(--color-divider)] bg-[var(--color-surface)]",
       )}
     >
@@ -129,11 +139,15 @@ export function AdminSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6">
+      <nav
+        aria-label={t("towTruck.navigation")}
+        className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6"
+      >
         {visibleItems.map((item) => (
           <NavLink
             key={item.key}
             to={item.path}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",

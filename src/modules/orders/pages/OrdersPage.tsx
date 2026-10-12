@@ -17,6 +17,7 @@
  * number through ORDER_TYPE_MAP; "all" omits the param. Status filtering
  * stays client-side on the fetched page (via the stats strip), unchanged.
  */
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Eye, Pencil, PackageOpen, RotateCw, Trash2 } from "lucide-react";
@@ -45,6 +46,7 @@ const PAGE_SIZE = 20;
 
 export function OrdersPage() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const [pageNumber, setPageNumber] = useState(1);
 
@@ -87,7 +89,9 @@ export function OrdersPage() {
   // Server already applied the type filter; status stays client-side.
   const items = status === "all" ? fetchedItems : fetchedItems.filter((o) => o.status === status);
 
-  const hasActiveFilters = Boolean(trimmedSearch || status !== "all" || type !== "all" || fromDate || toDate);
+  const hasActiveFilters = Boolean(
+    trimmedSearch || status !== "all" || type !== "all" || fromDate || toDate,
+  );
 
   const clearFilters = () => {
     setSearch("");
@@ -107,6 +111,10 @@ export function OrdersPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const openDetail = (order: Order) => {
+    if (order.type === "TowTruck") {
+      navigate(`/admin/tow-truck/${order.id}`);
+      return;
+    }
     setDetailOrderId(order.id);
     setDetailOpen(true);
   };
@@ -122,10 +130,22 @@ export function OrdersPage() {
   };
 
   const columns: DataTableColumn<Order>[] = [
-    { key: "trackNumber", header: t("orders.columns.trackNumber"), render: (row) => row.trackNumber || "—" },
+    {
+      key: "trackNumber",
+      header: t("orders.columns.trackNumber"),
+      render: (row) => row.trackNumber || "—",
+    },
     { key: "userFullName", header: t("orders.columns.userFullName") },
-    { key: "type", header: t("orders.columns.type"), render: (row) => <OrderTypeBadge type={row.type} /> },
-    { key: "status", header: t("orders.columns.status"), render: (row) => <OrderStatusBadge status={row.status} /> },
+    {
+      key: "type",
+      header: t("orders.columns.type"),
+      render: (row) => <OrderTypeBadge type={row.type} />,
+    },
+    {
+      key: "status",
+      header: t("orders.columns.status"),
+      render: (row) => <OrderStatusBadge status={row.status} />,
+    },
     {
       key: "paymentMethod",
       header: t("orders.columns.paymentMethod"),
@@ -150,26 +170,28 @@ export function OrdersPage() {
           >
             <Eye className="size-4" />
           </Button>
-          <Can permission="orders.manage">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              title={t("orders.actions.edit")}
-              onClick={() => openEdit(row)}
-            >
-              <Pencil className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              title={t("orders.actions.delete")}
-              onClick={() => openDelete(row)}
-            >
-              <Trash2 className="size-4 text-danger-500" />
-            </Button>
-          </Can>
+          {row.type !== "TowTruck" && (
+            <Can permission="orders.manage">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                title={t("orders.actions.edit")}
+                onClick={() => openEdit(row)}
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                title={t("orders.actions.delete")}
+                onClick={() => openDelete(row)}
+              >
+                <Trash2 className="text-danger-500 size-4" />
+              </Button>
+            </Can>
+          )}
         </div>
       ),
       className: "text-end",
@@ -227,7 +249,9 @@ export function OrdersPage() {
       {!q.isLoading && !q.isError && items.length === 0 && (
         <div className="flex flex-col items-center gap-2 py-6 text-center">
           <PackageOpen className="size-8 text-[var(--color-muted)]" />
-          <p className="text-sm font-medium text-[var(--color-ink-body)]">{t("orders.emptyTitle")}</p>
+          <p className="text-sm font-medium text-[var(--color-ink-body)]">
+            {t("orders.emptyTitle")}
+          </p>
         </div>
       )}
 
@@ -239,7 +263,7 @@ export function OrdersPage() {
                 onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                 className={
                   pageNumber === 1
-                    ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                    ? "pointer-events-none cursor-default gap-1 px-2.5 opacity-50"
                     : "cursor-pointer gap-1 px-2.5"
                 }
                 aria-label={t("common.back")}
@@ -257,7 +281,7 @@ export function OrdersPage() {
                 onClick={() => setPageNumber((p) => Math.min(totalPages, p + 1))}
                 className={
                   pageNumber === totalPages
-                    ? "pointer-events-none opacity-50 cursor-default gap-1 px-2.5"
+                    ? "pointer-events-none cursor-default gap-1 px-2.5 opacity-50"
                     : "cursor-pointer gap-1 px-2.5"
                 }
                 aria-label={t("common.next")}
