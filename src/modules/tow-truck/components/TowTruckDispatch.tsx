@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -18,19 +18,24 @@ import {
   dispatchDraftSchema,
   dispatchSnapshot,
   initialAssignmentBlock,
+  reviewMatchesDraft,
   type DispatchDraft,
 } from "../lib/dispatchModel";
+
+import { assignmentRejection, driverEligibilityMessage } from "../lib/assignmentFeedback";
 
 export function TowTruckDispatch({
   order,
   onDirtyChange,
   onBusyChange,
   stale,
+  operationsBlocked,
 }: {
   order: TowTruckOrder;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
   stale: boolean;
+  operationsBlocked: boolean;
 }) {
   const { t } = useTranslation();
   const { can } = usePermissions();
@@ -41,6 +46,9 @@ export function TowTruckDispatch({
   const [review, setReview] = useState<{ values: DispatchDraft; snapshot: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reviewing = useRef(false);
+  const feedback = useRef<HTMLDivElement>(null);
+  const feedbackRequested = useRef(false);
+  const driverSection = useRef<HTMLFieldSetElement>(null);
   const reviewHeading = useRef<HTMLHeadingElement>(null);
   const assignment = useInitialAssignment(order.id);
   const busy = assignment.state.phase === "busy";
@@ -52,6 +60,7 @@ export function TowTruckDispatch({
     resolver: zodResolver(dispatchDraftSchema(true)),
     defaultValues: { driverId: "", cost: "", duration: "" },
   });
+  const draft = useWatch({ control: form.control });
   const { isDirty, isSubmitting, errors } = form.formState;
   useEffect(() => {
     onDirtyChange(isDirty && canEdit);
@@ -65,6 +74,13 @@ export function TowTruckDispatch({
     if (review) reviewHeading.current?.focus();
   }, [review]);
 
+  useEffect(() => {
+    if (feedbackRequested.current && !busy && assignment.state.message && feedback.current) {
+      feedbackRequested.current = false;
+      feedback.current?.focus();
+    }
+  }, [assignment.state, busy, review]);
+
   const reviewDraft = async (values: DispatchDraft) => {
     if (
       reviewing.current ||
@@ -73,7 +89,9 @@ export function TowTruckDispatch({
       !canPrepare ||
       stale ||
       !selected ||
-      !canSelectDriver(selected)
+      !canSelectDriver(selected) ||
+      (assignment.state.message === "assignmentDriverBusy" &&
+        selected.id === assignment.state.driverId)
     )
       return;
     reviewing.current = true;
@@ -100,20 +118,22 @@ export function TowTruckDispatch({
         !canSelectDriver(driver) ||
         driver.id === latest.driverId
       ) {
-        setError("driverChanged");
+        setError(driverEligibilityMessage(driver, values.driverId) ?? "driverChanged");
       } else {
         setSelected(driver);
-        setReview({ values, snapshot: dispatchSnapshot(latest) });
+        setReview({ values: { ...values }, snapshot: dispatchSnapshot(latest) });
       }
-    } catch {
-      setError("reviewFailed");
+    } catch (error) {
+      setError(assignmentRejection(error) ?? "reviewFailed");
     } finally {
       reviewing.current = false;
     }
   };
-  const reviewChanged = !!review && review.snapshot !== dispatchSnapshot(order);
+  const quoteChanged = !!review && !reviewMatchesDraft(review.values, draft);
+  const reviewChanged = !!review && (review.snapshot !== dispatchSnapshot(order) || quoteChanged);
   const confirmAssignment = async () => {
     if (!review || !canEdit || initialBlock || stale || reviewChanged || !canPrepare) return;
+    feedbackRequested.current = true;
     const result = await assignment.submit(review);
     if (result.phase === "success") {
       form.reset();
@@ -122,6 +142,7 @@ export function TowTruckDispatch({
     } else if (["retryable", "rejected"].includes(result.phase)) setReview(null);
   };
   const checkOutcome = async () => {
+    feedbackRequested.current = true;
     const result = await assignment.check();
     if (result.phase === "success") {
       form.reset();
@@ -129,6 +150,15 @@ export function TowTruckDispatch({
       setEditing(false);
     } else if (result.phase === "retryable") setReview(null);
   };
+  if (operationsBlocked)
+    return (
+      <section className="tow-section">
+        <h3 className="tow-section-title" id="tow-dispatch-title" tabIndex={-1}>
+          {t("towTruck.dispatchTitle")}
+        </h3>
+        <p className="tow-hint">{t("towTruck.opsInitialHeld")}</p>
+      </section>
+    );
   return (
     <section className="tow-section tow-dispatch" aria-labelledby="tow-dispatch-title">
       <h3 id="tow-dispatch-title" tabIndex={-1} className="tow-section-title">
@@ -142,20 +172,41 @@ export function TowTruckDispatch({
           <p>{t(`towTruck.${initialBlock ?? "initialReady"}`)}</p>
         </div>
       </div>
-      {assignment.state.message && (
+      {assignment.state.message && (!review || busy || !canEdit) && (
         <div
+          ref={feedback}
+          tabIndex={-1}
           className="tow-assignment-result"
+          data-phase={assignment.state.phase}
           role={assignment.state.phase === "rejected" ? "alert" : "status"}
-          aria-live="polite"
+          aria-atomic="true"
         >
-          <strong>{t(`towTruck.${assignment.state.message}`)}</strong>
-          {!!assignment.state.details?.length && (
-            <ul>
-              {assignment.state.details.map((message, index) => (
-                <li key={index}>{message}</li>
-              ))}
-            </ul>
+          {assignment.state.phase === "rejected" && (
+            <strong>{t("towTruck.assignmentRejectedTitle")}</strong>
           )}
+          {assignment.state.reason && <p>{t(`towTruck.${assignment.state.reason}`)}</p>}
+          <p>
+            {t(
+              `towTruck.${assignment.state.message === "assignmentDriverBusy" && selected && selected.id !== assignment.state.driverId ? "assignmentBusyPrevious" : assignment.state.message}`,
+            )}
+          </p>
+          {["rejected", "uncertain", "accepted", "retryable"].includes(assignment.state.phase) &&
+            editing &&
+            isDirty && <p className="tow-hint">{t("towTruck.draftPreserved")}</p>}
+          {assignment.state.message === "assignmentDriverBusy" &&
+            editing &&
+            !review &&
+            !initialBlock && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  driverSection.current?.focus();
+                  driverSection.current?.scrollIntoView({ block: "nearest" });
+                }}
+              >
+                {t("towTruck.changeDriver")}
+              </Button>
+            )}
           {assignment.state.receipt && assignment.state.phase === "success" && (
             <p>
               {t("towTruck.sentQuote", {
@@ -183,9 +234,6 @@ export function TowTruckDispatch({
           >
             {t("towTruck.prepare")}
           </Button>
-          {order.assignment === "unknown" && (
-            <p className="tow-hint">{t("towTruck.driverStateUnknown")}</p>
-          )}
         </div>
       ) : review ? (
         <div className="tow-draft-review">
@@ -195,7 +243,7 @@ export function TowTruckDispatch({
           <p className="tow-hint">{t("towTruck.confirmInitialHint")}</p>
           {(reviewChanged || stale) && (
             <p className="tow-warning" role="alert">
-              {t("towTruck.requestChanged")}
+              {t(quoteChanged ? "towTruck.quoteChanged" : "towTruck.requestChanged")}
             </p>
           )}
           <dl className="tow-draft-summary">
@@ -246,8 +294,14 @@ export function TowTruckDispatch({
           className="tow-dispatch-form"
           noValidate
         >
-          <p className="tow-hint">{t("towTruck.localOnly")}</p>
-          <fieldset disabled={isSubmitting || busy || !!initialBlock}>
+          <p className="tow-hint">
+            {t("towTruck.localOnly")} {t("towTruck.reviewRequired")}
+          </p>
+          <fieldset
+            ref={driverSection}
+            tabIndex={-1}
+            disabled={isSubmitting || busy || !!initialBlock}
+          >
             <legend>{t("towTruck.chooseDriver")}</legend>
             <Button
               type="button"
@@ -288,10 +342,13 @@ export function TowTruckDispatch({
                           value={driver.id}
                           {...form.register("driverId")}
                           disabled={!canSelectDriver(driver) || driver.id === order.driverId}
+                          aria-invalid={!!errors.driverId}
                           aria-describedby="tow-driver-help tow-driver-error"
                           onChange={(event) => {
                             void form.register("driverId").onChange(event);
                             setSelected(driver);
+                            setReview(null);
+                            setError(null);
                           }}
                         />
                         <span>
@@ -358,7 +415,7 @@ export function TowTruckDispatch({
                 />
                 <small id="tow-cost-help">{t("towTruck.costHelp")}</small>
                 <span id="tow-cost-error" className="tow-form-error">
-                  {errors.cost ? t("towTruck.costInvalid") : ""}
+                  {errors.cost?.message ? t(`towTruck.${errors.cost.message}`) : ""}
                 </span>
               </label>
               <label>
@@ -372,7 +429,7 @@ export function TowTruckDispatch({
                   placeholder={t("towTruck.durationExample")}
                 />
                 <span id="tow-duration-error" className="tow-form-error">
-                  {errors.duration ? t("towTruck.durationInvalid") : ""}
+                  {errors.duration?.message ? t(`towTruck.${errors.duration.message}`) : ""}
                 </span>
               </label>
             </div>
@@ -385,7 +442,15 @@ export function TowTruckDispatch({
           {stale && <p className="tow-hint">{t("towTruck.reviewNeedsFresh")}</p>}
           <Button
             type="submit"
-            disabled={isSubmitting || busy || !canEdit || !!initialBlock || stale || !selected}
+            disabled={
+              isSubmitting ||
+              busy ||
+              !canEdit ||
+              !!initialBlock ||
+              stale ||
+              (assignment.state.message === "assignmentDriverBusy" &&
+                selected?.id === assignment.state.driverId)
+            }
           >
             {t(`towTruck.${isSubmitting ? "reviewingDraft" : "reviewDraft"}`)}
           </Button>
@@ -395,9 +460,6 @@ export function TowTruckDispatch({
         <div className="tow-unavailable-actions" aria-describedby="tow-dispatch-blocked">
           <Button variant="outline" disabled>
             {t("towTruck.reassignDriver")}
-          </Button>
-          <Button variant="outline" disabled>
-            {t("towTruck.unassignDriver")}
           </Button>
         </div>
       )}

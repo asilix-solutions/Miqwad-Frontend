@@ -15,6 +15,7 @@
  * type workaround is obsolete. Status filtering stays client-side
  * (unchanged); trackNumber search stays FilterBy=trackNumber (unchanged).
  */
+import { confirmMutation, noMutationReplay } from "@shared/lib/confirmedMutation";
 import type { AxiosRequestConfig } from "axios";
 import { AppError } from "@shared/types/api";
 import { apiClient } from "@shared/lib/axios";
@@ -203,25 +204,41 @@ export const ordersApi = {
     return unwrap(data);
   },
 
+  removeTowTruckDriver: async (id: string): Promise<void> => {
+    const response = await apiClient.delete(`/Orders/${id}/tow-truck-driver`, noMutationReplay);
+    confirmMutation(response);
+  },
+
   assignTowTruckDriver: async (id: string, payload: TowTruckAssignmentPayload): Promise<void> => {
     // Keep shared auth/language interceptors, but never refresh-and-replay a PUT.
-    const config: AxiosRequestConfig & { _retry: boolean } = { _retry: true };
+    const transforms = apiClient.defaults.transformResponse;
+    const config: AxiosRequestConfig & { _retry: boolean } = {
+      _retry: true,
+      transformResponse: [
+        ...(Array.isArray(transforms) ? transforms : transforms ? [transforms] : []),
+        (response: unknown) => {
+          // Preserve message type before the shared Error constructor coerces
+          // it. A malformed array/object must never impersonate a known 409.
+          if (
+            response &&
+            typeof response === "object" &&
+            "message" in response &&
+            typeof response.message !== "string"
+          )
+            return { ...response, message: "" };
+          return response;
+        },
+      ],
+    };
     const { data } = await apiClient.put<ApiEnvelope<unknown>>(
       `/Orders/${id}/tow-truck-driver`,
       payload,
       config,
     );
     if (data?.success === false) {
-      const errors = Array.isArray(data.errors)
-        ? data.errors.filter((value): value is string => typeof value === "string")
-        : undefined;
-      throw new AppError(
-        data.message || "Assignment rejected",
-        "ASSIGNMENT_REJECTED",
-        422,
-        undefined,
-        errors,
-      );
+      // Explicit rejection is distinct from malformed acknowledgment. Do not
+      // pass untrusted server text or invent an HTTP validation status.
+      throw new AppError("Assignment rejected", "ASSIGNMENT_REJECTED");
     }
     // The documented acknowledgment is {success:true}. A malformed 2xx is an
     // uncertain outcome, not permission to repeat the write.

@@ -5,6 +5,7 @@ import { ordersApi } from "@modules/orders/api/ordersApi";
 import { orderKeys } from "@modules/orders/hooks/useOrdersQueries";
 import { adminApi } from "@modules/admin/api/adminApi";
 import { adminKeys } from "@modules/admin/hooks/useAdminQueries";
+import { driverOperationBlocks, removalHistory } from "../lib/driverOperationGuards";
 import { adaptTowTruck } from "../lib/towTruckModel";
 import {
   checkAssignmentOutcome,
@@ -49,6 +50,8 @@ export function useInitialAssignment(orderId: string) {
         : getRolePermissions(user?.role);
       return (
         !!userId &&
+        !driverOperationBlocks(qc, userId) &&
+        !removalHistory(userId, orderId) &&
         user?.id === userId &&
         hasPermission(permissions, "orders.manage") &&
         hasPermission(permissions, "users.view")
