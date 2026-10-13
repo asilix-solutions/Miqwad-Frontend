@@ -15,19 +15,18 @@ export function canSelectDriver(driver: AdminUserRow): boolean {
 
 // Avoid silently changing a financial value while converting the decimal input
 // to the numeric JSON DTO. No currency precision or business maximum is invented.
-export function validQuoteCost(value: string): boolean {
-  if (!/^\d+(?:\.\d+)?$/.test(value)) return false;
+export function quoteCostError(value: string): string | null {
+  if (!value) return "costRequired";
+  if (!/^\d+(?:\.\d+)?$/.test(value)) return "costInvalid";
   const cost = Number(value);
+  if (cost < 0.01) return "costMinimum";
   const canonical = value
     .replace(/^0+(?=\d)/, "")
     .replace(/(\.\d*?)0+$/, "$1")
     .replace(/\.$/, "");
-  return (
-    Number.isFinite(cost) &&
-    cost >= 0.01 &&
-    cost <= Number.MAX_SAFE_INTEGER &&
-    String(cost) === canonical
-  );
+  if (!Number.isFinite(cost) || cost > Number.MAX_SAFE_INTEGER || String(cost) !== canonical)
+    return "costPrecision";
+  return null;
 }
 
 export function dispatchDraftSchema(quoteAllowed: boolean) {
@@ -39,8 +38,11 @@ export function dispatchDraftSchema(quoteAllowed: boolean) {
     cost: z
       .string()
       .trim()
-      .refine((value) => !quoteAllowed || validQuoteCost(value), "costInvalid"),
-    duration: z.string().trim().min(1, "durationInvalid").max(100, "durationInvalid"),
+      .superRefine((value, ctx) => {
+        const message = quoteAllowed ? quoteCostError(value) : null;
+        if (message) ctx.addIssue({ code: "custom", message });
+      }),
+    duration: z.string().trim().min(1, "durationRequired").max(100, "durationTooLong"),
   });
 }
 export type DispatchDraft = z.infer<ReturnType<typeof dispatchDraftSchema>>;
@@ -64,7 +66,8 @@ export function dispatchSnapshot(order: TowTruckOrder): string {
 
 // Initial assignment is now confirmed; all other driver mutations remain out of scope.
 export function initialAssignmentBlock(order: TowTruckOrder): string | null {
-  if (order.assignment !== "unassigned") return "initialNeedsUnassigned";
+  if (order.assignment === "unknown") return "driverStateUnknown";
+  if (order.assignment === "assigned") return "initialNeedsUnassigned";
   if (order.statusCode !== 1 || order.status !== "InWaiting") return "initialNeedsWaiting";
   // Legacy new requests use null/0. Pending=1 is the existing attested mapping.
   // Other payment codes remain unverified and must not enter an initial quote.
@@ -100,4 +103,22 @@ export function validateDriverPage(data: PaginatedResponse<AdminUserRow>, page: 
     throw new Error("Invalid tow-truck driver page");
   }
   return data;
+}
+
+// Editing a reviewed proposal requires a new GET review and explicit confirmation.
+export function reviewMatchesDraft(
+  reviewed: DispatchDraft,
+  current: Partial<DispatchDraft>,
+): boolean {
+  return (
+    reviewed.driverId === current.driverId &&
+    reviewed.cost.trim() === current.cost?.trim() &&
+    reviewed.duration.trim() === current.duration?.trim()
+  );
+}
+
+export function nextActionMessage(order: TowTruckOrder): string {
+  if (order.stage === "checkDetails") return "checkHint";
+  if (order.paymentPending && order.assignment === "assigned") return "pendingCustomerHint";
+  return initialAssignmentBlock(order) ?? "reviewHint";
 }

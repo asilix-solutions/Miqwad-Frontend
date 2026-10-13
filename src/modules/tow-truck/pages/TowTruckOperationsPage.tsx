@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { formatRelativeDate } from "@modules/orders/lib/formatRelativeDate";
 import { useTowTruckDetail, useTowTruckQueue } from "../hooks/useTowTruckQueries";
 import { TowTruckDetail } from "../components/TowTruckDetail";
+import { readFailureMessage } from "../lib/assignmentFeedback";
 import "../towTruck.css";
 
 function Loading({ detail = false }: { detail?: boolean }) {
@@ -43,14 +44,22 @@ function Loading({ detail = false }: { detail?: boolean }) {
     </div>
   );
 }
-function ReadError({ retry, stale = false }: { retry: () => void; stale?: boolean }) {
+function ReadError({
+  retry,
+  stale = false,
+  error,
+}: {
+  retry: () => void;
+  stale?: boolean;
+  error: unknown;
+}) {
   const { t } = useTranslation();
   return (
     <div className="tow-read-error" role="alert">
       <AlertCircle size={20} aria-hidden="true" />
       <div>
         <strong>{t(`towTruck.${stale ? "stale" : "errorTitle"}`)}</strong>
-        {!stale && <p>{t("towTruck.errorHint")}</p>}
+        <p>{t(`towTruck.${readFailureMessage(error)}`)}</p>
         <Button variant="outline" size="sm" onClick={retry}>
           {t("towTruck.retry")}
         </Button>
@@ -215,7 +224,13 @@ export function TowTruckOperationsPage() {
               <span className="tow-total">{t("towTruck.total", { count: queue.data.total })}</span>
             )}
           </header>
-          {queue.isError && <ReadError retry={() => void queue.refetch()} stale={!!queue.data} />}
+          {queue.isError && (
+            <ReadError
+              retry={() => void queue.refetch()}
+              stale={!!queue.data}
+              error={queue.error}
+            />
+          )}
           <div aria-busy={queue.isFetching}>
             {queue.isPending || queue.isPlaceholderData ? (
               <Loading />
@@ -421,7 +436,7 @@ export function TowTruckOperationsPage() {
                   <div className="tow-empty" role="alert">
                     <AlertCircle size={28} aria-hidden="true" />
                     <h2>{t("towTruck.invalidOrder")}</h2>
-                    <p>{t("towTruck.invalidHint")}</p>
+                    <p>{t("towTruck.invalidLink")}</p>
                   </div>
                 ) : (
                   <>
@@ -439,7 +454,11 @@ export function TowTruckOperationsPage() {
                       </Button>
                     </div>
                     {detail.isError && (
-                      <ReadError retry={() => void detail.refetch()} stale={!!detail.data} />
+                      <ReadError
+                        retry={() => void detail.refetch()}
+                        stale={!!detail.data}
+                        error={detail.error}
+                      />
                     )}
                     {detail.isPending ? (
                       <Loading detail />

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
@@ -11,6 +11,9 @@ import {
   UserRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { nextActionMessage } from "../lib/dispatchModel";
+import { TowTruckDriverOperations } from "./TowTruckDriverOperations";
+import { useDriverOperations } from "../hooks/useDriverOperations";
 import { TowTruckDispatch } from "./TowTruckDispatch";
 import type { TowTruckOrder, TripLocation } from "../lib/towTruckModel";
 
@@ -87,6 +90,18 @@ export function TowTruckDetail({
   stale: boolean;
 }) {
   const { t, i18n } = useTranslation();
+  const operations = useDriverOperations(order.id);
+  const [assignmentBusy, setAssignmentBusy] = useState(false);
+  const [assignmentDirty, setAssignmentDirty] = useState(false);
+  const [accountDirty, setAccountDirty] = useState(false);
+  useEffect(() => {
+    onBusyChange(assignmentBusy || operations.busy);
+    return () => onBusyChange(false);
+  }, [assignmentBusy, operations.busy, onBusyChange]);
+  useEffect(() => {
+    onDirtyChange(assignmentDirty || accountDirty);
+    return () => onDirtyChange(false);
+  }, [assignmentDirty, accountDirty, onDirtyChange]);
   const money = (value: number | null) =>
     value === null
       ? t("towTruck.missing")
@@ -142,7 +157,7 @@ export function TowTruckDetail({
           <strong>{t("towTruck.nextStep")}</strong>
           <p>
             {t(
-              `towTruck.${order.paymentPending && order.assignment === "assigned" ? "pendingCustomerHint" : order.stage === "checkDetails" ? "checkHint" : "reviewHint"}`,
+              `towTruck.${operations.removalHistory ? "opsInitialHeld" : nextActionMessage(order)}`,
             )}
           </p>
           <Button
@@ -288,10 +303,17 @@ export function TowTruckDetail({
             </p>
           )}
         </details>
+        <TowTruckDriverOperations
+          order={order}
+          stale={stale}
+          operations={operations}
+          onDirtyChange={setAccountDirty}
+        />
         <TowTruckDispatch
           order={order}
-          onDirtyChange={onDirtyChange}
-          onBusyChange={onBusyChange}
+          onDirtyChange={setAssignmentDirty}
+          onBusyChange={setAssignmentBusy}
+          operationsBlocked={operations.initialBlocked}
           stale={stale}
         />
       </div>

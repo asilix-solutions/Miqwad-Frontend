@@ -1,4 +1,5 @@
 /** Read-only projection of Orders GET. Never infer payment from an amount. */
+import { AppError } from "@shared/types/api";
 import type { RawOrder, OrdersReadPage } from "@modules/orders/api/ordersApi";
 import { orderStatusFromNumber, PAYMENT_STATUS_MAP } from "@modules/orders/lib/orderEnums";
 
@@ -51,7 +52,8 @@ export function safeAttachmentUrl(value: unknown): string | null {
 
 export function adaptTowTruck(raw: RawOrder) {
   const orderId = id(raw?.id);
-  if (!orderId || raw.orderType !== 3) throw new Error("Invalid tow-truck order response");
+  if (!orderId) throw new AppError("Invalid order identity", "TOW_ORDER_ID");
+  if (raw.orderType !== 3) throw new AppError("Unexpected order type", "TOW_ORDER_TYPE");
   const origin = location(
     raw.addressTitle,
     raw.addressDescription,
@@ -88,6 +90,35 @@ export function adaptTowTruck(raw: RawOrder) {
       : null;
   return {
     id: orderId,
+    // Preserve raw material-field distinctions for confirmation; never infer a
+    // payment name from the unverified numeric 2/3/4 mapping.
+    operationSnapshot: JSON.stringify([
+      raw.id,
+      raw.orderNumber,
+      raw.orderType,
+      raw.status,
+      raw.paymentStatus,
+      raw.paymentMethod,
+      raw.towTruckDriverId,
+      raw.towTruckDriverFullName,
+      raw.subtotal,
+      raw.discountAmount,
+      raw.totalPrice,
+      raw.duration,
+    ]),
+    financeSnapshot: JSON.stringify([
+      raw.paymentStatus,
+      raw.paymentMethod,
+      raw.subtotal,
+      raw.discountAmount,
+      raw.totalPrice,
+    ]),
+    removalPayment:
+      (raw.paymentStatus as unknown) === "Paid"
+        ? ("paid" as const)
+        : raw.paymentStatus === PAYMENT_STATUS_MAP.Pending.number
+          ? ("pending" as const)
+          : ("unknown" as const),
     number: text(raw.orderNumber) ?? `#${orderId}`,
     createdAt: parsedDate,
     customer: text(raw.userFullName),

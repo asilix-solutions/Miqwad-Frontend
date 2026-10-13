@@ -1,3 +1,4 @@
+import { confirmMutation, noMutationReplay } from "@shared/lib/confirmedMutation";
 import { apiClient } from "@shared/lib/axios";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, RevenueSummary, RevenueSource } from "../types";
@@ -172,9 +173,10 @@ export const adminApi = {
     return adaptUserList(data, params.includeAdmins);
   },
 
-  getUser: async (id: string): Promise<AdminUserDetail> => {
-    const { data } = await apiClient.get(`/Users/${id}`);
-    return adaptUser(unwrapEnvelope<RawAdminUser>(data));
+  getUser: async (id: string, controlled = false): Promise<AdminUserDetail> => {
+    const response = await apiClient.get(`/Users/${id}`);
+    if (controlled) confirmMutation(response);
+    return adaptUser(unwrapEnvelope<RawAdminUser>(response.data));
   },
 
   // NOTE: user deactivate/reactivate now hit the real backend — see the
@@ -391,15 +393,28 @@ export const adminApi = {
  * an empty/missing note returns 400. It is write-only: it never comes back on
  * any user DTO. Resolves to void (response body is `data: null`).
  */
-export const deactivateUser = async (id: number, note: string): Promise<void> => {
-  await apiClient.patch(`/Users/${id}/deactivate`, { note });
+export const deactivateUser = async (
+  id: number,
+  note: string,
+  controlled = false,
+): Promise<void> => {
+  const response = await apiClient.patch(
+    `/Users/${id}/deactivate`,
+    { note },
+    controlled ? noMutationReplay : undefined,
+  );
+  if (controlled) confirmMutation(response);
 };
 
 /**
  * Reactivate a user. No body. Resolves to void (response body is `data: null`).
  */
-export const activateUser = async (id: number): Promise<void> => {
-  await apiClient.patch(`/Users/${id}/activate`);
+export const activateUser = async (id: number, controlled = false): Promise<void> => {
+  const response = await apiClient.patch(
+    `/Users/${id}/activate`,
+    undefined,
+    controlled ? noMutationReplay : undefined,
+  );
+  if (controlled) confirmMutation(response);
 };
-
 
