@@ -18,10 +18,11 @@ import { CategoriesPanel } from "../components/reference/CategoriesPanel";
 import { CitiesPanel } from "../components/reference/CitiesPanel";
 import { BrandsModelsPanel } from "../components/reference/BrandsModelsPanel";
 import { ServicesPanel } from "../components/reference/ServicesPanel";
+import { InterCityRoutesPanel } from "../components/reference/InterCityRoutesPanel";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
-type TabKey = "categories" | "cities" | "brands" | "services";
+type TabKey = "categories" | "cities" | "brands" | "services" | "routes";
 
 interface TabDef {
   key: TabKey;
@@ -33,6 +34,7 @@ const TABS: readonly TabDef[] = [
   { key: "cities", labelI18n: "superAdmin.reference.tabs.cities" },
   { key: "brands", labelI18n: "superAdmin.reference.tabs.brands" },
   { key: "services", labelI18n: "superAdmin.reference.tabs.services" },
+  { key: "routes", labelI18n: "superAdmin.reference.tabs.routes" },
 ] as const;
 
 const TAB_FEATURES = {
@@ -40,13 +42,20 @@ const TAB_FEATURES = {
   cities: "referenceCities",
   brands: "referenceBrands",
   services: "referenceServices",
+  routes: "towTruck",
 } as const satisfies Record<TabKey, AdminFeature>;
 const visibleTabs = TABS.filter((tab) => isAdminFeatureAvailable(TAB_FEATURES[tab.key]));
 
 const DEFAULT_TAB: TabKey = "categories";
 
 function isValidTab(value: string | null): value is TabKey {
-  return value === "categories" || value === "cities" || value === "brands" || value === "services";
+  return (
+    value === "categories" ||
+    value === "cities" ||
+    value === "brands" ||
+    value === "services" ||
+    value === "routes"
+  );
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -104,6 +113,7 @@ export function AdminReferenceDataPage() {
       {activeTab === "cities" && <CitiesPanel />}
       {activeTab === "brands" && <BrandsModelsPanel />}
       {activeTab === "services" && <ServicesPanel />}
+      {activeTab === "routes" && <InterCityRoutesPanel />}
     </div>
   );
 }

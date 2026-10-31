@@ -116,7 +116,7 @@ export function useDriverOperations(orderId: string) {
     authorized,
     busy: state.phase === "busy",
     locked: driverOperationBlocks(qc, actor),
-    initialBlocked: driverOperationBlocks(qc, actor) || removalHistory(actor, orderId),
+    initialBlocked: driverOperationBlocks(qc, actor),
     removalHistory: removalHistory(actor, orderId),
     initialConflict: () => initialOperationBlocks(qc, actor),
   };

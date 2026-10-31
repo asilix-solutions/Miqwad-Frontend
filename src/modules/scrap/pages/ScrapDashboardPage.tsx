@@ -9,12 +9,11 @@
  *   4. Quick actions        — part-requests entry + conversations entry
  */
 
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Star,
   MapPin,
+  Clock,
   ShieldCheck,
   ClipboardList,
   CheckCircle2,
@@ -27,51 +26,54 @@ import {
   ProviderSkeleton,
   ProviderEmptyState,
 } from "@shared/provider-ui";
-import {
-  useScrapProfileQuery,
-  useScrapStatsQuery,
-  usePartRequestsQuery,
-} from "../hooks/useScrapQueries";
-import { formatCurrency } from "@shared/lib/formatCurrency";
+import { useAppSelector } from "@app/store";
+import { useAccountProfileQuery } from "@modules/profile/hooks/useProfileQueries";
+import { useSalvageOrdersQuery } from "../hooks/useSalvageOrders";
 import { PartRequestPreviewRow } from "../components/dashboard/PartRequestPreviewRow";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 /** Scrap provider dashboard — operations hub for part requests and escrow. */
 export function ScrapDashboardPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [bannerError, setBannerError] = useState(false);
+  const user = useAppSelector((s) => s.auth.user);
+  const accountProfileQuery = useAccountProfileQuery();
+  const requestsQuery = useSalvageOrdersQuery({ pageSize: 4 });
 
-  const profileQuery  = useScrapProfileQuery();
-  const statsQuery    = useScrapStatsQuery();
-  const requestsQuery = usePartRequestsQuery({ pageSize: 4 });
-
-  const profile  = profileQuery.data;
-  const stats    = statsQuery.data;
+  const accountProfile = accountProfileQuery.data;
   const requests = requestsQuery.data?.items ?? [];
+
+  const displayName = accountProfile?.fullName || user?.fullName || "";
+  const workingHoursLabel = [accountProfile?.workingDays, accountProfile?.workingHours]
+    .filter(Boolean)
+    .join(" · ");
+
+  // Total requests: live server total from /api/Orders?OrderType=2.
+  // Labeled accurately as Total Requests (not Open Requests) since the endpoint filters by type,
+  // not by order status.
+  const totalRequestsCount = requestsQuery.data?.total;
+  const totalRequestsLoading = requestsQuery.isLoading;
+  const totalRequestsValue = totalRequestsLoading
+    ? ""
+    : typeof totalRequestsCount === "number"
+      ? String(totalRequestsCount)
+      : "—";
+
+  // Escrow held & completed deals: unsupported without /scrap/stats (legacy endpoint returns 404).
+  // Render truthful unavailable indicator ("—") without calling unsupported endpoint.
+  const escrowHeldValue = "—";
+  const completedDealsValue = "—";
 
   return (
     <div className="space-y-6">
-
       {/* ── 1. Hero strip ───────────────────────────────────────────────── */}
       <div className="provider-fade-up">
         <div
           className="relative w-full overflow-hidden rounded-[var(--radius-lg)]"
           style={{ height: "clamp(140px, 16vw, 180px)", backgroundColor: "#043168" }}
         >
-          {/* Banner image — silent onError fallback to brand-blue */}
-          {!bannerError && profile?.bannerUrl && (
-            <img
-              src={profile.bannerUrl}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 h-full w-full object-cover"
-              onError={() => { setBannerError(true); }}
-            />
-          )}
-
           {/* Gradient overlay */}
           <div
             aria-hidden
@@ -83,7 +85,7 @@ export function ScrapDashboardPage() {
           />
 
           {/* Loading skeleton */}
-          {profileQuery.isLoading && (
+          {accountProfileQuery.isLoading && (
             <div className="absolute inset-0 flex items-end p-5">
               <div className="flex-1 space-y-2">
                 <ProviderSkeleton variant="line" width="44%" height={18} className="opacity-40" />
@@ -93,72 +95,52 @@ export function ScrapDashboardPage() {
           )}
 
           {/* Identity content */}
-          {!profileQuery.isLoading && profile && (
+          {!accountProfileQuery.isLoading && (
             <div className="absolute inset-0 flex items-end p-5">
-              <div className="flex-1 min-w-0 space-y-1.5">
-
-                {/* Greeting + verified pill */}
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                {/* Greeting + provider type pill */}
+                <div className="flex flex-wrap items-center gap-2">
                   <h1
-                    className="font-[var(--font-display)] text-lg font-bold leading-tight text-white"
+                    className="truncate text-lg leading-tight font-[var(--font-display)] font-bold text-white"
                     style={{ textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}
                   >
-                    {t("scrap.dashboard.greeting", { name: profile.companyName })}
+                    {displayName
+                      ? t("scrap.dashboard.greeting", { name: displayName })
+                      : t("scrap.dashboard.title")}
                   </h1>
-                  {profile.isVerified && (
-                    <span
-                      className={[
-                        "inline-flex items-center gap-1",
-                        "rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none",
-                        "bg-[var(--color-success-500)]/20 text-[var(--color-success-300,#6ee7b7)]",
-                        "border border-[var(--color-success-500)]/30",
-                      ].join(" ")}
-                    >
-                      {t("providers.profile.verified")}
-                    </span>
-                  )}
+                  <span
+                    className={[
+                      "inline-flex items-center gap-1",
+                      "rounded-full px-2 py-0.5 text-[10px] leading-none font-semibold",
+                      "border border-white/20 bg-white/15 text-white/90",
+                    ].join(" ")}
+                  >
+                    {t("superAdmin.providers.types.scrap")}
+                  </span>
                 </div>
 
                 {/* Subtitle */}
-                <p className="text-[11px] text-white/65 leading-snug">
+                <p className="text-[11px] leading-snug text-white/65">
                   {t("scrap.dashboard.subtitle")}
                 </p>
 
-                {/* Meta row: rating · city · brand chips */}
-                <div className="flex items-center gap-3 flex-wrap text-white/70 text-[11px]">
-                  {/* Rating */}
-                  <span className="flex items-center gap-1">
-                    <Star
-                      className="h-3 w-3 shrink-0 fill-[var(--color-warning-500)] text-[var(--color-warning-500)]"
-                      aria-hidden
-                    />
-                    <span className="font-semibold text-white">{profile.rating.toFixed(1)}</span>
-                    {profile.totalRatings > 0 && (
-                      <span>
-                        ({t("scrap.profile.totalRatings", { count: profile.totalRatings })})
+                {/* Meta row: city · working hours (only when supported data is present) */}
+                {(accountProfile?.city || workingHoursLabel) && (
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/70">
+                    {accountProfile?.city && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+                        {accountProfile.city}
                       </span>
                     )}
-                  </span>
-
-                  {/* City */}
-                  {profile.location?.city && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 shrink-0" aria-hidden />
-                      {profile.location.city}
-                    </span>
-                  )}
-
-                  {/* Brand chips (max 4) */}
-                  {profile.specializations.vehicleBrands.slice(0, 4).map((brand) => (
-                    <span
-                      key={brand}
-                      className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-medium text-white/90 leading-none"
-                    >
-                      {t(`scrap.profile.specializations.brand.${brand}`, { defaultValue: brand })}
-                    </span>
-                  ))}
-                </div>
-
+                    {workingHoursLabel && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                        {workingHoursLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -167,60 +149,51 @@ export function ScrapDashboardPage() {
 
       {/* ── 2. KPI row ──────────────────────────────────────────────────── */}
       <div
-        className="provider-fade-up grid grid-cols-1 sm:grid-cols-3 gap-4"
+        className="provider-fade-up grid grid-cols-1 gap-4 sm:grid-cols-3"
         style={{ animationDelay: "60ms" }}
       >
-        {/* Open requests — clickable → part-requests page */}
+        {/* Total requests — clickable → part-requests page */}
         <button
           type="button"
-          className="block w-full text-start rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40"
-          onClick={() => { void navigate("/provider/scrap/part-requests"); }}
+          className="block w-full rounded-[var(--radius-lg)] text-start focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40 focus-visible:outline-none"
+          onClick={() => {
+            void navigate("/provider/scrap/part-requests");
+          }}
         >
           <ProviderStatCard
-            label={t("scrap.dashboard.kpiOpenRequests")}
-            value={statsQuery.isLoading ? "" : String(stats?.openRequestsCount ?? 0)}
+            label={t("scrap.dashboard.kpiTotalRequests")}
+            value={totalRequestsValue}
             icon={<ClipboardList className="h-5 w-5" aria-hidden />}
             tone="info"
-            loading={statsQuery.isLoading}
+            loading={totalRequestsLoading}
           />
         </button>
 
-        {/* Escrow held — signature metric (protected vault feel) */}
+        {/* Escrow held — signature metric (unavailable without live backend stats endpoint) */}
         <ProviderStatCard
           label={t("scrap.dashboard.kpiEscrowHeld")}
-          value={
-            statsQuery.isLoading
-              ? ""
-              : formatCurrency(stats?.escrowHeldAmount ?? 0, i18n.language)
-          }
+          value={escrowHeldValue}
           icon={<ShieldCheck className="h-5 w-5" aria-hidden />}
           tone="warning"
-          trend={t("scrap.dashboard.kpiEscrowHeldSub")}
-          loading={statsQuery.isLoading}
         />
 
-        {/* Completed deals */}
+        {/* Completed deals — unavailable without live backend stats endpoint */}
         <ProviderStatCard
           label={t("scrap.dashboard.kpiCompletedDeals")}
-          value={statsQuery.isLoading ? "" : String(stats?.completedDealsCount ?? 0)}
+          value={completedDealsValue}
           icon={<CheckCircle2 className="h-5 w-5" aria-hidden />}
           tone="success"
-          loading={statsQuery.isLoading}
         />
       </div>
 
       {/* ── 3. Recent part requests ─────────────────────────────────────── */}
-      <div
-        className="provider-fade-up"
-        style={{ animationDelay: "100ms" }}
-      >
+      <div className="provider-fade-up" style={{ animationDelay: "100ms" }}>
         <ProviderCard padded={false}>
-
           {/* Section header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <h2
               className={[
-                "font-[var(--font-display)] text-base font-semibold",
+                "text-base font-[var(--font-display)] font-semibold",
                 "text-[var(--color-ink-body)]",
               ].join(" ")}
             >
@@ -233,7 +206,7 @@ export function ScrapDashboardPage() {
                 "text-[var(--color-brand-orange)]",
                 "hover:text-[#E3460F]",
                 "transition-colors duration-[var(--dur-base)]",
-                "focus-visible:outline-none focus-visible:underline",
+                "focus-visible:underline focus-visible:outline-none",
               ].join(" ")}
             >
               {t("scrap.dashboard.viewAll")}
@@ -242,7 +215,7 @@ export function ScrapDashboardPage() {
 
           {/* Loading skeleton */}
           {requestsQuery.isLoading && (
-            <div className="px-5 pb-5 space-y-4">
+            <div className="space-y-4 px-5 pb-5">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="flex-1 space-y-2">
@@ -259,19 +232,23 @@ export function ScrapDashboardPage() {
           {requestsQuery.isError && !requestsQuery.isLoading && (
             <div className="flex flex-col items-center gap-3 px-5 py-10">
               <p className="text-sm text-[var(--color-muted)]">
-                {t("common.saveFailed")}
+                {t("scrap.partRequests.errorTitle")}
               </p>
               <button
                 type="button"
-                onClick={() => { void requestsQuery.refetch(); }}
+                disabled={requestsQuery.isFetching}
+                onClick={() => {
+                  void requestsQuery.refetch();
+                }}
                 className={[
                   "rounded-[var(--radius-sm)] px-4 py-2 text-sm font-medium",
                   "bg-[var(--color-brand-50)] text-[var(--color-brand-orange)]",
                   "hover:bg-[var(--color-brand-100,#fde8df)]",
+                  "disabled:opacity-50",
                   "transition-colors duration-[var(--dur-base)]",
                 ].join(" ")}
               >
-                {t("common.retry")}
+                {requestsQuery.isFetching ? t("common.loading") : t("common.retry")}
               </button>
             </div>
           )}
@@ -295,13 +272,12 @@ export function ScrapDashboardPage() {
               ))}
             </div>
           )}
-
         </ProviderCard>
       </div>
 
       {/* ── 4. Quick actions ────────────────────────────────────────────── */}
       <div
-        className="provider-fade-up grid grid-cols-1 sm:grid-cols-2 gap-4"
+        className="provider-fade-up grid grid-cols-1 gap-4 sm:grid-cols-2"
         style={{ animationDelay: "140ms" }}
       >
         {/* Part requests */}
@@ -311,7 +287,7 @@ export function ScrapDashboardPage() {
             className={[
               "flex items-center gap-4 p-5",
               "rounded-[var(--radius-lg)]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+              "focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
               "focus-visible:ring-[var(--color-brand-orange)]/40",
             ].join(" ")}
           >
@@ -321,11 +297,11 @@ export function ScrapDashboardPage() {
             >
               <ClipboardList className="h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--color-ink-body)]">
                 {t("scrap.dashboard.quickPartRequests")}
               </p>
-              <p className="text-xs text-[var(--color-muted)] truncate">
+              <p className="truncate text-xs text-[var(--color-muted)]">
                 {t("scrap.dashboard.quickPartRequestsHint")}
               </p>
             </div>
@@ -343,7 +319,7 @@ export function ScrapDashboardPage() {
             className={[
               "flex items-center gap-4 p-5",
               "rounded-[var(--radius-lg)]",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset",
+              "focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
               "focus-visible:ring-[var(--color-brand-orange)]/40",
             ].join(" ")}
           >
@@ -353,11 +329,11 @@ export function ScrapDashboardPage() {
             >
               <MessageSquare className="h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--color-ink-body)]">
                 {t("scrap.dashboard.quickConversations")}
               </p>
-              <p className="text-xs text-[var(--color-muted)] truncate">
+              <p className="truncate text-xs text-[var(--color-muted)]">
                 {t("scrap.dashboard.quickConversationsHint")}
               </p>
             </div>
@@ -368,7 +344,6 @@ export function ScrapDashboardPage() {
           </Link>
         </ProviderCard>
       </div>
-
     </div>
   );
 }

@@ -15,6 +15,8 @@ import { ProviderStatusPill } from "@shared/provider-ui";
 import { formatRelativeTime } from "@shared/lib/formatRelativeTime";
 import { salvageOrderStatusI18nKey } from "../lib/salvageOrderStatus";
 import type { SalvageOrder } from "../types";
+import { getModelArabicNameByBrand } from "@modules/vehicles/lib/modelLocalization";
+import { getBrandDisplayName } from "@modules/vehicles/lib/brandLocalization";
 
 // ── Part thumbnail with safe fallback ────────────────────────────────────────
 
@@ -60,7 +62,10 @@ export interface ScrapPartRequestCardProps {
 export function ScrapPartRequestCard({ request, onSelect, alreadyOffered }: ScrapPartRequestCardProps) {
   const { t, i18n } = useTranslation();
 
-  const vehicleLine = [request.brand, request.model, request.year].filter(Boolean).join(" · ");
+  const isAr = i18n.language.startsWith("ar");
+  const brandDisplay = getBrandDisplayName({ id: 0, name: request.brand }, i18n.language);
+  const modelDisplay = (isAr ? getModelArabicNameByBrand(request.brand, request.model) : undefined) ?? request.model;
+  const vehicleLine = [brandDisplay, modelDisplay, request.year].filter(Boolean).join(" · ");
   const timeAgo = formatRelativeTime(request.createdAt, i18n.language === "ar" ? "ar-SA" : "en-US");
 
   return (

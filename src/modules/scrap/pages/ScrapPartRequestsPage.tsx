@@ -23,6 +23,8 @@ import {
 } from "@shared/provider-ui";
 import type { ProviderSelectOption } from "@shared/provider-ui";
 import { useSalvageOrdersQuery } from "../hooks/useSalvageOrders";
+import { getModelArabicNameByBrand } from "@modules/vehicles/lib/modelLocalization";
+import { getBrandEnglishName, normalizeArabic } from "@modules/vehicles/lib/brandLocalization";
 import { useRequestQuotationsQuery } from "../hooks/useRequestQuotations";
 import { ScrapPartRequestCard } from "../components/ScrapPartRequestCard";
 import { ScrapPartRequestDetailDialog } from "../components/ScrapPartRequestDetailDialog";
@@ -79,8 +81,17 @@ export function ScrapPartRequestsPage() {
       if (brandFilter !== "all" && order.brand !== brandFilter) return false;
       if (notOfferedOnly && quotedOrderIds.has(order.id)) return false;
       if (search) {
-        const haystack = `${order.partName} ${order.brand} ${order.model}`.toLowerCase();
-        if (!haystack.includes(search)) return false;
+        const arModel = getModelArabicNameByBrand(order.brand, order.model) ?? "";
+        const enBrand = getBrandEnglishName(undefined, order.brand) ?? "";
+        const rawHaystack = `${order.partName} ${order.brand} ${enBrand} ${order.model} ${arModel}`.toLowerCase();
+        if (rawHaystack.includes(search)) return true;
+
+        const normSearch = normalizeArabic(search).toLowerCase();
+        if (normSearch) {
+          const normHaystack = `${normalizeArabic(order.partName)} ${normalizeArabic(order.brand)} ${normalizeArabic(arModel)}`.toLowerCase();
+          if (normHaystack.includes(normSearch)) return true;
+        }
+        return false;
       }
       return true;
     });

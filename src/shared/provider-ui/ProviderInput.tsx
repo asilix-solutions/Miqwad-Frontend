@@ -31,10 +31,22 @@ export interface ProviderInputProps extends ComponentPropsWithoutRef<"input"> {
   error?: string;
   /** Helper text rendered below the input (muted). Hidden when error is set. */
   hint?: string;
-  /** Icon node (lucide) rendered at the inline-start of the input. */
+  /** Icon node (lucide or custom) rendered at the inline-start of the input. */
   leadingIcon?: ReactNode;
-  /** Icon node (lucide) rendered at the inline-end of the input. */
+  /** Icon node (lucide or custom) rendered at the inline-end of the input. */
   trailingIcon?: ReactNode;
+  /**
+   * Whether this field is required. When true, renders a red asterisk adjacent
+   * to the label and sets aria-required and required on the input.
+   */
+  required?: boolean;
+  /**
+   * Explicit direction for adornment icon placement and input padding.
+   * Defaults to the input's `dir` attribute if set to "ltr" or "rtl".
+   * For numeric LTR inputs in RTL pages, this ensures the leading icon stays
+   * on the physical left and does not collide with right-side native steppers.
+   */
+  adornmentDir?: "ltr" | "rtl";
 }
 
 // ── Style constants ───────────────────────────────────────────────────────────
@@ -77,6 +89,8 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
       hint,
       leadingIcon,
       trailingIcon,
+      required,
+      adornmentDir,
       className,
       id,
       style,
@@ -85,21 +99,49 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
     ref,
   ) => {
     const hasId = Boolean(id);
-    const describedBy =
-      hasId && error
-        ? `${id}-error`
-        : hasId && hint
-          ? `${id}-hint`
-          : undefined;
+    const describedBy = hasId && error ? `${id}-error` : hasId && hint ? `${id}-hint` : undefined;
+
+    const effectiveAdornmentDir =
+      adornmentDir ?? (rest.dir === "ltr" ? "ltr" : rest.dir === "rtl" ? "rtl" : undefined);
+
+    const leadingPositionClass =
+      effectiveAdornmentDir === "ltr"
+        ? "left-3"
+        : effectiveAdornmentDir === "rtl"
+          ? "right-3"
+          : "start-3";
+
+    const trailingPositionClass =
+      effectiveAdornmentDir === "ltr"
+        ? "right-3"
+        : effectiveAdornmentDir === "rtl"
+          ? "left-3"
+          : "end-3";
+
+    const leadingPaddingClass =
+      effectiveAdornmentDir === "ltr"
+        ? "pl-10"
+        : effectiveAdornmentDir === "rtl"
+          ? "pr-10"
+          : "ps-10";
+
+    const trailingPaddingClass =
+      effectiveAdornmentDir === "ltr"
+        ? "pr-10"
+        : effectiveAdornmentDir === "rtl"
+          ? "pl-10"
+          : "pe-10";
 
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label
-            htmlFor={id}
-            className="text-sm font-medium text-[var(--color-ink-body)]"
-          >
+          <label htmlFor={id} className="text-sm font-medium text-[var(--color-ink-body)]">
             {label}
+            {required && (
+              <span className="ms-1 text-[var(--color-danger-500)] select-none" aria-hidden="true">
+                *
+              </span>
+            )}
           </label>
         )}
 
@@ -107,7 +149,10 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
           {leadingIcon && (
             <span
               aria-hidden
-              className="pointer-events-none absolute start-3 flex shrink-0 items-center text-[var(--color-muted)]"
+              className={cn(
+                "pointer-events-none absolute flex shrink-0 items-center text-[var(--color-muted)]",
+                leadingPositionClass,
+              )}
             >
               {leadingIcon}
             </span>
@@ -116,14 +161,16 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
           <input
             ref={ref}
             id={id}
+            required={required}
+            aria-required={required ? true : undefined}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             style={{ ...TRANSITION, ...style }}
             className={cn(
               BASE,
               "h-[var(--size-input-h)]",
-              leadingIcon && "ps-10",
-              trailingIcon && "pe-10",
+              leadingIcon && leadingPaddingClass,
+              trailingIcon && trailingPaddingClass,
               error
                 ? [
                     "border-[var(--color-danger-500)]",
@@ -143,7 +190,10 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
           {trailingIcon && (
             <span
               aria-hidden
-              className="pointer-events-none absolute end-3 flex shrink-0 items-center text-[var(--color-muted)]"
+              className={cn(
+                "pointer-events-none absolute flex shrink-0 items-center text-[var(--color-muted)]",
+                trailingPositionClass,
+              )}
             >
               {trailingIcon}
             </span>
@@ -161,10 +211,7 @@ export const ProviderInput = forwardRef<HTMLInputElement, ProviderInputProps>(
         )}
 
         {!error && hint && (
-          <p
-            id={hasId ? `${id}-hint` : undefined}
-            className="text-xs text-[var(--color-muted)]"
-          >
+          <p id={hasId ? `${id}-hint` : undefined} className="text-xs text-[var(--color-muted)]">
             {hint}
           </p>
         )}

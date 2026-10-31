@@ -48,16 +48,16 @@ type SheetSide = "end" | "bottom"
 
 // Physical slide-direction utilities (tw-animate-css) don't auto-flip for
 // RTL, so the "end" side keeps a direction-agnostic fade/zoom instead of a
-// slide — the logical `inset-inline-end-0` positioning still lands on the
+// slide — the logical `end-0` positioning still lands on the
 // correct physical edge in both ar and en.
 const SIDE_CLASSES: Record<SheetSide, string> = {
   end: cn(
-    "inset-block-0 inset-inline-end-0 h-full w-full max-w-sm border-s",
+    "inset-y-0 end-0 h-full w-full max-w-sm border-s",
     "data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
     "data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
   ),
   bottom: cn(
-    "inset-inline-0 bottom-0 max-h-[85vh] w-full rounded-t-[var(--radius-lg)] border-t",
+    "inset-x-0 bottom-0 max-h-[85vh] w-full rounded-t-[var(--radius-lg)] border-t",
     "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
   ),
 }

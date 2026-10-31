@@ -1,6 +1,8 @@
 import { confirmMutation, noMutationReplay } from "@shared/lib/confirmedMutation";
 import { apiClient } from "@shared/lib/axios";
+import { roadsApi } from "./roadsApi";
 import type { PaginatedResponse } from "@shared/types/api";
+
 import type { AdminProvider, AdminProviderStatus, DashboardStats, AdminUserRow, AdminUserDetail, City, RevenueSummary, RevenueSource } from "../types";
 import type { ProviderType } from "@modules/providers/types";
 import type { PricedService, ServiceCategory } from "@modules/services/types";
@@ -66,7 +68,14 @@ function adaptUser(raw: RawAdminUser): AdminUserRow {
     createdAt: raw.createdAt,
     // Wire key is `roleId`; the app model exposes it as `role` for
     // roleRegistry compatibility (see config/roleRegistry.ts).
-    role: typeof raw.roleId === "number" ? raw.roleId : undefined,
+    role:
+      typeof raw.roleId === "number"
+        ? raw.roleId
+        : raw.roleId !== undefined && raw.roleId !== null && !isNaN(Number(raw.roleId))
+          ? Number(raw.roleId)
+          : typeof (raw as unknown as { role?: unknown }).role === "number"
+            ? ((raw as unknown as { role: number }).role)
+            : undefined,
   };
 }
 
@@ -281,8 +290,12 @@ export const adminApi = {
   // module — see src/modules/subscriptions/ (feat/subscriptions-live).
 
   getCities: async (): Promise<City[]> => {
-    const { data } = await apiClient.get<City[]>("/admin/cities");
-    return data;
+    const list = await roadsApi.getCities({ pageSize: 100 });
+    return list.map((c) => ({
+      id: String(c.id),
+      nameAr: c.name ?? `#${c.id}`,
+      nameEn: c.name ?? `#${c.id}`,
+    }));
   },
 
   createCity: async (payload: Omit<City, "id">): Promise<City> => {

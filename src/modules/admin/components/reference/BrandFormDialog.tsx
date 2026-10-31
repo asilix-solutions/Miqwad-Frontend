@@ -84,7 +84,7 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? t("superAdmin.brands.add") : t("superAdmin.brands.edit")}

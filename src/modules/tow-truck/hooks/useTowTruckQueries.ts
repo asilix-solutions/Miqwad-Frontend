@@ -3,15 +3,33 @@ import { orderListOptions, orderDetailOptions } from "@modules/orders/hooks/useO
 import { adaptTowTruck, adaptTowTruckPage } from "../lib/towTruckModel";
 
 export const TOW_PAGE_SIZE = 20;
-export function useTowTruckQueue(page: number) {
+export function useTowTruckQueue(
+  page: number,
+  trackNumber?: string,
+  serviceType?: number,
+) {
+  const trimmed = trackNumber?.trim();
+  const listParams = {
+    orderType: 3,
+    pageNumber: page,
+    pageSize: TOW_PAGE_SIZE,
+    sortBy: "createdAt",
+    sortDescending: true,
+    filterBy: trimmed ? "trackNumber" : undefined,
+    filterValue: trimmed || undefined,
+    serviceType,
+  };
+
   return useQuery({
-    ...orderListOptions({
-      orderType: 3,
-      pageNumber: page,
-      pageSize: TOW_PAGE_SIZE,
-      sortBy: "createdAt",
-      sortDescending: true,
-    }),
+    ...orderListOptions(listParams),
+    placeholderData: (previousData, previousQuery) => {
+      // Pending query changes do not temporarily display results from a different service type
+      const prevParams = previousQuery?.queryKey?.[2] as typeof listParams | undefined;
+      if (prevParams?.serviceType !== serviceType) {
+        return undefined;
+      }
+      return previousData;
+    },
     select: (data) => {
       const result = adaptTowTruckPage(data);
       if (result.page !== page) throw new Error("Mismatched page response");

@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 import { Calendar, Pencil, Trash2, Paperclip } from "lucide-react";
 import { formatOrderDate } from "@shared/lib/formatOrderDate";
 import type { RequestQuotation, SalvageOrder } from "../types";
+import { getModelArabicNameByBrand } from "@modules/vehicles/lib/modelLocalization";
+import { getBrandDisplayName } from "@modules/vehicles/lib/brandLocalization";
 
 export interface QuotationCardProps {
   quotation: RequestQuotation;
@@ -33,8 +35,16 @@ export function QuotationCard({
 }: QuotationCardProps) {
   const { t, i18n } = useTranslation();
 
+  const isAr = i18n.language.startsWith("ar");
+  const modelDisplay = order
+    ? (isAr ? getModelArabicNameByBrand(order.brand, order.model) : undefined) ?? order.model
+    : "";
+  const brandDisplay = order
+    ? getBrandDisplayName({ id: 0, name: order.brand }, i18n.language)
+    : "";
+
   const vehicleLabel = order
-    ? [order.brand, order.model, order.year].filter(Boolean).join(" · ")
+    ? [brandDisplay, modelDisplay, order.year].filter(Boolean).join(" · ")
     : undefined;
 
   return (

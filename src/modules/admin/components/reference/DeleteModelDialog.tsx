@@ -18,6 +18,7 @@ import { useDeleteModelMutation } from "../../hooks/useAdminQueries";
 import type { VehicleModel } from "@modules/vehicles/types";
 import { AppError } from "@shared/types/api";
 import { useToast } from "@shared/components/ui/toastContext";
+import { getModelDisplayName } from "@modules/vehicles/lib/modelLocalization";
 
 interface Props {
   brandId: number | null;
@@ -27,7 +28,7 @@ interface Props {
 }
 
 export function DeleteModelDialog({ brandId, model, open, onOpenChange }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const toast = useToast();
   const deleteMutation = useDeleteModelMutation();
 
@@ -48,14 +49,14 @@ export function DeleteModelDialog({ brandId, model, open, onOpenChange }: Props)
 
   return (
     <Dialog open={open} onOpenChange={(val) => !deleteMutation.isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-danger-500">
             {t("superAdmin.models.deleteConfirm.title")}
           </DialogTitle>
           <DialogDescription className="pt-2">
             {t("superAdmin.models.deleteConfirm.description", {
-              name: model?.name ?? "",
+              name: getModelDisplayName(model, i18n.language),
             })}
           </DialogDescription>
         </DialogHeader>

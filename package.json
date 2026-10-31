@@ -9,6 +9,7 @@
     "build:nocheck": "vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
+    "test:cities": "node scripts/check-cities-reference-data.cjs && node scripts/check-google-places-city-creation.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "preview": "vite preview --host"

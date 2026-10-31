@@ -33,6 +33,8 @@ import type { RequestQuotation } from "../types";
 import { QuotationForm } from "./QuotationForm";
 import { AttachmentGallery } from "./AttachmentGallery";
 import { DeleteQuotationDialog } from "./DeleteQuotationDialog";
+import { getModelArabicNameByBrand } from "@modules/vehicles/lib/modelLocalization";
+import { getBrandDisplayName } from "@modules/vehicles/lib/brandLocalization";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -214,7 +216,10 @@ export function PartRequestDetailContent({ requestId }: PartRequestDetailContent
     );
   }
 
-  const vehicleLine = [order.brand, order.model, order.year].filter(Boolean).join(" · ");
+  const isAr = i18n.language.startsWith("ar");
+  const brandDisplay = getBrandDisplayName({ id: 0, name: order.brand }, i18n.language);
+  const modelDisplay = (isAr ? getModelArabicNameByBrand(order.brand, order.model) : undefined) ?? order.model;
+  const vehicleLine = [brandDisplay, modelDisplay, order.year].filter(Boolean).join(" · ");
 
   return (
     <div className="flex flex-col gap-5">

@@ -24,9 +24,10 @@ interface Props {
   brand: Brand | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (brandId: number) => void;
 }
 
-export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
+export function DeleteBrandDialog({ brand, open, onOpenChange, onDeleted }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const deleteMutation = useDeleteBrandMutation();
@@ -39,6 +40,7 @@ export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
     try {
       await deleteMutation.mutateAsync(brand.id);
       toast.success(t("superAdmin.brands.success.deleted"));
+      onDeleted?.(brand.id);
       onOpenChange(false);
     } catch (err) {
       if (err instanceof AppError && err.status === 409) {
@@ -51,7 +53,7 @@ export function DeleteBrandDialog({ brand, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(val) => !deleteMutation.isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-danger-500">
             {t("superAdmin.brands.deleteConfirm.title")}

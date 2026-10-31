@@ -14,26 +14,17 @@ import {
   Star,
   MapPin,
   Clock,
-  Wrench,
   MessageSquare,
   CalendarClock,
   ChevronRight,
   UserCheck,
   UserCircle,
 } from "lucide-react";
-import {
-  ProviderCard,
-  ProviderStatCard,
-  ProviderSkeleton,
-  ProviderStatusPill,
-} from "@shared/provider-ui";
+import { ProviderCard, ProviderStatCard, ProviderSkeleton } from "@shared/provider-ui";
 import type { StatusPillTone } from "@shared/provider-ui";
-import {
-  useWorkshopProfileQuery,
-  useWorkshopSubscriptionQuery,
-} from "../hooks/useWorkshopQueries";
+import { useAppSelector } from "@app/store";
+import { useAccountProfileQuery } from "@modules/profile/hooks/useProfileQueries";
 import { computeProfileCompleteness } from "../lib/profileCompleteness";
-import { computeSubscriptionDaysLeft, subscriptionTone } from "../lib/subscriptionDaysLeft";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -41,33 +32,38 @@ export function WorkshopDashboardPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const profileQuery      = useWorkshopProfileQuery();
-  const subscriptionQuery = useWorkshopSubscriptionQuery();
+  const user = useAppSelector((s) => s.auth.user);
+  const accountProfileQuery = useAccountProfileQuery();
 
-  const profile = profileQuery.data;
-  const sub     = subscriptionQuery.data;
+  const accountProfile = accountProfileQuery.data;
 
-  const daysLeft = sub ? computeSubscriptionDaysLeft(sub.endDate) : null;
+  const displayName = accountProfile?.fullName || user?.fullName || "";
+  const workingHoursLabel = [accountProfile?.workingDays, accountProfile?.workingHours]
+    .filter(Boolean)
+    .join(" · ");
 
-  const subValue =
-    subscriptionQuery.isLoading ? "" : daysLeft === null ? "—" : String(Math.max(0, daysLeft));
+  // Subscription: /workshop/subscription returns 404 on live backend.
+  // Display truthful unavailable state ("—") without calling the legacy endpoint.
+  const subValue = "—";
+  const subTone: StatusPillTone = "info";
 
-  const subTrend =
-    !subscriptionQuery.isLoading && daysLeft !== null
-      ? daysLeft <= 0
-        ? t("workshop.dashboard.subscriptionExpired")
-        : t("workshop.dashboard.subscriptionDaysLeft", { count: daysLeft })
-      : undefined;
-
-  const subTone: StatusPillTone =
-    sub ? subscriptionTone(sub.status, daysLeft!) : "info";
-
-  const pct = computeProfileCompleteness(profile);
-  const pctTone: StatusPillTone = pct < 50 ? "danger" : pct < 80 ? "warning" : "success";
+  // Completeness & rating: WorkshopProfile is mock-only on legacy endpoint.
+  // When no verified WorkshopProfile exists, display "—" rather than false 0% or 0.0.
+  const profileCompleteness = computeProfileCompleteness(undefined);
+  const completenessValue = profileCompleteness === null ? "—" : `${profileCompleteness}%`;
+  const completenessTone: StatusPillTone =
+    profileCompleteness === null
+      ? "info"
+      : profileCompleteness < 50
+        ? "danger"
+        : profileCompleteness < 80
+          ? "warning"
+          : "success";
+  const completenessTrend =
+    profileCompleteness === null ? undefined : t("workshop.dashboard.completenessHint");
 
   return (
     <div className="space-y-6">
-
       {/* ── 1. Hero banner ──────────────────────────────────────────────── */}
       <div className="provider-fade-up">
         <div
@@ -83,7 +79,7 @@ export function WorkshopDashboardPage() {
             }}
           />
 
-          {profileQuery.isLoading && (
+          {accountProfileQuery.isLoading && (
             <div className="absolute inset-0 flex items-end p-6">
               <div className="flex-1 space-y-2">
                 <ProviderSkeleton variant="line" width="48%" height={22} className="opacity-40" />
@@ -92,61 +88,49 @@ export function WorkshopDashboardPage() {
             </div>
           )}
 
-          {!profileQuery.isLoading && profile && (
+          {!accountProfileQuery.isLoading && (
             <div className="absolute inset-0 flex items-end p-6">
-              <div className="flex-1 min-w-0 space-y-1.5">
-
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                   <h1
-                    className="font-[var(--font-display)] text-xl font-bold leading-tight text-white"
+                    className="truncate text-xl leading-tight font-[var(--font-display)] font-bold text-white"
                     style={{ textShadow: "0 1px 6px rgba(0,0,0,0.35)" }}
                   >
-                    {profile.companyName}
+                    {displayName
+                      ? t("workshop.dashboard.greeting", { name: displayName })
+                      : t("workshop.dashboard.title")}
                   </h1>
-                  {profile.isVerified && (
-                    <ProviderStatusPill
-                      tone="success"
-                      label={t("providers.profile.verified")}
-                      className="shrink-0"
-                    />
-                  )}
+                  <span
+                    className={[
+                      "inline-flex items-center gap-1",
+                      "rounded-full px-2 py-0.5 text-[10px] leading-none font-semibold",
+                      "border border-white/20 bg-white/15 text-white/90",
+                    ].join(" ")}
+                  >
+                    {t("superAdmin.providers.types.workshop")}
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap text-white/80 text-sm">
-                  {profile.city && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {profile.city}
-                    </span>
-                  )}
-                  {profile.specializationLabel && (
-                    <span className="flex items-center gap-1">
-                      <Wrench className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {profile.specializationLabel}
-                    </span>
-                  )}
-                </div>
+                <p className="text-xs leading-snug text-white/70">
+                  {t("workshop.dashboard.subtitle")}
+                </p>
 
-                <div className="flex items-center gap-4 flex-wrap text-white/70 text-xs">
-                  <span className="flex items-center gap-1">
-                    <Star
-                      className="h-3.5 w-3.5 shrink-0 fill-[var(--color-warning-500)] text-[var(--color-warning-500)]"
-                      aria-hidden
-                    />
-                    <span className="font-semibold text-white">{profile.rating.toFixed(1)}</span>
-                    {profile.totalRatings > 0 && (
-                      <span>
-                        ({t("workshop.dashboard.totalRatings", { count: profile.totalRatings })})
+                {(accountProfile?.city || workingHoursLabel) && (
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-white/80">
+                    {accountProfile?.city && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {accountProfile.city}
                       </span>
                     )}
-                  </span>
-                  {profile.workingHoursLabel && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {profile.workingHoursLabel}
-                    </span>
-                  )}
-                </div>
+                    {workingHoursLabel && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {workingHoursLabel}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -155,13 +139,13 @@ export function WorkshopDashboardPage() {
 
       {/* ── 2. KPI cards (3) ────────────────────────────────────────────── */}
       <div
-        className="provider-fade-up grid grid-cols-1 sm:grid-cols-3 gap-4"
+        className="provider-fade-up grid grid-cols-1 gap-4 sm:grid-cols-3"
         style={{ animationDelay: "60ms" }}
       >
         {/* 1. Subscription + days remaining — clickable */}
         <button
           type="button"
-          className="block w-full text-start rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40"
+          className="block w-full rounded-[var(--radius-lg)] text-start focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40 focus-visible:outline-none"
           onClick={() => void navigate("/provider/workshop/subscription")}
         >
           <ProviderStatCard
@@ -169,45 +153,38 @@ export function WorkshopDashboardPage() {
             value={subValue}
             icon={<CalendarClock className="h-5 w-5" aria-hidden />}
             tone={subTone}
-            trend={subTrend}
-            loading={subscriptionQuery.isLoading}
           />
         </button>
 
         {/* 2. Rating + reviews count */}
         <ProviderStatCard
           label={t("workshop.dashboard.kpiRating")}
-          value={profileQuery.isLoading ? "" : profile ? profile.rating.toFixed(1) : "—"}
+          value="—"
           icon={<Star className="h-5 w-5" aria-hidden />}
           tone="warning"
-          trend={
-            profile?.totalRatings
-              ? t("workshop.dashboard.totalRatings", { count: profile.totalRatings })
-              : undefined
-          }
-          loading={profileQuery.isLoading}
+          loading={accountProfileQuery.isLoading}
         />
 
         {/* 3. Profile completeness — clickable */}
         <button
           type="button"
-          className="block w-full text-start rounded-[var(--radius-lg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40"
+          className="block w-full rounded-[var(--radius-lg)] text-start focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/40 focus-visible:outline-none"
           onClick={() => void navigate("/provider/workshop/profile")}
         >
           <ProviderStatCard
             label={t("workshop.dashboard.kpiCompleteness")}
-            value={profileQuery.isLoading ? "" : `${pct}%`}
+            value={completenessValue}
             icon={<UserCheck className="h-5 w-5" aria-hidden />}
-            tone={pctTone}
-            trend={t("workshop.dashboard.completenessHint")}
-            loading={profileQuery.isLoading}
+            tone={completenessTone}
+            trend={completenessTrend}
+            loading={accountProfileQuery.isLoading}
           />
         </button>
       </div>
 
       {/* ── 3. Quick-action cards ────────────────────────────────────────── */}
       <div
-        className="provider-fade-up grid grid-cols-1 sm:grid-cols-2 gap-4"
+        className="provider-fade-up grid grid-cols-1 gap-4 sm:grid-cols-2"
         style={{ animationDelay: "100ms" }}
       >
         {/* Conversations entry point (deferred chat wire-in) */}
@@ -228,11 +205,11 @@ export function WorkshopDashboardPage() {
             >
               <MessageSquare className="h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--color-ink-body)]">
                 {t("workshop.dashboard.manageConversations")}
               </p>
-              <p className="text-xs text-[var(--color-muted)] truncate">
+              <p className="truncate text-xs text-[var(--color-muted)]">
                 {t("workshop.dashboard.manageConversationsHint")}
               </p>
             </div>
@@ -261,11 +238,11 @@ export function WorkshopDashboardPage() {
             >
               <UserCircle className="h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-[var(--color-ink-body)]">
                 {t("workshop.dashboard.editProfile")}
               </p>
-              <p className="text-xs text-[var(--color-muted)] truncate">
+              <p className="truncate text-xs text-[var(--color-muted)]">
                 {t("workshop.dashboard.editProfileHint")}
               </p>
             </div>
@@ -276,7 +253,6 @@ export function WorkshopDashboardPage() {
           </Link>
         </ProviderCard>
       </div>
-
     </div>
   );
 }

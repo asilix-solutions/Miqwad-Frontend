@@ -16,6 +16,8 @@ import { TowTruckDriverOperations } from "./TowTruckDriverOperations";
 import { useDriverOperations } from "../hooks/useDriverOperations";
 import { TowTruckDispatch } from "./TowTruckDispatch";
 import type { TowTruckOrder, TripLocation } from "../lib/towTruckModel";
+import { isArabicLanguage } from "@modules/vehicles/lib/modelLocalization";
+import { paymentStatusToI18nKey, paymentMethodToI18nKey } from "@modules/orders/lib/orderEnums";
 
 function Section({
   title,
@@ -142,9 +144,11 @@ export function TowTruckDetail({
           </Field>
           <Field label={t("towTruck.payment")}>
             <span>
-              {t(order.paymentPending ? "towTruck.paymentPending" : "towTruck.paymentUnknown")}
+              {order.paymentStatus
+                ? t(paymentStatusToI18nKey(order.paymentStatus))
+                : t("towTruck.paymentUnknown")}
             </span>
-            {!order.paymentPending && order.paymentCode !== null && (
+            {!order.paymentStatus && order.paymentCode !== null && (
               <small>{t("towTruck.code", { code: order.paymentCode })}</small>
             )}
           </Field>
@@ -206,7 +210,11 @@ export function TowTruckDetail({
             )}
           </Section>
           <Section title={t("towTruck.vehicle")} icon={<Car size={18} aria-hidden="true" />}>
-            <p className="tow-value">{order.vehicle ?? t("towTruck.vehicleMissing")}</p>
+            <p className="tow-value">
+              {(isArabicLanguage(i18n.language) ? order.vehicleAr : order.vehicle) ??
+                order.vehicle ??
+                t("towTruck.vehicleMissing")}
+            </p>
             <dl>
               <Field label={t("towTruck.plate")}>
                 <bdi>{order.plate ?? t("towTruck.missing")}</bdi>
@@ -247,18 +255,27 @@ export function TowTruckDetail({
           <div className="tow-payment-note">
             <strong>
               {t("towTruck.payment")} ·{" "}
-              {t(order.paymentPending ? "towTruck.paymentPending" : "towTruck.paymentUnknown")}
+              {order.paymentStatus
+                ? t(paymentStatusToI18nKey(order.paymentStatus))
+                : t("towTruck.paymentUnknown")}
             </strong>
             <p>
-              {t(order.paymentPending ? "towTruck.pendingCustomerHint" : "towTruck.paymentHint")}
+              {order.paymentStatus === "Paid"
+                ? t("towTruck.paymentPaidHint")
+                : order.paymentStatus === "Failed"
+                  ? t("towTruck.paymentFailedHint")
+                  : order.paymentStatus === "Refunded"
+                    ? t("towTruck.paymentRefundedHint")
+                    : order.paymentPending
+                      ? t("towTruck.pendingCustomerHint")
+                      : t("towTruck.paymentHint")}
             </p>
           </div>
           <dl className="tow-info-grid">
             <Field label={t("towTruck.paymentMethod")}>
-              {t("towTruck.methodUnknown")}
-              {order.paymentMethodCode !== null && (
-                <small>{t("towTruck.code", { code: order.paymentMethodCode })}</small>
-              )}
+              {order.paymentMethod
+                ? t(paymentMethodToI18nKey(order.paymentMethod))
+                : t("towTruck.methodUnknown")}
             </Field>
             <Field label={t("towTruck.duration")}>
               {order.duration ?? t("towTruck.missing")}

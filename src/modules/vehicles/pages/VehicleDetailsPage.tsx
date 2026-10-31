@@ -17,6 +17,8 @@ import { MaintenanceHistoryTable } from "../components/MaintenanceHistoryTable";
 import { AddMaintenanceModal } from "../components/AddMaintenanceModal";
 import { UpcomingServicesList } from "../components/UpcomingServicesList";
 import { DeleteVehicleDialog } from "../components/DeleteVehicleDialog";
+import { getBrandDisplayName } from "../lib/brandLocalization";
+import { getVehicleModelDisplayName } from "../lib/modelLocalization";
 
 /**
  * Vehicle Details page.
@@ -24,7 +26,7 @@ import { DeleteVehicleDialog } from "../components/DeleteVehicleDialog";
  * and upcoming services for a single vehicle.
  */
 export function VehicleDetailsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const params = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
@@ -45,6 +47,8 @@ export function VehicleDetailsPage() {
   }
 
   const v = vehicleQuery.data;
+  const brandDisplay = getBrandDisplayName({ id: v.brandId, name: v.brandName }, i18n.language);
+  const modelDisplay = getVehicleModelDisplayName(v, i18n.language);
 
   const handleDelete = async () => {
     try {
@@ -75,7 +79,7 @@ export function VehicleDetailsPage() {
           {v.imageUrl ? (
             <img
               src={v.imageUrl}
-              alt={`${v.brandName} ${v.modelName}`}
+              alt={`${brandDisplay} ${modelDisplay}`}
               className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
@@ -86,10 +90,10 @@ export function VehicleDetailsPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <h1 className="font-display text-2xl font-semibold text-ink-900">
-                {v.nickname || `${v.brandName} ${v.modelName}`}
+                {v.nickname || `${brandDisplay} ${modelDisplay}`}
               </h1>
               <p className="text-sm text-ink-500 mt-1">
-                {v.brandName} {v.modelName} · {v.year} · {v.plateNumber}
+                {brandDisplay} {modelDisplay} · {v.year} · {v.plateNumber}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -113,8 +117,8 @@ export function VehicleDetailsPage() {
           </div>
 
           <dl className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Fact label={t("vehicles.fields.brand")} value={v.brandName} />
-            <Fact label={t("vehicles.fields.model")} value={v.modelName} />
+            <Fact label={t("vehicles.fields.brand")} value={brandDisplay} />
+            <Fact label={t("vehicles.fields.model")} value={modelDisplay} />
             <Fact label={t("vehicles.fields.year")} value={String(v.year)} />
             <Fact label={t("vehicles.fields.plate")} value={v.plateNumber} />
             <Fact label={t("vehicles.fields.color")} value={v.color ?? "—"} />

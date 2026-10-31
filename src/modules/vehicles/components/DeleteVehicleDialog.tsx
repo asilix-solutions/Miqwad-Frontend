@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Vehicle } from "../types";
+import { getBrandDisplayName } from "../lib/brandLocalization";
+import { getVehicleModelDisplayName } from "../lib/modelLocalization";
 
 interface Props {
   vehicle: Vehicle | null;
@@ -25,8 +27,12 @@ interface Props {
  * the dialog visibility by setting/unsetting `vehicle`.
  */
 export function DeleteVehicleDialog({ vehicle, onCancel, onConfirm, loading }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const open = vehicle != null;
+  const brandDisplay = vehicle
+    ? getBrandDisplayName({ id: vehicle.brandId, name: vehicle.brandName }, i18n.language)
+    : "";
+  const modelDisplay = getVehicleModelDisplayName(vehicle, i18n.language);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
@@ -46,10 +52,10 @@ export function DeleteVehicleDialog({ vehicle, onCancel, onConfirm, loading }: P
           <DialogBody>
             <div className="rounded-[var(--radius-sm)] bg-ink-50 p-3 text-sm">
               <p className="font-medium text-ink-900">
-                {vehicle.nickname || `${vehicle.brandName} ${vehicle.modelName}`}
+                {vehicle.nickname || `${brandDisplay} ${modelDisplay}`}
               </p>
               <p className="text-xs text-ink-500 mt-0.5">
-                {vehicle.brandName} {vehicle.modelName} · {vehicle.year} · {vehicle.plateNumber}
+                {brandDisplay} {modelDisplay} · {vehicle.year} · {vehicle.plateNumber}
               </p>
             </div>
           </DialogBody>

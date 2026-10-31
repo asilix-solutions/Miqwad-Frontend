@@ -19,6 +19,7 @@ function load(file) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const local = (name) => {
+    if (name === "@app/i18n") return { default: { language: "ar" }, language: "ar" };
     if (name === "@shared/lib/axios")
       return {
         apiClient: {
@@ -310,12 +311,12 @@ for (const kind of ["remove", "activate", "deactivate"]) {
     assert.equal(f.orderReads + f.userReads, 1);
   });
 }
-test("paid/unknown removal remains possible with stronger acknowledgment; numeric 2 is not invented Paid", async () => {
+test("paid/unknown removal remains possible with stronger acknowledgment; numeric 2 resolves to Paid", async () => {
   for (const paymentStatus of ["Paid", 2, 3, 4, null, undefined, "invalid"]) {
     const f = fixture("remove", { raw: { paymentStatus } });
     assert.equal(
       adaptTowTruck(f.raw).removalPayment,
-      paymentStatus === "Paid" ? "paid" : "unknown",
+      paymentStatus === "Paid" || paymentStatus === 2 ? "paid" : "unknown",
     );
     await submit(f.d, f.proposal);
     assert.equal(f.sent, 1);
@@ -623,6 +624,79 @@ test("AR/EN operation messages are complete and do not advertise availability", 
   assert.ok(source.includes("dir={i18n.dir()}"));
   assert.ok(source.includes("onCloseAutoFocus"));
   assert.ok(source.includes("onEscapeKeyDown"));
+});
+test("payment status resolution: 1=Pending, 2=Paid, 3=Failed, 4=Refunded; 0/null safe; labels verified", () => {
+  const { paymentStatusToI18nKey } = load("src/modules/orders/lib/orderEnums.ts");
+  const { towTruckAr, towTruckEn } = load("src/modules/tow-truck/i18n.ts");
+
+  // 1. Numeric 1 resolves to Pending
+  const p1 = adaptTowTruck({ ...rawOrder, paymentStatus: 1 });
+  assert.equal(p1.paymentStatus, "Pending");
+  assert.equal(p1.paymentPending, true);
+  assert.equal(p1.removalPayment, "pending");
+  assert.equal(paymentStatusToI18nKey(p1.paymentStatus), "orders.paymentStatus.Pending");
+
+  // 2. Numeric 2 resolves to Paid
+  const p2 = adaptTowTruck({ ...rawOrder, paymentStatus: 2 });
+  assert.equal(p2.paymentStatus, "Paid");
+  assert.equal(p2.paymentPending, false);
+  assert.equal(p2.removalPayment, "paid");
+  assert.equal(paymentStatusToI18nKey(p2.paymentStatus), "orders.paymentStatus.Paid");
+
+  // 3. Numeric 3 resolves to Failed
+  const p3 = adaptTowTruck({ ...rawOrder, paymentStatus: 3 });
+  assert.equal(p3.paymentStatus, "Failed");
+  assert.equal(p3.paymentPending, false);
+  assert.equal(p3.removalPayment, "unknown");
+  assert.equal(paymentStatusToI18nKey(p3.paymentStatus), "orders.paymentStatus.Failed");
+
+  // 4. Numeric 4 resolves to Refunded
+  const p4 = adaptTowTruck({ ...rawOrder, paymentStatus: 4 });
+  assert.equal(p4.paymentStatus, "Refunded");
+  assert.equal(p4.paymentPending, false);
+  assert.equal(p4.removalPayment, "unknown");
+  assert.equal(paymentStatusToI18nKey(p4.paymentStatus), "orders.paymentStatus.Refunded");
+
+  // 5. null and 0 handled safely
+  for (const emptyVal of [null, 0, undefined]) {
+    const pEmpty = adaptTowTruck({ ...rawOrder, paymentStatus: emptyVal });
+    assert.equal(pEmpty.paymentStatus, "");
+    assert.equal(pEmpty.paymentPending, false);
+    assert.equal(pEmpty.removalPayment, "unknown");
+  }
+
+  // 6. Unknown values do not crash UI
+  for (const unknownVal of [-1, 99, 999, "INVALID", {}, NaN, Infinity]) {
+    const pUnk = adaptTowTruck({ ...rawOrder, paymentStatus: unknownVal });
+    assert.equal(pUnk.paymentStatus, "");
+    assert.equal(pUnk.paymentPending, false);
+    assert.equal(pUnk.removalPayment, "unknown");
+  }
+
+  // 7. Localized labels in Arabic and English
+  assert.equal(towTruckAr.paymentUnknown, "غير مؤكد");
+  assert.equal(towTruckEn.paymentUnknown, "Unconfirmed");
+  assert.equal(towTruckAr.opsPaid, "مدفوع");
+  assert.equal(towTruckEn.opsPaid, "Paid");
+  assert.equal(towTruckAr.paymentPaidHint, "تم تأكيد دفع هذا الطلب من الخادم.");
+  assert.equal(towTruckEn.paymentPaidHint, "Payment for this request has been confirmed by the server.");
+  assert.equal(towTruckAr.paymentFailedHint, "فشلت عملية الدفع لهذا الطلب.");
+  assert.equal(towTruckEn.paymentFailedHint, "Payment for this request has failed.");
+  assert.equal(towTruckAr.paymentRefundedHint, "تم استرداد مبلغ هذا الطلب.");
+  assert.equal(towTruckEn.paymentRefundedHint, "Payment for this request has been refunded.");
+
+  // 8. Distinction between order status and payment status preserved
+  const orderWithStatuses = adaptTowTruck({ ...rawOrder, status: 1, paymentStatus: 2 });
+  assert.equal(orderWithStatuses.status, "InWaiting");
+  assert.equal(orderWithStatuses.paymentStatus, "Paid");
+  assert.notEqual(orderWithStatuses.status, orderWithStatuses.paymentStatus);
+
+  // 9. OrderType query remains 3
+  assert.equal(rawOrder.orderType, 3);
+  assert.throws(
+    () => adaptTowTruck({ ...rawOrder, orderType: 4 }),
+    (err) => err.code === "TOW_ORDER_TYPE",
+  );
 });
 (async () => {
   for (const [name, fn] of cases) {

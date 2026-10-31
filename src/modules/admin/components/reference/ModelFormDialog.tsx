@@ -79,7 +79,7 @@ export function ModelFormDialog({ mode, brandId, model, open, onOpenChange }: Pr
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isPending && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-[425px]" dir="rtl">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? t("superAdmin.models.add") : t("superAdmin.models.edit")}

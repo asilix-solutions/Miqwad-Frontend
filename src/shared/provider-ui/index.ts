@@ -38,6 +38,12 @@ export type { ProviderDataViewProps, ColumnDef } from "./ProviderDataView";
 export { ProviderInput } from "./ProviderInput";
 export type { ProviderInputProps } from "./ProviderInput";
 
+export { ProviderCurrencyInput } from "./ProviderCurrencyInput";
+export type { ProviderCurrencyInputProps } from "./ProviderCurrencyInput";
+
+export { ProviderQuantityInput } from "./ProviderQuantityInput";
+export type { ProviderQuantityInputProps } from "./ProviderQuantityInput";
+
 export { ProviderTextarea } from "./ProviderTextarea";
 export type { ProviderTextareaProps } from "./ProviderTextarea";
 
@@ -63,3 +69,8 @@ export type { NotificationBellProps } from "./NotificationBell";
 
 export { NotificationToastHost } from "./NotificationToastHost";
 export type { NotificationToastHostProps } from "./NotificationToastHost";
+
+// ── Icons / Currency ──────────────────────────────────────────────────────────
+
+export { SaudiRiyalIcon } from "@shared/components/icons/SaudiRiyalIcon";
+export type { SaudiRiyalIconProps } from "@shared/components/icons/SaudiRiyalIcon";

@@ -139,8 +139,13 @@ export function TowTruckDriverOperations({
     </div>
   );
   return (
-    <section className="tow-section" aria-labelledby="tow-driver-operations-title">
-      <h3 id="tow-driver-operations-title" className="tow-section-title">
+    <section
+      id="tow-driver-operations-section"
+      className="tow-section"
+      aria-labelledby="tow-driver-operations-title"
+      style={{ scrollMarginTop: "80px" }}
+    >
+      <h3 id="tow-driver-operations-title" className="tow-section-title" tabIndex={-1}>
         {t("towTruck.opsTitle")}
       </h3>
       <div className="tow-driver-management-grid">

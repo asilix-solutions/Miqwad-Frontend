@@ -21,7 +21,7 @@ export const adminFeatureCapabilities = {
   reference: "PARTIAL",
   referenceCategories: "PARTIAL",
   legacyCategoryTree: "MOCK_ONLY",
-  referenceCities: "MOCK_ONLY",
+  referenceCities: "PARTIAL",
   referenceBrands: "LIVE",
   referenceServices: "MOCK_ONLY",
   taxonomy: "LIVE",

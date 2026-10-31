@@ -26,13 +26,11 @@ const YEARS_KEY = (brandId: number | null, modelId: number | null) =>
 /** Long staleTime — brands rarely change. */
 const LOOKUP_STALE = 30 * 60_000;
 
-/** Backend caps PageSize; 100 matches the proven-working CategoryTree call. */
-const LOOKUP_PAGE_SIZE = 100;
 
 export function useBrandsQuery() {
   return useQuery({
     queryKey: brandKeys.list(),
-    queryFn: async () => (await brandsApi.list({ pageSize: LOOKUP_PAGE_SIZE })).items,
+    queryFn: () => brandsApi.listAll(),
     staleTime: LOOKUP_STALE,
   });
 }
@@ -40,7 +38,7 @@ export function useBrandsQuery() {
 export function useModelsQuery(brandId: number | null) {
   return useQuery({
     queryKey: brandKeys.models(brandId),
-    queryFn: async () => (await brandsApi.listModels(brandId!, { pageSize: LOOKUP_PAGE_SIZE })).items,
+    queryFn: () => brandsApi.listAllModels(brandId!),
     enabled: brandId != null && brandId > 0,
     staleTime: LOOKUP_STALE,
   });

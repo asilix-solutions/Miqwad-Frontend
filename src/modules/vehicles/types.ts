@@ -41,6 +41,7 @@ export interface VehicleModel {
   id: number;
   name: string;
   brandId: number | null;
+  nameAr?: string;
 }
 
 export interface Vehicle {
@@ -49,6 +50,7 @@ export interface Vehicle {
   brandName: string;
   modelId: number;
   modelName: string;
+  modelNameAr?: string;
   year: number;
   plateNumber: string;
   color: string | null;

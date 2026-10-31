@@ -844,11 +844,35 @@ export const router = createBrowserRouter([
                     element: <PermissionGuard permission="orders.view" />,
                     children: [
                       {
-                        path: ":orderId?",
+                        index: true,
                         lazy: async () => {
                           const { TowTruckOperationsPage } =
                             await import("@modules/tow-truck/pages/TowTruckOperationsPage");
                           return { Component: TowTruckOperationsPage };
+                        },
+                      },
+                      {
+                        path: "intracity",
+                        lazy: async () => {
+                          const { TowTruckOperationsPage } =
+                            await import("@modules/tow-truck/pages/TowTruckOperationsPage");
+                          return { Component: TowTruckOperationsPage };
+                        },
+                      },
+                      {
+                        path: "intercity",
+                        lazy: async () => {
+                          const { TowTruckOperationsPage } =
+                            await import("@modules/tow-truck/pages/TowTruckOperationsPage");
+                          return { Component: TowTruckOperationsPage };
+                        },
+                      },
+                      {
+                        path: ":orderId",
+                        lazy: async () => {
+                          const { TowTruckOrderWorkspacePage } =
+                            await import("@modules/tow-truck/pages/TowTruckOrderWorkspacePage");
+                          return { Component: TowTruckOrderWorkspacePage };
                         },
                       },
                     ],

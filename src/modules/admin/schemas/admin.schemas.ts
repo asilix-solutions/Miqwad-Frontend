@@ -70,6 +70,9 @@ export const citySchema = z.object({
 
 export type CityFormValues = z.infer<typeof citySchema>;
 
+export { createCitySchema, type CreateCityFormValues, type CreateCityParsedValues } from "./citySchema";
+
+
 /** Schema used by the admin brand create/edit dialog — real backend, single name + optional image URL. */
 export const brandSchema = z.object({
   name: z

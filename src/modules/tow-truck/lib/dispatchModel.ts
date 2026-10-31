@@ -3,11 +3,19 @@ import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminUserRow } from "@modules/admin/types";
 import type { TowTruckOrder } from "./towTruckModel";
 
+export function normalizeArabicNumerals(value: string): string {
+  return value.replace(/[٠-٩]/g, (d) => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)]);
+}
+
 // Account eligibility for preparation only; not availability or permission to dispatch.
 export function canSelectDriver(driver: AdminUserRow): boolean {
+  const isActive =
+    driver.isActive === true ||
+    (driver.isActive as unknown) === 1 ||
+    String(driver.isActive) === "true";
   return (
-    driver.role === 5 &&
-    driver.isActive === true &&
+    (driver.role === 5 || Number(driver.role) === 5) &&
+    isActive &&
     /^[1-9]\d*$/.test(driver.id) &&
     Number.isSafeInteger(Number(driver.id))
   );
@@ -17,10 +25,11 @@ export function canSelectDriver(driver: AdminUserRow): boolean {
 // to the numeric JSON DTO. No currency precision or business maximum is invented.
 export function quoteCostError(value: string): string | null {
   if (!value) return "costRequired";
-  if (!/^\d+(?:\.\d+)?$/.test(value)) return "costInvalid";
-  const cost = Number(value);
+  const normalized = normalizeArabicNumerals(value.trim());
+  if (!/^\d+(?:\.\d+)?$/.test(normalized)) return "costInvalid";
+  const cost = Number(normalized);
   if (cost < 0.01) return "costMinimum";
-  const canonical = value
+  const canonical = normalized
     .replace(/^0+(?=\d)/, "")
     .replace(/(\.\d*?)0+$/, "$1")
     .replace(/\.$/, "");
@@ -69,6 +78,17 @@ export function initialAssignmentBlock(order: TowTruckOrder): string | null {
   if (order.assignment === "unknown") return "driverStateUnknown";
   if (order.assignment === "assigned") return "initialNeedsUnassigned";
   if (order.statusCode !== 1 || order.status !== "InWaiting") return "initialNeedsWaiting";
+
+  // InterCity safeguards: requires valid agreed price and blocks paid order submissions
+  if (order.isInterCity) {
+    if (order.total === null || order.total < 0.01) {
+      return "intercityMissingAgreedPrice";
+    }
+    if (order.paymentCode === 2 || order.paymentStatus === "Paid") {
+      return "assignmentPaidInterCityBlocked";
+    }
+  }
+
   // Legacy new requests use null/0. Pending=1 is the existing attested mapping.
   // Other payment codes remain unverified and must not enter an initial quote.
   if (
@@ -80,6 +100,11 @@ export function initialAssignmentBlock(order: TowTruckOrder): string | null {
 }
 
 export function validateDriverPage(data: PaginatedResponse<AdminUserRow>, page: number) {
+  const isZeroTotal = data.total === 0;
+  const isTotalPagesValid = isZeroTotal
+    ? data.totalPages === 0 || data.totalPages === 1
+    : data.totalPages === Math.ceil(data.total / 10);
+
   if (
     !Array.isArray(data.items) ||
     data.page !== page ||
@@ -87,17 +112,25 @@ export function validateDriverPage(data: PaginatedResponse<AdminUserRow>, page: 
     !Number.isSafeInteger(data.total) ||
     data.total < 0 ||
     !Number.isSafeInteger(data.totalPages) ||
-    data.totalPages !== Math.ceil(data.total / 10) ||
+    !isTotalPagesValid ||
     data.items.length > 10 ||
-    (data.total === 0 && data.items.length > 0) ||
+    (isZeroTotal && data.items.length > 0) ||
     (page > Math.max(1, data.totalPages) && data.items.length > 0) ||
-    data.items.some(
-      (driver) =>
-        driver.role !== 5 ||
-        typeof driver.isActive !== "boolean" ||
+    data.items.some((driver) => {
+      const isRole5 = driver.role === 5 || Number(driver.role) === 5;
+      const isActiveValid =
+        typeof driver.isActive === "boolean" ||
+        (driver.isActive as unknown) === 1 ||
+        (driver.isActive as unknown) === 0 ||
+        driver.isActive === "true" ||
+        driver.isActive === "false";
+      return (
+        !isRole5 ||
+        !isActiveValid ||
         !/^[1-9]\d*$/.test(driver.id) ||
-        !Number.isSafeInteger(Number(driver.id)),
-    ) ||
+        !Number.isSafeInteger(Number(driver.id))
+      );
+    }) ||
     new Set(data.items.map((driver) => driver.id)).size !== data.items.length
   ) {
     throw new Error("Invalid tow-truck driver page");

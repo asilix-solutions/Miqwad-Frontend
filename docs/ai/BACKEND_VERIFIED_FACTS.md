@@ -355,15 +355,15 @@ Do not merge these concepts just because both were historically named “Service
 
 Verified facts:
 
-- Brand create/update uses a single `name`;
-- Brand includes `image` as a text URL in the verified contract;
+- Brand create/update requires `multipart/form-data` with `Name` (string, required);
+- Brand image upload uses binary field `ImageFile` via `PUT /api/Brands/{id}` (or `POST /api/Brands`);
+- Sending JSON body `{ name, image }` to `PUT /api/Brands/{id}` is rejected with 400 (`"بيانات غير صالحة."`, `"الاسم مطلوب."`) due to the `[FromForm]` model binder;
+- Uploaded brand images are stored and returned as absolute HTTPS URLs matching `https://miqwad-test.runasp.net/brands/{guid}.png`;
+- Submitting `PUT /api/Brands/{id}` with `FormData` containing only `Name` preserves the previously uploaded image URL;
+- Updating a brand's image does not alter the brand ID, name, or existing model relationships;
 - Model create includes `name` and `brandId`;
-- model writes use standalone `/api/Models/{id}` endpoints rather than nested write routes under Brands;
-- reads include `/api/Brands` and `/api/Brands/{brandId}/models`.
-
-A prior handover explicitly required live re-verification of some brand/model update/delete behavior before promotion.
-
-Re-probe if behavior is material to a new task.
+- Model writes use standalone `/api/Models/{id}` endpoints rather than nested write routes under Brands;
+- Reads include `/api/Brands` and `/api/Brands/{brandId}/models`. All 40 catalog brands (IDs 9–48) currently have verified, resolving PNG manufacturer logos.
 
 ---
 
@@ -418,6 +418,28 @@ Observed backend data required defensive frontend behavior, including:
 - some financial values were temporarily derived client-side because the backend did not provide them.
 
 Any temporary client-side financial calculation must remain clearly marked and should be replaced when the backend becomes authoritative.
+
+---
+
+### 10.4 Tow Truck Service Type and InterCity Filtering (Gate Verification)
+
+**Verified behavior:**
+- The current Swagger documentation and live API contract for `GET /api/Orders` support: `OrderType`, `Status`, `PageNumber`, `PageSize`, `SortBy`, `SortDescending`, `FilterBy`, `FilterValue`, `DateFilterBy`, `FromDate`, and `ToDate`.
+- `GET /api/Orders` does **not** expose or document a dedicated server-side `TowTruckServiceType` query filter parameter.
+- The order entity schema (`Order`) contains:
+  - `towTruckServiceType`: Numeric enum (`1 = IntraCity`, `2 = InterCity`).
+  - `intercityTowTruckDetails`: Object containing `roadId`, `originCityId`, `destinationCityId`, `originCityNameSnapshot`, `destinationCityNameSnapshot`, `receiverName`, and `receiverPhone`.
+- There are no direct flat route/city snapshot fields on the root `Order` object; they reside exclusively within `intercityTowTruckDetails`.
+- `totalPrice` represents the agreed, fixed price snapshotted from the predefined `Road.cost` at order creation.
+
+**Frontend consequence:**
+- The frontend currently queries `GET /api/Orders?OrderType=3` and performs client-side filtering on the loaded page batch (20 items) using `order.isInterCity`.
+- This causes pagination distortion: `totalCount` and `totalPages` reflect all TowTruck orders rather than the filtered subset, and InterCity orders on subsequent pages are not discoverable without paginating through all orders.
+- The frontend must NOT send an unverified `TowTruckServiceType` query parameter until the backend implements and publishes it.
+- A visible warning notice must remain in place to inform operators that the current view is scoped to the loaded page batch until server-side filtering is deployed.
+
+**Re-verification trigger:**
+Deployment of server-side `TowTruckServiceType` filter on `GET /api/Orders` with accurate pre-pagination `totalCount`.
 
 ---
 

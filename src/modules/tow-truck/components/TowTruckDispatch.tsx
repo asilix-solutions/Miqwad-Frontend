@@ -3,7 +3,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { ClipboardList, LockKeyhole } from "lucide-react";
+import { CheckCircle2, ClipboardList, Info, LockKeyhole } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@shared/auth/usePermissions";
 import { adminApi } from "@modules/admin/api/adminApi";
@@ -18,6 +18,7 @@ import {
   dispatchDraftSchema,
   dispatchSnapshot,
   initialAssignmentBlock,
+  normalizeArabicNumerals,
   reviewMatchesDraft,
   type DispatchDraft,
 } from "../lib/dispatchModel";
@@ -30,12 +31,14 @@ export function TowTruckDispatch({
   onBusyChange,
   stale,
   operationsBlocked,
+  removalHistory,
 }: {
   order: TowTruckOrder;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
   stale: boolean;
   operationsBlocked: boolean;
+  removalHistory?: boolean;
 }) {
   const { t } = useTranslation();
   const { can } = usePermissions();
@@ -54,12 +57,23 @@ export function TowTruckDispatch({
   const busy = assignment.state.phase === "busy";
   const initialBlock = initialAssignmentBlock(order);
   const canEdit = ["idle", "rejected", "retryable"].includes(assignment.state.phase);
-  const canPrepare = can("orders.manage") && can("users.view");
+  const canPrepare = can("orders.manage");
   const drivers = useTowTruckDrivers(page, editing && canPrepare);
   const form = useForm<DispatchDraft>({
     resolver: zodResolver(dispatchDraftSchema(true)),
-    defaultValues: { driverId: "", cost: "", duration: "" },
+    defaultValues: {
+      driverId: "",
+      cost: order.isInterCity && order.total ? String(order.total) : "",
+      duration: order.duration ?? "",
+    },
   });
+
+  useEffect(() => {
+    if (order.isInterCity && order.total) {
+      form.setValue("cost", String(order.total), { shouldDirty: false });
+    }
+  }, [order.isInterCity, order.total, form]);
+
   const draft = useWatch({ control: form.control });
   const { isDirty, isSubmitting, errors } = form.formState;
   useEffect(() => {
@@ -82,6 +96,8 @@ export function TowTruckDispatch({
   }, [assignment.state, busy, review]);
 
   const reviewDraft = async (values: DispatchDraft) => {
+    const cost = normalizeArabicNumerals(values.cost);
+    const draftValues = { ...values, cost };
     if (
       reviewing.current ||
       !canEdit ||
@@ -101,8 +117,8 @@ export function TowTruckDispatch({
       const [raw, driver] = await Promise.all([
         qc.fetchQuery({ ...orderDetailOptions(order.id), staleTime: 0 }),
         qc.fetchQuery({
-          queryKey: adminKeys.user(values.driverId),
-          queryFn: () => adminApi.getUser(values.driverId),
+          queryKey: adminKeys.user(draftValues.driverId),
+          queryFn: () => adminApi.getUser(draftValues.driverId),
           staleTime: 0,
         }),
       ]);
@@ -114,14 +130,14 @@ export function TowTruckDispatch({
       ) {
         setError("requestChanged");
       } else if (
-        driver.id !== values.driverId ||
+        driver.id !== draftValues.driverId ||
         !canSelectDriver(driver) ||
         driver.id === latest.driverId
       ) {
-        setError(driverEligibilityMessage(driver, values.driverId) ?? "driverChanged");
+        setError(driverEligibilityMessage(driver, draftValues.driverId) ?? "driverChanged");
       } else {
         setSelected(driver);
-        setReview({ values: { ...values }, snapshot: dispatchSnapshot(latest) });
+        setReview({ values: { ...draftValues }, snapshot: dispatchSnapshot(latest) });
       }
     } catch (error) {
       setError(assignmentRejection(error) ?? "reviewFailed");
@@ -172,6 +188,17 @@ export function TowTruckDispatch({
           <p>{t(`towTruck.${initialBlock ?? "initialReady"}`)}</p>
         </div>
       </div>
+      {order.assignment === "unassigned" && removalHistory && (
+        <div
+          className="rounded-xl border border-brand-blue/20 bg-brand-blue/5 p-3.5 mb-3 flex items-start gap-2.5"
+          role="status"
+        >
+          <CheckCircle2 size={16} className="text-brand-blue shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-xs text-brand-blue font-medium leading-relaxed">
+            {t("towTruck.driverReplacementReady")}
+          </p>
+        </div>
+      )}
       {assignment.state.message && (!review || busy || !canEdit) && (
         <div
           ref={feedback}
@@ -261,13 +288,13 @@ export function TowTruckDispatch({
               </dd>
             </div>
             <div>
-              <dt>{t("towTruck.proposedCost")}</dt>
+              <dt>{order.isInterCity ? t("towTruck.intercityAgreedPrice") : t("towTruck.proposedCost")}</dt>
               <dd>
-                <bdi>{review.values.cost}</bdi>
+                <bdi>{review.values.cost} SAR</bdi>
               </dd>
             </div>
             <div>
-              <dt>{t("towTruck.proposedDuration")}</dt>
+              <dt>{order.isInterCity ? t("towTruck.adminEstimatedDuration") : t("towTruck.proposedDuration")}</dt>
               <dd>{review.values.duration}</dd>
             </div>
           </dl>
@@ -363,9 +390,13 @@ export function TowTruckDispatch({
                       </label>
                     ))}
                   </div>
-                  {!drivers.data.items.length && (
+                  {!drivers.data.items.length ? (
                     <p className="tow-hint">{t("towTruck.noDrivers")}</p>
-                  )}
+                  ) : !drivers.data.items.some(canSelectDriver) ? (
+                    <p className="tow-hint text-warning-700" role="status">
+                      {t("towTruck.noActiveDrivers")}
+                    </p>
+                  ) : null}
                   {page > Math.max(1, drivers.data.totalPages) ? (
                     <Button type="button" variant="outline" onClick={() => setPage(1)}>
                       {t("towTruck.firstPage")}
@@ -403,31 +434,56 @@ export function TowTruckDispatch({
               {errors.driverId ? t("towTruck.driverRequired") : ""}
             </p>
             <div className="tow-quote-fields">
+              {order.isInterCity ? (
+                <div className="space-y-1">
+                  <span className="text-xs font-semibold text-ink-700 block">
+                    {t("towTruck.intercityAgreedPrice")}
+                  </span>
+                  <div className="flex items-center justify-between p-2.5 rounded-md bg-brand-50/70 border border-brand-blue/20 text-xs">
+                    <span className="font-bold text-sm text-brand-blue" dir="ltr">
+                      {order.total ? Number(order.total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"} SAR
+                    </span>
+                    <span className="text-[11px] text-ink-600 font-medium bg-white px-2 py-0.5 rounded border border-ink-200">
+                      {t("towTruck.fixedRoutePrice")}
+                    </span>
+                  </div>
+                  <input type="hidden" {...form.register("cost")} value={order.total ? String(order.total) : ""} />
+                  <small className="text-[11px] text-ink-500 block leading-tight">
+                    {t("towTruck.fixedPriceNotice")}
+                  </small>
+                </div>
+              ) : (
+                <label>
+                  {t("towTruck.proposedCost")}
+                  <input
+                    {...form.register("cost")}
+                    inputMode="decimal"
+                    dir="ltr"
+                    autoComplete="off"
+                    aria-invalid={!!errors.cost}
+                    aria-describedby="tow-cost-error tow-cost-help"
+                  />
+                  <small id="tow-cost-help">{t("towTruck.costHelp")}</small>
+                  <span id="tow-cost-error" className="tow-form-error">
+                    {errors.cost?.message ? t(`towTruck.${errors.cost.message}`) : ""}
+                  </span>
+                </label>
+              )}
               <label>
-                {t("towTruck.proposedCost")}
-                <input
-                  {...form.register("cost")}
-                  inputMode="decimal"
-                  dir="ltr"
-                  autoComplete="off"
-                  aria-invalid={!!errors.cost}
-                  aria-describedby="tow-cost-error tow-cost-help"
-                />
-                <small id="tow-cost-help">{t("towTruck.costHelp")}</small>
-                <span id="tow-cost-error" className="tow-form-error">
-                  {errors.cost?.message ? t(`towTruck.${errors.cost.message}`) : ""}
-                </span>
-              </label>
-              <label>
-                {t("towTruck.proposedDuration")}
+                {order.isInterCity ? t("towTruck.adminEstimatedDuration") : t("towTruck.proposedDuration")}
                 <input
                   {...form.register("duration")}
                   maxLength={100}
                   autoComplete="off"
                   aria-invalid={!!errors.duration}
                   aria-describedby="tow-duration-error"
-                  placeholder={t("towTruck.durationExample")}
+                  placeholder={order.isInterCity ? t("towTruck.intercityDurationExample") : t("towTruck.durationExample")}
                 />
+                {order.isInterCity && (
+                  <small className="text-[11px] text-ink-500 block">
+                    {t("towTruck.adminDurationHelp")}
+                  </small>
+                )}
                 <span id="tow-duration-error" className="tow-form-error">
                   {errors.duration?.message ? t(`towTruck.${errors.duration.message}`) : ""}
                 </span>
@@ -457,9 +513,43 @@ export function TowTruckDispatch({
         </form>
       )}
       {order.assignment === "assigned" && (
-        <div className="tow-unavailable-actions" aria-describedby="tow-dispatch-blocked">
-          <Button variant="outline" disabled>
-            {t("towTruck.reassignDriver")}
+        <div
+          className="mt-4 rounded-xl border border-ink-200 bg-ink-50/60 p-4 space-y-3"
+          role="region"
+          aria-label={t("towTruck.reassignDriver")}
+        >
+          <div className="flex items-start gap-2.5">
+            <Info size={17} className="text-brand-blue shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="space-y-1">
+              <strong className="text-xs font-bold text-ink-900 block">
+                {t("towTruck.reassignDriver")}
+              </strong>
+              <p className="text-xs text-ink-600 leading-relaxed">
+                {t("towTruck.reassignWorkflowNotice")}
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const section = document.getElementById("tow-driver-operations-section");
+              if (!section) return;
+              const prefersReducedMotion = window.matchMedia(
+                "(prefers-reduced-motion: reduce)",
+              ).matches;
+              section.scrollIntoView({
+                behavior: prefersReducedMotion ? "instant" : "smooth",
+                block: "nearest",
+              });
+              // Move focus to the section heading so keyboard users land in the right place.
+              const heading = section.querySelector<HTMLElement>("[id='tow-driver-operations-title']");
+              heading?.focus();
+            }}
+            className="text-xs gap-1.5 border-ink-300 text-ink-800 hover:bg-white min-h-[36px]"
+          >
+            <span>{t("towTruck.goToUnassign")}</span>
           </Button>
         </div>
       )}

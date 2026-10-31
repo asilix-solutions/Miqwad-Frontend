@@ -23,6 +23,8 @@ import {
   UserRound,
   CalendarClock,
 } from "lucide-react";
+import { getModelArabicNameByBrand, isArabicLanguage } from "@modules/vehicles/lib/modelLocalization";
+import { getBrandDisplayName } from "@modules/vehicles/lib/brandLocalization";
 import {
   Dialog,
   DialogContent,
@@ -156,10 +158,20 @@ function DetailBody({ order }: { order: OrderDetail }) {
         <Section icon={<Car className="size-4" />} title={t("orders.detail.sections.vehicle")}>
           <dl className="grid grid-cols-2 gap-3">
             {order.vehicle.brandName && (
-              <Field label={t("orders.detail.vehicle.brand")} value={order.vehicle.brandName} />
+              <Field
+                label={t("orders.detail.vehicle.brand")}
+                value={getBrandDisplayName({ id: 0, name: order.vehicle.brandName }, i18n.language)}
+              />
             )}
             {order.vehicle.brandModel && (
-              <Field label={t("orders.detail.vehicle.model")} value={order.vehicle.brandModel} />
+              <Field
+                label={t("orders.detail.vehicle.model")}
+                value={
+                  (isArabicLanguage(i18n.language)
+                    ? getModelArabicNameByBrand(order.vehicle.brandName, order.vehicle.brandModel)
+                    : undefined) ?? order.vehicle.brandModel
+                }
+              />
             )}
             {order.vehicle.brandYear && (
               <Field label={t("orders.detail.vehicle.year")} value={<span dir="ltr">{order.vehicle.brandYear}</span>} />

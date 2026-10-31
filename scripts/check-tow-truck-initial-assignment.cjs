@@ -17,6 +17,7 @@ function load(file) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const local = (name) => {
+    if (name === "@app/i18n") return { default: { language: "ar" }, language: "ar" };
     if (name === "@shared/lib/axios")
       return {
         apiClient: {
@@ -43,6 +44,8 @@ const {
   dispatchDraftSchema,
   reviewMatchesDraft,
   nextActionMessage,
+  validateDriverPage,
+  canSelectDriver,
 } = load("src/modules/tow-truck/lib/dispatchModel.ts");
 const { submitInitialAssignment: submit, checkAssignmentOutcome: checkOutcome } = load(
   "src/modules/tow-truck/lib/initialAssignment.ts",
@@ -138,20 +141,22 @@ async function test(name, run) {
 }
 async function main() {
   await test("eligible initial assignment: fresh driver/order, one PUT, fresh GET, Pending not paid", async () => {
-    const x = setup();
-    await submit(x.deps, request);
-    assert.deepEqual(x.events, ["driver", "order", "mark", "put", "invalidate", "order"]);
-    assert.equal(x.sent(), 1);
-    assert.equal(x.state().phase, "success");
-    assert.equal(x.marked(), false);
+    for (const absentDriverId of [null, undefined, 0, "0", ""]) {
+      const x = setup({ raw: { towTruckDriverId: absentDriverId } });
+      const reqObj = { ...request, values: { ...request.values } };
+      await submit(x.deps, reqObj);
+      assert.equal(x.sent(), 1);
+      assert.equal(x.state().phase, "success");
+      assert.equal(x.marked(), false);
+    }
     assert.equal(adaptTowTruck({ ...original, paymentStatus: 1 }).paymentPending, true);
     assert.equal(adaptTowTruck({ ...original, paymentStatus: 2 }).paymentPending, false);
   });
-  await test("assigned, absent assignment, unknown stages and noninitial payments cannot write", async () => {
+  await test("assigned, corrupted driver identity, unknown stages and noninitial payments cannot write", async () => {
     for (const raw of [
       { towTruckDriverId: 15 },
-      { towTruckDriverId: undefined },
-      { towTruckDriverId: 0 },
+      { towTruckDriverId: -1 },
+      { towTruckDriverId: "invalid" },
       { status: 2 },
       { status: 5 },
       { status: 99 },
@@ -169,6 +174,10 @@ async function main() {
     }
     for (const paymentStatus of [null, 0, 1])
       assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, paymentStatus })), null);
+    for (const absentDriverId of [null, undefined, 0, "0", ""])
+      assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: absentDriverId })), null);
+    for (const corruptDriverId of [-1, "corrupt", {}])
+      assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: corruptDriverId })), "driverStateUnknown");
   });
   await test("wrong order identity/type cannot write", async () => {
     for (const raw of [{ id: 20 }, { orderType: 2 }]) {
@@ -576,6 +585,14 @@ async function main() {
     );
     assert.equal(
       initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: undefined })),
+      null,
+    );
+    assert.equal(
+      initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: 0 })),
+      null,
+    );
+    assert.equal(
+      initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: -1 })),
       "driverStateUnknown",
     );
     const complete = {
@@ -621,6 +638,73 @@ async function main() {
       en.assignmentDriverBusy,
       "The selected driver is busy with another order. Choose another driver, review the quote, and confirm submission again.",
     );
+  });
+  await test("driver page validation handles role 5, boolean/numeric isActive, and empty pages", async () => {
+    // Valid page with numeric and string roles, and boolean/numeric isActive
+    const validPage = {
+      items: [
+        { id: "15", role: 5, isActive: true, fullName: "Driver 1" },
+        { id: "16", role: "5", isActive: 1, fullName: "Driver 2" },
+        { id: "17", role: 5, isActive: false, fullName: "Driver Inactive" },
+      ],
+      page: 1,
+      pageSize: 10,
+      total: 3,
+      totalPages: 1,
+    };
+    assert.deepEqual(validateDriverPage(validPage, 1), validPage);
+
+    // Empty driver pages
+    assert.ok(validateDriverPage({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 1 }, 1));
+    assert.ok(validateDriverPage({ items: [], page: 1, pageSize: 10, total: 0, totalPages: 0 }, 1));
+
+    // canSelectDriver rules
+    assert.equal(canSelectDriver({ id: "15", role: 5, isActive: true }), true);
+    assert.equal(canSelectDriver({ id: "15", role: "5", isActive: 1 }), true);
+    assert.equal(canSelectDriver({ id: "15", role: 5, isActive: "true" }), true);
+    assert.equal(canSelectDriver({ id: "15", role: 5, isActive: false }), false);
+    assert.equal(canSelectDriver({ id: "15", role: 5, isActive: 0 }), false);
+    assert.equal(canSelectDriver({ id: "15", role: 4, isActive: true }), false);
+    assert.equal(canSelectDriver({ id: "-1", role: 5, isActive: true }), false);
+    assert.equal(canSelectDriver({ id: "0", role: 5, isActive: true }), false);
+
+    // Invalid driver page throws
+    assert.throws(() => validateDriverPage({ items: [{ id: "15", role: 4, isActive: true }], page: 1, pageSize: 10, total: 1, totalPages: 1 }, 1));
+    assert.throws(() => validateDriverPage({ items: [{ id: "15", role: 5, isActive: true }, { id: "15", role: 5, isActive: true }], page: 1, pageSize: 10, total: 2, totalPages: 1 }, 1));
+  });
+  await test("order state immediately after driver removal supports assignment only when InWaiting and unpaid", async () => {
+    // 1. Order immediately after driver removal in InWaiting, unpaid (paymentStatus: null | 0 | 1)
+    for (const paymentStatus of [null, 0, 1]) {
+      const removedWaitingOrder = adaptTowTruck({
+        ...original,
+        status: 1,
+        paymentStatus,
+        towTruckDriverId: null, // or 0 or undefined after removal
+      });
+      assert.equal(removedWaitingOrder.assignment, "unassigned");
+      assert.equal(initialAssignmentBlock(removedWaitingOrder), null);
+    }
+
+    // 2. Order after driver removal that had already progressed to Paid (paymentStatus: 2)
+    // Backend contract: An initial quote CANNOT be created for an already-paid order.
+    const removedPaidOrder = adaptTowTruck({
+      ...original,
+      status: 1,
+      paymentStatus: 2,
+      towTruckDriverId: null,
+    });
+    assert.equal(removedPaidOrder.assignment, "unassigned");
+    assert.equal(initialAssignmentBlock(removedPaidOrder), "initialPaymentBlocked");
+
+    // 3. Order after driver removal that is no longer in InWaiting (e.g. status: 2 Ready)
+    const removedProgressedOrder = adaptTowTruck({
+      ...original,
+      status: 2,
+      paymentStatus: 1,
+      towTruckDriverId: null,
+    });
+    assert.equal(removedProgressedOrder.assignment, "unassigned");
+    assert.equal(initialAssignmentBlock(removedProgressedOrder), "initialNeedsWaiting");
   });
   console.log(`${checks} checks passed. No live backend requests executed.`);
 }

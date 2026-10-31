@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import type { Control, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Spinner } from "@shared/components/ui/spinner";
 import { useBrandsQuery, useModelsQuery, useYearsQuery } from "../hooks/useBrandsModels";
+import { getBrandDisplayName } from "../lib/brandLocalization";
+import { getModelDisplayName } from "../lib/modelLocalization";
 import type { VehicleFormValues } from "../schemas/vehicles.schemas";
 
 interface Props {
@@ -24,18 +26,31 @@ interface Props {
  *   - Years load only when both brand + model have been picked.
  *   - Changing brand resets model + year; changing model resets year.
  *     This prevents impossible combinations (e.g. Toyota → Sonata).
+ *   - Model options are localized (Arabic in AR mode, English in EN mode)
+ *     and sorted alphabetically by localized name.
+ *   - Returns canonical `modelId` to the form.
  *
  * Validation messages are i18n keys produced by Zod; we translate
  * them at render time so the form stays language-agnostic.
  */
 export function BrandModelYearSelect({ control, watch, setValue, errors }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const brandId = watch("brandId");
   const modelId = watch("modelId");
 
   const brandsQuery = useBrandsQuery();
   const modelsQuery = useModelsQuery(brandId || null);
   const yearsQuery = useYearsQuery(brandId || null, modelId || null);
+
+  const localizedModels = useMemo(() => {
+    if (!modelsQuery.data) return [];
+    const isAr = i18n.language.startsWith("ar");
+    return [...modelsQuery.data].sort((a, b) => {
+      const nameA = getModelDisplayName(a, i18n.language);
+      const nameB = getModelDisplayName(b, i18n.language);
+      return nameA.localeCompare(nameB, isAr ? "ar" : "en");
+    });
+  }, [modelsQuery.data, i18n.language]);
 
   // Reset cascade when the parent changes.
   // We compare against the *current* form values so we don't blow away
@@ -75,7 +90,7 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
                 <SelectItem value="none">{t("common.select")}</SelectItem>
                 {brandsQuery.data?.map((b) => (
                   <SelectItem key={b.id} value={String(b.id)}>
-                    {b.name}
+                    {getBrandDisplayName(b, i18n.language)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -111,9 +126,9 @@ export function BrandModelYearSelect({ control, watch, setValue, errors }: Props
                 <SelectItem value="none">
                   {!brandId ? t("vehicles.pickBrandFirst") : t("common.select")}
                 </SelectItem>
-                {modelsQuery.data?.map((m) => (
+                {localizedModels.map((m) => (
                   <SelectItem key={m.id} value={String(m.id)}>
-                    {m.name}
+                    {getModelDisplayName(m, i18n.language)}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -12,24 +12,24 @@
  * Architecture: src/shared/provider-ui/ — reused across dealer, workshop, scrap.
  */
 
-import {
-  forwardRef,
-  type ComponentPropsWithoutRef,
-  type CSSProperties,
-} from "react";
+import { forwardRef, type ComponentPropsWithoutRef, type CSSProperties } from "react";
 import { cn } from "@shared/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /** Props for {@link ProviderTextarea}. */
-export interface ProviderTextareaProps
-  extends ComponentPropsWithoutRef<"textarea"> {
+export interface ProviderTextareaProps extends ComponentPropsWithoutRef<"textarea"> {
   /** Label rendered above the textarea. */
   label?: string;
   /** Error message rendered below (danger colour). Suppresses hint when set. */
   error?: string;
   /** Helper text rendered below the textarea (muted). Hidden when error is set. */
   hint?: string;
+  /**
+   * Whether this field is required. When true, renders a red asterisk adjacent
+   * to the label and sets aria-required and required on the textarea.
+   */
+  required?: boolean;
 }
 
 // ── Style constants ───────────────────────────────────────────────────────────
@@ -63,73 +63,68 @@ const TRANSITION: CSSProperties = {
  * />
  * ```
  */
-export const ProviderTextarea = forwardRef<
-  HTMLTextAreaElement,
-  ProviderTextareaProps
->(({ label, error, hint, className, id, style, ...rest }, ref) => {
-  const hasId = Boolean(id);
-  const describedBy =
-    hasId && error
-      ? `${id}-error`
-      : hasId && hint
-        ? `${id}-hint`
-        : undefined;
+export const ProviderTextarea = forwardRef<HTMLTextAreaElement, ProviderTextareaProps>(
+  ({ label, error, hint, required, className, id, style, ...rest }, ref) => {
+    const hasId = Boolean(id);
+    const describedBy = hasId && error ? `${id}-error` : hasId && hint ? `${id}-hint` : undefined;
 
-  return (
-    <div className="flex flex-col gap-1.5">
-      {label && (
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-[var(--color-ink-body)]"
-        >
-          {label}
-        </label>
-      )}
-
-      <textarea
-        ref={ref}
-        id={id}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        style={{ ...TRANSITION, ...style }}
-        className={cn(
-          BASE,
-          error
-            ? [
-                "border-[var(--color-danger-500)]",
-                "focus-visible:border-[var(--color-danger-500)]",
-                "focus-visible:ring-2 focus-visible:ring-[var(--color-danger-500)]/20",
-              ]
-            : [
-                "border-[var(--color-divider)]",
-                "focus-visible:border-[var(--color-brand-orange)]",
-                "focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/20",
-              ],
-          className,
+    return (
+      <div className="flex flex-col gap-1.5">
+        {label && (
+          <label htmlFor={id} className="text-sm font-medium text-[var(--color-ink-body)]">
+            {label}
+            {required && (
+              <span className="ms-1 text-[var(--color-danger-500)] select-none" aria-hidden="true">
+                *
+              </span>
+            )}
+          </label>
         )}
-        {...rest}
-      />
 
-      {error && (
-        <p
-          id={hasId ? `${id}-error` : undefined}
-          role="alert"
-          className="text-xs text-[var(--color-danger-500)]"
-        >
-          {error}
-        </p>
-      )}
+        <textarea
+          ref={ref}
+          id={id}
+          required={required}
+          aria-required={required ? true : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          style={{ ...TRANSITION, ...style }}
+          className={cn(
+            BASE,
+            error
+              ? [
+                  "border-[var(--color-danger-500)]",
+                  "focus-visible:border-[var(--color-danger-500)]",
+                  "focus-visible:ring-2 focus-visible:ring-[var(--color-danger-500)]/20",
+                ]
+              : [
+                  "border-[var(--color-divider)]",
+                  "focus-visible:border-[var(--color-brand-orange)]",
+                  "focus-visible:ring-2 focus-visible:ring-[var(--color-brand-orange)]/20",
+                ],
+            className,
+          )}
+          {...rest}
+        />
 
-      {!error && hint && (
-        <p
-          id={hasId ? `${id}-hint` : undefined}
-          className="text-xs text-[var(--color-muted)]"
-        >
-          {hint}
-        </p>
-      )}
-    </div>
-  );
-});
+        {error && (
+          <p
+            id={hasId ? `${id}-error` : undefined}
+            role="alert"
+            className="text-xs text-[var(--color-danger-500)]"
+          >
+            {error}
+          </p>
+        )}
+
+        {!error && hint && (
+          <p id={hasId ? `${id}-hint` : undefined} className="text-xs text-[var(--color-muted)]">
+            {hint}
+          </p>
+        )}
+      </div>
+    );
+  },
+);
 
 ProviderTextarea.displayName = "ProviderTextarea";

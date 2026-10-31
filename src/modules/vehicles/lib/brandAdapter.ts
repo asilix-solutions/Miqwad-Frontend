@@ -19,6 +19,7 @@
  */
 import type { Brand, VehicleModel } from "../types";
 import type { PaginatedResponse } from "@shared/types/api";
+import { getModelArabicNameById, getModelArabicNameByBrand } from "./modelLocalization";
 
 export interface RawBrand {
   id: number;
@@ -67,36 +68,63 @@ export function adaptRawBrand(raw: RawBrand): Brand {
  * already scoped to a brand via the URL).
  */
 export function adaptRawModel(raw: RawModel, brandId: number | null = null): VehicleModel {
+  const modelId = raw.id;
+  const name = raw.name ?? "";
+  const resolvedBrandId = raw.brandId ?? brandId;
+  const nameAr =
+    getModelArabicNameById(modelId) ??
+    (resolvedBrandId ? getModelArabicNameByBrand(resolvedBrandId, name) : undefined);
+
   return {
-    id: raw.id,
-    name: raw.name ?? "",
-    brandId: raw.brandId ?? brandId,
+    id: modelId,
+    name,
+    brandId: resolvedBrandId,
+    nameAr,
   };
 }
 
 export function adaptBrandsPage(raw: RawPage<RawBrand>): PaginatedResponse<Brand> {
+  const items = Array.isArray(raw.items) ? raw.items.map(adaptRawBrand) : [];
+  const page = raw.pageNumber ?? 1;
+  const pageSize = raw.pageSize ?? 100;
+  const total = raw.totalCount ?? items.length;
+  const totalPages =
+    raw.totalPages ?? (total > 0 ? Math.ceil(total / Math.max(1, pageSize)) : 1);
+
   return {
-    items: raw.items.map(adaptRawBrand),
-    page: raw.pageNumber,
-    pageSize: raw.pageSize,
-    total: raw.totalCount,
-    totalPages: raw.totalPages,
+    items,
+    page,
+    pageSize,
+    total,
+    totalPages,
   };
 }
 
 export function adaptModelsPage(raw: RawPage<RawModel>, brandId: number): PaginatedResponse<VehicleModel> {
+  const items = Array.isArray(raw.items) ? raw.items.map((m) => adaptRawModel(m, brandId)) : [];
+  const page = raw.pageNumber ?? 1;
+  const pageSize = raw.pageSize ?? 100;
+  const total = raw.totalCount ?? items.length;
+  const totalPages =
+    raw.totalPages ?? (total > 0 ? Math.ceil(total / Math.max(1, pageSize)) : 1);
+
   return {
-    items: raw.items.map((m) => adaptRawModel(m, brandId)),
-    page: raw.pageNumber,
-    pageSize: raw.pageSize,
-    total: raw.totalCount,
-    totalPages: raw.totalPages,
+    items,
+    page,
+    pageSize,
+    total,
+    totalPages,
   };
 }
 
-/** Builds the create/update request body for a brand. `image` is a plain text field (URL), not a file upload. */
-export function adaptBrandToWritePayload(name: string, image?: string | null): { name: string; image: string | null } {
-  return { name, image: image ?? null };
+/** Builds the create/update multipart request body for a brand, matching the verified live backend contract (`Name`, optional `ImageFile`). */
+export function adaptBrandToWritePayload(name: string, image?: File | Blob | string | null): FormData {
+  const formData = new FormData();
+  formData.append("Name", name);
+  if (image instanceof Blob) {
+    formData.append("ImageFile", image);
+  }
+  return formData;
 }
 
 /** Builds the create/update request body for the standalone `/api/Models` endpoint. */

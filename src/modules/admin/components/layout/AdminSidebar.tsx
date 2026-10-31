@@ -4,7 +4,7 @@
  */
 
 import { useTranslation } from "react-i18next";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -25,6 +25,7 @@ import {
   TicketPercent,
   Wallet,
   Truck,
+  Route,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@shared/lib/utils";
@@ -111,6 +112,9 @@ export function AdminSidebar({
 }) {
   const { t } = useTranslation();
   const { can } = usePermissions();
+  const location = useLocation();
+  const isTowTruckActive = location.pathname.startsWith("/admin/tow-truck");
+
   const visibleItems = NAV_ITEMS.filter((item) => {
     const route = getAdminRoute(item.path);
     return route && isAdminRouteVisible(route) && (!route.permission || can(route.permission));
@@ -143,24 +147,84 @@ export function AdminSidebar({
         aria-label={t("towTruck.navigation")}
         className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6"
       >
-        {visibleItems.map((item) => (
-          <NavLink
-            key={item.key}
-            to={item.path}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-[var(--color-brand-orange)] text-white"
-                  : "text-[var(--color-ink-body)] hover:bg-[var(--color-surface-2)]",
-              )
-            }
-          >
-            <item.icon size={20} className="shrink-0" />
-            <span>{t(item.labelPath)}</span>
-          </NavLink>
-        ))}
+        {visibleItems.map((item) => {
+          const isTowTruck = item.key === "tow-truck";
+
+          return (
+            <div key={item.key} className="flex flex-col">
+              <NavLink
+                to={item.path}
+                onClick={onNavigate}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-[var(--color-brand-orange)] text-white"
+                      : "text-[var(--color-ink-body)] hover:bg-[var(--color-surface-2)]",
+                  )
+                }
+              >
+                <item.icon size={20} className="shrink-0" />
+                <span>{t(item.labelPath)}</span>
+              </NavLink>
+
+              {isTowTruck && isTowTruckActive && (
+                <div
+                  className="ms-6 me-1 mt-1 space-y-0.5 border-s-2 border-[var(--color-divider)] ps-3 py-1"
+                  role="group"
+                  aria-label={t("towTruck.operationsNavLabel")}
+                >
+                  <NavLink
+                    to="/admin/tow-truck"
+                    end
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        isActive
+                          ? "bg-brand-50 text-brand-orange font-semibold"
+                          : "text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+                      )
+                    }
+                  >
+                    <Truck size={14} className="shrink-0" aria-hidden="true" />
+                    <span>{t("towTruck.navAllBadge")}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/tow-truck/intracity"
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        isActive
+                          ? "bg-brand-50 text-brand-orange font-semibold"
+                          : "text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+                      )
+                    }
+                  >
+                    <MapPin size={14} className="shrink-0" aria-hidden="true" />
+                    <span>{t("towTruck.navIntraCityBadge")}</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admin/tow-truck/intercity"
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
+                        isActive
+                          ? "bg-brand-50 text-brand-orange font-semibold"
+                          : "text-[var(--color-ink-muted)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink-body)]",
+                      )
+                    }
+                  >
+                    <Route size={14} className="shrink-0" aria-hidden="true" />
+                    <span>{t("towTruck.navInterCityBadge")}</span>
+                  </NavLink>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

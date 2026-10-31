@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Vehicle } from "../types";
 
+import { getBrandDisplayName } from "../lib/brandLocalization";
+import { getVehicleModelDisplayName } from "../lib/modelLocalization";
+
 interface Props {
   vehicle: Vehicle;
   onDelete: (vehicle: Vehicle) => void;
@@ -15,7 +18,9 @@ interface Props {
  * Shows hero photo / brand placeholder, key facts, and action buttons.
  */
 export function VehicleCard({ vehicle, onDelete }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const brandDisplay = getBrandDisplayName({ id: vehicle.brandId, name: vehicle.brandName }, i18n.language);
+  const modelDisplay = getVehicleModelDisplayName(vehicle, i18n.language);
 
   const fuelLabel = vehicle.fuelType
     ? t(`vehicles.fields.fuel${capitalize(vehicle.fuelType)}` as const)
@@ -27,7 +32,7 @@ export function VehicleCard({ vehicle, onDelete }: Props) {
         {vehicle.imageUrl ? (
           <img
             src={vehicle.imageUrl}
-            alt={`${vehicle.brandName} ${vehicle.modelName}`}
+            alt={`${brandDisplay} ${modelDisplay}`}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
@@ -41,10 +46,10 @@ export function VehicleCard({ vehicle, onDelete }: Props) {
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
           <h3 className="font-display text-base font-semibold text-ink-900 truncate">
-            {vehicle.nickname || `${vehicle.brandName} ${vehicle.modelName}`}
+            {vehicle.nickname || `${brandDisplay} ${modelDisplay}`}
           </h3>
           <p className="text-xs text-ink-500 truncate">
-            {vehicle.brandName} {vehicle.modelName}
+            {brandDisplay} {modelDisplay}
           </p>
         </div>
 

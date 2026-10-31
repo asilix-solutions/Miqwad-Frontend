@@ -1,36 +1,106 @@
 /**
  * @file BrandsModelsPanel.tsx
- * @description Master-detail admin panel for the real-backend `/api/Brands`
- * resource: brands (master, single name + optional image) on the left,
- * the selected brand's models (detail, single name) on the right.
+ * @description Adaptive master-detail administrative workspace for vehicle Brands & Models.
+ * Provides responsive Master-Detail (Desktop) and Drilldown (Mobile/Tablet) layouts,
+ * Grid/List brand browsing with localStorage preference persistence, bilingual search,
+ * curated popular brand filtering, and complete model administration.
  */
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Plus, Pencil, Trash2, ListTree, ChevronRight, ImageOff } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DataTable } from "../shared/DataTable";
+import { useState, useMemo, useCallback } from "react";
 import { useAdminBrandsQuery, useModelsForBrandQuery } from "../../hooks/useAdminQueries";
 import type { Brand, VehicleModel } from "@modules/vehicles/types";
+import { matchesBrandSearch } from "@modules/vehicles/lib/brandLocalization";
+import { isCatalogTruncated } from "@modules/vehicles/api/brandsApi";
 import { BrandFormDialog } from "./BrandFormDialog";
 import { ModelFormDialog } from "./ModelFormDialog";
 import { DeleteBrandDialog } from "./DeleteBrandDialog";
 import { DeleteModelDialog } from "./DeleteModelDialog";
-import { Can } from "@shared/auth/Can";
+import { BrandBrowser } from "./brands-models/BrandBrowser";
+import { ModelWorkspace } from "./brands-models/ModelWorkspace";
+import type { ViewMode, BrandFilter } from "./brands-models/types";
+import { POPULAR_BRAND_IDS } from "./brands-models/types";
+
+const VIEW_MODE_STORAGE_KEY = "miqwad:admin:brands:view-mode";
+
+function getInitialViewMode(): ViewMode {
+  try {
+    const saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    if (saved === "grid" || saved === "list") return saved;
+  } catch {
+    // Graceful fallback when localStorage is unavailable
+  }
+  return "grid";
+}
+
+function persistViewMode(mode: ViewMode): void {
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch {
+    // Ignore storage quota / privacy mode exceptions
+  }
+}
 
 export function BrandsModelsPanel() {
-  const { t } = useTranslation();
+  // ─── 1. View & Filter Preferences ──────────────────────────────────────────
+  const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode);
+  const [brandFilter, setBrandFilter] = useState<BrandFilter>("all");
 
-  // ─── Master State (Brands) ───────────────────────────────────────────────────
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode);
+    persistViewMode(mode);
+  }, []);
+
+  // ─── 2. Search States ──────────────────────────────────────────────────────
+  const [brandSearch, setBrandSearch] = useState("");
+  const [modelSearch, setModelSearch] = useState("");
+
+  // ─── 3. Master Query & ID-based Selection ──────────────────────────────────
   const brandsQuery = useAdminBrandsQuery();
-  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
 
+  // Derived selected brand: stays synchronized with fresh query data (handles renames/deletions)
+  const selectedBrand = useMemo(() => {
+    if (selectedBrandId == null) return null;
+    return brandsQuery.data?.find((b) => b.id === selectedBrandId) ?? null;
+  }, [brandsQuery.data, selectedBrandId]);
+
+  const effectiveBrandId = selectedBrand?.id ?? null;
+
+  // Filtered and searched brands collection
+  const filteredBrands = useMemo(() => {
+    const catalog = brandsQuery.data ?? [];
+    return catalog.filter((brand) => {
+      // 1. Popularity filter
+      if (brandFilter === "popular" && !POPULAR_BRAND_IDS.has(brand.id)) {
+        return false;
+      }
+      // 2. Resilient bilingual search (Arabic + English + aliases + normalized)
+      return matchesBrandSearch(brandSearch, brand);
+    });
+  }, [brandsQuery.data, brandFilter, brandSearch]);
+
+  // ─── 4. Detail Query (Models for selected brand) ───────────────────────────
+  const modelsQuery = useModelsForBrandQuery(effectiveBrandId);
+
+  // ─── 5. Dialog States ──────────────────────────────────────────────────────
+  // Brand Create/Edit Dialog
   const [brandFormOpen, setBrandFormOpen] = useState(false);
   const [brandFormMode, setBrandFormMode] = useState<"create" | "edit">("create");
   const [brandToEdit, setBrandToEdit] = useState<Brand | undefined>();
 
+  // Brand Delete Dialog
   const [deleteBrandOpen, setDeleteBrandOpen] = useState(false);
   const [brandToDelete, setBrandToDelete] = useState<Brand | null>(null);
 
+  // Model Create/Edit Dialog
+  const [modelFormOpen, setModelFormOpen] = useState(false);
+  const [modelFormMode, setModelFormMode] = useState<"create" | "edit">("create");
+  const [modelToEdit, setModelToEdit] = useState<VehicleModel | undefined>();
+
+  // Model Delete Dialog
+  const [deleteModelOpen, setDeleteModelOpen] = useState(false);
+  const [modelToDelete, setModelToDelete] = useState<VehicleModel | null>(null);
+
+  // ─── 6. Action Handlers ────────────────────────────────────────────────────
   const openCreateBrand = () => {
     setBrandFormMode("create");
     setBrandToEdit(undefined);
@@ -48,15 +118,15 @@ export function BrandsModelsPanel() {
     setDeleteBrandOpen(true);
   };
 
-  // ─── Detail State (Models) ───────────────────────────────────────────────────
-  const modelsQuery = useModelsForBrandQuery(selectedBrand?.id ?? null);
+  const handleSelectBrand = (brand: Brand) => {
+    setSelectedBrandId(brand.id);
+    setModelSearch("");
+  };
 
-  const [modelFormOpen, setModelFormOpen] = useState(false);
-  const [modelFormMode, setModelFormMode] = useState<"create" | "edit">("create");
-  const [modelToEdit, setModelToEdit] = useState<VehicleModel | undefined>();
-
-  const [deleteModelOpen, setDeleteModelOpen] = useState(false);
-  const [modelToDelete, setModelToDelete] = useState<VehicleModel | null>(null);
+  const handleBackToBrands = () => {
+    setSelectedBrandId(null);
+    setModelSearch("");
+  };
 
   const openCreateModel = () => {
     setModelFormMode("create");
@@ -75,203 +145,66 @@ export function BrandsModelsPanel() {
     setDeleteModelOpen(true);
   };
 
-  // ─── Layout ──────────────────────────────────────────────────────────────────
+  // ─── 7. Responsive Layout ──────────────────────────────────────────────────
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* ─── Master Panel (Brands) ─── */}
-      <div className="flex-1 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[var(--color-ink-body)]">
-            {t("superAdmin.brands.title")}
-          </h2>
-          <Can permission="brands.create">
-            <Button
-              onClick={openCreateBrand}
-              className="bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90"
-            >
-              <Plus className="me-2 h-4 w-4" />
-              {t("superAdmin.brands.add")}
-            </Button>
-          </Can>
-        </div>
-
-        <div className="rounded-md border border-[var(--color-divider)] bg-white shadow-sm">
-          <DataTable<Brand>
-            rows={brandsQuery.data ?? []}
+    <>
+      <div className="h-[750px] max-h-[calc(100vh-13rem)] min-h-[520px] flex flex-col lg:flex-row gap-5 min-h-0">
+        {/* ─── Master Pane: Brand Browser ─── */}
+        <div
+          className={[
+            "flex-1 min-w-0 h-full",
+            // On mobile/tablet (< lg), hide Master when a brand is selected (drilldown level 2)
+            effectiveBrandId != null ? "hidden lg:block" : "block",
+          ].join(" ")}
+        >
+          <BrandBrowser
+            brands={filteredBrands}
+            totalCatalogCount={brandsQuery.data?.length}
             isLoading={brandsQuery.isLoading}
             isError={brandsQuery.isError}
-            emptyText={t("superAdmin.brands.empty")}
-            errorText={t("superAdmin.brands.error")}
-            getRowKey={(brand) => brand.id.toString()}
-            columns={[
-              {
-                key: "name",
-                header: t("superAdmin.brands.columns.name"),
-                render: (brand: Brand) =>
-                  brand.image ? (
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={brand.image}
-                        alt=""
-                        className="h-8 w-8 rounded-[var(--radius-xs)] object-cover border border-[var(--color-divider)]"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                      <span>{brand.name}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-xs)] bg-[var(--color-surface-2)]">
-                        <ImageOff className="h-4 w-4 text-[var(--color-muted)]" />
-                      </div>
-                      <span>{brand.name}</span>
-                    </div>
-                  ),
-              },
-              {
-                key: "actions",
-                header: t("superAdmin.brands.columns.actions"),
-                className: "text-end",
-                render: (brand: Brand) => {
-                  const isSelected = selectedBrand?.id === brand.id;
-                  return (
-                    <div
-                      className="flex justify-end gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Button
-                        variant={isSelected ? "secondary" : "ghost"}
-                        size="icon"
-                        className={[
-                          "h-8 w-8 rounded-[var(--radius-md)]",
-                          isSelected
-                            ? "bg-[var(--color-surface-3)] text-[var(--color-brand-orange)]"
-                            : "text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)]"
-                        ].join(" ")}
-                        title={t("superAdmin.brands.manageModels")}
-                        onClick={() => setSelectedBrand(brand)}
-                      >
-                        <ListTree className="h-4 w-4" />
-                      </Button>
-                      <Can permission="brands.edit">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                          onClick={() => openEditBrand(brand)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Can>
-                      <Can permission="brands.delete">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-[var(--color-danger-500)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                          onClick={() => openDeleteBrand(brand)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </Can>
-                    </div>
-                  );
-                },
-              },
-            ]}
+            isTruncated={isCatalogTruncated(brandsQuery.data)}
+            onRetry={() => void brandsQuery.refetch()}
+            selectedBrandId={effectiveBrandId}
+            onSelectBrand={handleSelectBrand}
+            onAddBrand={openCreateBrand}
+            onEditBrand={openEditBrand}
+            onDeleteBrand={openDeleteBrand}
+            search={brandSearch}
+            onSearchChange={setBrandSearch}
+            activeFilter={brandFilter}
+            onFilterChange={setBrandFilter}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            selectedBrandModelCount={modelsQuery.data?.length}
+          />
+        </div>
+
+        {/* ─── Detail Pane: Model Workspace ─── */}
+        <div
+          className={[
+            "flex-1 min-w-0 h-full",
+            // On mobile/tablet (< lg), hide Detail when no brand is selected (drilldown level 1)
+            effectiveBrandId == null ? "hidden lg:block" : "block",
+          ].join(" ")}
+        >
+          <ModelWorkspace
+            selectedBrand={selectedBrand}
+            models={modelsQuery.data ?? []}
+            isLoading={modelsQuery.isLoading}
+            isError={modelsQuery.isError}
+            isTruncated={isCatalogTruncated(modelsQuery.data)}
+            onRetry={() => void modelsQuery.refetch()}
+            onBackToBrands={handleBackToBrands}
+            onAddModel={openCreateModel}
+            onEditModel={openEditModel}
+            onDeleteModel={openDeleteModel}
+            search={modelSearch}
+            onSearchChange={setModelSearch}
           />
         </div>
       </div>
 
-      {/* ─── Detail Panel (Models) ─── */}
-      <div className="flex-1 space-y-6">
-        {!selectedBrand ? (
-          <div className="flex flex-col items-center justify-center h-full min-h-[300px] border border-dashed border-[var(--color-divider)] rounded-md bg-[var(--color-surface-1)] text-[var(--color-muted)] p-6 text-center">
-            <ListTree className="h-12 w-12 mb-4 text-[var(--color-surface-4)]" />
-            <p>{t("superAdmin.brands.manageModels")} </p>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedBrand(null)}
-                  className="h-8 w-8 -ms-2"
-                >
-                  <ChevronRight className="h-5 w-5 rtl:hidden" />
-                  <ChevronRight className="h-5 w-5 ltr:hidden rotate-180" />
-                </Button>
-                <h2 className="text-lg font-bold text-[var(--color-ink-body)]">
-                  {t("superAdmin.models.modelsOf", { brandName: selectedBrand.name })}
-                </h2>
-              </div>
-              <Can permission="models.create">
-                <Button
-                  onClick={openCreateModel}
-                  className="bg-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/90"
-                >
-                  <Plus className="me-2 h-4 w-4" />
-                  {t("superAdmin.models.add")}
-                </Button>
-              </Can>
-            </div>
-
-            <div className="rounded-md border border-[var(--color-divider)] bg-white shadow-sm">
-              <DataTable<VehicleModel>
-                rows={modelsQuery.data ?? []}
-                isLoading={modelsQuery.isLoading}
-                isError={modelsQuery.isError}
-                emptyText={t("superAdmin.models.empty")}
-                errorText={t("superAdmin.models.error")}
-                getRowKey={(model) => model.id.toString()}
-                columns={[
-                  {
-                    key: "name",
-                    header: t("superAdmin.models.columns.name"),
-                    render: (model: VehicleModel) => model.name,
-                  },
-                  {
-                    key: "actions",
-                    header: t("superAdmin.models.columns.actions"),
-                    className: "text-end",
-                    render: (model: VehicleModel) => (
-                      <div
-                        className="flex justify-end gap-2"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Can permission="models.edit">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-[var(--color-ink-secondary)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                            onClick={() => openEditModel(model)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Can>
-                        <Can permission="models.delete">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-[var(--color-danger-500)] hover:bg-[var(--color-surface-2)] rounded-[var(--radius-md)]"
-                            onClick={() => openDeleteModel(model)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </Can>
-                      </div>
-                    ),
-                  },
-                ]}
-              />
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ─── Dialogs ─── */}
+      {/* ─── Dialogs (Preserved Contracts) ─── */}
       {brandFormOpen && (
         <BrandFormDialog
           mode={brandFormMode}
@@ -286,27 +219,33 @@ export function BrandsModelsPanel() {
           brand={brandToDelete}
           open={deleteBrandOpen}
           onOpenChange={setDeleteBrandOpen}
+          onDeleted={(deletedId) => {
+            if (deletedId === selectedBrandId) {
+              setSelectedBrandId(null);
+              setModelSearch("");
+            }
+          }}
         />
       )}
 
-      {modelFormOpen && selectedBrand && (
+      {modelFormOpen && effectiveBrandId != null && (
         <ModelFormDialog
           mode={modelFormMode}
-          brandId={selectedBrand.id}
+          brandId={effectiveBrandId}
           model={modelToEdit}
           open={modelFormOpen}
           onOpenChange={setModelFormOpen}
         />
       )}
 
-      {deleteModelOpen && selectedBrand && (
+      {deleteModelOpen && effectiveBrandId != null && (
         <DeleteModelDialog
-          brandId={selectedBrand.id}
+          brandId={effectiveBrandId}
           model={modelToDelete}
           open={deleteModelOpen}
           onOpenChange={setDeleteModelOpen}
         />
       )}
-    </div>
+    </>
   );
 }

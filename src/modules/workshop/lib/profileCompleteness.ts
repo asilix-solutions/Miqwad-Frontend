@@ -31,15 +31,17 @@ function isWeeklyHoursComplete(hours: WorkshopProfile["workingHours"]): boolean 
  *   5. specializations has at least one serviceType or vehicleBrand
  *   6. contact.phone present
  */
-export function computeProfileCompleteness(profile: WorkshopProfile | undefined): number {
-  if (!profile) return 0;
+export function computeProfileCompleteness(
+  profile: WorkshopProfile | undefined | null,
+): number | null {
+  if (!profile) return null;
   const checks = [
     Boolean(profile.bannerUrl),
     profile.photos.length >= 1,
     isWeeklyHoursComplete(profile.workingHours),
     Boolean(profile.location?.lat && profile.location?.lng && profile.location?.address),
-    (profile.specializations.serviceTypes.length >= 1 ||
-      profile.specializations.vehicleBrands.length >= 1),
+    profile.specializations.serviceTypes.length >= 1 ||
+      profile.specializations.vehicleBrands.length >= 1,
     Boolean(profile.contact.phone),
   ];
   const filled = checks.filter(Boolean).length;

@@ -61,6 +61,29 @@ export interface RawOrder {
   towTruckDriverFullName?: string | null;
   duration?: string | null;
   notes?: string | null;
+  /** TowTruckServiceType enum (IntraCity=1, InterCity=2). */
+  towTruckServiceType?: number | null;
+  /** ServiceType enum alias per Swagger (IntraCity=1, InterCity=2). */
+  serviceType?: number | null;
+  /** Intercity tow truck details when available in backend contract. */
+  intercityTowTruckDetails?: {
+    id?: number;
+    orderId?: number;
+    roadId?: number;
+    originCityId?: number;
+    destinationCityId?: number;
+    originCityNameSnapshot?: string | null;
+    destinationCityNameSnapshot?: string | null;
+    receiverName?: string | null;
+    receiverPhone?: string | null;
+  } | null;
+  roadId?: number | null;
+  originCityId?: number | null;
+  destinationCityId?: number | null;
+  originCityName?: string | null;
+  destinationCityName?: string | null;
+  receiverName?: string | null;
+  receiverPhone?: string | null;
   userId: number;
   userFullName: string;
   /** Numeric OrderType enum (SpareParts=1…Mojaz=5). */
@@ -131,6 +154,12 @@ export interface OrdersListParams {
   toDate?: string;
   /** Numeric order-type enum (SpareParts=1…Mojaz=5). Omitted when undefined. */
   orderType?: number;
+  /**
+   * ServiceType filter for TowTruck orders (IntraCity=1, InterCity=2).
+   * Exact backend query parameter: ServiceType.
+   * Omitted when undefined.
+   */
+  serviceType?: number;
 }
 
 const DEFAULT_PAGE_SIZE = 100;
@@ -193,6 +222,9 @@ export const ordersApi = {
           // Sent only when defined; axios drops `undefined` params, so an
           // "all" selection (orderType === undefined) omits the key entirely.
           OrderType: params.orderType,
+          // Exact backend query parameter per verified Swagger (1=IntraCity, 2=InterCity).
+          // Omitted when undefined.
+          ServiceType: params.serviceType,
         },
       },
     );
@@ -207,6 +239,16 @@ export const ordersApi = {
   removeTowTruckDriver: async (id: string): Promise<void> => {
     const response = await apiClient.delete(`/Orders/${id}/tow-truck-driver`, noMutationReplay);
     confirmMutation(response);
+  },
+
+  cancel: async (id: string): Promise<RawOrder | null> => {
+    const response = await apiClient.put<ApiEnvelope<RawOrder | null>>(
+      `/Orders/${id}/cancel`,
+      undefined,
+      noMutationReplay,
+    );
+    confirmMutation(response);
+    return response.data?.data ?? null;
   },
 
   assignTowTruckDriver: async (id: string, payload: TowTruckAssignmentPayload): Promise<void> => {

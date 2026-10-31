@@ -22,13 +22,14 @@ import { setListFilters } from "../store/vehiclesSlice";
 import { VehicleCard } from "../components/VehicleCard";
 import { DeleteVehicleDialog } from "../components/DeleteVehicleDialog";
 import type { Vehicle } from "../types";
+import { matchesVehicleSearch } from "../lib/modelLocalization";
 
 /**
  * Vehicles list page.
  *
  * Responsibilities:
  *   - Fetch the user's garage and render a responsive grid of cards.
- *   - Search by plate / nickname and filter by fuel type — both
+ *   - Search by plate / nickname / model (bilingual AR/EN) and filter by fuel type — both
  *     persisted in Redux so navigating to Details and back
  *     restores the user's view.
  *   - Delete flow with confirmation dialog.
@@ -44,18 +45,12 @@ export function VehiclesListPage() {
   const [pendingDelete, setPendingDelete] = useState<Vehicle | null>(null);
 
   // Client-side filtering — list is small (typically <50 vehicles per user).
-  // Server-side filtering can be added later by passing filters to the API.
+  // Matches plate, nickname, brandName, and both English and Arabic model names.
   const filtered = useMemo(() => {
     if (!listQuery.data) return [];
-    const term = filters.search.trim().toLowerCase();
     return listQuery.data.filter((v) => {
       if (filters.fuelType && v.fuelType !== filters.fuelType) return false;
-      if (!term) return true;
-      const haystack = [v.plateNumber, v.nickname, v.brandName, v.modelName]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(term);
+      return matchesVehicleSearch(filters.search, v);
     });
   }, [listQuery.data, filters]);
 
