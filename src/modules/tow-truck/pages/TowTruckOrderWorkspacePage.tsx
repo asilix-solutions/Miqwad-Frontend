@@ -6,13 +6,7 @@
  * and seamless back navigation to preserved queue state.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useBeforeUnload,
-  useBlocker,
-  useLocation,
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { useBeforeUnload, useBlocker, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,19 +23,19 @@ import "../towTruck.css";
 function WorkspaceLoading() {
   const { t } = useTranslation();
   return (
-    <div className="space-y-6 animate-pulse py-4" role="status">
+    <div className="animate-pulse space-y-6 py-4" role="status">
       <span className="sr-only">{t("towTruck.loadingDetail")}</span>
-      <div className="h-28 bg-white border border-ink-200 rounded-2xl p-6" />
-      <div className="h-24 bg-white border border-ink-200 rounded-2xl p-6" />
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <div className="h-64 bg-white border border-ink-200 rounded-2xl" />
-          <div className="h-96 bg-white border border-ink-200 rounded-2xl" />
+      <div className="border-ink-200 h-28 rounded-2xl border bg-white p-6" />
+      <div className="border-ink-200 h-24 rounded-2xl border bg-white p-6" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-7 xl:col-span-8">
+          <div className="border-ink-200 h-64 rounded-2xl border bg-white" />
+          <div className="border-ink-200 h-96 rounded-2xl border bg-white" />
         </div>
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-          <div className="h-48 bg-white border border-ink-200 rounded-2xl" />
-          <div className="h-64 bg-white border border-ink-200 rounded-2xl" />
-          <div className="h-40 bg-white border border-ink-200 rounded-2xl" />
+        <div className="space-y-6 lg:col-span-5 xl:col-span-4">
+          <div className="border-ink-200 h-48 rounded-2xl border bg-white" />
+          <div className="border-ink-200 h-64 rounded-2xl border bg-white" />
+          <div className="border-ink-200 h-40 rounded-2xl border bg-white" />
         </div>
       </div>
     </div>
@@ -59,7 +53,7 @@ export function TowTruckOrderWorkspacePage() {
 
   const detail = useTowTruckDetail(validId ? orderId : undefined);
   const operations = useDriverOperations(validId ? (orderId as string) : "");
-  const cancellation = useTowTruckCancellation(detail.data);
+  const cancellation = useTowTruckCancellation(detail.data, validId ? orderId : undefined);
 
   const [assignmentDirty, setAssignmentDirty] = useState(false);
   const [assignmentBusy, setAssignmentBusy] = useState(false);
@@ -121,12 +115,15 @@ export function TowTruckOrderWorkspacePage() {
 
   if (!validId) {
     return (
-      <div className="tow-workspace max-w-4xl mx-auto py-12 px-4" dir={i18n.dir()}>
-        <div className="rounded-2xl border border-danger-200 bg-white p-8 text-center space-y-4 shadow-sm" role="alert">
-          <AlertCircle size={44} className="mx-auto text-danger-500" aria-hidden="true" />
+      <div className="tow-workspace mx-auto max-w-4xl px-4 py-12" dir={i18n.dir()}>
+        <div
+          className="border-danger-200 space-y-4 rounded-2xl border bg-white p-8 text-center shadow-sm"
+          role="alert"
+        >
+          <AlertCircle size={44} className="text-danger-500 mx-auto" aria-hidden="true" />
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-ink-900">{t("towTruck.invalidOrder")}</h2>
-            <p className="text-sm text-ink-500">{t("towTruck.invalidLink")}</p>
+            <h2 className="text-ink-900 text-lg font-bold">{t("towTruck.invalidOrder")}</h2>
+            <p className="text-ink-500 text-sm">{t("towTruck.invalidLink")}</p>
           </div>
           <Button
             variant="outline"
@@ -146,16 +143,16 @@ export function TowTruckOrderWorkspacePage() {
       {/* Unsaved Draft Blocker Alert */}
       {blocker.state === "blocked" && (
         <div
-          className="rounded-xl border border-warning-300 bg-warning-50 p-4 shadow-md flex items-center justify-between gap-4 flex-wrap"
+          className="border-warning-300 bg-warning-50 flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4 shadow-md"
           role="alert"
         >
           <div className="flex items-center gap-2.5">
             <AlertCircle size={20} className="text-warning-600 shrink-0" aria-hidden="true" />
-            <p className="text-xs font-medium text-warning-900">
+            <p className="text-warning-900 text-xs font-medium">
               {t(busy ? "towTruck.assignmentStay" : "towTruck.discardPrompt")}
             </p>
           </div>
-          <div className="flex items-center gap-2 ms-auto">
+          <div className="ms-auto flex items-center gap-2">
             <Button
               ref={stayButton}
               variant="outline"
@@ -185,14 +182,20 @@ export function TowTruckOrderWorkspacePage() {
       {/* Uncertain Cancellation Outcome Banner */}
       {cancellation.isUncertain && (
         <div
-          className="rounded-xl border border-warning-300 bg-warning-50 p-4 shadow-sm flex items-center justify-between gap-4 flex-wrap"
+          className="border-warning-300 bg-warning-50 flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4 shadow-sm"
           role="alert"
         >
           <div className="flex items-start gap-2.5">
-            <AlertCircle size={20} className="text-warning-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <AlertCircle
+              size={20}
+              className="text-warning-600 mt-0.5 shrink-0"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-xs font-bold text-warning-900">{t("towTruck.cancelUncertain")}</p>
-              <p className="text-[11px] text-warning-700">{t("towTruck.cancelUncertainHint")}</p>
+              <p className="text-warning-900 text-xs font-bold">
+                {t(`towTruck.${cancellation.state.message ?? "cancelUncertain"}`)}
+              </p>
+              <p className="text-warning-700 text-[11px]">{t("towTruck.cancelUncertainHint")}</p>
             </div>
           </div>
           <Button
@@ -200,9 +203,13 @@ export function TowTruckOrderWorkspacePage() {
             size="sm"
             onClick={() => void cancellation.reconcile()}
             disabled={cancellation.busy}
-            className="text-xs gap-1.5 ms-auto border-warning-400 text-warning-900 hover:bg-warning-100"
+            className="border-warning-400 text-warning-900 hover:bg-warning-100 ms-auto gap-1.5 text-xs"
           >
-            <RefreshCw size={13} className={cancellation.busy ? "animate-spin" : ""} aria-hidden="true" />
+            <RefreshCw
+              size={13}
+              className={cancellation.busy ? "animate-spin" : ""}
+              aria-hidden="true"
+            />
             <span>{t("towTruck.cancelReconcile")}</span>
           </Button>
         </div>
@@ -212,11 +219,16 @@ export function TowTruckOrderWorkspacePage() {
       {detail.isPending ? (
         <WorkspaceLoading />
       ) : detail.isError ? (
-        <div className="rounded-2xl border border-danger-200 bg-white p-8 text-center space-y-4 shadow-sm" role="alert">
-          <AlertCircle size={44} className="mx-auto text-danger-500" aria-hidden="true" />
+        <div
+          className="border-danger-200 space-y-4 rounded-2xl border bg-white p-8 text-center shadow-sm"
+          role="alert"
+        >
+          <AlertCircle size={44} className="text-danger-500 mx-auto" aria-hidden="true" />
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-ink-900">{t("towTruck.errorTitle")}</h2>
-            <p className="text-sm text-ink-500">{t(`towTruck.${readFailureMessage(detail.error)}`)}</p>
+            <h2 className="text-ink-900 text-lg font-bold">{t("towTruck.errorTitle")}</h2>
+            <p className="text-ink-500 text-sm">
+              {t(`towTruck.${readFailureMessage(detail.error)}`)}
+            </p>
           </div>
           <div className="flex items-center justify-center gap-3">
             <Button
@@ -230,7 +242,7 @@ export function TowTruckOrderWorkspacePage() {
             <Button
               variant="default"
               onClick={handleRefresh}
-              className="gap-2 text-xs font-semibold bg-brand-blue hover:bg-brand-700"
+              className="bg-brand-blue hover:bg-brand-700 gap-2 text-xs font-semibold"
             >
               <RefreshCw size={14} />
               <span>{t("towTruck.retry")}</span>

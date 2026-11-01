@@ -4,6 +4,7 @@ import { adminApi, activateUser, deactivateUser } from "@modules/admin/api/admin
 import { adminKeys } from "@modules/admin/hooks/useAdminQueries";
 import { ordersApi } from "@modules/orders/api/ordersApi";
 import { orderKeys } from "@modules/orders/hooks/useOrdersQueries";
+import { cancellationBlocks } from "../lib/cancellationJournal";
 import { adaptTowTruck } from "../lib/towTruckModel";
 import {
   driverOperationAuthorized,
@@ -51,7 +52,7 @@ export function useDriverOperations(orderId: string) {
     },
     set: (value) => qc.setQueryData(key, value),
     authorized,
-    conflict: () => initialOperationBlocks(qc, actor),
+    conflict: () => initialOperationBlocks(qc, actor) || cancellationBlocks(qc, actor, orderId),
     readOrder: async (id) => {
       await qc.cancelQueries({ queryKey: orderKeys.detail(id), exact: true });
       const raw = await ordersApi.get(id);

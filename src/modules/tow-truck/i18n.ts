@@ -108,7 +108,8 @@ export const towTruckAr = {
   refreshing: "جارٍ التحديث…",
   updated: "آخر تحديث {{time}}",
   notUpdated: "لم تُحدّث البيانات بعد",
-  syncStaleBanner: "تعذر تحديث البيانات من الخادم مؤخراً. البيانات المعروضة أدناه هي آخر نسخة محفوظة.",
+  syncStaleBanner:
+    "تعذر تحديث البيانات من الخادم مؤخراً. البيانات المعروضة أدناه هي آخر نسخة محفوظة.",
   back: "العودة للقائمة",
   generalOrders: "جميع الطلبات",
   open: "فتح الطلب {{number}}",
@@ -150,7 +151,8 @@ export const towTruckAr = {
   filterAssigned: "مسندة",
   filterPaid: "مدفوعة",
   filterAttention: "تتطلب مراجعة",
-  localFilterScope: "التصفية السريعة تنطبق على الطلبات الـ ({{count}}) المحملة في هذه الصفحة. للبحث الشامل في سجلات الخادم، استخدم حقل البحث برقم التتبع أعلاه.",
+  localFilterScope:
+    "التصفية السريعة تنطبق على الطلبات الـ ({{count}}) المحملة في هذه الصفحة. للبحث الشامل في سجلات الخادم، استخدم حقل البحث برقم التتبع أعلاه.",
   noFilterResults: "لا توجد طلبات تطابق التصفية المحددة في هذه الصفحة.",
   resetFilter: "عرض كافة طلبات الصفحة",
   noSearchResults: "لا توجد طلبات تطابق رقم التتبع المدخل.",
@@ -246,7 +248,8 @@ export const towTruckAr = {
   inactiveAccount: "حساب غير نشط",
   currentDriver: "السائق الحالي",
   noDrivers: "لا توجد حسابات سائقين في هذه الصفحة. حدّث القائمة أو انتقل إلى صفحة أخرى إن وجدت.",
-  noActiveDrivers: "جميع حسابات السائقين في هذه الصفحة غير نشطة حاليًا. حدّث القائمة أو انتقل لصفحة أخرى.",
+  noActiveDrivers:
+    "جميع حسابات السائقين في هذه الصفحة غير نشطة حاليًا. حدّث القائمة أو انتقل لصفحة أخرى.",
   driverPages: "صفحات حسابات السائقين",
   driverRequired: "اختر سائق سطحة بحساب نشط، ثم راجع العرض.",
   proposedCost: "تكلفة الرحلة",
@@ -374,29 +377,44 @@ export const towTruckAr = {
   orderNumber: "رقم الطلب",
   attachments: "المرفقات",
   contact: "وسيلة التواصل",
+  cancelReviewAgain: "أغلق النافذة وراجع بيانات الطلب قبل بدء مراجعة إلغاء جديدة.",
+  cancelAcknowledged: "أقرّ الخادم طلب الإلغاء، لكن لم تُؤكّد الحالة النهائية بعد.",
+  cancelReadFailed: "تعذر التحقق من الحالة الحالية. تبقى إعادة الإلغاء محظورة.",
+  cancelStorage:
+    "تعذر التحقق من سجل المحاولة بأمان. لا تعِد الإلغاء؛ تحقّق من النتيجة أو تواصل مع الدعم.",
+  cancelReviewFailed:
+    "تعذرت قراءة بيانات موثوقة للطلب. لم يُرسل الإلغاء؛ أغلق النافذة وأعد المراجعة.",
+  cancelReviewChanged:
+    "تغيّرت بيانات الطلب. لم يُرسل الإلغاء؛ أغلق النافذة وراجع البيانات المحدّثة قبل التأكيد مجددًا.",
+  cancelOperationConflict:
+    "تغيّرت الصلاحية أو توجد عملية أخرى قيد التنفيذ أو التحقق. لم يُرسل الإلغاء.",
   cancelOrder: "إلغاء الطلب",
   cancelOrderTitle: "إلغاء طلب السطحة",
-  cancelOrderDescription: "أنت على وشك إلغاء طلب السطحة رقم {{orderNumber}}. يرجى مراجعة التنبيهات التشغيلية بعناية.",
+  cancelOrderDescription:
+    "أنت على وشك إلغاء طلب السطحة رقم {{orderNumber}}. يرجى مراجعة التنبيهات التشغيلية بعناية.",
   operationalWarning: "تنبيه تشغيلي مهم",
   cancelOrderScopeNotice: "هذا الإجراء يلغي الطلب بالكامل، وليس مجرد إزالة السائق المعيّن.",
-  cancelOrderTripNotice: "في حال وجود رحلة نشطة مرتبطة بالطلب، سيقوم الخادم بإلغائها تلقائيًا.",
-  cancelOrderIrreversibleNotice: "لا يمكن التراجع عن هذا الإجراء أو إعادة فتح الطلب بعد تأكيد الإلغاء.",
+  cancelOrderTripNotice: "تحقّق من حالة الرحلة المرتبطة بشكل مستقل؛ لا يؤكد هذا الإجراء نتيجتها.",
+  cancelOrderIrreversibleNotice: "لا تفترض إمكانية التراجع عن هذا الإجراء بعد تأكيده.",
   cancelClose: "تراجع وإغلاق",
   close: "إغلاق",
   confirmCancelOrder: "تأكيد إلغاء الطلب",
   cancellingOrder: "جارٍ إلغاء الطلب…",
-  cancelSuccess: "تم إلغاء الطلب بنجاح.",
-  cancelSuccessHint: "تم تحديث حالة الطلب بالخادم وإلغاء أي رحلة نشطة مرتبطة به.",
+  cancelSuccess: "تظهر أحدث قراءة أن الطلب ملغى.",
+  cancelSuccessHint: "هذه ملاحظة لحالة الطلب، وليست إثباتًا أن هذه المحاولة هي التي ألغته.",
   cancelBlockedPaid: "لا يمكن إلغاء الطلب بعد سداد قيمته.",
-  cancelConflictRefreshed: "تم تحديث بيانات الطلب من الخادم لتعكس حالة السداد الحالية.",
+  cancelConflictRefreshed:
+    "رفض الخادم الإلغاء. أغلق النافذة وراجع بيانات الطلب قبل بدء مراجعة جديدة.",
   cancelBlockedAlreadyCancelled: "هذا الطلب ملغي بالفعل ولا يمكن إلغاؤه مجددًا.",
-  cancelBlockedUnknownPayment: "بيانات الدفع غير مؤكدة؛ لا يمكن تحديد أهلية الإلغاء حتى التحقق من السداد.",
+  cancelBlockedUnknownPayment:
+    "بيانات الدفع غير مؤكدة؛ لا يمكن تحديد أهلية الإلغاء حتى التحقق من السداد.",
   cancelNotFound: "الطلب غير متاح أو لا تملك صلاحية إلغائه.",
   cancelForbidden: "ليس لديك صلاحية لإلغاء هذا الطلب.",
   cancelValidation: "تعذر قبول طلب الإلغاء بسبب بيانات غير صالحة.",
-  cancelUncertain: "تعذر تأكيد نتيجة الإلغاء بسبب انقطاع الاتصال. لم يتم تكرار الطلب تلقائيًا؛ يرجى التحقق من أحدث بيانات الطلب.",
-  cancelUncertainHint: "قد يكون الخادم قد نفّذ الإلغاء؛ تحقق من أحدث حالة للطلب دون إعادة إرسال العملية.",
-  cancelReconcile: "التحقق من أحدث حالة للطلب",
+  cancelUncertain: "لم تتأكد نتيجة إلغاء الطلب. تحقّق من النتيجة قبل أي محاولة أخرى.",
+  cancelUncertainHint:
+    "إغلاق النافذة لا يلغي المحاولة. إذا لم تظهر حالة «ملغى»، تبقى إعادة الإرسال محظورة؛ اطلب من الدعم التحقق من المحاولة على الخادم باستخدام رقم الطلب.",
+  cancelReconcile: "التحقق من نتيجة الإلغاء",
   cancelChecking: "جارٍ التحقق من حالة الطلب…",
   orderCancelledHint: "تم إلغاء هذا الطلب؛ لا يمكن تنفيذ أي إجراءات تشغيلية أو تعيين سائق له.",
   reassignWorkflowNotice:
@@ -416,8 +434,7 @@ export const towTruckAr = {
     "طلب سطحة بين المدن: التكلفة محددة مسبقاً ومعتمدة بناءً على مسار الطلب، ولا يمكن تعديلها يدوياً.",
   intercityCostSummaryDesc: "تكلفة مسار بين المدن معتمدة مسبقاً للطلب",
   durationEstimateLabel: "المدة المتوقعة (تقدير إداري)",
-  durationEstimateHint:
-    "تقدير إداري للمدة بالساعات أو الأيام للرحلة بين المدن (مطلوب من الخادم)",
+  durationEstimateHint: "تقدير إداري للمدة بالساعات أو الأيام للرحلة بين المدن (مطلوب من الخادم)",
   adminDurationSummaryDesc: "تقدير إداري مطلوب للإسناد",
   assignmentPaidInterCityBlocked:
     "إسناد السائق للطلبات المدفوعة بين المدن مقفل احترازياً بانتظار تأكيد سلوك الخادم المالي.",
@@ -431,11 +448,9 @@ export const towTruckAr = {
   serviceTypeNavLabel: "نوع الخدمة",
   filterAllServices: "جميع طلبات السطحة",
   serviceTypeFilterNoticeTitle: "تصفية الخدمة ({{service}})",
-  serviceTypeFilterNoticeDesc:
-    "تصفية مخصصة لعرض طلبات الخدمة المحددة مباشرة من سجلات النظام.",
+  serviceTypeFilterNoticeDesc: "تصفية مخصصة لعرض طلبات الخدمة المحددة مباشرة من سجلات النظام.",
   noServiceFilterResults: "لا توجد طلبات مطابقة لنوع الخدمة في الخادم",
-  serviceBatchScopeNotice:
-    "يتم عرض {{count}} طلباً مسجلاً في النظام.",
+  serviceBatchScopeNotice: "يتم عرض {{count}} طلباً مسجلاً في النظام.",
   receiver: "بيانات المستلم (بين المدن)",
   receiverMissing: "لا توجد بيانات مستلم مسجلة",
   operationsNavLabel: "التنقل بين مساحات عمليات السطحات",
@@ -452,12 +467,9 @@ export const towTruckAr = {
   eyebrowAll: "مركز عمليات السطحات · جميع العمليات",
   eyebrowIntraCity: "مركز عمليات السطحات · داخل المدن",
   eyebrowInterCity: "مركز عمليات السطحات · بين المدن",
-  subtitleAll:
-    "لوحة تحكم تشغيلية موحدة لمراقبة وتوجيه كافة طلبات السطحات بمختلف أنواعها.",
-  subtitleIntraCity:
-    "إدارة ومتابعة طلبات السطحات المحلية داخل المدن وتعيين السائقين المتاحين.",
-  subtitleInterCity:
-    "إدارة رحلات السطحات بين المدن عبر المسارات المحددة والأسعار المعتمدة مسبقاً.",
+  subtitleAll: "لوحة تحكم تشغيلية موحدة لمراقبة وتوجيه كافة طلبات السطحات بمختلف أنواعها.",
+  subtitleIntraCity: "إدارة ومتابعة طلبات السطحات المحلية داخل المدن وتعيين السائقين المتاحين.",
+  subtitleInterCity: "إدارة رحلات السطحات بين المدن عبر المسارات المحددة والأسعار المعتمدة مسبقاً.",
   // InterCity Purpose-Built Header (Phase 2C.2)
   interCityHeaderTitle: "عمليات النقل بين المدن",
   interCityHeaderSubtitle:
@@ -465,8 +477,7 @@ export const towTruckAr = {
 
   // Corridor Explorer (Phase 2C.2)
   corridorsExplorerTitle: "ممرات النقل المعتمدة",
-  corridorsExplorerSubtitle:
-    "استعراض مسارات النقل والتسعيرات المرجعية المعتمدة بين المدن",
+  corridorsExplorerSubtitle: "استعراض مسارات النقل والتسعيرات المرجعية المعتمدة بين المدن",
   corridorsAriaLabel: "ممرات النقل بين المدن",
   corridorAll: "جميع الممرات",
   corridorAllDesc: "استعراض ممرات النقل المعتمدة والتسعيرات المرجعية في النظام",
@@ -489,8 +500,7 @@ export const towTruckAr = {
   corridorInspectionBadge: "معاينة مرجعية",
   corridorInspectionNotice:
     "معاينة مرجعية لبيانات المسار؛ قائمة الطلبات أدناه تعرض طلبات النقل بين المدن دون تصفية حسب المسار.",
-  corridorDirectionalNotice:
-    "مسار اتجاهي محدد: حركة النقل من نقطة الانطلاق إلى نقطة الوصول حصراً.",
+  corridorDirectionalNotice: "مسار اتجاهي محدد: حركة النقل من نقطة الانطلاق إلى نقطة الوصول حصراً.",
   clearCorridorSelection: "إلغاء تحديد الممر",
   manageCorridorInReference: "إدارة المسار في البيانات المرجعية",
   corridorReferenceId: "معرّف المرجع",
@@ -719,7 +729,8 @@ export const towTruckEn: typeof towTruckAr = {
   refreshing: "Refreshing…",
   updated: "Updated {{time}}",
   notUpdated: "Not updated yet",
-  syncStaleBanner: "Failed to refresh data from server recently. The data displayed below is the last cached snapshot.",
+  syncStaleBanner:
+    "Failed to refresh data from server recently. The data displayed below is the last cached snapshot.",
   back: "Back to queue",
   generalOrders: "All orders",
   open: "Open request {{number}}",
@@ -761,7 +772,8 @@ export const towTruckEn: typeof towTruckAr = {
   filterAssigned: "Assigned",
   filterPaid: "Paid",
   filterAttention: "Needs Review",
-  localFilterScope: "Quick tabs filter the ({{count}}) orders currently loaded on this page. For server-wide search, use the track number search above.",
+  localFilterScope:
+    "Quick tabs filter the ({{count}}) orders currently loaded on this page. For server-wide search, use the track number search above.",
   noFilterResults: "No orders match the selected filter on this page.",
   resetFilter: "Show all page orders",
   noSearchResults: "No orders match the entered track number.",
@@ -847,8 +859,7 @@ export const towTruckEn: typeof towTruckAr = {
   keepDraft: "Stay on this request",
   discardDraft: "Discard and leave",
   dispatchTitle: "Driver & quotation",
-  preparePermission:
-    "Preparing and sending a quote requires order management permission.",
+  preparePermission: "Preparing and sending a quote requires order management permission.",
   prepareHint: "Choose a driver, enter cost and duration, then review and confirm the quotation.",
   prepare: "Prepare driver & quotation",
   driverStateUnknown:
@@ -864,7 +875,8 @@ export const towTruckEn: typeof towTruckAr = {
   inactiveAccount: "Inactive account",
   currentDriver: "Current driver",
   noDrivers: "No driver accounts on this page. Refresh the list or use another page if available.",
-  noActiveDrivers: "All driver accounts on this page are currently inactive. Refresh the list or navigate to another page.",
+  noActiveDrivers:
+    "All driver accounts on this page are currently inactive. Refresh the list or navigate to another page.",
   driverPages: "Driver account pages",
   driverRequired: "Choose a tow truck driver with an active account, then review the quote.",
   proposedCost: "Trip cost",
@@ -1005,31 +1017,52 @@ export const towTruckEn: typeof towTruckAr = {
   orderNumber: "Order number",
   attachments: "Attachments",
   contact: "Contact",
+  cancelReviewAgain:
+    "Close this dialog and review the order before starting a new cancellation review.",
+  cancelAcknowledged:
+    "The server acknowledged cancellation, but the final state is not yet verified.",
+  cancelReadFailed:
+    "The current state could not be verified. Resubmitting cancellation remains blocked.",
+  cancelStorage:
+    "The attempt record could not be verified safely. Do not resubmit; check the result or contact support.",
+  cancelReviewFailed:
+    "Verified order data could not be read. Cancellation was not sent; close this dialog and review again.",
+  cancelReviewChanged:
+    "The order changed. Cancellation was not sent; close this dialog and review the updated details before confirming again.",
+  cancelOperationConflict:
+    "Permission changed or another operation is pending or unresolved. Cancellation was not sent.",
   cancelOrder: "Cancel Order",
   cancelOrderTitle: "Cancel Tow Truck Order",
-  cancelOrderDescription: "You are about to cancel tow truck order {{orderNumber}}. Please review the operational notices carefully.",
+  cancelOrderDescription:
+    "You are about to cancel tow truck order {{orderNumber}}. Please review the operational notices carefully.",
   operationalWarning: "Important Operational Notice",
   cancelOrderScopeNotice: "This action cancels the entire order, not merely the assigned driver.",
-  cancelOrderTripNotice: "If an active trip is associated with this order, the backend will cancel it automatically.",
+  cancelOrderTripNotice:
+    "Check any linked trip separately; this action does not verify its outcome.",
   cancelOrderIrreversibleNotice: "This action should not be assumed reversible once confirmed.",
   cancelClose: "Close / Keep Order",
   close: "Close",
   confirmCancelOrder: "Confirm Cancellation",
   cancellingOrder: "Cancelling order…",
-  cancelSuccess: "The order has been cancelled successfully.",
-  cancelSuccessHint: "Order state has been updated on the server and any active trip has been cancelled.",
+  cancelSuccess: "The latest read shows that the order is canceled.",
+  cancelSuccessHint:
+    "This observes the order state; it does not prove that this attempt caused the cancellation.",
   cancelBlockedPaid: "The order cannot be cancelled after payment has been completed.",
-  cancelConflictRefreshed: "Order details were refreshed from the server to reflect the current payment status.",
+  cancelConflictRefreshed:
+    "The server rejected cancellation. Close this dialog and review the order before starting a new review.",
   cancelBlockedAlreadyCancelled: "This order is already cancelled and cannot be cancelled again.",
-  cancelBlockedUnknownPayment: "Payment status is unconfirmed; cancellation eligibility cannot be determined until verified.",
+  cancelBlockedUnknownPayment:
+    "Payment status is unconfirmed; cancellation eligibility cannot be determined until verified.",
   cancelNotFound: "The order is unavailable or you do not have permission to cancel it.",
   cancelForbidden: "You do not have permission to cancel this order.",
   cancelValidation: "Cancellation request was rejected due to invalid data.",
-  cancelUncertain: "Unable to confirm cancellation outcome due to network failure. The request was not automatically retried; please check latest order status.",
-  cancelUncertainHint: "The server may have processed the cancellation; verify the latest order state without repeating the request.",
-  cancelReconcile: "Verify Latest Order State",
+  cancelUncertain: "The cancellation outcome is unconfirmed. Check the result before trying again.",
+  cancelUncertainHint:
+    "Closing this dialog does not undo the attempt. If cancellation is not observed, resubmission stays blocked; ask support to verify the server-side attempt using the order number.",
+  cancelReconcile: "Check cancellation outcome",
   cancelChecking: "Checking order status…",
-  orderCancelledHint: "This order has been cancelled; no operational actions or driver dispatch can be performed.",
+  orderCancelledHint:
+    "This order has been cancelled; no operational actions or driver dispatch can be performed.",
   reassignWorkflowNotice:
     "This order already has an assigned driver. To assign a replacement driver, first unassign the current driver from the 'Driver Operations' section above, then assign the desired driver.",
   goToUnassign: "Go to Unassign Driver",
@@ -1065,8 +1098,7 @@ export const towTruckEn: typeof towTruckAr = {
   serviceTypeFilterNoticeDesc:
     "Filtered view displaying specific service requests directly from system records.",
   noServiceFilterResults: "No matching service-type orders returned from the server",
-  serviceBatchScopeNotice:
-    "Displaying {{count}} registered orders from the system.",
+  serviceBatchScopeNotice: "Displaying {{count}} registered orders from the system.",
   receiver: "Receiver Details (InterCity)",
   receiverMissing: "No receiver details recorded",
   operationsNavLabel: "Tow truck operations workspace navigation",
@@ -1213,7 +1245,8 @@ export const towTruckEn: typeof towTruckAr = {
 
   // Carrier Assignment & Logistics Actions
   intercityDispatchTitle: "Carrier Assignment & Operations",
-  intercityDispatchSubtitle: "Assign transport carrier driver and manage operational trip workflows",
+  intercityDispatchSubtitle:
+    "Assign transport carrier driver and manage operational trip workflows",
   assignedCarrier: "Currently Assigned Carrier",
   unassignedCarrier: "No carrier assigned for this trip",
   intercityPaidSafeguardTitle: "Carrier Assignment Safeguarded for Paid Orders",
