@@ -1,4 +1,6 @@
 export const towTruckAr = {
+  opsMutationConflict:
+    "هذا الإجراء غير متاح بسبب حالة الطلب أو عملية أخرى قيد التنفيذ أو التحقق. تحقّق من النتائج قبل إجراء تغيير جديد.",
   opsRejectedRefresh:
     "تعذر تحديث البيانات بعد الرفض. هذه آخر بيانات محملة؛ حدّثها قبل مراجعة محاولة جديدة.",
   opsTitle: "إدارة السائق",
@@ -609,6 +611,8 @@ export const towTruckAr = {
     "تم تفعيل وضع القراءة الآمن لحماية البيانات ومنع تنفيذ عمليات الإسناد أو التسعير غير المتوافقة. يمكنك الاطلاع على بيانات الطلب المؤكدة أو إلغاء الطلب إذا كانت شروط الأهلية تسمح بذلك.",
 };
 export const towTruckEn: typeof towTruckAr = {
+  opsMutationConflict:
+    "This action is unavailable because of the order state or another pending or unresolved operation. Check the outcomes before making a new change.",
   opsRejectedRefresh:
     "Data could not be refreshed after rejection. Previously loaded details remain; refresh them before reviewing another attempt.",
   opsTitle: "Driver management",

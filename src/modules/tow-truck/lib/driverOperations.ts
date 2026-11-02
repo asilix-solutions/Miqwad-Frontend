@@ -89,7 +89,7 @@ export interface OperationDependencies {
   get: () => DriverOperationState;
   set: (state: DriverOperationState) => void;
   authorized: (kind: DriverAction) => boolean;
-  conflict: () => boolean;
+  conflict: (operation: Pick<OperationIdentity, "kind" | "orderId">) => boolean;
   readOrder: (id: string) => Promise<TowTruckOrder>;
   readDriver: (id: string) => Promise<AdminUserRow>;
   send: (operation: OperationIdentity, note?: string) => Promise<void>;
@@ -157,7 +157,11 @@ export async function submitDriverOperation(
   d: OperationDependencies,
   proposal: DriverProposal,
 ): Promise<void> {
-  if (consumed.has(proposal) || operationLocked(d.get()) || d.conflict()) return;
+  if (consumed.has(proposal) || operationLocked(d.get())) return;
+  if (d.conflict(proposal)) {
+    d.set({ phase: "rejected", message: "opsMutationConflict" });
+    return;
+  }
   if (!d.authorized(proposal.kind)) {
     d.set({ phase: "rejected", message: "opsForbidden" });
     return;
@@ -202,8 +206,12 @@ export async function submitDriverOperation(
         return;
       }
     }
-    if (!d.authorized(proposal.kind) || d.conflict()) {
+    if (!d.authorized(proposal.kind)) {
       d.set({ phase: "rejected", message: "opsForbidden" });
+      return;
+    }
+    if (d.conflict(proposal)) {
+      d.set({ phase: "rejected", message: "opsMutationConflict" });
       return;
     }
   } catch (error) {
@@ -272,14 +280,20 @@ export async function submitDriverOperation(
 
 export async function recoverDriverOperation(d: OperationDependencies): Promise<void> {
   const state = d.get();
-  if (
-    state.phase === "busy" ||
-    !state.operation ||
-    !d.authorized(state.operation.kind) ||
-    d.conflict()
-  )
+  if (state.phase === "busy") return;
+  const operation = state.operation;
+  if (!operation || !validDriverId(operation.orderId) || !validDriverId(operation.driverId)) {
+    d.set({ ...state, phase: "uncertain", message: "opsRecoveryMissing" });
     return;
+  }
+  if (!d.authorized(operation.kind)) {
+    d.set({ ...state, message: "opsForbidden" });
+    return;
+  }
+  // Recovery only reads the recorded operation. Mutation conflicts must not
+  // prevent an authorized GET or substitute the currently displayed order.
+
   d.set({ ...state, phase: "busy", message: "opsChecking" });
-  await d.invalidate(state.operation).catch(() => undefined);
+  await d.invalidate(operation).catch(() => undefined);
   await reconcile(d, state);
 }

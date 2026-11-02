@@ -57,7 +57,13 @@ export function TowTruckDriverOperations({
   });
   const account =
     driverId && driver.data && verifiedDriver(driver.data, driverId) ? driver.data : null;
-  const otherOperation = operations.initialConflict();
+  const removalConflict = operations.mutationConflict({ kind: "remove", orderId: order.id });
+  const otherOperation = operations.mutationConflict(
+    proposal ?? {
+      kind: dialog === "remove" ? "remove" : account?.isActive ? "deactivate" : "activate",
+      orderId: order.id,
+    },
+  );
   const disabled = operations.locked || otherOperation;
   const changed =
     proposal &&
@@ -80,7 +86,14 @@ export function TowTruckDriverOperations({
     }
   };
   const reviewRemoval = () => {
-    if (!order.driverId || stale || disabled || !operations.authorized("remove")) return;
+    if (
+      !order.driverId ||
+      stale ||
+      operations.locked ||
+      removalConflict ||
+      !operations.authorized("remove")
+    )
+      return;
     setProposal({
       kind: "remove",
       orderId: order.id,
@@ -127,10 +140,13 @@ export function TowTruckDriverOperations({
       {operations.state.financialWarning && (
         <p className="tow-warning">{t("towTruck.opsFinancialWarning")}</p>
       )}
+      {operations.state.operation && !operations.authorized(operations.state.operation.kind) && (
+        <p className="tow-warning">{t("towTruck.opsForbidden")}</p>
+      )}
       {["uncertain", "accepted"].includes(operations.state.phase) && operations.state.operation && (
         <Button
           variant="outline"
-          disabled={!operations.authorized(operations.state.operation.kind) || otherOperation}
+          disabled={operations.busy || !operations.authorized(operations.state.operation.kind)}
           onClick={() => void recover()}
         >
           {t("towTruck.checkOutcome")}
@@ -155,7 +171,9 @@ export function TowTruckDriverOperations({
           {order.assignment === "assigned" ? (
             <Button
               variant="outline"
-              disabled={stale || disabled || !operations.authorized("remove")}
+              disabled={
+                stale || operations.locked || removalConflict || !operations.authorized("remove")
+              }
               onClick={(event) => {
                 trigger.current = event.currentTarget;
                 setDialog("remove");
@@ -171,6 +189,7 @@ export function TowTruckDriverOperations({
               )}
             </p>
           )}
+          {removalConflict && <p className="tow-warning">{t("towTruck.opsMutationConflict")}</p>}
           {!operations.authorized("remove") && (
             <p className="tow-hint">{t("towTruck.opsOrderPermission")}</p>
           )}
@@ -193,7 +212,7 @@ export function TowTruckDriverOperations({
           {!can("users.view") && <p className="tow-hint">{t("towTruck.opsViewPermission")}</p>}
         </div>
       </div>
-      {otherOperation && <p className="tow-warning">{t("towTruck.opsOtherOperation")}</p>}
+      {otherOperation && <p className="tow-warning">{t("towTruck.opsMutationConflict")}</p>}
       {!dialog && feedback}
       <Dialog.Root
         open={!!dialog}
@@ -230,6 +249,11 @@ export function TowTruckDriverOperations({
               )}
             </Dialog.Description>
             {feedback}
+            {otherOperation && (
+              <p className="tow-warning" role="alert">
+                {t("towTruck.opsMutationConflict")}
+              </p>
+            )}
             {proposal ? (
               <div className="tow-operation-confirmation">
                 <dl className="tow-draft-summary">

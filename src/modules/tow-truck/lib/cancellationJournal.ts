@@ -1,3 +1,4 @@
+import type { OperationIdentity } from "./driverOperations";
 import type { QueryClient } from "@tanstack/react-query";
 import { operationCancellationLocked, type CancellationState } from "./cancellationModel";
 
@@ -73,4 +74,16 @@ export function cancellationState(
 
 export function cancellationBlocks(qc: QueryClient, actor: string, orderId: string): boolean {
   return operationCancellationLocked(cancellationState(qc, actor, orderId));
+}
+
+/** A completed cancellation protects order writes, not independent account changes. */
+export function cancellationConflictsWithDriverMutation(
+  qc: QueryClient,
+  actor: string,
+  operation: Pick<OperationIdentity, "kind" | "orderId">,
+): boolean {
+  const state = cancellationState(qc, actor, operation.orderId);
+  return (
+    operationCancellationLocked(state) && (operation.kind === "remove" || state.phase !== "success")
+  );
 }

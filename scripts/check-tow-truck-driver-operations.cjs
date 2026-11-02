@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const req = createRequire(path.join(root, "package.json"));
 const ts = req("typescript");
 const cache = new Map();
+let hookMocks;
 let transport = () => {
   throw new Error("Unexpected transport call");
 };
@@ -19,6 +20,7 @@ function load(file) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   const local = (name) => {
+    if (hookMocks?.[name]) return hookMocks[name];
     if (name === "@app/i18n") return { default: { language: "ar" }, language: "ar" };
     if (name === "@shared/lib/axios")
       return {
@@ -679,7 +681,10 @@ test("payment status resolution: 1=Pending, 2=Paid, 3=Failed, 4=Refunded; 0/null
   assert.equal(towTruckAr.opsPaid, "مدفوع");
   assert.equal(towTruckEn.opsPaid, "Paid");
   assert.equal(towTruckAr.paymentPaidHint, "تم تأكيد دفع هذا الطلب من الخادم.");
-  assert.equal(towTruckEn.paymentPaidHint, "Payment for this request has been confirmed by the server.");
+  assert.equal(
+    towTruckEn.paymentPaidHint,
+    "Payment for this request has been confirmed by the server.",
+  );
   assert.equal(towTruckAr.paymentFailedHint, "فشلت عملية الدفع لهذا الطلب.");
   assert.equal(towTruckEn.paymentFailedHint, "Payment for this request has failed.");
   assert.equal(towTruckAr.paymentRefundedHint, "تم استرداد مبلغ هذا الطلب.");
@@ -698,6 +703,310 @@ test("payment status resolution: 1=Pending, 2=Paid, 3=Failed, 4=Refunded; 0/null
     (err) => err.code === "TOW_ORDER_TYPE",
   );
 });
+function makeCrossOperationHarness() {
+  const journal = load("src/modules/tow-truck/lib/cancellationJournal.ts");
+  const model = load("src/modules/tow-truck/lib/driverOperations.ts");
+  const cancellation = load("src/modules/tow-truck/lib/cancellationModel.ts");
+  const entries = new Map(),
+    events = [];
+  let user = { id: "1", role: "admin", permissions: ["*"] };
+  let account = { id: "42", fullName: "Fixture", role: 5, isActive: false };
+  const orders = new Map(
+    ["105", "106"].map((id) => [
+      id,
+      {
+        id: Number(id),
+        orderNumber: "REQ-" + id,
+        orderType: 3,
+        status: 1,
+        paymentStatus: 1,
+        towTruckDriverId: 42,
+        towTruckDriverFullName: "Fixture",
+        userId: 9,
+      },
+    ]),
+  );
+  const qc = new QueryClient();
+  globalThis.sessionStorage = {
+    getItem: (k) => entries.get(k) ?? null,
+    setItem: (k, v) => entries.set(k, v),
+    removeItem: (k) => entries.delete(k),
+    get length() {
+      return entries.size;
+    },
+    key: (i) => [...entries.keys()][i] ?? null,
+  };
+  const runtime = {
+    qc,
+    get user() {
+      return user;
+    },
+    admin: {
+      getUser: async (id) => {
+        events.push(["user", id]);
+        return { ...account };
+      },
+      activate: async (id) => {
+        events.push(["activate", id]);
+        account.isActive = true;
+      },
+      deactivate: async (id) => {
+        events.push(["deactivate", id]);
+        account.isActive = false;
+      },
+    },
+    orders: {
+      get: async (id) => {
+        events.push(["order", id]);
+        return { ...orders.get(id) };
+      },
+      remove: async (id) => {
+        events.push(["remove", id]);
+        orders.get(id).towTruckDriverId = null;
+      },
+    },
+  };
+  hookMocks = {
+    "@tanstack/react-query": {
+      useQueryClient: () => qc,
+      useQuery: (o) => {
+        let data = qc.getQueryData(o.queryKey);
+        if (data === undefined) {
+          data = o.initialData();
+          qc.setQueryData(o.queryKey, data);
+        }
+        return { data };
+      },
+      useMutation: (o) => ({ mutateAsync: o.mutationFn }),
+    },
+    "@app/store": {
+      store: { getState: () => ({ auth: { user } }) },
+      useAppSelector: (f) => f({ auth: { user } }),
+    },
+    "@modules/admin/api/adminApi": {
+      adminApi: runtime.admin,
+      activateUser: runtime.admin.activate,
+      deactivateUser: runtime.admin.deactivate,
+    },
+    "@modules/admin/hooks/useAdminQueries": {
+      adminKeys: { all: ["admin"], user: (id) => ["admin", id] },
+    },
+    "@modules/orders/api/ordersApi": {
+      ordersApi: { get: runtime.orders.get, removeTowTruckDriver: runtime.orders.remove },
+    },
+    "@modules/orders/hooks/useOrdersQueries": {
+      orderKeys: { all: ["orders"], detail: (id) => ["orders", id] },
+    },
+  };
+  const hookPath = "src/modules/tow-truck/hooks/useDriverOperations.ts";
+  cache.delete(path.resolve(root, hookPath));
+  const { useDriverOperations } = load(hookPath);
+  hookMocks = undefined;
+  return {
+    qc,
+    entries,
+    events,
+    runtime,
+    orders,
+    journal,
+    guards,
+    cancellation,
+    model,
+    hook: (id) => useDriverOperations(id),
+    setUser: (v) => {
+      user = v;
+    },
+    setAccount: (v) => {
+      account = { ...account, ...v };
+    },
+    order: (id) => adaptTowTruck(orders.get(id)),
+    proposal: (kind, id = "105") => ({
+      kind,
+      orderId: id,
+      driverId: "42",
+      driverName: "Fixture",
+      orderNumber: "REQ-" + id,
+      snapshot:
+        kind === "remove"
+          ? adaptTowTruck(orders.get(id)).operationSnapshot
+          : model.driverSnapshot(account),
+      note: "Operational review",
+      riskConfirmed: true,
+    }),
+    journalDriver: (kind, id = "106") =>
+      guards.writeDriverJournal("1", { kind, orderId: id, driverId: "42" }),
+    marker: (id, outcome) => journal.writeCancellationJournal("1", id, outcome),
+    dispose: () => {
+      qc.clear();
+      delete globalThis.sessionStorage;
+    },
+  };
+}
+
+async function checkCrossOperationSafety(makeHarness, assert) {
+  // The hook and domain code are real; only React scheduling and APIs are stubbed.
+  for (const [viewed, recorded] of [
+    ["105", "106"],
+    ["106", "105"],
+    ["105", "105"],
+  ]) {
+    const h = makeHarness();
+    try {
+      h.marker(viewed, "pending");
+      const marker = h.entries.get(h.journal.cancellationMarker("1", viewed));
+      h.journalDriver("remove", recorded);
+      h.orders.get(recorded).towTruckDriverId = null;
+      const result = await h.hook(viewed).recover();
+      assert.deepEqual(h.events, [["order", recorded]]);
+      assert.equal(result.phase, "observed");
+      assert.equal(h.entries.get(h.journal.cancellationMarker("1", viewed)), marker);
+    } finally {
+      h.dispose();
+    }
+  }
+  for (const changedActor of [false, true]) {
+    const h = makeHarness();
+    try {
+      h.journalDriver("remove");
+      const hook = h.hook("105");
+      h.setUser({
+        id: changedActor ? "2" : "1",
+        role: changedActor ? "admin" : "customer",
+        permissions: changedActor ? ["*"] : [],
+      });
+      assert.equal((await hook.recover()).message, "opsForbidden");
+      assert.equal(h.events.length, 0);
+      assert.ok(h.entries.has(h.guards.driverOperationMarker("1")));
+    } finally {
+      h.dispose();
+    }
+  }
+  {
+    const h = makeHarness();
+    try {
+      h.journalDriver("remove");
+      h.orders.get("106").id = 105;
+      assert.equal((await h.hook("105").recover()).phase, "uncertain");
+      assert.deepEqual(h.events, [["order", "106"]]);
+      assert.ok(h.entries.has(h.guards.driverOperationMarker("1")));
+    } finally {
+      h.dispose();
+    }
+  }
+  for (const kind of ["activate", "deactivate"]) {
+    const h = makeHarness();
+    try {
+      h.marker("105", "observed");
+      h.setAccount({ isActive: kind === "deactivate" });
+      const state = h.journal.cancellationState(h.qc, "1", "105");
+      assert.equal(state.phase, "success");
+      assert.equal(h.journal.cancellationBlocks(h.qc, "1", "105"), true);
+      await h.cancellation.submitOrderCancellation(
+        {
+          actor: "1",
+          orderId: "105",
+          get: () => state,
+          sendCancel: () => assert.fail("Cancellation replay"),
+          readOrder: () => assert.fail("Unexpected read"),
+        },
+        h.order("105"),
+      );
+      const hook = h.hook("105"),
+        proposal = h.proposal(kind);
+      assert.equal(hook.mutationConflict(proposal), false);
+      assert.equal(hook.mutationConflict({ ...proposal, kind: "remove" }), true);
+      const [result] = await Promise.all([hook.submit(proposal), hook.submit(proposal)]);
+      assert.equal(result.phase, "success");
+      assert.deepEqual(h.events, [
+        ["user", "42"],
+        [kind, 42],
+        ["user", "42"],
+      ]);
+      assert.equal(h.journal.readCancellationJournal("1", "105").phase, "success");
+      assert.equal(h.orders.get("105").towTruckDriverId, 42);
+      assert.equal(h.orders.get("105").paymentStatus, 1);
+    } finally {
+      h.dispose();
+    }
+  }
+  for (const phase of [
+    "busy",
+    "preflight",
+    "checking",
+    "accepted",
+    "uncertain",
+    "readFailed",
+    "success",
+  ]) {
+    for (const kind of ["remove", "activate", "deactivate"]) {
+      if (phase === "success" && kind !== "remove") continue;
+      const h = makeHarness();
+      try {
+        h.qc.setQueryData(h.journal.cancellationKey("1", "105"), { phase });
+        const hook = h.hook("105"),
+          proposal = h.proposal(kind);
+        assert.equal(hook.mutationConflict(proposal), true, `${phase}/${kind}`);
+        assert.equal((await hook.submit(proposal)).message, "opsMutationConflict");
+        assert.equal(h.events.length, 0);
+      } finally {
+        h.dispose();
+      }
+    }
+  }
+  {
+    const h = makeHarness();
+    try {
+      h.marker("105", "pending");
+      const hook = h.hook("105"),
+        proposal = h.proposal("activate", "106");
+      assert.equal(hook.mutationConflict(proposal), false);
+      assert.equal((await hook.submit(proposal)).phase, "success");
+      assert.equal(h.journal.readCancellationJournal("1", "105").phase, "uncertain");
+    } finally {
+      h.dispose();
+    }
+  }
+  for (const lock of ["assignment", "driver"]) {
+    const h = makeHarness();
+    try {
+      h.marker("105", "observed");
+      if (lock === "assignment") h.entries.set("miqwad:initial-assignment:1:106", "pending");
+      else h.journalDriver("remove");
+      const hook = h.hook("105");
+      assert.equal(
+        lock === "assignment" ? hook.mutationConflict(h.proposal("activate")) : hook.locked,
+        true,
+      );
+      await hook.submit(h.proposal("activate"));
+      assert.equal(h.events.length, 0);
+    } finally {
+      h.dispose();
+    }
+  }
+}
+// End F1/F2 scenarios
+
+test("F1/F2: actual hook recovery, shared UI conflict predicate, tombstones and isolation", async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  try {
+    await checkCrossOperationSafety(makeCrossOperationHarness, assert);
+  } finally {
+    if (previous) Object.defineProperty(globalThis, "sessionStorage", previous);
+    else delete globalThis.sessionStorage;
+  }
+  const source = fs.readFileSync(
+    path.join(root, "src/modules/tow-truck/components/TowTruckDriverOperations.tsx"),
+    "utf8",
+  );
+  assert.ok(source.includes("operations.mutationConflict("));
+  assert.ok(source.includes('t("towTruck.opsMutationConflict")'));
+  assert.ok(
+    source.includes(
+      "disabled={operations.busy || !operations.authorized(operations.state.operation.kind)}",
+    ),
+  );
+});
+
 (async () => {
   for (const [name, fn] of cases) {
     await fn();
