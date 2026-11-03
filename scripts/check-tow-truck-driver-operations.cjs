@@ -61,7 +61,8 @@ const rawOrder = {
   id: 19,
   orderNumber: "REQ-19",
   orderType: 3,
-  status: 1,
+  status: 2,
+  towTruckServiceType: 2,
   paymentStatus: 1,
   paymentMethod: 3,
   towTruckDriverId: 15,
@@ -127,7 +128,7 @@ function fixture(kind = "remove", options = {}) {
       assert.notEqual(op.driverId, String(raw.userId));
       if (op.kind === "remove") {
         assert.equal(note, undefined);
-        raw = { ...raw, towTruckDriverId: null };
+        raw = { ...raw, towTruckDriverId: null, status: 1 };
       } else {
         if (op.kind === "deactivate") assert.equal(note, "operational review");
         else assert.equal(note, undefined);
@@ -202,7 +203,7 @@ for (const kind of ["remove", "activate", "deactivate"]) {
       assert.equal(f.sent, 0);
     }
   });
-  test(`${kind}: timeout reconciles without replay and requires NEW confirmation`, async () => {
+  test(`${kind}: timeout: removal remains locked; account recovery retains existing policy`, async () => {
     const f = fixture(kind);
     let sends = 0;
     f.d.send = async () => {
@@ -211,11 +212,11 @@ for (const kind of ["remove", "activate", "deactivate"]) {
     };
     await submit(f.d, f.proposal);
     assert.equal(sends, 1);
-    assert.equal(f.state.phase, "retryable");
+    assert.equal(f.state.phase, kind === "remove" ? "uncertain" : "retryable");
     await submit(f.d, f.proposal);
     assert.equal(sends, 1);
     await submit(f.d, { ...f.proposal });
-    assert.equal(sends, 2);
+    assert.equal(sends, kind === "remove" ? 1 : 2);
   });
   test(`${kind}: ambiguous failure + failed GET locks retry and GET recovery observes result`, async () => {
     const f = fixture(kind),
@@ -242,8 +243,8 @@ for (const kind of ["remove", "activate", "deactivate"]) {
     else f.changeUser({ isActive: kind === "activate" });
     await recover(f.d);
     assert.equal(sends, 1);
-    assert.equal(f.state.phase, "observed");
-    assert.equal(f.journal, null);
+    assert.equal(f.state.phase, kind === "remove" ? "uncertain" : "observed");
+    assert.equal(!!f.journal, kind === "remove");
   });
   test(`${kind}: acknowledged success + failed/stale GET remains accepted and cannot resend`, async () => {
     const f = fixture(kind);
@@ -375,8 +376,8 @@ test("timeout + different driver never removes the replacement", async () => {
   };
   await submit(f.d, f.proposal);
   assert.equal(sends, 1);
-  assert.equal(f.state.message, "opsDifferentDriver");
-  assert.equal(f.state.phase, "observed");
+  assert.equal(f.state.message, "r2UncertainFinality");
+  assert.equal(f.state.phase, "uncertain");
 });
 test("financial changes are presented from GET with a warning; never overwritten", async () => {
   const f = fixture();
@@ -505,7 +506,7 @@ test("malformed API acknowledgment enters GET reconciliation, not success or aut
   f.d.send = () => ordersApi.removeTowTruckDriver("19");
   await submit(f.d, f.proposal);
   assert.equal(calls, 1);
-  assert.equal(f.state.phase, "retryable");
+  assert.equal(f.state.phase, "uncertain");
 });
 test("5xx and network failures never bypass GET reconciliation", async () => {
   for (const status of [500, 502, 503, undefined]) {
@@ -515,7 +516,7 @@ test("5xx and network failures never bypass GET reconciliation", async () => {
     };
     await submit(f.d, f.proposal);
     assert.equal(f.orderReads, 2);
-    assert.equal(f.state.phase, "retryable");
+    assert.equal(f.state.phase, "uncertain");
   }
 });
 test("conflict refreshes a changed order while retaining rejection; failed refresh is distinguished", async () => {
@@ -551,7 +552,7 @@ function memoryStorage() {
     removeItem: (k) => values.delete(k),
   };
 }
-test("journal survives reload with only operation IDs; corrupted entries lock safely", () => {
+test("minimal operation journal survives reload; corrupted entries lock safely", () => {
   global.sessionStorage = memoryStorage();
   const op = { kind: "remove", orderId: "19", driverId: "15" };
   guards.writeDriverJournal("2", op);
@@ -606,7 +607,7 @@ test("reloaded pending operation reconciles read-only and conservatively flags f
   });
   await recover(f.d);
   assert.equal(f.sent, 0);
-  assert.equal(f.state.phase, "observed");
+  assert.equal(f.state.phase, "uncertain");
   assert.equal(f.state.financialWarning, true);
 });
 test("AR/EN operation messages are complete and do not advertise availability", () => {
@@ -858,7 +859,7 @@ async function checkCrossOperationSafety(makeHarness, assert) {
       h.orders.get(recorded).towTruckDriverId = null;
       const result = await h.hook(viewed).recover();
       assert.deepEqual(h.events, [["order", recorded]]);
-      assert.equal(result.phase, "observed");
+      assert.equal(result.phase, "uncertain");
       assert.equal(h.entries.get(h.journal.cancellationMarker("1", viewed)), marker);
     } finally {
       h.dispose();

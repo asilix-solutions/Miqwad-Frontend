@@ -135,12 +135,10 @@ export interface OrderWritePayload {
   trackNumber: string;
 }
 
-/** Initial tow-truck quote; only the dedicated dispatch flow may call this. */
-export interface TowTruckAssignmentPayload {
-  towTruckDriverId: number;
-  cost: number;
-  duration: string;
-}
+/** Service-specific DTO; InterCity must omit quotation fields entirely. */
+export type TowTruckAssignmentPayload =
+  | { towTruckDriverId: number; cost?: never; duration?: never }
+  | { towTruckDriverId: number; cost: number; duration: string };
 
 export interface OrdersListParams {
   pageNumber?: number;

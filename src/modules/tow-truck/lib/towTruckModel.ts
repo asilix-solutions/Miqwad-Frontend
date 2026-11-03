@@ -207,12 +207,8 @@ export function adaptTowTruck(raw: RawOrder) {
   const rawYear = text(raw.brandYear);
   const brandEn = rawBrand ? (getBrandEnglishName(undefined, rawBrand) ?? rawBrand) : null;
   const modelAr = getModelArabicNameByBrand(rawBrand, rawModel);
-  const vehicle = [brandEn ?? rawBrand, rawModel, rawYear]
-    .filter(Boolean)
-    .join(" · ");
-  const vehicleAr = [rawBrand, modelAr ?? rawModel, rawYear]
-    .filter(Boolean)
-    .join(" · ");
+  const vehicle = [brandEn ?? rawBrand, rawModel, rawYear].filter(Boolean).join(" · ");
+  const vehicleAr = [rawBrand, modelAr ?? rawModel, rawYear].filter(Boolean).join(" · ");
   const missingTrip =
     (!origin.title && !origin.description) ||
     (!destination.title && !destination.description) ||
@@ -256,7 +252,9 @@ export function adaptTowTruck(raw: RawOrder) {
 
   const rawIntercity = raw.intercityTowTruckDetails;
   const originCityName = text(rawIntercity?.originCityNameSnapshot ?? raw.originCityName);
-  const destinationCityName = text(rawIntercity?.destinationCityNameSnapshot ?? raw.destinationCityName);
+  const destinationCityName = text(
+    rawIntercity?.destinationCityNameSnapshot ?? raw.destinationCityName,
+  );
 
   const intercityDetails = {
     roadId: id(rawIntercity?.roadId ?? raw.roadId),
@@ -290,6 +288,7 @@ export function adaptTowTruck(raw: RawOrder) {
       raw.totalPrice,
       raw.duration,
       raw.towTruckServiceType,
+      raw.serviceType,
       intercityDetails.roadId,
     ]),
     financeSnapshot: JSON.stringify([
@@ -338,6 +337,18 @@ export function adaptTowTruck(raw: RawOrder) {
     agreedPrice: number(raw.totalPrice),
     duration: text(raw.duration),
     notes: text(raw.notes),
+    // Dispatch needs an explicit, consistent discriminator. Missing legacy
+    // discriminators are not proof of a local contract; require verification.
+    dispatchService:
+      raw.towTruckServiceType != null &&
+      raw.serviceType != null &&
+      number(raw.towTruckServiceType) !== number(raw.serviceType)
+        ? ("unknown" as const)
+        : rawServiceType === 2
+          ? ("intercity" as const)
+          : rawServiceType === 1 && !hasExplicitIntercityDetails
+            ? ("intracity" as const)
+            : ("unknown" as const),
     serviceType,
     serviceTypeCode: rawServiceType,
     isInterCity,

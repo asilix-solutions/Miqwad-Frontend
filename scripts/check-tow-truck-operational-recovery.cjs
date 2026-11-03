@@ -92,6 +92,7 @@ async function main() {
       id: 101,
       orderNumber: "REQ-101",
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1, // InWaiting
       paymentStatus: 1, // Pending
       paymentMethod: 1,
@@ -143,8 +144,22 @@ async function main() {
 
   // Test A2: Paid order protection
   {
-    const paidRawNumeric = { id: 102, orderType: 3, status: 1, paymentStatus: 2, userId: 55 };
-    const paidRawString = { id: 103, orderType: 3, status: 1, paymentStatus: "Paid", userId: 55 };
+    const paidRawNumeric = {
+      id: 102,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 1,
+      paymentStatus: 2,
+      userId: 55,
+    };
+    const paidRawString = {
+      id: 103,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 1,
+      paymentStatus: "Paid",
+      userId: 55,
+    };
     const orderNum = adaptTowTruck(paidRawNumeric);
     const orderStr = adaptTowTruck(paidRawString);
 
@@ -156,7 +171,14 @@ async function main() {
 
   // Test A3: Unknown / corrupted payment status
   {
-    const corruptedRaw = { id: 104, orderType: 3, status: 1, paymentStatus: 99, userId: 55 };
+    const corruptedRaw = {
+      id: 104,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 1,
+      paymentStatus: 99,
+      userId: 55,
+    };
     const orderCorrupted = adaptTowTruck(corruptedRaw);
     const eligibility = orderCancellationEligibility(orderCorrupted);
     assert.equal(eligibility.eligible, false);
@@ -165,7 +187,14 @@ async function main() {
 
   // Test A4: Already cancelled order
   {
-    const cancelledRaw = { id: 105, orderType: 3, status: 5, paymentStatus: 1, userId: 55 };
+    const cancelledRaw = {
+      id: 105,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 5,
+      paymentStatus: 1,
+      userId: 55,
+    };
     const orderCancelled = adaptTowTruck(cancelledRaw);
     const eligibility = orderCancellationEligibility(orderCancelled);
     assert.equal(eligibility.eligible, false);
@@ -174,7 +203,14 @@ async function main() {
 
   // Test A5: Missing authorization
   {
-    const order = adaptTowTruck({ id: 106, orderType: 3, status: 1, paymentStatus: 1, userId: 55 });
+    const order = adaptTowTruck({
+      id: 106,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 1,
+      paymentStatus: 1,
+      userId: 55,
+    });
     const mockDeps = {
       actor: "admin-1",
       conflict: () => false,
@@ -215,7 +251,14 @@ async function main() {
 
   // Test A7: Network failure triggers uncertain outcome and GET reconciliation
   {
-    const order = adaptTowTruck({ id: 107, orderType: 3, status: 1, paymentStatus: 1, userId: 55 });
+    const order = adaptTowTruck({
+      id: 107,
+      orderType: 3,
+      towTruckServiceType: 1,
+      status: 1,
+      paymentStatus: 1,
+      userId: 55,
+    });
     let sent = false;
     const reconciledOrder = { ...order, statusCode: 5, status: "Canceled" };
     const mockDeps = {
@@ -291,6 +334,7 @@ async function main() {
     const unassignedOrder = adaptTowTruck({
       id: 201,
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1, // InWaiting
       paymentStatus: 1, // Pending
       towTruckDriverId: null,
@@ -305,6 +349,7 @@ async function main() {
     const alreadyAssigned = adaptTowTruck({
       id: 202,
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1,
       paymentStatus: 1,
       towTruckDriverId: 99,
@@ -315,6 +360,7 @@ async function main() {
     const paidOrder = adaptTowTruck({
       id: 203,
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1,
       paymentStatus: 2, // Paid
       towTruckDriverId: null,
@@ -333,6 +379,7 @@ async function main() {
     const orderBefore = adaptTowTruck({
       id: 204,
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1,
       paymentStatus: 1,
       towTruckDriverId: null,
@@ -341,7 +388,8 @@ async function main() {
     const orderAfter = adaptTowTruck({
       id: 204,
       orderType: 3,
-      status: 1,
+      towTruckServiceType: 1,
+      status: 2,
       paymentStatus: 1,
       towTruckDriverId: 12,
       towTruckDriverFullName: "Assigned Driver",
@@ -399,6 +447,7 @@ async function main() {
     const assignedOrder = adaptTowTruck({
       id: 301,
       orderType: 3,
+      towTruckServiceType: 1,
       status: 1,
       paymentStatus: 1,
       towTruckDriverId: 88,
@@ -414,7 +463,11 @@ async function main() {
     // Simulating state after DELETE /api/Orders/{id}/tow-truck-driver succeeds
     const postRemovalOrder = adaptTowTruck({
       id: 301,
+      subtotal: 150,
+      discountAmount: 0,
+      totalPrice: 150,
       orderType: 3,
+      towTruckServiceType: 2,
       status: 1, // InWaiting
       paymentStatus: 1, // Pending
       towTruckDriverId: null,
@@ -423,17 +476,30 @@ async function main() {
     });
     const replacementCommittedOrder = adaptTowTruck({
       id: 301,
+      subtotal: 150,
+      discountAmount: 0,
+      totalPrice: 150,
       orderType: 3,
-      status: 1,
+      towTruckServiceType: 2,
+      status: 2,
       paymentStatus: 1,
       towTruckDriverId: 95,
       towTruckDriverFullName: "Replacement Driver",
       userId: 55,
     });
 
+    // Synthetic evidence models acknowledged DELETE + verified Waiting GET;
+    // it is not a server concurrency or financial-finality guarantee.
+    const { serviceSnapshot } = load("src/modules/tow-truck/lib/reassignment.ts");
+    const evidence = {
+      orderId: "301",
+      driverId: "88",
+      finance: postRemovalOrder.financeSnapshot,
+      service: serviceSnapshot(postRemovalOrder),
+    };
     assert.equal(postRemovalOrder.assignment, "unassigned");
     assert.equal(
-      initialAssignmentBlock(postRemovalOrder),
+      initialAssignmentBlock(postRemovalOrder, evidence),
       null,
       "Post-removal unassigned order is eligible for assignment",
     );
@@ -450,7 +516,8 @@ async function main() {
       set(s) {
         this.state = s;
       },
-      authorized: () => true, // verified: removalHistory does NOT lock out authorized()
+      authorized: () => true,
+      evidence: () => evidence,
       readDriver: async (id) => ({ id, fullName: "Replacement Driver", role: 5, isActive: true }),
       readOrder: async () => (writeExecuted ? replacementCommittedOrder : postRemovalOrder),
       send: async (payload) => {
@@ -468,13 +535,11 @@ async function main() {
     await submitInitialAssignment(mockDeps, replacementRequest).then(() => {
       assert.deepEqual(sentReplacementPayload, {
         towTruckDriverId: 95,
-        cost: 200,
-        duration: "45 minutes",
       });
       assert.equal(
         mockDeps.state.phase,
         "success",
-        "Replacement assignment succeeds and records new quotation",
+        "InterCity replacement succeeds without sending a new quotation",
       );
     });
   }

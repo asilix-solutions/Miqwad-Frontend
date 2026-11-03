@@ -88,6 +88,7 @@ export function TowTruckDriverOperations({
   const reviewRemoval = () => {
     if (
       !order.driverId ||
+      order.statusCode !== 2 ||
       stale ||
       operations.locked ||
       removalConflict ||
@@ -168,11 +169,18 @@ export function TowTruckDriverOperations({
         <div>
           <h4>{t("towTruck.opsOrderAction")}</h4>
           <p className="tow-hint">{t("towTruck.opsRemoveOnly")}</p>
+          {order.assignment === "assigned" && order.statusCode !== 2 && (
+            <p role="status">{t("towTruck.r2RemovalReadyOnly")}</p>
+          )}
           {order.assignment === "assigned" ? (
             <Button
               variant="outline"
               disabled={
-                stale || operations.locked || removalConflict || !operations.authorized("remove")
+                stale ||
+                order.statusCode !== 2 ||
+                operations.locked ||
+                removalConflict ||
+                !operations.authorized("remove")
               }
               onClick={(event) => {
                 trigger.current = event.currentTarget;
@@ -343,6 +351,7 @@ export function TowTruckDriverOperations({
                   disabled ||
                   stale ||
                   order.assignment !== "assigned" ||
+                  order.statusCode !== 2 ||
                   !operations.authorized("remove")
                 }
                 onClick={reviewRemoval}

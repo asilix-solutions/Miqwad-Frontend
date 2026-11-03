@@ -1,4 +1,30 @@
 export const towTruckAr = {
+  r2DriverOnlyHint:
+    "اختر السائق وراجع الإسناد. يرسل هذا الإجراء هوية السائق فقط؛ مبلغ الطلب المعروض مرجعي ولا يمكن تعديله هنا.",
+  r2RecordedTotal: "إجمالي الطلب المسجل",
+  r2RecordedTotalHint: "المبلغ المسجل بالطلب للمرجعية فقط. تُدار تسعيرة المسار في دليل الطرق.",
+  r2PrepareDriver: "إعداد إسناد السائق",
+  r2ReviewDriver: "مراجعة السائق",
+  r2ConfirmDriver: "تأكيد إسناد السائق",
+  r2ReplacementTitle: "استبدال السائق — مراجعة مستقلة",
+  r2ReplacementReady:
+    "تم التحقق من الإزالة والطلب بانتظار سائق. راجع سائقًا جديدًا ثم أكّد الإسناد بشكل مستقل. بيانات الدفع لم تتغير؛ لم نطلب استردادًا أو تحصيلًا جديدًا.",
+  r2ReplacementSuccess:
+    "تم التحقق من إسناد السائق البديل وحالة جاهز، مع بقاء بيانات الدفع والمبالغ دون تغيير.",
+  r2UncertainFinality:
+    "نتيجة العملية غير محسومة. قراءة الطلب وحدها لا تثبت انتهاء الطلب السابق، حتى إن ظهرت الحالة المطلوبة. الإرسال موقوف؛ يمكنك التحقق بالقراءة فقط أو طلب مراجعة تشغيلية مع فريق الدعم.",
+  r2RemovalUnverified:
+    "لا يوجد إثبات مكتمل لإزالة سابقة. سجل المحاولة لا يسمح بالاستبدال؛ يلزم التحقق التشغيلي قبل إجراء جديد.",
+  r2LocalCostUnverified:
+    "استبدال داخل المدينة موقوف: قيمة العقد الأصلية المطلوبة للإسناد غير متاحة بشكل موثوق. الإجمالي ليس بديلًا عنها. يلزم تحقق مالي من فريق الدعم؛ لن نغيّر السعر.",
+  r2FinancialChanged:
+    "تغيرت بيانات الدفع أو المبالغ أو المسار أو تعذر التحقق منها؛ يلزم تحقق تشغيلي ومالي. لا تتابع اعتمادًا على المراجعة السابقة.",
+  r2ServiceUnverified:
+    "نوع الخدمة غير مؤكد أو متعارض. يلزم نوع خدمة صريح أو إثبات موثوق للخدمة المحلية القديمة قبل الإسناد.",
+  r2SameDriver: "اختر سائقًا مختلفًا عن السائق الذي أزيل، ثم أجرِ مراجعة جديدة.",
+  r2RemovalReadyOnly:
+    "إزالة السائق متاحة فقط للطلب المسند في حالة جاهز. الحالات الأخرى تتطلب مراجعة تشغيلية.",
+
   opsMutationConflict:
     "هذا الإجراء غير متاح بسبب حالة الطلب أو عملية أخرى قيد التنفيذ أو التحقق. تحقّق من النتائج قبل إجراء تغيير جديد.",
   opsRejectedRefresh:
@@ -55,7 +81,7 @@ export const towTruckAr = {
   opsChecking: "جارٍ التحقق من أحدث البيانات…",
   opsSending: "جارٍ إرسال الإجراء…",
   opsSuccess_remove:
-    "تمت إزالة السائق وتحديث بيانات الطلب. لم يُرسل طلب إلغاء أو استرداد أو تغيير للسعر.",
+    "تم التحقق من الإزالة وحالة الانتظار. الطلب يحتاج سائقًا؛ راجع قسم الإسناد للتحقق من أهلية الاستبدال. لم نطلب إلغاءً أو استردادًا أو تغييرًا للسعر.",
   opsSuccess_activate: "تم تفعيل حساب السائق وتأكيد حالته من الخادم.",
   opsSuccess_deactivate: "تم تعطيل حساب السائق وتأكيد حالته من الخادم.",
   opsContext: "الطلب #{{order}} · حساب السائق #{{driver}}",
@@ -93,8 +119,7 @@ export const towTruckAr = {
     "تظهر أحدث البيانات سائقًا مختلفًا. لم نزل السائق الجديد؛ راجع الطلب قبل أي إجراء آخر.",
   opsRetryReview:
     "تم التحقق من أحدث البيانات، ولم تتأكد نتيجة المحاولة السابقة. يلزم مراجعة جديدة وتأكيد جديد قبل إعادة المحاولة.",
-  opsInitialHeld:
-    "لا يمكن بدء تعيين جديد أثناء إجراء للسائق أو بعد محاولة إزالته في هذه الجلسة. تحقّق من النتيجة؛ تغيير السائق يحتاج مسار إعادة تعيين معتمدًا.",
+  opsInitialHeld: "يوجد إجراء سائق قيد التنفيذ أو التحقق. تحقّق من نتيجته قبل إسناد جديد.",
 
   title: "عمليات السطحات",
   eyebrow: "مركز العمليات",
@@ -271,25 +296,26 @@ export const towTruckAr = {
   assignDriver: "تعيين السائق وإرسال العرض",
   reassignDriver: "تغيير سائق السطحة",
   unassignDriver: "إزالة السائق من الطلب",
-  initialOnly: "تعيين سائق لطلب جديد",
-  initialReady: "يمكن إعداد عرض لطلب بانتظار المعالجة دون سائق. إعادة تعيين سائق بديل غير متاحة.",
+  initialOnly: "مراجعة إسناد السائق",
+  initialReady:
+    "الطلب بانتظار المعالجة دون سائق. راجع الإسناد حسب نوع الخدمة؛ لا يُحصّل الدفع هنا.",
   initialNeedsUnassigned:
-    "يوجد سائق معين لهذا الطلب. إعادة تعيين سائق بديل غير متاحة؛ إزالة السائق إجراء مستقل أدناه.",
+    "يوجد سائق معيّن. الاستبدال يبدأ بإزالة مستقلة مؤكدة، ثم تحقق من أهلية إسناد جديد.",
   initialNeedsWaiting:
     "حالة الطلب الحالية لا تسمح بتعيين سائق لأول مرة. التعيين متاح فقط للطلبات بانتظار المعالجة.",
   initialPaymentBlocked:
     "بيانات الدفع لهذا الطلب لا تسمح بتأكيد أهليته لعرض أولي. لم يتم تغيير أي مبلغ.",
   confirmInitial: "تأكيد السائق وعرض السعر",
   confirmInitialHint:
-    "تأكيد الإرسال يعيّن السائق ويرسل عرض السعر. ينتظر الطلب بعدها دفع العميل عبر تطبيقه؛ إرسال العرض لا يعني تحصيل الدفع.",
+    "راجع السائق ونوع الخدمة قبل التأكيد. بين المدن يرسل هوية السائق فقط؛ داخل المدينة يرسل عرض التكلفة والمدة. لا يتم تحصيل الدفع هنا.",
   paymentPending: "بانتظار دفع العميل",
   pendingCustomerHint: "عرض السعر بانتظار دفع العميل عبر تطبيقه. لا يوجد إجراء لتحصيل الدفع هنا.",
   assignmentChecking: "جارٍ التحقق من أحدث بيانات الطلب والسائق…",
-  assignmentSending: "جارٍ إرسال عرض السعر…",
-  assignmentSuccess: "تم تعيين سائق السطحة وإرسال عرض السعر بنجاح.",
+  assignmentSending: "جارٍ إرسال الإسناد…",
+  assignmentSuccess: "تم التحقق من إسناد السائق وحالة جاهز من بيانات الطلب المحدثة.",
   sentQuote: "تكلفة العرض المرسل: {{cost}} · المدة: {{duration}}",
   assignmentAwaitingRead:
-    "أكد الخادم قبول العرض، لكن بيانات السائق لم تتطابق بعد. الإرسال مقفل؛ تحقّق من بيانات الطلب دون إعادة الإرسال.",
+    "أكد الخادم قبول الإسناد، لكن الحالة المسجلة لم تتطابق بعد. الإرسال مقفل؛ تحقّق بالقراءة دون إعادة الإرسال.",
   assignmentUncertain:
     "نتيجة الإرسال غير مؤكدة. الإرسال مقفل حتى التحقق من أحدث بيانات الطلب؛ لا تعِد المحاولة قبل ذلك.",
   assignmentRetryReview:
@@ -302,7 +328,7 @@ export const towTruckAr = {
   assignmentMissing:
     "الطلب أو السائق المشار إليه لم يعد متاحًا. حدّث الطلب وقائمة السائقين قبل مراجعة العرض.",
   assignmentValidation:
-    "لم يقبل الخادم بيانات العرض. تحقق من السائق والتكلفة والمدة، ثم راجع العرض مجددًا.",
+    "بيانات الإسناد غير صالحة. راجع السائق والحقول المطلوبة لنوع الخدمة ثم أجرِ مراجعة جديدة.",
   assignmentStorage:
     "تعذر حفظ علامة أمان المحاولة في هذه الجلسة. اسمح بتخزين الجلسة ثم تحقّق من الطلب قبل الإرسال.",
   assignmentStay: "الإرسال أو التحقق جارٍ. انتظر اكتمال العملية قبل مغادرة الطلب.",
@@ -311,7 +337,7 @@ export const towTruckAr = {
     "سبق أن رفض الخادم السائق في المحاولة السابقة لأنه مشغول. راجع العرض مع السائق الجديد قبل الإرسال.",
   assignmentRejectedTitle: "تعذر تعيين سائق السطحة",
   assignmentDriverBusy:
-    "السائق المحدد مشغول بطلب آخر حاليًا. اختر سائقًا آخر، ثم راجع العرض وأكد إرساله.",
+    "السائق المحدد مشغول بطلب آخر حاليًا. اختر سائقًا آخر، ثم راجع الإسناد وأكّد إرساله.",
   assignmentAuthentication:
     "تعذر التحقق من جلسة تسجيل الدخول. احتفظ ببيانات العرض قبل إعادة تسجيل الدخول، ثم حدّث الطلب.",
   assignmentInvalidRequest:
@@ -319,7 +345,7 @@ export const towTruckAr = {
   assignmentRejected:
     "لم يقبل الخادم التعيين ولم يقدّم سببًا يمكن عرضه بأمان. حدّث البيانات وراجع العرض؛ تواصل مع الدعم إذا تكرر الرفض.",
   assignmentRefreshFailed:
-    "أكد الخادم قبول العرض، لكن تعذر تحديث تفاصيل الطلب. لا تعِد الإرسال؛ استخدم التحقق من النتيجة لتحديث العرض.",
+    "أكد الخادم قبول الإسناد، لكن تعذر التحقق من تفاصيل الطلب. لا تعِد الإرسال؛ استخدم التحقق من النتيجة.",
   draftPreserved:
     "احتُفظ بالتكلفة والمدة في هذه الصفحة. تعديل السائق أو العرض يتطلب مراجعة جديدة وتأكيدًا جديدًا.",
   quoteChanged: "تغيّرت بيانات العرض بعد المراجعة. راجع القيم الجديدة ثم أكّد الإرسال مجددًا.",
@@ -420,7 +446,7 @@ export const towTruckAr = {
   cancelChecking: "جارٍ التحقق من حالة الطلب…",
   orderCancelledHint: "تم إلغاء هذا الطلب؛ لا يمكن تنفيذ أي إجراءات تشغيلية أو تعيين سائق له.",
   reassignWorkflowNotice:
-    "الطلب لديه سائق مسند حالياً. لإسناد سائق بديل، قم أولاً بإلغاء تعيين السائق الحالي من قسم «عمليات السائق» أعلاه، ثم أعد إسناد السائق المطلوب.",
+    "الاستبدال خطوتان منفصلتان: إزالة مؤكدة ثم مراجعة وإسناد جديد. لا يبدأ الإسناد تلقائيًا. بين المدن يحافظ على بيانات الدفع؛ داخل المدينة يتطلب إثبات قيمة العقد الأصلية.",
   goToUnassign: "الانتقال إلى إلغاء تعيين السائق",
   driverReplacementReady:
     "تم إلغاء تعيين السائق السابق لهذا الطلب بنجاح. يمكنك الآن اختيار سائق بديل وتحديد التكلفة والمدة لإرسال العرض.",
@@ -611,6 +637,33 @@ export const towTruckAr = {
     "تم تفعيل وضع القراءة الآمن لحماية البيانات ومنع تنفيذ عمليات الإسناد أو التسعير غير المتوافقة. يمكنك الاطلاع على بيانات الطلب المؤكدة أو إلغاء الطلب إذا كانت شروط الأهلية تسمح بذلك.",
 };
 export const towTruckEn: typeof towTruckAr = {
+  r2DriverOnlyHint:
+    "Select a driver and review assignment. This action sends the driver ID only; the displayed order amount is read-only context.",
+  r2RecordedTotal: "Recorded order total",
+  r2RecordedTotalHint:
+    "The recorded order amount is contextual information. Route tariffs are managed in the Road catalog.",
+  r2PrepareDriver: "Prepare driver assignment",
+  r2ReviewDriver: "Review driver",
+  r2ConfirmDriver: "Confirm driver assignment",
+  r2ReplacementTitle: "Replace driver \u2014 independent review",
+  r2ReplacementReady:
+    "Removal verified; the order needs a driver. Review a new driver and confirm assignment separately. Payment data is unchanged; no refund or new charge was requested.",
+  r2ReplacementSuccess:
+    "Replacement driver and Ready state verified; payment and financial values are unchanged.",
+  r2UncertainFinality:
+    "The operation remains unresolved. A read alone cannot establish that the earlier request has finished, even if the desired state appears. Sending is blocked. Check using read-only recovery or request operational support review.",
+  r2RemovalUnverified:
+    "No complete evidence of an earlier removal. An attempt record does not permit replacement; operational verification is required.",
+  r2LocalCostUnverified:
+    "Local replacement is blocked: the original contractual assignment cost cannot be verified. Total is not a substitute. Request financial verification from support; no repricing will be attempted.",
+  r2FinancialChanged:
+    "Payment, financial values or route changed or cannot be verified. Operational and financial verification is required. Do not continue from the previous review.",
+  r2ServiceUnverified:
+    "Service type is missing or conflicting. An explicit service type or verified legacy local-service classification is required before assignment.",
+  r2SameDriver: "Select a different driver from the removed driver, then perform a fresh review.",
+  r2RemovalReadyOnly:
+    "Driver removal is available only for an assigned Ready order. Other stages require operational review.",
+
   opsMutationConflict:
     "This action is unavailable because of the order state or another pending or unresolved operation. Check the outcomes before making a new change.",
   opsRejectedRefresh:
@@ -673,7 +726,7 @@ export const towTruckEn: typeof towTruckAr = {
   opsChecking: "Checking the latest data…",
   opsSending: "Submitting action…",
   opsSuccess_remove:
-    "The driver was removed and the request refreshed. No cancellation, refund or price-change request was sent.",
+    "Removal and Waiting state verified. The order needs a driver; check dispatch for replacement eligibility. No cancellation, refund or repricing was requested.",
   opsSuccess_activate: "The driver account was activated and its state confirmed with the server.",
   opsSuccess_deactivate:
     "The driver account was deactivated and its state confirmed with the server.",
@@ -717,7 +770,7 @@ export const towTruckEn: typeof towTruckAr = {
   opsRetryReview:
     "The latest data was checked and the previous outcome is unconfirmed. A new review and confirmation are required before retrying.",
   opsInitialHeld:
-    "Initial assignment is unavailable during a driver operation or after a removal attempt in this session. Check the outcome; replacing the driver requires an approved reassignment workflow.",
+    "A driver operation is running or unresolved. Check its outcome before a new assignment.",
 
   title: "Tow truck operations",
   eyebrow: "OPERATIONS CENTER",
@@ -903,28 +956,27 @@ export const towTruckEn: typeof towTruckAr = {
   assignDriver: "Assign driver & send quote",
   reassignDriver: "Change tow truck driver",
   unassignDriver: "Remove driver from request",
-  initialOnly: "Assign a driver to a new request",
+  initialOnly: "Review driver assignment",
   initialReady:
-    "Prepare a quote for a waiting request with no driver. Reassignment remains unavailable.",
+    "The waiting order has no driver. Review assignment using its service contract; this does not collect payment.",
   initialNeedsUnassigned:
-    "This request already has an assigned driver. Reassignment remains unavailable; driver removal is a separate action below.",
+    "A driver is assigned. Replacement starts with a separately confirmed removal, followed by eligibility verification for a new assignment.",
   initialNeedsWaiting:
     "This order’s current status does not permit initial assignment. Only waiting requests are eligible.",
   initialPaymentBlocked:
     "This payment state cannot be confirmed as eligible for an initial quotation. No amount has been changed.",
   confirmInitial: "Confirm driver & quotation",
   confirmInitialHint:
-    "Confirming assigns the driver and submits the quote. The customer then pays in their app; sending a quote does not collect payment.",
+    "Review the driver and service type before confirming. InterCity sends only the driver ID; IntraCity sends cost and duration. No payment is collected here.",
   paymentPending: "Awaiting customer payment",
   pendingCustomerHint:
     "The quote is awaiting customer payment in their app. There is no collection action here.",
   assignmentChecking: "Checking the latest request and driver…",
-  assignmentSending: "Submitting quotation…",
-  assignmentSuccess:
-    "The tow truck driver has been assigned and the quotation submitted successfully.",
+  assignmentSending: "Submitting assignment…",
+  assignmentSuccess: "Driver assignment and Ready state were verified from the refreshed order.",
   sentQuote: "Submitted quotation cost: {{cost}} · Duration: {{duration}}",
   assignmentAwaitingRead:
-    "The server acknowledged the quote, but driver details do not match yet. Submission is locked; check the request without sending again.",
+    "The server acknowledged assignment, but the recorded state does not match yet. Submission is locked; check using read-only recovery.",
   assignmentUncertain:
     "The submission outcome is uncertain. Submission is locked until the latest request is checked; do not retry before that.",
   assignmentRetryReview:
@@ -938,7 +990,7 @@ export const towTruckEn: typeof towTruckAr = {
   assignmentMissing:
     "The request or referenced driver is no longer available. Refresh the request and driver list before reviewing the quote.",
   assignmentValidation:
-    "The server did not accept the quotation details. Check the driver, cost and duration, then review again.",
+    "Assignment details are invalid. Check the driver and required fields for this service, then perform a fresh review.",
   assignmentStorage:
     "The attempt safety marker could not be saved in this session. Allow session storage, then check the request before submitting.",
   assignmentStay: "Submission or verification is in progress. Wait before leaving this request.",
@@ -947,7 +999,7 @@ export const towTruckEn: typeof towTruckAr = {
     "The server rejected the driver in the previous attempt as busy. Review the quote with the newly selected driver before sending.",
   assignmentRejectedTitle: "Unable to assign tow truck driver",
   assignmentDriverBusy:
-    "The selected driver is busy with another order. Choose another driver, review the quote, and confirm submission again.",
+    "The selected driver is busy with another order. Choose another driver, review assignment, and confirm again.",
   assignmentAuthentication:
     "Your sign-in session could not be verified. Keep a copy of the quote before signing in again, then refresh the request.",
   assignmentInvalidRequest:
@@ -955,7 +1007,7 @@ export const towTruckEn: typeof towTruckAr = {
   assignmentRejected:
     "The server rejected the assignment without a reason we can safely display. Refresh the data and review the quote; contact support if rejection persists.",
   assignmentRefreshFailed:
-    "The server acknowledged the quote, but request details could not be refreshed. Do not resend; use Check request outcome to refresh the view.",
+    "The server acknowledged assignment, but order details could not be verified. Do not resend; check the outcome.",
   draftPreserved:
     "Cost and duration are preserved on this page. Changing the driver or quote requires a new review and confirmation.",
   quoteChanged:
@@ -1068,7 +1120,7 @@ export const towTruckEn: typeof towTruckAr = {
   orderCancelledHint:
     "This order has been cancelled; no operational actions or driver dispatch can be performed.",
   reassignWorkflowNotice:
-    "This order already has an assigned driver. To assign a replacement driver, first unassign the current driver from the 'Driver Operations' section above, then assign the desired driver.",
+    "Replacement has two separate steps: confirmed removal, then a new assignment review. Assignment never starts automatically. InterCity preserves payment data; IntraCity requires verified original contractual cost.",
   goToUnassign: "Go to Unassign Driver",
   driverReplacementReady:
     "The previous driver was successfully unassigned from this request. You can now select a replacement driver and submit cost and duration.",

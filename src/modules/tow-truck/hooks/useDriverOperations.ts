@@ -1,3 +1,4 @@
+import { removalHistoryKey } from "../lib/reassignment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { store, useAppSelector } from "@app/store";
 import { adminApi, activateUser, deactivateUser } from "@modules/admin/api/adminApi";
@@ -82,6 +83,8 @@ export function useDriverOperations(orderId: string) {
     },
     mark: (operation) => writeDriverJournal(actor, operation),
     clear: () => sessionStorage.removeItem(driverOperationMarker(actor)),
+    verifiedRemoval: (receipt) =>
+      sessionStorage.setItem(removalHistoryKey(actor, receipt.orderId), JSON.stringify(receipt)),
     invalidate: async (operation) => {
       if (!authorized(operation.kind)) return;
       await qc.invalidateQueries({ queryKey: orderKeys.all, refetchType: "none" });

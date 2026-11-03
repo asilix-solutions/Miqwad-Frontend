@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { serviceSnapshot, type RemovalReceipt } from "./reassignment";
 import { getRolePermissions, hasPermission } from "@shared/auth/permissions";
 import { AppError } from "@shared/types/api";
 import type { AdminUserRow } from "@modules/admin/types";
@@ -10,6 +11,7 @@ export interface OperationIdentity {
   orderId: string;
   driverId: string;
   acknowledged?: boolean;
+  removal?: RemovalReceipt;
 }
 export interface DriverProposal extends OperationIdentity {
   snapshot: string;
@@ -95,6 +97,7 @@ export interface OperationDependencies {
   send: (operation: OperationIdentity, note?: string) => Promise<void>;
   mark: (operation: OperationIdentity) => void;
   clear: () => void;
+  verifiedRemoval?: (receipt: RemovalReceipt) => void;
   invalidate: (operation: OperationIdentity) => Promise<void>;
 }
 const consumed = new WeakSet<DriverProposal>();
@@ -118,9 +121,22 @@ async function reconcile(d: OperationDependencies, state: DriverOperationState):
       const order = await d.readOrder(operation.orderId);
       if (order.id !== operation.orderId || order.assignment === "unknown")
         throw new Error("Unverified order");
-      complete = order.assignment === "unassigned";
+      complete = order.assignment === "unassigned" && order.statusCode === 1;
       changed = order.assignment === "assigned" && order.driverId !== operation.driverId;
-      financialWarning = !state.financeBefore || state.financeBefore !== order.financeSnapshot;
+      financialWarning =
+        !operation.removal ||
+        operation.removal.finance !== order.financeSnapshot ||
+        operation.removal.service !== serviceSnapshot(order);
+      if (!accepted) {
+        d.set({ ...state, financialWarning, phase: "uncertain", message: "r2UncertainFinality" });
+        return;
+      }
+      if (complete && financialWarning) {
+        d.set({ ...state, financialWarning, phase: "accepted", message: "r2FinancialChanged" });
+        return;
+      }
+      if (complete && !financialWarning && operation.removal)
+        d.verifiedRemoval?.(operation.removal);
     } else {
       const user = await d.readDriver(operation.driverId);
       if (!verifiedDriver(user, operation.driverId)) throw new Error("Unverified account");
@@ -178,12 +194,14 @@ export async function submitDriverOperation(
   }
   d.set({ phase: "busy", message: "opsChecking" });
   let financeBefore: string | undefined;
+  let removal: RemovalReceipt | undefined;
   try {
     if (proposal.kind === "remove") {
       const order = await d.readOrder(proposal.orderId);
       if (
         order.id !== proposal.orderId ||
         order.assignment !== "assigned" ||
+        order.statusCode !== 2 ||
         order.driverId !== proposal.driverId ||
         order.operationSnapshot !== proposal.snapshot
       ) {
@@ -195,6 +213,12 @@ export async function submitDriverOperation(
         return;
       }
       financeBefore = order.financeSnapshot;
+      removal = {
+        orderId: order.id,
+        driverId: proposal.driverId,
+        finance: order.financeSnapshot,
+        service: serviceSnapshot(order),
+      };
     } else {
       const user = await d.readDriver(proposal.driverId);
       if (
@@ -222,6 +246,7 @@ export async function submitDriverOperation(
     kind: proposal.kind,
     orderId: proposal.orderId,
     driverId: proposal.driverId,
+    ...(removal ? { removal } : {}),
   };
   consumed.add(proposal);
   try {
