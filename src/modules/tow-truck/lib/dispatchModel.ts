@@ -98,6 +98,11 @@ export function initialAssignmentBlock(
     (order.paymentCode !== null && order.paymentCode !== 0 && order.paymentCode !== 1)
   )
     return "initialPaymentBlocked";
+  // Waiting/payment/totals and absent session history cannot distinguish a new
+  // local quote from a previously assigned order after removal by another actor.
+  // The current GET contract exposes neither first-assignment authority nor the
+  // original contractual cost. Block BOTH local workflows until it does.
+  if (order.dispatchService === "intracity") return "r2LocalEligibilityUnverified";
   return null;
 }
 

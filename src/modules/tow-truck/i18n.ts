@@ -15,6 +15,8 @@ export const towTruckAr = {
     "نتيجة العملية غير محسومة. قراءة الطلب وحدها لا تثبت انتهاء الطلب السابق، حتى إن ظهرت الحالة المطلوبة. الإرسال موقوف؛ يمكنك التحقق بالقراءة فقط أو طلب مراجعة تشغيلية مع فريق الدعم.",
   r2RemovalUnverified:
     "لا يوجد إثبات مكتمل لإزالة سابقة. سجل المحاولة لا يسمح بالاستبدال؛ يلزم التحقق التشغيلي قبل إجراء جديد.",
+  r2LocalEligibilityUnverified:
+    "إسناد داخل المدينة موقوف مؤقتًا، بما فيه الإسناد الأول: لا يمكن التحقق من أن الطلب جديد ولم يسبق إسناده. يلزم تحديث بيانات التحقق من الخادم؛ تواصل مع فريق الدعم. لن نرسل تكلفة جديدة.",
   r2LocalCostUnverified:
     "استبدال داخل المدينة موقوف: قيمة العقد الأصلية المطلوبة للإسناد غير متاحة بشكل موثوق. الإجمالي ليس بديلًا عنها. يلزم تحقق مالي من فريق الدعم؛ لن نغيّر السعر.",
   r2FinancialChanged:
@@ -654,6 +656,8 @@ export const towTruckEn: typeof towTruckAr = {
     "The operation remains unresolved. A read alone cannot establish that the earlier request has finished, even if the desired state appears. Sending is blocked. Check using read-only recovery or request operational support review.",
   r2RemovalUnverified:
     "No complete evidence of an earlier removal. An attempt record does not permit replacement; operational verification is required.",
+  r2LocalEligibilityUnverified:
+    "Local assignment is temporarily unavailable, including first assignment: we cannot verify that this order has never been assigned. Backend eligibility verification is required; contact support. No new cost will be submitted.",
   r2LocalCostUnverified:
     "Local replacement is blocked: the original contractual assignment cost cannot be verified. Total is not a substitute. Request financial verification from support; no repricing will be attempted.",
   r2FinancialChanged:

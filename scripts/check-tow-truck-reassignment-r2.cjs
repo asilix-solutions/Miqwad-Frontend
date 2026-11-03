@@ -205,7 +205,7 @@ test("ordinary Paid first assignment is still blocked", async () => {
   await assign(f.a, f.request());
   assert.equal(f.puts, 0);
 });
-test("initial local quotation serializes numeric cost and nonempty duration", async () => {
+test("local quotation schema stays valid but initial assignment is contract-blocked", async () => {
   const f = scenario({
     towTruckServiceType: 1,
     roadId: null,
@@ -214,8 +214,13 @@ test("initial local quotation serializes numeric cost and nonempty duration", as
     towTruckDriverId: null,
   });
   await assign(f.a, f.request({ cost: "١٥٠", duration: " 35 mins " }));
-  assert.deepEqual(f.payload, { towTruckDriverId: 25, cost: 150, duration: "35 mins" });
-  assert.equal(f.as.phase, "success");
+  assert.equal(
+    dispatchDraftSchema(true).safeParse({ driverId: "25", cost: "١٥٠", duration: "35 mins" })
+      .success,
+    true,
+  );
+  assert.equal(f.puts, 0);
+  assert.equal(f.as.message, "r2LocalEligibilityUnverified");
 });
 for (const values of [
   { cost: "", duration: "35 mins" },
@@ -232,7 +237,8 @@ for (const values of [
     });
     await assign(f.a, f.request(values));
     assert.equal(f.puts, 0);
-    assert.equal(f.as.message, "assignmentValidation");
+    assert.equal(dispatchDraftSchema(true).safeParse({ driverId: "25", ...values }).success, false);
+    assert.equal(f.as.message, "r2LocalEligibilityUnverified");
   });
 test("InterCity ignores stale quote draft fields and has no required duration", async () => {
   const f = scenario({ status: 1, paymentStatus: 1, towTruckDriverId: null, totalPrice: null });
@@ -619,7 +625,7 @@ test("missing replacement financial projection blocks even after acknowledged re
   assert.equal(f.puts, 0);
   assert.equal(f.as.message, "r2FinancialChanged");
 });
-test("explicit legacy serviceType alias 1 permits local initial payload; absence alone does not", async () => {
+test("explicit legacy local alias still requires unavailable first-assignment proof", async () => {
   const f = scenario({
     towTruckServiceType: null,
     serviceType: 1,
@@ -629,7 +635,123 @@ test("explicit legacy serviceType alias 1 permits local initial payload; absence
     towTruckDriverId: null,
   });
   await assign(f.a, f.request({ cost: "150", duration: "35 mins" }));
-  assert.deepEqual(f.payload, { towTruckDriverId: 25, cost: 150, duration: "35 mins" });
+  assert.equal(f.puts, 0);
+  assert.equal(f.as.message, "r2LocalEligibilityUnverified");
+});
+
+for (const context of ["new session", "different administrator", "lost markers"]) {
+  test(`H1: ${context} cannot turn a removed local order into a new quote`, async () => {
+    const f = scenario({ towTruckServiceType: 1, roadId: null, paymentStatus: 1 });
+    await removed(f);
+    const h = hookHarness();
+    try {
+      Object.assign(h.raw, { towTruckServiceType: 1, roadId: null, paymentStatus: 1 });
+      const receipt = JSON.stringify(f.evidence);
+      if (context === "different administrator") {
+        h.entries.set(removalHistoryKey("1", "105"), receipt);
+        h.setUser({ id: "2", role: "admin", permissions: ["orders.view", "orders.manage"] });
+      } else if (context === "lost markers") {
+        h.entries.set(removalHistoryKey("1", "105"), receipt);
+        h.entries.clear();
+      }
+      const hook = h.hook();
+      const order = adaptTowTruck(h.raw);
+      assert.equal(hook.block(order), "r2LocalEligibilityUnverified");
+      await hook.submit({
+        snapshot: dispatchSnapshot(order),
+        values: { driverId: "25", cost: "999", duration: "90 minutes" },
+      });
+      assert.equal(h.writes, 0);
+      assert.equal(h.hook().state.message, "r2LocalEligibilityUnverified");
+    } finally {
+      h.dispose();
+    }
+  });
+}
+test("H1: zero/missing/nonzero totals and null/zero/Pending payment never prove local first assignment", async () => {
+  for (const paymentStatus of [null, 0, 1])
+    for (const total of [undefined, 0, 150]) {
+      const f = scenario({
+        towTruckServiceType: 1,
+        roadId: null,
+        status: 1,
+        towTruckDriverId: null,
+        paymentStatus,
+        subtotal: total,
+        totalPrice: total,
+      });
+      assert.equal(initialAssignmentBlock(f.order()), "r2LocalEligibilityUnverified");
+      await assign(f.a, f.request({ cost: "999", duration: "90 minutes" }));
+      assert.equal(f.puts, 0);
+      assert.equal(f.as.message, "r2LocalEligibilityUnverified");
+    }
+});
+for (const observation of ["matching", "delayed", "changed driver", "failed GET"]) {
+  test(`H2: 202 success:true with ${observation} stays unresolved across recovery/reload`, async () => {
+    const f = scenario({ status: 1, paymentStatus: 1, towTruckDriverId: null });
+    let puts = 0;
+    transport = async (method, url, payload, config) => {
+      assert.equal(method, "PUT");
+      assert.equal(url, "/Orders/105/tow-truck-driver");
+      assert.deepEqual(payload, { towTruckDriverId: 25 });
+      assert.equal(config._retry, true);
+      puts++;
+      if (observation === "matching") f.change({ status: 2, towTruckDriverId: 25 });
+      if (observation === "changed driver") f.change({ status: 2, towTruckDriverId: 35 });
+      if (observation === "failed GET")
+        f.a.readOrder = async () => {
+          throw new Error("offline");
+        };
+      return { status: 202, data: { success: true } };
+    };
+    f.a.send = (p) => ordersApi.assignTowTruckDriver("105", p);
+    await assign(f.a, f.request());
+    assert.equal(f.as.phase, "uncertain");
+    assert.equal(f.putJournal.orderId, "105");
+    assert.equal(f.putJournal.driverId, "25");
+    assert.equal(f.putJournal.receipt, undefined);
+    const journal = structuredClone(f.putJournal);
+    f.a.readOrder = async () => f.order();
+    f.change({ status: 2, towTruckDriverId: 25 });
+    await check(f.a);
+    await assign(f.a, f.request());
+    assert.equal(f.as.phase, "uncertain");
+    assert.equal(puts, 1);
+    assert.deepEqual(f.putJournal, journal);
+    const h = hookHarness();
+    try {
+      const marker = "miqwad:initial-assignment:1:105";
+      h.entries.set(marker, JSON.stringify(journal));
+      Object.assign(h.raw, { status: 2, towTruckDriverId: 25 });
+      await h.hook().check();
+      assert.equal(h.hook().state.phase, "uncertain");
+      assert.equal(h.entries.get(marker), JSON.stringify(journal));
+      assert.equal(h.writes, 0);
+    } finally {
+      h.dispose();
+    }
+  });
+}
+test("H2: only documented 200 success:true acknowledges; other resolved statuses stay uncertain", async () => {
+  for (const status of [201, 202, 204, 206, undefined]) {
+    transport = async () => ({ status, data: { success: true } });
+    await assert.rejects(
+      () => ordersApi.assignTowTruckDriver("105", { towTruckDriverId: 25 }),
+      (e) => e.code === "ASSIGNMENT_UNCERTAIN",
+    );
+  }
+  const f = scenario({ status: 1, paymentStatus: 1, towTruckDriverId: null });
+  let puts = 0;
+  transport = async () => {
+    puts++;
+    f.change({ status: 2, towTruckDriverId: 25 });
+    return { status: 200, data: { success: true } };
+  };
+  f.a.send = (p) => ordersApi.assignTowTruckDriver("105", p);
+  await assign(f.a, f.request());
+  assert.equal(puts, 1);
+  assert.equal(f.as.phase, "success");
+  assert.equal(f.putJournal, null);
 });
 (async () => {
   for (const [name, fn] of tests) {

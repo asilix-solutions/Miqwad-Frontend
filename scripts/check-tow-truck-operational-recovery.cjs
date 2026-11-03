@@ -342,8 +342,8 @@ async function main() {
     });
     assert.equal(
       initialAssignmentBlock(unassignedOrder),
-      null,
-      "Unassigned InWaiting order has no assignment block",
+      "r2LocalEligibilityUnverified",
+      "Local first-assignment eligibility cannot be proven from Waiting and Pending",
     );
 
     const alreadyAssigned = adaptTowTruck({
@@ -379,7 +379,7 @@ async function main() {
     const orderBefore = adaptTowTruck({
       id: 204,
       orderType: 3,
-      towTruckServiceType: 1,
+      towTruckServiceType: 2,
       status: 1,
       paymentStatus: 1,
       towTruckDriverId: null,
@@ -388,7 +388,7 @@ async function main() {
     const orderAfter = adaptTowTruck({
       id: 204,
       orderType: 3,
-      towTruckServiceType: 1,
+      towTruckServiceType: 2,
       status: 2,
       paymentStatus: 1,
       towTruckDriverId: 12,
@@ -425,10 +425,8 @@ async function main() {
         sentPayload,
         {
           towTruckDriverId: 12,
-          cost: 150,
-          duration: "30 minutes",
         },
-        "Sent assignment payload must have numeric driver ID, numeric cost, and string duration",
+        "Sent assignment payload must have driver ID only for InterCity",
       );
       assert.equal(
         mockDeps.state.phase,
