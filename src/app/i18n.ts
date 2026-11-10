@@ -670,6 +670,14 @@ const ar = {
     empty: "لا توجد فئات للعرض",
   },
   admin: {
+    workspaces: {
+      general: "الإدارة العامة",
+      tow: "مركز السطحات",
+      generalCompact: "الإدارة",
+      towCompact: "السطحات",
+      label: "مساحات العمل",
+      account: "قائمة حساب {{name}}",
+    },
     featureUnavailable: {
       badge: "قريبًا",
       title: "هذه الميزة غير متاحة حاليًا",
@@ -1990,7 +1998,8 @@ const ar = {
         countryCodeHelp: "رمز الدولة بصيغة ISO المعتمدة (مثل: SA للمملكة العربية السعودية)",
         googlePlaceId: "معرّف Google Place ID",
         googlePlaceIdPlaceholder: "مثال: ChIJ818b-y1Elx4Rj80s-k8x5g8",
-        googlePlaceIdHelp: "المعرّف الفريد للمكان من Google Places لمنع التكرار وضمان الدقة الجغرافية",
+        googlePlaceIdHelp:
+          "المعرّف الفريد للمكان من Google Places لمنع التكرار وضمان الدقة الجغرافية",
         latitude: "خط العرض (Latitude)",
         latitudePlaceholder: "مثال: 24.7136",
         latitudeHelp: "قيمة عشرية بين -90 و 90",
@@ -4252,6 +4261,14 @@ const en: typeof ar = {
     empty: "No categories to display",
   },
   admin: {
+    workspaces: {
+      general: "General Administration",
+      tow: "Tow Truck Operations Center",
+      generalCompact: "Administration",
+      towCompact: "Tow trucks",
+      label: "Workspaces",
+      account: "Account menu for {{name}}",
+    },
     featureUnavailable: {
       badge: "Coming soon",
       title: "This feature is not available yet",
@@ -5580,7 +5597,8 @@ const en: typeof ar = {
         countryCodeHelp: "Standard ISO country code (e.g. SA for Saudi Arabia)",
         googlePlaceId: "Google Place ID",
         googlePlaceIdPlaceholder: "e.g. ChIJ818b-y1Elx4Rj80s-k8x5g8",
-        googlePlaceIdHelp: "Unique Google Places identifier to prevent duplicates and ensure geographic precision",
+        googlePlaceIdHelp:
+          "Unique Google Places identifier to prevent duplicates and ensure geographic precision",
         latitude: "Latitude",
         latitudePlaceholder: "e.g. 24.7136",
         latitudeHelp: "Decimal value between -90 and 90",
@@ -5658,7 +5676,8 @@ const en: typeof ar = {
       },
       empty: {
         title: "No cities registered yet",
-        description: "Add your first city to make it available in platform services and intercity routes.",
+        description:
+          "Add your first city to make it available in platform services and intercity routes.",
         noResults: "No cities match your current search criteria.",
       },
       errors: {
@@ -5675,7 +5694,8 @@ const en: typeof ar = {
       },
       success: {
         created: "City created successfully",
-        existingRetrieved: "City was already registered with this Google Place ID and its details were retrieved",
+        existingRetrieved:
+          "City was already registered with this Google Place ID and its details were retrieved",
         updated: "City updated successfully",
         deleted: "City deleted successfully",
       },
@@ -5734,7 +5754,8 @@ const en: typeof ar = {
       edit: "Edit Model",
       delete: "Delete",
       empty: "No models for this brand yet",
-      emptyHint: "Start by adding the first model for this brand to make it available in the system",
+      emptyHint:
+        "Start by adding the first model for this brand to make it available in the system",
       addFirst: "Add First Model",
       error: "Failed to load models",
       searchPlaceholder: "Search models...",

@@ -35,7 +35,12 @@ function load(file) {
   const local = (name) => {
     if (name === "@app/i18n") return { default: { language: "ar" }, language: "ar" };
     if (name === "@shared/lib/axios") {
-      return { apiClient: { defaults: { baseURL: "/api" }, get: async () => ({ data: { success: true } }) } };
+      return {
+        apiClient: {
+          defaults: { baseURL: "/api" },
+          get: async () => ({ data: { success: true } }),
+        },
+      };
     }
     if (name === "@shared/lib/utils") {
       return { cn: (...classes) => classes.filter(Boolean).join(" ") };
@@ -125,7 +130,11 @@ test("Canonical Route Mapping: Workspaces map to correct route paths", () => {
 test("URL Builder: Resetting pagination when switching workspace", () => {
   const url = buildWorkspaceNavigationUrl("intercity", "page=3&trackNumber=TRK-999");
   assert.equal(url, "/admin/tow-truck/intercity?trackNumber=TRK-999");
-  assert.equal(url.includes("page="), false, "page parameter must be stripped on workspace navigation");
+  assert.equal(
+    url.includes("page="),
+    false,
+    "page parameter must be stripped on workspace navigation",
+  );
 });
 
 test("URL Builder: Preserving active trackNumber search across workspaces", () => {
@@ -158,11 +167,11 @@ test("Legacy SearchParam Redirect: Legacy ?serviceType=intracity and ?serviceTyp
 
   assert.equal(
     checkLegacyRedirect("serviceType=intracity&page=2"),
-    "/admin/tow-truck/intracity?page=2"
+    "/admin/tow-truck/intracity?page=2",
   );
   assert.equal(
     checkLegacyRedirect("serviceType=intercity&trackNumber=TRK-1"),
-    "/admin/tow-truck/intercity?trackNumber=TRK-1"
+    "/admin/tow-truck/intercity?trackNumber=TRK-1",
   );
   assert.equal(checkLegacyRedirect("trackNumber=TRK-1"), null);
 });
@@ -174,39 +183,40 @@ test("Route Collision Safety: Static routes 'intracity' and 'intercity' are not 
 
   assert.equal(isValidOrderId("101"), true);
   assert.equal(isValidOrderId("55421"), true);
-  assert.equal(isValidOrderId("intracity"), false, "'intracity' must fail numeric order ID validation");
-  assert.equal(isValidOrderId("intercity"), false, "'intercity' must fail numeric order ID validation");
+  assert.equal(
+    isValidOrderId("intracity"),
+    false,
+    "'intracity' must fail numeric order ID validation",
+  );
+  assert.equal(
+    isValidOrderId("intercity"),
+    false,
+    "'intercity' must fail numeric order ID validation",
+  );
   assert.equal(isValidOrderId("0"), false);
   assert.equal(isValidOrderId("-5"), false);
   assert.equal(isValidOrderId("abc"), false);
 });
 
 test("Workspace Back-Navigation: Preserves complete operational context in fromQueue", () => {
-  function resolveBackTarget(fromQueue) {
-    if (!fromQueue) return "/admin/tow-truck";
-    if (fromQueue.startsWith("/")) return fromQueue;
-    if (fromQueue.startsWith("?")) return `/admin/tow-truck${fromQueue}`;
-    return fromQueue;
-  }
+  const { queueReturnDestination } = load("src/modules/tow-truck/lib/queueContinuity.ts");
+  const resolveBackTarget = (fromQueue) => queueReturnDestination({ fromQueue });
 
   assert.equal(
     resolveBackTarget("/admin/tow-truck/intercity?page=2&trackNumber=TRK-88"),
     "/admin/tow-truck/intercity?page=2&trackNumber=TRK-88",
-    "Full path with search must be returned verbatim"
+    "Full path with search must be returned verbatim",
   );
-  assert.equal(
-    resolveBackTarget("/admin/tow-truck/intracity"),
-    "/admin/tow-truck/intracity"
-  );
+  assert.equal(resolveBackTarget("/admin/tow-truck/intracity"), "/admin/tow-truck/intracity");
   assert.equal(
     resolveBackTarget("?page=3"),
     "/admin/tow-truck?page=3",
-    "Legacy search-only string must prepend /admin/tow-truck"
+    "Legacy search-only string must prepend /admin/tow-truck",
   );
   assert.equal(
     resolveBackTarget(null),
     "/admin/tow-truck",
-    "Null fromQueue falls back safely to default queue"
+    "Null fromQueue falls back safely to default queue",
   );
 });
 
@@ -239,17 +249,17 @@ test("Stale-Row Protection: Switching service type drops placeholderData to prev
   assert.equal(
     resolvePlaceholder(prevData, prevQuery, 2),
     undefined,
-    "Switching from IntraCity (1) to InterCity (2) must clear placeholderData"
+    "Switching from IntraCity (1) to InterCity (2) must clear placeholderData",
   );
   assert.equal(
     resolvePlaceholder(prevData, prevQuery, undefined),
     undefined,
-    "Switching from IntraCity (1) to All (undefined) must clear placeholderData"
+    "Switching from IntraCity (1) to All (undefined) must clear placeholderData",
   );
   assert.deepEqual(
     resolvePlaceholder(prevData, prevQuery, 1),
     prevData,
-    "Staying on IntraCity (1) preserves placeholderData for smooth page transition"
+    "Staying on IntraCity (1) preserves placeholderData for smooth page transition",
   );
 });
 
@@ -267,39 +277,69 @@ test("Router File Structure: Verifies routes 'intracity', 'intercity', and ':ord
   const intercityIdx = routerSource.indexOf('path: "intercity"');
   const orderIdIdx = routerSource.indexOf('path: ":orderId"');
 
-  assert.ok(intracityIdx < orderIdIdx, "Static 'intracity' route must precede dynamic ':orderId' route");
-  assert.ok(intercityIdx < orderIdIdx, "Static 'intercity' route must precede dynamic ':orderId' route");
+  assert.ok(
+    intracityIdx < orderIdIdx,
+    "Static 'intracity' route must precede dynamic ':orderId' route",
+  );
+  assert.ok(
+    intercityIdx < orderIdIdx,
+    "Static 'intercity' route must precede dynamic ':orderId' route",
+  );
 });
 
 // ─── 7. AdminSidebar Hierarchical Integration ────────────────────────────────
 
-test("AdminSidebar Structure: Contains integrated Tow Truck hierarchical sub-navigation", () => {
-  const sidebarSource = fs.readFileSync(
+// P2.5 deliberately relocates the three services from the queue into the existing
+// sidebar/Sheet. Test destinations and single ownership, not obsolete inline JSX.
+test("AdminSidebar: single service navigation owner with capability checks", () => {
+  const sidebar = fs.readFileSync(
     path.resolve(root, "src/modules/admin/components/layout/AdminSidebar.tsx"),
-    "utf8"
+    "utf8",
   );
-
-  assert.ok(sidebarSource.includes('to="/admin/tow-truck"'), "Must contain root Tow Truck link");
-  assert.ok(sidebarSource.includes('to="/admin/tow-truck/intracity"'), "Must contain IntraCity sub-link");
-  assert.ok(sidebarSource.includes('to="/admin/tow-truck/intercity"'), "Must contain InterCity sub-link");
-  assert.ok(sidebarSource.includes("isTowTruckActive"), "Must check isTowTruckActive");
-  assert.ok(sidebarSource.includes('role="group"'), "Must group sub-links with role='group'");
+  const queue = fs.readFileSync(
+    path.resolve(root, "src/modules/tow-truck/pages/TowTruckOperationsPage.tsx"),
+    "utf8",
+  );
+  const layout = fs.readFileSync(
+    path.resolve(root, "src/modules/admin/components/layout/AdminLayout.tsx"),
+    "utf8",
+  );
+  assert.ok(sidebar.includes("<TowTruckOperationsNav"));
+  assert.ok(sidebar.includes("canViewTow &&"));
+  assert.ok(sidebar.includes("isAdminRouteVisible(towRoute)"));
+  assert.ok(sidebar.includes("can(towRoute.permission)"));
+  assert.ok(
+    !queue.includes("<TowTruckOperationsNav"),
+    "Queue must not duplicate contextual navigation",
+  );
+  assert.ok(layout.includes("<AdminSidebar mobile"), "Existing Sheet must expose the same sidebar");
+  assert.ok(layout.includes("lg:hidden"), "Sheet trigger remains available below desktop");
+  for (const [workspace, route] of [
+    ["all", "/admin/tow-truck"],
+    ["intracity", "/admin/tow-truck/intracity"],
+    ["intercity", "/admin/tow-truck/intercity"],
+  ]) {
+    assert.equal(buildWorkspaceNavigationUrl(workspace), route);
+  }
 });
 
-// ─── 8. TowTruckOperationsNav Accessibility & Responsiveness ─────────────────
-
-test("Operations Nav Component: Implements accessible landmarks and attributes", () => {
-  const navSource = fs.readFileSync(
+test("Operations Nav: semantic links, current location, focus and 44px targets", () => {
+  const nav = fs.readFileSync(
     path.resolve(root, "src/modules/tow-truck/components/TowTruckOperationsNav.tsx"),
-    "utf8"
+    "utf8",
   );
-
-  assert.ok(navSource.includes("<nav"), "Must render semantic <nav> element");
-  assert.ok(navSource.includes("aria-label="), "Must provide aria-label for navigation landmark");
-  assert.ok(navSource.includes("aria-current="), "Must set aria-current on active workspace");
-  assert.ok(navSource.includes("focus-visible:ring-"), "Must define visible focus indicator");
-  assert.ok(navSource.includes("grid-cols-3"), "Must use compact 3-segment grid for mobile efficiency");
-  assert.ok(navSource.includes("min-h-[40px]"), "Must provide accessible touch targets for mobile operators");
+  const css = fs.readFileSync(
+    path.resolve(root, "src/modules/admin/components/layout/adminNavigation.css"),
+    "utf8",
+  );
+  assert.ok(nav.includes("<nav"));
+  assert.ok(nav.includes("aria-label="));
+  assert.ok(nav.includes("aria-current="));
+  assert.ok(nav.includes("<NavLink"));
+  assert.ok(nav.includes("buildWorkspaceNavigationUrl"));
+  assert.ok(css.includes(".admin-context-link:focus-visible"));
+  assert.ok(css.includes("min-height: 44px"));
+  assert.ok(css.includes("prefers-reduced-motion"));
 });
 
 // ─── 9. Arabic & English i18n Translation Parity ─────────────────────────────
@@ -328,14 +368,24 @@ test("i18n Parity: Complete 1-to-1 parity between towTruckAr and towTruckEn for 
   for (const k of phase2aKeys) {
     assert.ok(k in towTruckAr, `Missing key in towTruckAr: ${k}`);
     assert.ok(k in towTruckEn, `Missing key in towTruckEn: ${k}`);
-    assert.ok(typeof towTruckAr[k] === "string" && towTruckAr[k].length > 0, `Empty translation for ${k} in ar`);
-    assert.ok(typeof towTruckEn[k] === "string" && towTruckEn[k].length > 0, `Empty translation for ${k} in en`);
+    assert.ok(
+      typeof towTruckAr[k] === "string" && towTruckAr[k].length > 0,
+      `Empty translation for ${k} in ar`,
+    );
+    assert.ok(
+      typeof towTruckEn[k] === "string" && towTruckEn[k].length > 0,
+      `Empty translation for ${k} in en`,
+    );
   }
 
   // Verify full parity across entire dictionary
   const arKeys = Object.keys(towTruckAr);
   const enKeys = Object.keys(towTruckEn);
-  assert.equal(arKeys.length, enKeys.length, "Arabic and English dictionaries must have exact same number of keys");
+  assert.equal(
+    arKeys.length,
+    enKeys.length,
+    "Arabic and English dictionaries must have exact same number of keys",
+  );
   for (const k of arKeys) {
     assert.ok(k in towTruckEn, `Key '${k}' in towTruckAr is missing in towTruckEn`);
   }

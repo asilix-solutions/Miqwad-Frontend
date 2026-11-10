@@ -1,5 +1,5 @@
 /** Admin shell: persistent desktop navigation and an accessible mobile drawer. */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Menu, X } from "lucide-react";
@@ -11,6 +11,15 @@ import { AdminTopbar } from "./AdminTopbar";
 export function AdminLayout() {
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  useEffect(() => {
+    // A Sheet opened on mobile must not coexist with desktop navigation after resize.
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpen(false);
+    };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
   return (
     <div className="flex min-h-screen bg-[var(--color-app-bg,#F5F6FA)]">
       <AdminSidebar />
@@ -22,7 +31,7 @@ export function AdminLayout() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="lg:hidden"
+                  className="min-h-11 min-w-11 lg:hidden"
                   aria-label={t("towTruck.navigation")}
                 >
                   <Menu aria-hidden="true" />
@@ -39,7 +48,7 @@ export function AdminLayout() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute end-3 top-3"
+                    className="absolute end-3 top-3 min-h-11 min-w-11"
                     aria-label={t("towTruck.closeNavigation")}
                   >
                     <X aria-hidden="true" />

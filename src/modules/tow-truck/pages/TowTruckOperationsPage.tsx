@@ -1,63 +1,63 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Link,
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Network,
-  RefreshCw,
-  Route,
-  Truck,
-  Search,
-} from "lucide-react";
-import { cn } from "@shared/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAppSelector } from "@app/store";
+import { AlertCircle, ChevronLeft, ChevronRight, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTowTruckDetail, useTowTruckQueue } from "../hooks/useTowTruckQueries";
+import { useTowTruckDetail, useTowTruckQueue, TOW_PAGE_SIZE } from "../hooks/useTowTruckQueries";
 import { TowTruckQuickPreviewDrawer } from "../components/TowTruckQuickPreviewDrawer";
-import { TowTruckTable } from "../components/TowTruckTable";
+import { TowTruckTable, type TowTruckQueueDirection } from "../components/TowTruckTable";
 import { TowTruckMobileList } from "../components/TowTruckMobileList";
 import { TowTruckInterCityTable } from "../components/TowTruckInterCityTable";
 import { TowTruckInterCityMobileList } from "../components/TowTruckInterCityMobileList";
 import { TowTruckCorridorExplorer } from "../components/TowTruckCorridorExplorer";
 import { TowTruckNetworkModal } from "../components/TowTruckNetworkModal";
 import { useAvailableRoadsQuery } from "@modules/admin/hooks/useRoadsQueries";
-import {
-  TowTruckQueueSearchFilter,
-  type TowTruckLocalFilterKey,
-  type TowTruckLocalCounts,
-} from "../components/TowTruckQueueSearchFilter";
-import {
-  resolveTowTruckWorkspace,
-  workspaceToServiceType,
-} from "../lib/towTruckWorkspace";
-import { TowTruckOperationsNav } from "../components/TowTruckOperationsNav";
+import { TowTruckQueueSearchFilter } from "../components/TowTruckQueueSearchFilter";
+import { resolveTowTruckWorkspace, workspaceToServiceType } from "../lib/towTruckWorkspace";
 import { formatTowTruckSyncTime } from "../lib/towTruckDate";
 import { readFailureMessage } from "../lib/assignmentFeedback";
+import { driverOperationBlocks, initialOperationBlocks } from "../lib/driverOperationGuards";
+import { cancellationBlocks } from "../lib/cancellationJournal";
+import type { TowTruckOrder } from "../lib/towTruckModel";
+import { readQueueReturn, safeQueueUrl, restoreQueuePosition } from "../lib/queueContinuity";
 import "../towTruck.css";
+
+// Advisory copy only. This function cannot authorize assignment or resolve an outcome.
+function queueAdvice(
+  order: TowTruckOrder,
+  held: boolean,
+): { title: string; reason: string; tone: TowTruckQueueDirection["tone"] } {
+  if (held) return { title: "qVerifyRecord", reason: "qSessionHold", tone: "warning" };
+  if (order.dispatchService === "unknown")
+    return { title: "qVerifyService", reason: "qUnverifiedService", tone: "warning" };
+  if (order.status === "Canceled" || order.status === "Received")
+    return { title: "qReviewClosed", reason: "qReadOnlyAdvice", tone: "muted" };
+  if (order.dispatchService === "intracity" && order.assignment === "unassigned")
+    return { title: "qAssignmentBlocked", reason: "qLocalEligibility", tone: "blocked" };
+  if (order.assignment === "unknown" || !order.status)
+    return { title: "qVerifyOrder", reason: "qIncompleteState", tone: "warning" };
+  if (order.isInterCity ? !order.hasInterCityRoute : order.stage === "checkDetails")
+    return { title: "qReviewLocation", reason: "qLocationEvidence", tone: "warning" };
+  if (!order.vehicle) return { title: "qReviewVehicle", reason: "qReadOnlyAdvice", tone: "review" };
+  if (order.assignment === "assigned")
+    return {
+      title: "qReviewState",
+      reason: order.dispatchService === "intracity" ? "qLocalReplacement" : "qDriverRecorded",
+      tone: "muted",
+    };
+  return { title: "qReviewAssignment", reason: "qEligibilityInDetails", tone: "review" };
+}
 
 function Loading() {
   const { t } = useTranslation();
   return (
-    <div className="tow-loading" role="status">
-      <span className="sr-only">{t("towTruck.loading")}</span>
-      {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="tow-skeleton" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-      ))}
+    <div className="tow-empty" role="status">
+      <p>{t("towTruck.loading")}</p>
     </div>
   );
 }
-
 function ReadError({
   retry,
   stale = false,
@@ -82,60 +82,72 @@ function ReadError({
   );
 }
 
+// Reference browsing stays secondary and mounts its read queries only on demand.
+function QueueReferences() {
+  const [selectedCorridorId, setSelectedCorridorId] = useState<number | null>(null);
+  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
+  const roads = useAvailableRoadsQuery();
+  return (
+    <>
+      <TowTruckCorridorExplorer
+        selectedCorridorId={selectedCorridorId}
+        onSelectCorridor={setSelectedCorridorId}
+        onOpenNetworkView={() => setIsNetworkModalOpen(true)}
+      />
+      <TowTruckNetworkModal
+        open={isNetworkModalOpen}
+        onClose={() => setIsNetworkModalOpen(false)}
+        roads={roads.data ?? []}
+        selectedCorridorId={selectedCorridorId}
+        onSelectCorridor={setSelectedCorridorId}
+      />
+    </>
+  );
+}
+
 export function TowTruckOperationsPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeLocalFilter, setActiveLocalFilter] = useState<TowTruckLocalFilterKey>("all");
-
   const [params, setParams] = useSearchParams();
-
   const workspace = resolveTowTruckWorkspace(location.pathname);
   const numericServiceType = workspaceToServiceType(workspace);
+  const [referencesOpen, setReferencesOpen] = useState(false);
 
-  const [selectedCorridorId, setSelectedCorridorId] = useState<number | null>(null);
-  const [prevWorkspace, setPrevWorkspace] = useState(workspace);
-  const [isNetworkModalOpen, setIsNetworkModalOpen] = useState(false);
-  const availableRoadsQuery = useAvailableRoadsQuery();
-
-  if (prevWorkspace !== workspace) {
-    setPrevWorkspace(workspace);
-    setSelectedCorridorId(null);
-  }
-
-  // Backward-compatibility: redirect legacy ?serviceType=intracity or ?serviceType=intercity
   useEffect(() => {
     const rawServiceType = params.get("serviceType");
     if (rawServiceType === "intracity" || rawServiceType === "intercity") {
-      const nextParams = new URLSearchParams(params);
-      nextParams.delete("serviceType");
-      const qs = nextParams.toString();
-      navigate(`/admin/tow-truck/${rawServiceType}${qs ? `?${qs}` : ""}`, {
-        replace: true,
-      });
+      const next = new URLSearchParams(params);
+      next.delete("serviceType");
+      const qs = next.toString();
+      navigate(`/admin/tow-truck/${rawServiceType}${qs ? `?${qs}` : ""}`, { replace: true });
     }
   }, [params, navigate]);
 
   const previewId = params.get("preview") || params.get("orderId");
   const validPreviewId =
     !!previewId && /^[1-9]\d*$/.test(previewId) && Number.isSafeInteger(Number(previewId));
-
   const requestedPage = Number(params.get("page") ?? 1);
   const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-  const trackSearch = params.get("trackNumber") ?? "";
-
+  const trackSearch = params.get("trackNumber")?.trim() ?? "";
   const queue = useTowTruckQueue(page, trackSearch, numericServiceType);
   const detail = useTowTruckDetail(validPreviewId ? previewId : undefined);
-
   const queueRef = useRef<HTMLDivElement>(null);
   const queueHeading = useRef<HTMLHeadingElement>(null);
-  const returnTarget = useRef<string | undefined>(undefined);
-  const scrollPosition = useRef(0);
+  const restoredEntry = useRef<string | null>(null);
+  const interruptedEntry = useRef<string | null>(null);
+  const queueUrl = safeQueueUrl(`${location.pathname}${location.search}`) ?? "/admin/tow-truck";
+  const returnContext = useMemo(() => readQueueReturn(location.state), [location.state]);
+  const focusQueueHeading =
+    !!location.state &&
+    typeof location.state === "object" &&
+    location.state.focusQueueHeading === true;
   const totalPages = Math.max(1, queue.data?.totalPages ?? 1);
   const updating = queue.isFetching || detail.isFetching;
-  const updatedAt = queue.dataUpdatedAt;
-
-  const syncTime = formatTowTruckSyncTime(updatedAt, i18n.language);
+  const hasCurrentData = !!queue.data && !queue.isPlaceholderData && queue.data.page === page;
+  const syncTime = hasCurrentData
+    ? formatTowTruckSyncTime(queue.dataUpdatedAt, i18n.language)
+    : null;
   const updatedText = syncTime
     ? t("towTruck.updated", { time: syncTime })
     : t("towTruck.notUpdated");
@@ -145,27 +157,74 @@ export function TowTruckOperationsPage() {
       queue.data &&
       !queue.isPlaceholderData &&
       !queue.isError &&
+      !queue.isFetching &&
       page > Math.max(1, queue.data.totalPages)
     ) {
       const next = new URLSearchParams(params);
       next.set("page", String(Math.max(1, queue.data.totalPages)));
       setParams(next, { replace: true });
     }
-  }, [queue.data, queue.isPlaceholderData, queue.isError, page, params, setParams]);
+  }, [
+    queue.data,
+    queue.isPlaceholderData,
+    queue.isError,
+    queue.isFetching,
+    page,
+    params,
+    setParams,
+  ]);
 
-  const restoreQueueFocus = () => {
-    const row = queueRef.current?.querySelector<HTMLElement>(
-      `[data-order-id="${returnTarget.current}"]`,
-    );
-    (row ?? queueHeading.current)?.focus({ preventScroll: true });
-    window.scrollTo({ top: scrollPosition.current, behavior: "instant" });
-  };
+  const restoreQueueFocus = useCallback(() => {
+    if (
+      validPreviewId ||
+      restoredEntry.current === location.key ||
+      interruptedEntry.current === location.key ||
+      document.querySelector('[data-tow-preview][data-state="open"]')
+    )
+      return;
+    if (queue.isPending || queue.isPlaceholderData || (!hasCurrentData && !queue.isError)) return;
+    const context = returnContext?.url === queueUrl ? returnContext : null;
+    if (restoreQueuePosition(queueRef.current, queueHeading.current, context)) {
+      if (!context && focusQueueHeading) window.scrollTo({ top: 0, behavior: "instant" });
+      restoredEntry.current = location.key;
+    }
+  }, [
+    validPreviewId,
+    location.key,
+    queue.isPending,
+    queue.isPlaceholderData,
+    queue.isError,
+    hasCurrentData,
+    returnContext,
+    focusQueueHeading,
+    queueUrl,
+  ]);
+
+  useEffect(() => {
+    if (
+      validPreviewId ||
+      (!returnContext && !focusQueueHeading) ||
+      (returnContext && returnContext.url !== queueUrl)
+    )
+      return;
+    // Do not steal focus if the operator starts another task while the list is loading.
+    const interrupt = () => {
+      interruptedEntry.current = location.key;
+    };
+    document.addEventListener("pointerdown", interrupt, { once: true });
+    document.addEventListener("keydown", interrupt, { once: true });
+    const frame = requestAnimationFrame(restoreQueueFocus);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("pointerdown", interrupt);
+      document.removeEventListener("keydown", interrupt);
+    };
+  }, [validPreviewId, returnContext, focusQueueHeading, queueUrl, location.key, restoreQueueFocus]);
 
   const refresh = () => {
     void queue.refetch();
     if (validPreviewId) void detail.refetch();
   };
-
   const changePage = (value: number) => {
     const next = new URLSearchParams(params);
     if (value > 1) next.set("page", String(value));
@@ -174,456 +233,239 @@ export function TowTruckOperationsPage() {
     queueHeading.current?.focus({ preventScroll: true });
     queueRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
   };
-
   const handleTrackSearchSubmit = (value: string) => {
     const next = new URLSearchParams(params);
-    if (value.trim()) {
-      next.set("trackNumber", value.trim());
-    } else {
-      next.delete("trackNumber");
-    }
+    if (value.trim()) next.set("trackNumber", value.trim());
+    else next.delete("trackNumber");
     next.delete("page");
     setParams(next);
   };
-
-  const handleTrackSearchClear = () => {
-    const next = new URLSearchParams(params);
-    next.delete("trackNumber");
-    next.delete("page");
-    setParams(next);
-  };
-
-  const rawItems = useMemo(() => queue.data?.items ?? [], [queue.data?.items]);
-
-  const previewOrder = useMemo(() => {
-    if (!previewId || !validPreviewId) return null;
-    return detail.data ?? rawItems.find((o) => o.id === previewId) ?? null;
-  }, [previewId, validPreviewId, detail.data, rawItems]);
-
-  const localCounts: TowTruckLocalCounts = useMemo(
-    () => ({
-      all: rawItems.length,
-      unassigned: rawItems.filter((o) => o.assignment === "unassigned").length,
-      assigned: rawItems.filter((o) => o.assignment === "assigned").length,
-      paid: rawItems.filter((o) => o.paymentStatus === "Paid").length,
-      attention: rawItems.filter((o) => o.stage === "checkDetails").length,
-    }),
-    [rawItems],
+  const handleTrackSearchClear = () => handleTrackSearchSubmit("");
+  // Never label a previous query's placeholder rows as current matches.
+  const rawItems = useMemo(
+    () => (hasCurrentData ? (queue.data?.items ?? []) : []),
+    [hasCurrentData, queue.data?.items],
+  );
+  const previewOrder = useMemo(
+    () =>
+      !previewId || !validPreviewId ? null : detail.data?.id === previewId ? detail.data : null,
+    [previewId, validPreviewId, detail.data],
   );
 
-  const displayedOrders = useMemo(() => {
-    switch (activeLocalFilter) {
-      case "unassigned":
-        return rawItems.filter((o) => o.assignment === "unassigned");
-      case "assigned":
-        return rawItems.filter((o) => o.assignment === "assigned");
-      case "paid":
-        return rawItems.filter((o) => o.paymentStatus === "Paid");
-      case "attention":
-        return rawItems.filter((o) => o.stage === "checkDetails");
-      default:
-        return rawItems;
-    }
-  }, [rawItems, activeLocalFilter]);
+  const actor = useAppSelector((state) => state.auth.user?.id) ?? "";
+  const qc = useQueryClient();
+  const subscribe = useCallback((notify: () => void) => qc.getQueryCache().subscribe(notify), [qc]);
+  const heldIds = useSyncExternalStore(
+    subscribe,
+    () => {
+      if (!actor) return "";
+      const sessionHeld = driverOperationBlocks(qc, actor) || initialOperationBlocks(qc, actor);
+      return rawItems
+        .filter((order) => sessionHeld || cancellationBlocks(qc, actor, order.id))
+        .map((order) => order.id)
+        .join(",");
+    },
+    () => "",
+  );
+  const directions = useMemo(() => {
+    const held = new Set(heldIds.split(","));
+    return Object.fromEntries(
+      rawItems.map((order) => {
+        const advice = queueAdvice(order, held.has(order.id));
+        return [
+          order.id,
+          {
+            ...advice,
+            title: t(`towTruck.${advice.title}`),
+            reason: t(`towTruck.${advice.reason}`),
+          },
+        ];
+      }),
+    );
+  }, [rawItems, heldIds, t]);
 
   const handleSelectOrder = (id: string) => {
-    scrollPosition.current = window.scrollY;
-    returnTarget.current = id;
-    const next = new URLSearchParams(params);
+    const context = {
+      url: queueUrl,
+      orderId: id,
+      control: "preview" as const,
+      scrollY: window.scrollY,
+    };
+    // Both the underlying queue and the modal entry can restore on browser Back/Forward.
+    navigate(queueUrl, { replace: true, state: { towQueueReturn: context } });
+    const next = new URLSearchParams(queueUrl.split("?")[1]);
     next.set("preview", id);
-    setParams(next);
+    navigate(`${queueUrl.split("?")[0]}?${next}`, { state: { towQueueReturn: context } });
   };
-
   const handleClosePreview = () => {
-    const next = new URLSearchParams(params);
-    next.delete("preview");
-    next.delete("orderId");
-    setParams(next, { replace: true });
-    restoreQueueFocus();
+    const context =
+      returnContext?.url === queueUrl
+        ? returnContext
+        : validPreviewId
+          ? {
+              url: queueUrl,
+              orderId: previewId,
+              control: "preview" as const,
+              scrollY: window.scrollY,
+            }
+          : null;
+    navigate(queueUrl, { replace: true, state: { towQueueReturn: context } });
   };
-
-  const subtitleText =
-    workspace === "intracity"
-      ? t("towTruck.subtitleIntraCity")
-      : workspace === "intercity"
-      ? t("towTruck.subtitleInterCity")
-      : t("towTruck.subtitleAll");
-
+  const listProps = {
+    orders: rawItems,
+    directions,
+    fromQueue: queueUrl,
+    selectedOrderId: previewId ?? undefined,
+    onSelectOrder: handleSelectOrder,
+  };
+  const queueTitle = t(
+    `towTruck.${workspace === "all" ? "qAllRequests" : workspace === "intracity" ? "navIntraCityBadge" : "navInterCityBadge"}`,
+  );
   return (
-    <div className="tow-workspace" dir={i18n.dir()}>
-      {/* Contextual Breadcrumb */}
-      <nav
-        aria-label={t("towTruck.breadcrumbLabel")}
-        className="flex items-center gap-1.5 text-xs text-ink-500 mb-2 select-none"
-      >
-        <Link
-          to="/admin/dashboard"
-          className="hover:text-ink-900 transition-colors"
-        >
-          {t("towTruck.breadcrumbDashboard")}
-        </Link>
-        <ChevronLeft
-          size={12}
-          className="rtl:rotate-0 rotate-180 text-ink-400 shrink-0"
-          aria-hidden="true"
-        />
-        <Link
-          to="/admin/tow-truck"
-          className={cn(
-            "transition-colors",
-            workspace === "all"
-              ? "font-semibold text-ink-900 pointer-events-none"
-              : "hover:text-ink-900",
-          )}
-          aria-current={workspace === "all" ? "page" : undefined}
-        >
-          {t("towTruck.breadcrumbTowTruck")}
-        </Link>
-        {workspace !== "all" && (
-          <>
-            <ChevronLeft
-              size={12}
-              className="rtl:rotate-0 rotate-180 text-ink-400 shrink-0"
-              aria-hidden="true"
-            />
-            <span
-              className="font-semibold text-[var(--color-brand-blue)]"
-              aria-current="page"
-            >
-              {workspace === "intracity"
-                ? t("towTruck.navIntraCityBadge")
-                : t("towTruck.navInterCityBadge")}
-            </span>
-          </>
-        )}
-      </nav>
-
-      {/* Compact Contextual Header */}
-      {workspace === "intercity" ? (
-        <header className="tow-page-header">
-          <div className="tow-page-heading">
-            <div className="tow-brand-icon bg-[var(--color-brand-blue)]">
-              <Route size={22} aria-hidden="true" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-blue)]">
-                  {t("towTruck.interCityHeaderTitle")}
-                </h1>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-2xs bg-blue-50 border-blue-200 text-blue-800">
-                  <Route size={12} className="shrink-0 text-blue-600" aria-hidden="true" />
-                  <span>{t("towTruck.navInterCityBadge")}</span>
-                </span>
-              </div>
-              <p className="tow-subtitle">{t("towTruck.interCityHeaderSubtitle")}</p>
-            </div>
-          </div>
-          <div className="tow-page-actions flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsNetworkModalOpen(true)}
-              className="h-8 text-xs font-semibold text-[var(--color-brand-blue)] border-blue-200 bg-blue-50/60 hover:bg-blue-100/80 gap-1.5"
-              aria-label={t("towTruck.viewNetworkAriaLabel")}
-            >
-              <Network size={14} className="text-blue-600 shrink-0" aria-hidden="true" />
-              <span>{t("towTruck.viewNetwork")}</span>
-            </Button>
-            <Link
-              to="/admin/reference?tab=routes"
-              className="tow-general-link inline-flex items-center gap-1.5"
-            >
-              <Route size={14} aria-hidden="true" />
-              <span>{t("towTruck.intercityRoutesAdmin")}</span>
-            </Link>
-            <Link to="/admin/orders" className="tow-general-link">
-              <span>{t("towTruck.allOrders")}</span>
-            </Link>
-          </div>
-        </header>
-      ) : (
-        <header className="tow-page-header">
-          <div className="tow-page-heading">
-            <div className="tow-brand-icon">
-              <Truck size={22} aria-hidden="true" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-blue)]">
-                  {t("towTruck.title")}
-                </h1>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border shadow-2xs",
-                    workspace === "intracity"
-                      ? "bg-amber-50 border-amber-200 text-amber-800"
-                      : "bg-ink-100/70 border-ink-200 text-ink-700",
-                  )}
-                >
-                  {workspace === "intracity" ? (
-                    <MapPin size={12} className="shrink-0 text-amber-600" aria-hidden="true" />
-                  ) : (
-                    <Truck size={12} className="shrink-0 text-ink-500" aria-hidden="true" />
-                  )}
-                  <span>
-                    {workspace === "intracity"
-                      ? t("towTruck.navIntraCityBadge")
-                      : t("towTruck.navAllBadge")}
-                  </span>
-                </span>
-              </div>
-              <p className="tow-subtitle">{subtitleText}</p>
-            </div>
-          </div>
-          <div className="tow-page-actions flex items-center gap-2">
-            <Link
-              to="/admin/reference?tab=routes"
-              className="tow-general-link inline-flex items-center gap-1.5"
-            >
-              <Route size={14} aria-hidden="true" />
-              <span>{t("towTruck.intercityRoutesAdmin")}</span>
-            </Link>
-            <Link to="/admin/orders" className="tow-general-link">
-              <span>{t("towTruck.allOrders")}</span>
-            </Link>
-          </div>
-        </header>
-      )}
-
-      {/* Mobile Workspace Switcher: 1-tap switching without opening drawer, hidden on desktop where AdminSidebar is primary */}
-      <TowTruckOperationsNav
-        activeWorkspace={workspace}
-        trackSearch={trackSearch}
-        className="mb-3.5 lg:hidden"
-      />
-
-      {/* InterCity Corridor Exploration Layer (Phase 2C.2) */}
-      {workspace === "intercity" && (
-        <TowTruckCorridorExplorer
-          selectedCorridorId={selectedCorridorId}
-          onSelectCorridor={setSelectedCorridorId}
-          onOpenNetworkView={() => setIsNetworkModalOpen(true)}
-        />
-      )}
+    <div className="tow-workspace tow-queue-page" dir={i18n.dir()}>
+      <header className="tow-q-heading">
+        <h1>{t("towTruck.qOperationsTitle")}</h1>
+      </header>
 
       <div className="tow-workbench">
-        <section
-          ref={queueRef}
-          className="tow-queue-panel"
-          aria-labelledby="tow-queue-heading"
-        >
-          <div className="tow-queue-header">
+        <section ref={queueRef} className="tow-queue-panel" aria-labelledby="tow-queue-heading">
+          <div className="tow-q-tools">
             <div>
               <h2 id="tow-queue-heading" ref={queueHeading} tabIndex={-1}>
-                {t("towTruck.queue")}
+                {queueTitle}
               </h2>
-              <p className="tow-queue-caption">
-                {t("towTruck.queueCaption", {
-                  total: queue.data?.total ?? 0,
-                  batch: queue.data?.items.length ?? 0,
-                })}
+              <p className="tow-q-minor">
+                {t("towTruck.qNewestFirst")} ·{" "}
+                <a href="#tow-queue-pages">{t("towTruck.qPageOptions")}</a>
               </p>
             </div>
-            <div className="tow-queue-actions">
-              <span className="tow-queue-sync" role="status">
-                {queue.isFetching ? t("towTruck.syncing") : updatedText}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={updating}
-                onClick={refresh}
-                aria-label={t("towTruck.refreshQueue")}
-              >
-                <RefreshCw
-                  size={15}
-                  className={updating ? "animate-spin" : ""}
-                  aria-hidden="true"
-                />
-                <span>{t("towTruck.refresh")}</span>
-              </Button>
-            </div>
+            <TowTruckQueueSearchFilter
+              trackSearchValue={trackSearch}
+              onTrackSearchSubmit={handleTrackSearchSubmit}
+              onTrackSearchClear={handleTrackSearchClear}
+              isSearching={queue.isFetching}
+            />
           </div>
-
-
-
-          {/* Search & Local Filter Bar */}
-          <TowTruckQueueSearchFilter
-            trackSearchValue={trackSearch}
-            onTrackSearchSubmit={handleTrackSearchSubmit}
-            onTrackSearchClear={handleTrackSearchClear}
-            isSearching={queue.isFetching}
-            activeLocalFilter={activeLocalFilter}
-            onLocalFilterChange={setActiveLocalFilter}
-            localCounts={localCounts}
-          />
-
-          <div className="tow-queue-content">
+          {trackSearch && (
+            <p className="tow-q-search-context">
+              {t("towTruck.searchActiveNotice")} <bdi>{trackSearch}</bdi>
+            </p>
+          )}
+          <div className="tow-queue-content" aria-busy={queue.isFetching}>
             {queue.isError && (
-              <ReadError retry={refresh} stale={!!queue.data} error={queue.error} />
+              <ReadError retry={refresh} stale={hasCurrentData} error={queue.error} />
             )}
-
-            {queue.isPending ? (
+            {queue.isPlaceholderData ? (
+              <div className="tow-empty" role="status">
+                <p>{t("towTruck.qChangingResults")}</p>
+              </div>
+            ) : queue.isPending ? (
               <Loading />
-            ) : rawItems.length > 0 && displayedOrders.length > 0 ? (
+            ) : rawItems.length > 0 ? (
               workspace === "intercity" ? (
                 <>
-                  {/* Desktop View: Specialized InterCity Operations Table */}
-                  <TowTruckInterCityTable
-                    orders={displayedOrders}
-                    selectedOrderId={previewId ?? undefined}
-                    onSelectOrder={handleSelectOrder}
-                    className="hidden md:block"
-                  />
-
-                  {/* Mobile View: Specialized InterCity Operations Cards */}
-                  <TowTruckInterCityMobileList
-                    orders={displayedOrders}
-                    selectedOrderId={previewId ?? undefined}
-                    onSelectOrder={handleSelectOrder}
-                    className="md:hidden"
-                  />
+                  <TowTruckInterCityTable {...listProps} />
+                  <TowTruckInterCityMobileList {...listProps} />
                 </>
               ) : (
                 <>
-                  {/* Desktop View: Operations Table */}
-                  <TowTruckTable
-                    orders={displayedOrders}
-                    selectedOrderId={previewId ?? undefined}
-                    onSelectOrder={handleSelectOrder}
-                    className="hidden md:block"
-                  />
-
-                  {/* Mobile View: Operations Cards */}
-                  <TowTruckMobileList
-                    orders={displayedOrders}
-                    selectedOrderId={previewId ?? undefined}
-                    onSelectOrder={handleSelectOrder}
-                    className="md:hidden"
-                  />
+                  <TowTruckTable {...listProps} />
+                  <TowTruckMobileList {...listProps} />
                 </>
               )
-            ) : rawItems.length > 0 && displayedOrders.length === 0 ? (
-              /* Local Filter Zero State */
-              <div className="tow-empty py-12 text-center">
-                <AlertCircle size={32} className="mx-auto text-ink-400 mb-2" aria-hidden="true" />
-                <h3 className="font-semibold text-ink-800 text-sm">{t("towTruck.noFilterResults")}</h3>
-                <p className="text-xs text-ink-500 mt-1 mb-4">
-                  {t("towTruck.localFilterScope", { count: localCounts.all })}
-                </p>
-                <Button variant="outline" size="sm" onClick={() => setActiveLocalFilter("all")}>
-                  {t("towTruck.resetFilter")}
-                </Button>
-              </div>
             ) : (
               !queue.isError && (
-                /* Global, Service-Type, or Search Zero State */
-                <div className="tow-empty py-12 text-center">
-                  {workspace !== "all" ? (
-                    <>
-                      <Route size={32} className="mx-auto text-ink-400 mb-2" aria-hidden="true" />
-                      <h3 className="font-semibold text-ink-800 text-sm">
-                        {t("towTruck.noServiceFilterResults")}
-                      </h3>
-                      <p className="text-xs text-ink-500 mt-1 mb-4">
-                        {t("towTruck.emptyHint")}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          navigate(
-                            trackSearch
-                              ? `/admin/tow-truck?trackNumber=${encodeURIComponent(trackSearch)}`
-                              : "/admin/tow-truck",
-                          )
-                        }
-                      >
-                        {t("towTruck.resetFilter")}
-                      </Button>
-                    </>
-                  ) : trackSearch ? (
-                    <>
-                      <Search size={32} className="mx-auto text-ink-400 mb-2" aria-hidden="true" />
-                      <h3 className="font-semibold text-ink-800 text-sm">
-                        {t("towTruck.noSearchResults")}
-                      </h3>
-                      <p className="text-xs text-ink-500 mt-1 mb-4">
-                        <bdi>{trackSearch}</bdi>
-                      </p>
-                      <Button variant="outline" size="sm" onClick={handleTrackSearchClear}>
-                        {t("towTruck.clearSearch")}
-                      </Button>
-                    </>
+                <div className="tow-empty" role="status">
+                  <Search size={28} aria-hidden="true" />
+                  <h3>
+                    {t(
+                      `towTruck.${trackSearch ? "noSearchResults" : page > 1 ? "emptyPage" : workspace !== "all" ? "noServiceFilterResults" : "emptyTitle"}`,
+                    )}
+                  </h3>
+                  <p>{t("towTruck.qEmptyRead")}</p>
+                  {trackSearch ? (
+                    <Button variant="outline" onClick={handleTrackSearchClear}>
+                      {t("towTruck.clearSearch")}
+                    </Button>
                   ) : page > 1 ? (
-                    <>
-                      <Truck size={32} className="mx-auto text-ink-400 mb-2" aria-hidden="true" />
-                      <h3 className="font-semibold text-ink-800 text-sm">{t("towTruck.emptyPage")}</h3>
-                      <p className="text-xs text-ink-500 mt-1 mb-4">{t("towTruck.emptyHint")}</p>
-                      <Button variant="outline" size="sm" onClick={() => changePage(1)}>
-                        {t("towTruck.firstPage")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Truck size={32} className="mx-auto text-ink-400 mb-2" aria-hidden="true" />
-                      <h3 className="font-semibold text-ink-800 text-sm">{t("towTruck.emptyTitle")}</h3>
-                      <p className="text-xs text-ink-500 mt-1">{t("towTruck.emptyHint")}</p>
-                    </>
-                  )}
+                    <Button variant="outline" onClick={() => changePage(1)}>
+                      {t("towTruck.firstPage")}
+                    </Button>
+                  ) : null}
                 </div>
               )
             )}
           </div>
-
-          {/* Pagination */}
-          {queue.data && totalPages > 1 && (
-            <nav className="tow-pagination" aria-label={t("towTruck.pagination")}>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={page <= 1 || queue.isFetching}
+          <footer className="tow-q-footer" id="tow-queue-pages" tabIndex={-1}>
+            <div className="tow-q-read-info">
+              <span role="status">
+                {hasCurrentData
+                  ? t("towTruck.qLoadedBatch", { count: rawItems.length })
+                  : t("towTruck.notUpdated")}
+              </span>
+              <span>{queue.isFetching ? t("towTruck.syncing") : updatedText}</span>
+              <button
+                type="button"
+                className="tow-q-refresh"
+                disabled={updating}
+                onClick={refresh}
+                aria-label={t("towTruck.refreshQueue")}
+              >
+                <RefreshCw size={15} aria-hidden="true" />
+                {t("towTruck.refresh")}
+              </button>
+            </div>
+            <nav className="tow-q-pagination" aria-label={t("towTruck.pagination")}>
+              <span>{t("towTruck.qPageSize", { count: TOW_PAGE_SIZE })}</span>
+              <button
+                type="button"
+                disabled={!hasCurrentData || page <= 1 || queue.isFetching || queue.isError}
                 aria-label={t("towTruck.previous")}
                 onClick={() => changePage(page - 1)}
               >
                 <ChevronLeft className="rtl:rotate-180" aria-hidden="true" />
-              </Button>
-              <span>{t("towTruck.pageOf", { page, total: totalPages })}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={page >= totalPages || queue.isFetching}
+              </button>
+              <span aria-live="polite">
+                {hasCurrentData ? t("towTruck.qPageNumber", { page }) : "—"}
+              </span>
+              <button
+                type="button"
+                disabled={
+                  !hasCurrentData || page >= totalPages || queue.isFetching || queue.isError
+                }
                 aria-label={t("towTruck.next")}
                 onClick={() => changePage(page + 1)}
               >
                 <ChevronRight className="rtl:rotate-180" aria-hidden="true" />
-              </Button>
+              </button>
             </nav>
-          )}
+          </footer>
         </section>
-
-        {/* Quick Preview Drawer */}
         <TowTruckQuickPreviewDrawer
           open={validPreviewId}
           order={previewOrder}
           isLoading={validPreviewId && detail.isPending && !previewOrder}
           isError={validPreviewId && (detail.isError || (!detail.isPending && !previewOrder))}
           onClose={handleClosePreview}
+          onRestoreFocus={restoreQueueFocus}
+          fromQueue={queueUrl}
+          returnScrollY={returnContext?.url === queueUrl ? returnContext.scrollY : undefined}
           onRefresh={() => void detail.refetch()}
           isRefreshing={detail.isFetching}
         />
       </div>
-
-      {/* On-Demand InterCity Transport Network Modal (Phase 2C.2) */}
+      <div className="tow-q-secondary">
+        <Link to="/admin/reference?tab=routes">{t("towTruck.intercityRoutesAdmin")}</Link>
+        <Link to="/admin/orders">{t("towTruck.allOrders")}</Link>
+      </div>
       {workspace === "intercity" && (
-        <TowTruckNetworkModal
-          open={isNetworkModalOpen}
-          onClose={() => setIsNetworkModalOpen(false)}
-          roads={availableRoadsQuery.data ?? []}
-          selectedCorridorId={selectedCorridorId}
-          onSelectCorridor={setSelectedCorridorId}
-        />
+        <details
+          className="tow-q-references"
+          onToggle={(event) => setReferencesOpen(event.currentTarget.open)}
+        >
+          <summary>{t("towTruck.qBrowseReference")}</summary>
+          {referencesOpen && <QueueReferences />}
+        </details>
       )}
     </div>
   );

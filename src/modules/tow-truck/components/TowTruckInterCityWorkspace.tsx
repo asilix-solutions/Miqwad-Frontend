@@ -9,17 +9,19 @@
  * 5. On-Demand Transport Network Modal & Cancellation Confirmation Dialog
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { TowTruckOrder } from "../lib/towTruckModel";
 import type { DriverOperations } from "../hooks/useDriverOperations";
 import type { TowTruckCancellation } from "../hooks/useTowTruckCancellation";
-import { TowTruckInterCityHeader } from "./TowTruckInterCityHeader";
+import { TowTruckWorkspaceHeader } from "./TowTruckWorkspaceHeader";
 import { TowTruckOperationalSummary } from "./TowTruckOperationalSummary";
 import { TowTruckInterCityCorridorSection } from "./TowTruckInterCityCorridorSection";
 import { TowTruckInterCityPartiesSection } from "./TowTruckInterCityPartiesSection";
 import { TowTruckInterCityVehicleSection } from "./TowTruckInterCityVehicleSection";
 import { TowTruckInterCityFinanceSection } from "./TowTruckInterCityFinanceSection";
 import { TowTruckInterCityDispatchSection } from "./TowTruckInterCityDispatchSection";
-import { TowTruckAdditionalInfoSection } from "./TowTruckAdditionalInfoSection";
+import { TowTruckSupportingInformationSheet } from "./TowTruckSupportingInformationSheet";
+import { TowTruckDecisionEvidence } from "./TowTruckDecisionEvidence";
 import { TowTruckNetworkModal } from "./TowTruckNetworkModal";
 import { TowTruckCancelOrderDialog } from "./TowTruckCancelOrderDialog";
 import { useAvailableRoadsQuery } from "@modules/admin/hooks/useRoadsQueries";
@@ -57,6 +59,7 @@ export function TowTruckInterCityWorkspace({
   onAssignmentBusyChange,
   onAccountDirtyChange,
 }: Props) {
+  const { t } = useTranslation();
   const [networkModalOpen, setNetworkModalOpen] = useState(false);
   const availableRoadsQuery = useAvailableRoadsQuery();
 
@@ -65,9 +68,9 @@ export function TowTruckInterCityWorkspace({
     : null;
 
   return (
-    <>
+    <div className="tow-order-layout">
       {/* 1. Journey-Oriented Header */}
-      <TowTruckInterCityHeader
+      <TowTruckWorkspaceHeader
         order={order}
         onBack={onBack}
         onRefresh={onRefresh}
@@ -81,19 +84,30 @@ export function TowTruckInterCityWorkspace({
       <TowTruckOperationalSummary
         order={order}
         removalHistory={operations.removalHistory}
+        stale={stale}
       />
 
-      {/* 3. Purpose-Built 2-Column Responsive Operational Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Primary Logistical Column (Corridor, Parties, Carrier Dispatch) */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <TowTruckInterCityCorridorSection
-            order={order}
-            onOpenNetworkModal={() => setNetworkModalOpen(true)}
-          />
+      {/* The first screen contains actionable evidence and exactly one real action owner.
+          Full details remain accessible below without dominating initial scanning. */}
+      <div className="tow-p4r-priority">
+        <div className="tow-p4r-priority-evidence">
+          <TowTruckDecisionEvidence order={order} />
+          {Boolean(order.notes?.trim()) && (
+            <section className="tow-p4r-unclassified-notes" aria-label={t("towTruck.notes")}>
+              <h3>{t("towTruck.notes")}</h3>
+              <p>{order.notes}</p>
+            </section>
+          )}
+          <TowTruckSupportingInformationSheet order={order} />
+        </div>
 
-          <TowTruckInterCityPartiesSection order={order} />
-
+        {/* Existing dispatch handlers, journals and mutation guards are mounted ONCE. */}
+        <section
+          id="tow-order-action"
+          className="tow-p4r-priority-action"
+          tabIndex={-1}
+          aria-label={t("towTruck.p4rActionWorkspace")}
+        >
           <TowTruckInterCityDispatchSection
             order={order}
             stale={stale}
@@ -102,17 +116,26 @@ export function TowTruckInterCityWorkspace({
             onAssignmentBusyChange={onAssignmentBusyChange}
             onAccountDirtyChange={onAccountDirtyChange}
           />
-        </div>
-
-        {/* Secondary Supporting Column (Cargo Vehicle, Finances, Notes & Attachments) */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-          <TowTruckInterCityVehicleSection order={order} />
-
-          <TowTruckInterCityFinanceSection order={order} />
-
-          <TowTruckAdditionalInfoSection order={order} />
-        </div>
+        </section>
       </div>
+
+      {/* Full read-only record: one explicit disclosure, not a stack of default-open cards.
+          Required confirmation evidence remains inside the unchanged action owner. */}
+      <details className="tow-p4r-full-record" id="tow-order-record">
+        <summary>
+          <span>{t("towTruck.p4rFullRecord")}</span>
+          <small>{t("towTruck.p4rFullRecordHint")}</small>
+        </summary>
+        <div className="tow-p4r-record-sections">
+          <TowTruckInterCityCorridorSection
+            order={order}
+            onOpenNetworkModal={() => setNetworkModalOpen(true)}
+          />
+          <TowTruckInterCityPartiesSection order={order} />
+          <TowTruckInterCityVehicleSection order={order} />
+          <TowTruckInterCityFinanceSection order={order} />
+        </div>
+      </details>
 
       {/* On-Demand Transport Network Modal */}
       <TowTruckNetworkModal
@@ -129,6 +152,6 @@ export function TowTruckInterCityWorkspace({
         onOpenChange={setCancelDialogOpen}
         cancellation={cancellation}
       />
-    </>
+    </div>
   );
 }
