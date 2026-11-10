@@ -135,12 +135,10 @@ export interface OrderWritePayload {
   trackNumber: string;
 }
 
-/** Initial tow-truck quote; only the dedicated dispatch flow may call this. */
-export interface TowTruckAssignmentPayload {
-  towTruckDriverId: number;
-  cost: number;
-  duration: string;
-}
+/** Service-specific DTO; InterCity must omit quotation fields entirely. */
+export type TowTruckAssignmentPayload =
+  | { towTruckDriverId: number; cost?: never; duration?: never }
+  | { towTruckDriverId: number; cost: number; duration: string };
 
 export interface OrdersListParams {
   pageNumber?: number;
@@ -272,11 +270,15 @@ export const ordersApi = {
         },
       ],
     };
-    const { data } = await apiClient.put<ApiEnvelope<unknown>>(
+    const { data, status } = await apiClient.put<ApiEnvelope<unknown>>(
       `/Orders/${id}/tow-truck-driver`,
       payload,
       config,
     );
+    // This endpoint documents HTTP 200 as its final acknowledgment. In particular,
+    // 202 is acceptance for processing, even with success:true or a matching GET.
+    if (status !== 200)
+      throw new AppError("Unconfirmed assignment response", "ASSIGNMENT_UNCERTAIN");
     if (data?.success === false) {
       // Explicit rejection is distinct from malformed acknowledgment. Do not
       // pass untrusted server text or invent an HTTP validation status.

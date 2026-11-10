@@ -55,6 +55,7 @@ const { ordersApi } = load("src/modules/orders/api/ordersApi.ts");
 const original = {
   id: 19,
   orderType: 3,
+  towTruckServiceType: 2,
   status: 1,
   paymentStatus: null,
   paymentMethod: 3,
@@ -71,7 +72,8 @@ let request = {
   values: { driverId: "15", cost: "150.00", duration: " 30 دقيقة " },
   snapshot: dispatchSnapshot(adaptTowTruck(original)),
 };
-const payload = { towTruckDriverId: 15, cost: 150, duration: "30 دقيقة" };
+// Generic transport/lifecycle coverage uses the still-supported InterCity flow.
+const payload = { towTruckDriverId: 15 };
 function setup(options = {}) {
   let state = options.state ?? { phase: "idle" },
     raw = { ...original, ...options.raw };
@@ -112,6 +114,7 @@ function setup(options = {}) {
       raw = {
         ...raw,
         towTruckDriverId: 15,
+        status: 2,
         duration: "30 دقيقة",
         subtotal: 150,
         totalPrice: 150,
@@ -175,9 +178,15 @@ async function main() {
     for (const paymentStatus of [null, 0, 1])
       assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, paymentStatus })), null);
     for (const absentDriverId of [null, undefined, 0, "0", ""])
-      assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: absentDriverId })), null);
+      assert.equal(
+        initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: absentDriverId })),
+        null,
+      );
     for (const corruptDriverId of [-1, "corrupt", {}])
-      assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: corruptDriverId })), "driverStateUnknown");
+      assert.equal(
+        initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: corruptDriverId })),
+        "driverStateUnknown",
+      );
   });
   await test("wrong order identity/type cannot write", async () => {
     for (const raw of [{ id: 20 }, { orderType: 2 }]) {
@@ -201,7 +210,7 @@ async function main() {
       );
     }
   });
-  await test("cost/duration/unsafe identifiers validated before any GET or PUT", async () => {
+  await test("unsafe identifiers block reads; service-specific quotation validation blocks PUT", async () => {
     for (const change of [
       { cost: "0" },
       { cost: "-1" },
@@ -214,10 +223,14 @@ async function main() {
       { duration: "x".repeat(101) },
       { driverId: "9007199254740992" },
     ]) {
-      const x = setup();
+      const x = setup({ raw: { towTruckServiceType: 1 } });
+      assert.equal(
+        dispatchDraftSchema(true).safeParse({ ...request.values, ...change }).success,
+        false,
+      );
       await submit(x.deps, { ...request, values: { ...request.values, ...change } });
       assert.equal(x.sent(), 0);
-      assert.deepEqual(x.events, []);
+      assert.deepEqual(x.events, change.driverId ? [] : ["driver", "order"]);
     }
   });
   await test("changed financial snapshot requires a new review", async () => {
@@ -303,10 +316,10 @@ async function main() {
     };
     await submit(x.deps, request);
     assert.equal(x.reads(), 2);
-    assert.equal(x.state().phase, "observed");
+    assert.equal(x.state().phase, "uncertain");
     assert.equal(x.state().receipt, undefined);
   });
-  await test("timeout without assignment allows only a new explicit review after fresh GET", async () => {
+  await test("timeout without assignment remains locked; unchanged GET cannot prove finality", async () => {
     let calls = 0;
     const x = setup({
       deps: {
@@ -317,7 +330,7 @@ async function main() {
       },
     });
     await submit(x.deps, request);
-    assert.equal(x.state().phase, "retryable");
+    assert.equal(x.state().phase, "uncertain");
     assert.equal(x.reads(), 2);
     assert.equal(calls, 1);
   });
@@ -352,7 +365,7 @@ async function main() {
     assert.equal(x.state().phase, "accepted");
     assert.equal(x.state().message, "assignmentRefreshFailed");
     x.deps.readOrder = async () =>
-      adaptTowTruck({ ...original, towTruckDriverId: 15, paymentStatus: 1 });
+      adaptTowTruck({ ...original, towTruckDriverId: 15, status: 2, paymentStatus: 1 });
     await checkOutcome(x.deps);
     assert.equal(x.state().phase, "success");
     assert.equal(x.sent(), 1);
@@ -363,12 +376,12 @@ async function main() {
     assert.equal(x.state().phase, "accepted");
     assert.equal(x.marked(), true);
   });
-  await test("restored uncertain journal blocks submission until explicit GET recovery", async () => {
+  await test("restored uncertain journal stays locked after read-only recovery", async () => {
     const x = setup({ state: { phase: "uncertain" } });
     await submit(x.deps, request);
     assert.equal(x.sent(), 0);
     await checkOutcome(x.deps);
-    assert.equal(x.state().phase, "retryable");
+    assert.equal(x.state().phase, "uncertain");
     assert.equal(x.reads(), 1);
   });
   await test("failed list invalidation does not skip authoritative post-write read", async () => {
@@ -387,13 +400,13 @@ async function main() {
       assert.equal(url, "/Orders/19/tow-truck-driver");
       assert.deepEqual(body, payload);
       assert.equal(config._retry, true);
-      return { data: { success: true } };
+      return { status: 200, data: { success: true } };
     };
     await ordersApi.assignTowTruckDriver("19", payload);
   });
   await test("API does not accept malformed 2xx or explicit failure as success", async () => {
     for (const data of [null, {}, { success: "true" }, { success: false, errors: ["Rejected"] }]) {
-      transport = async () => ({ data });
+      transport = async () => ({ status: 200, data });
       await assert.rejects(() => ordersApi.assignTowTruckDriver("19", payload));
     }
   });
@@ -557,6 +570,7 @@ async function main() {
   });
   await test("explicit success:false is a controlled rejection without invented HTTP status", async () => {
     transport = async () => ({
+      status: 200,
       data: { success: false, message: { unexpected: "data" }, errors: ["private"] },
     });
     await assert.rejects(
@@ -587,10 +601,7 @@ async function main() {
       initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: undefined })),
       null,
     );
-    assert.equal(
-      initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: 0 })),
-      null,
-    );
+    assert.equal(initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: 0 })), null);
     assert.equal(
       initialAssignmentBlock(adaptTowTruck({ ...original, towTruckDriverId: -1 })),
       "driverStateUnknown",
@@ -632,11 +643,11 @@ async function main() {
     assert.equal(en.assignmentRejectedTitle, "Unable to assign tow truck driver");
     assert.equal(
       ar.assignmentDriverBusy,
-      "السائق المحدد مشغول بطلب آخر حاليًا. اختر سائقًا آخر، ثم راجع العرض وأكد إرساله.",
+      "السائق المحدد مشغول بطلب آخر حاليًا. اختر سائقًا آخر، ثم راجع الإسناد وأكّد إرساله.",
     );
     assert.equal(
       en.assignmentDriverBusy,
-      "The selected driver is busy with another order. Choose another driver, review the quote, and confirm submission again.",
+      "The selected driver is busy with another order. Choose another driver, review assignment, and confirm again.",
     );
   });
   await test("driver page validation handles role 5, boolean/numeric isActive, and empty pages", async () => {
@@ -669,10 +680,35 @@ async function main() {
     assert.equal(canSelectDriver({ id: "0", role: 5, isActive: true }), false);
 
     // Invalid driver page throws
-    assert.throws(() => validateDriverPage({ items: [{ id: "15", role: 4, isActive: true }], page: 1, pageSize: 10, total: 1, totalPages: 1 }, 1));
-    assert.throws(() => validateDriverPage({ items: [{ id: "15", role: 5, isActive: true }, { id: "15", role: 5, isActive: true }], page: 1, pageSize: 10, total: 2, totalPages: 1 }, 1));
+    assert.throws(() =>
+      validateDriverPage(
+        {
+          items: [{ id: "15", role: 4, isActive: true }],
+          page: 1,
+          pageSize: 10,
+          total: 1,
+          totalPages: 1,
+        },
+        1,
+      ),
+    );
+    assert.throws(() =>
+      validateDriverPage(
+        {
+          items: [
+            { id: "15", role: 5, isActive: true },
+            { id: "15", role: 5, isActive: true },
+          ],
+          page: 1,
+          pageSize: 10,
+          total: 2,
+          totalPages: 1,
+        },
+        1,
+      ),
+    );
   });
-  await test("order state immediately after driver removal supports assignment only when InWaiting and unpaid", async () => {
+  await test("InterCity without receipt: only Waiting/unpaid may assign, with driver-only payload", async () => {
     // 1. Order immediately after driver removal in InWaiting, unpaid (paymentStatus: null | 0 | 1)
     for (const paymentStatus of [null, 0, 1]) {
       const removedWaitingOrder = adaptTowTruck({
@@ -694,7 +730,7 @@ async function main() {
       towTruckDriverId: null,
     });
     assert.equal(removedPaidOrder.assignment, "unassigned");
-    assert.equal(initialAssignmentBlock(removedPaidOrder), "initialPaymentBlocked");
+    assert.equal(initialAssignmentBlock(removedPaidOrder), "assignmentPaidInterCityBlocked");
 
     // 3. Order after driver removal that is no longer in InWaiting (e.g. status: 2 Ready)
     const removedProgressedOrder = adaptTowTruck({

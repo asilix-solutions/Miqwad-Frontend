@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { replacementBlock, serviceSnapshot, type RemovalEvidence } from "./reassignment";
 import type { PaginatedResponse } from "@shared/types/api";
 import type { AdminUserRow } from "@modules/admin/types";
 import type { TowTruckOrder } from "./towTruckModel";
@@ -51,7 +52,9 @@ export function dispatchDraftSchema(quoteAllowed: boolean) {
         const message = quoteAllowed ? quoteCostError(value) : null;
         if (message) ctx.addIssue({ code: "custom", message });
       }),
-    duration: z.string().trim().min(1, "durationRequired").max(100, "durationTooLong"),
+    duration: quoteAllowed
+      ? z.string().trim().min(1, "durationRequired").max(100, "durationTooLong")
+      : z.string(),
   });
 }
 export type DispatchDraft = z.infer<ReturnType<typeof dispatchDraftSchema>>;
@@ -61,6 +64,7 @@ export type DispatchDraft = z.infer<ReturnType<typeof dispatchDraftSchema>>;
 export function dispatchSnapshot(order: TowTruckOrder): string {
   return JSON.stringify([
     order.id,
+    serviceSnapshot(order),
     order.statusCode,
     order.paymentCode,
     order.paymentMethodCode,
@@ -73,21 +77,19 @@ export function dispatchSnapshot(order: TowTruckOrder): string {
   ]);
 }
 
-// Initial assignment is now confirmed; all other driver mutations remain out of scope.
-export function initialAssignmentBlock(order: TowTruckOrder): string | null {
+// Shared UI/preflight decision. Paid eligibility is limited to verified replacement.
+export function initialAssignmentBlock(
+  order: TowTruckOrder,
+  evidence: RemovalEvidence = null,
+): string | null {
   if (order.assignment === "unknown") return "driverStateUnknown";
   if (order.assignment === "assigned") return "initialNeedsUnassigned";
   if (order.statusCode !== 1 || order.status !== "InWaiting") return "initialNeedsWaiting";
 
-  // InterCity safeguards: requires valid agreed price and blocks paid order submissions
-  if (order.isInterCity) {
-    if (order.total === null || order.total < 0.01) {
-      return "intercityMissingAgreedPrice";
-    }
-    if (order.paymentCode === 2 || order.paymentStatus === "Paid") {
-      return "assignmentPaidInterCityBlocked";
-    }
-  }
+  if (order.dispatchService === "unknown") return "r2ServiceUnverified";
+  if (evidence) return replacementBlock(order, evidence);
+  if (order.isInterCity && (order.paymentCode === 2 || order.paymentStatus === "Paid"))
+    return "assignmentPaidInterCityBlocked";
 
   // Legacy new requests use null/0. Pending=1 is the existing attested mapping.
   // Other payment codes remain unverified and must not enter an initial quote.
@@ -96,6 +98,11 @@ export function initialAssignmentBlock(order: TowTruckOrder): string | null {
     (order.paymentCode !== null && order.paymentCode !== 0 && order.paymentCode !== 1)
   )
     return "initialPaymentBlocked";
+  // Waiting/payment/totals and absent session history cannot distinguish a new
+  // local quote from a previously assigned order after removal by another actor.
+  // The current GET contract exposes neither first-assignment authority nor the
+  // original contractual cost. Block BOTH local workflows until it does.
+  if (order.dispatchService === "intracity") return "r2LocalEligibilityUnverified";
   return null;
 }
 

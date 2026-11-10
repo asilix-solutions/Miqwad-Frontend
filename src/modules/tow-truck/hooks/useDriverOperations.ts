@@ -1,9 +1,11 @@
+import { removalHistoryKey } from "../lib/reassignment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { store, useAppSelector } from "@app/store";
 import { adminApi, activateUser, deactivateUser } from "@modules/admin/api/adminApi";
 import { adminKeys } from "@modules/admin/hooks/useAdminQueries";
 import { ordersApi } from "@modules/orders/api/ordersApi";
 import { orderKeys } from "@modules/orders/hooks/useOrdersQueries";
+import { cancellationConflictsWithDriverMutation } from "../lib/cancellationJournal";
 import { adaptTowTruck } from "../lib/towTruckModel";
 import {
   driverOperationAuthorized,
@@ -14,6 +16,7 @@ import {
   type DriverOperationState,
   type DriverProposal,
   type OperationDependencies,
+  type OperationIdentity,
 } from "../lib/driverOperations";
 import {
   driverOperationKey,
@@ -39,6 +42,9 @@ export function useDriverOperations(orderId: string) {
   });
   const authorized = (kind: DriverAction) =>
     driverOperationAuthorized(actor, store.getState().auth.user, kind);
+  const mutationConflict = (operation: Pick<OperationIdentity, "kind" | "orderId">) =>
+    initialOperationBlocks(qc, actor) ||
+    cancellationConflictsWithDriverMutation(qc, actor, operation);
   const deps: OperationDependencies = {
     get: () => {
       const value = qc.getQueryData<DriverOperationState>(key);
@@ -51,7 +57,7 @@ export function useDriverOperations(orderId: string) {
     },
     set: (value) => qc.setQueryData(key, value),
     authorized,
-    conflict: () => initialOperationBlocks(qc, actor),
+    conflict: mutationConflict,
     readOrder: async (id) => {
       await qc.cancelQueries({ queryKey: orderKeys.detail(id), exact: true });
       const raw = await ordersApi.get(id);
@@ -77,6 +83,8 @@ export function useDriverOperations(orderId: string) {
     },
     mark: (operation) => writeDriverJournal(actor, operation),
     clear: () => sessionStorage.removeItem(driverOperationMarker(actor)),
+    verifiedRemoval: (receipt) =>
+      sessionStorage.setItem(removalHistoryKey(actor, receipt.orderId), JSON.stringify(receipt)),
     invalidate: async (operation) => {
       if (!authorized(operation.kind)) return;
       await qc.invalidateQueries({ queryKey: orderKeys.all, refetchType: "none" });
@@ -118,7 +126,7 @@ export function useDriverOperations(orderId: string) {
     locked: driverOperationBlocks(qc, actor),
     initialBlocked: driverOperationBlocks(qc, actor),
     removalHistory: removalHistory(actor, orderId),
-    initialConflict: () => initialOperationBlocks(qc, actor),
+    mutationConflict,
   };
 }
 export type DriverOperations = ReturnType<typeof useDriverOperations>;

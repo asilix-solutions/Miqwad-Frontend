@@ -60,6 +60,8 @@ const {
   submitOrderCancellation,
   reconcileOrderCancellation,
   cancellationRejection,
+  resetCancellationReview,
+  operationCancellationLocked,
 } = load("src/modules/tow-truck/lib/cancellationModel.ts");
 const { ordersApi } = load("src/modules/orders/api/ordersApi.ts");
 const { towTruckAr, towTruckEn } = load("src/modules/tow-truck/i18n.ts");
@@ -94,6 +96,10 @@ function createCancellationFixture(options = {}) {
   const calls = [];
 
   const d = {
+    actor: "admin-1",
+    conflict: () => false,
+    mark: () => {},
+    clear: () => {},
     orderId: String(raw.id),
     authorized: () => options.authorized ?? true,
     get: () => state,
@@ -103,6 +109,7 @@ function createCancellationFixture(options = {}) {
     readOrder: async (id) => {
       orderReads++;
       calls.push({ type: "readOrder", id });
+      if (options.onRead) return options.onRead(orderReads);
       return adaptTowTruck(raw);
     },
     sendCancel: async (id) => {
@@ -173,18 +180,42 @@ async function runCancellationChecks() {
 
     const res = await ordersApi.cancel("105");
     assert.equal(recordedMethod, "PUT", "Cancellation must use HTTP PUT");
-    assert.equal(recordedUrl, "/Orders/105/cancel", "Cancellation endpoint path must be /Orders/{id}/cancel");
+    assert.equal(
+      recordedUrl,
+      "/Orders/105/cancel",
+      "Cancellation endpoint path must be /Orders/{id}/cancel",
+    );
     assert.equal(recordedData, undefined, "Cancellation request must not send a body");
-    assert.equal(recordedConfig?._retry, true, "Must use noMutationReplay to avoid auto-replay on 401");
+    assert.equal(
+      recordedConfig?._retry,
+      true,
+      "Must use noMutationReplay to avoid auto-replay on 401",
+    );
     assert.equal(res, null, "Null data envelope returns null");
   }
 
   // 2. Canonical PaymentStatus 2 = Paid parsing
   {
-    assert.equal(paymentStatusFromNumber(2), "Paid", "Numeric PaymentStatus 2 must resolve to Paid");
-    assert.equal(paymentStatusFromNumber(1), "Pending", "Numeric PaymentStatus 1 must resolve to Pending");
-    assert.equal(paymentStatusFromNumber(3), "Failed", "Numeric PaymentStatus 3 must resolve to Failed");
-    assert.equal(paymentStatusFromNumber(4), "Refunded", "Numeric PaymentStatus 4 must resolve to Refunded");
+    assert.equal(
+      paymentStatusFromNumber(2),
+      "Paid",
+      "Numeric PaymentStatus 2 must resolve to Paid",
+    );
+    assert.equal(
+      paymentStatusFromNumber(1),
+      "Pending",
+      "Numeric PaymentStatus 1 must resolve to Pending",
+    );
+    assert.equal(
+      paymentStatusFromNumber(3),
+      "Failed",
+      "Numeric PaymentStatus 3 must resolve to Failed",
+    );
+    assert.equal(
+      paymentStatusFromNumber(4),
+      "Refunded",
+      "Numeric PaymentStatus 4 must resolve to Refunded",
+    );
     assert.equal(paymentStatusFromNumber(null), "", "Null payment status must resolve to empty");
     assert.equal(paymentStatusFromNumber(0), "", "0 payment status must resolve to empty");
   }
@@ -195,14 +226,22 @@ async function runCancellationChecks() {
     for (const ps of [1, "1", "Pending"]) {
       const unpaidOrder = adaptTowTruck({ ...sampleRawOrder, status: 1, paymentStatus: ps });
       const unpaidCheck = orderCancellationEligibility(unpaidOrder);
-      assert.equal(unpaidCheck.eligible, true, `Pending unpaid order (${ps}) must be eligible for cancellation`);
+      assert.equal(
+        unpaidCheck.eligible,
+        true,
+        `Pending unpaid order (${ps}) must be eligible for cancellation`,
+      );
     }
 
     // B. Paid order (numeric 2, string "2", string "Paid") -> Ineligible with reason 'paid'
     for (const ps of [2, "2", "Paid"]) {
       const paidOrder = adaptTowTruck({ ...sampleRawOrder, status: 1, paymentStatus: ps });
       const paidCheck = orderCancellationEligibility(paidOrder);
-      assert.equal(paidCheck.eligible, false, `Paid order (${ps}) must be ineligible for cancellation`);
+      assert.equal(
+        paidCheck.eligible,
+        false,
+        `Paid order (${ps}) must be ineligible for cancellation`,
+      );
       assert.equal(paidCheck.reason, "paid", `Ineligibility reason for ${ps} must be 'paid'`);
     }
 
@@ -210,22 +249,38 @@ async function runCancellationChecks() {
     for (const st of [5, "Canceled"]) {
       const cancelledOrder = adaptTowTruck({ ...sampleRawOrder, status: st, paymentStatus: 1 });
       const cancelledCheck = orderCancellationEligibility(cancelledOrder);
-      assert.equal(cancelledCheck.eligible, false, `Already cancelled order (${st}) must be ineligible`);
-      assert.equal(cancelledCheck.reason, "alreadyCancelled", "Ineligibility reason must be 'alreadyCancelled'");
+      assert.equal(
+        cancelledCheck.eligible,
+        false,
+        `Already cancelled order (${st}) must be ineligible`,
+      );
+      assert.equal(
+        cancelledCheck.reason,
+        "alreadyCancelled",
+        "Ineligibility reason must be 'alreadyCancelled'",
+      );
     }
 
     // D. Missing or unspecified payment status (null, undefined, 0, "0") -> Eligible
     for (const ps of [null, undefined, 0, "0"]) {
       const missingPayOrder = adaptTowTruck({ ...sampleRawOrder, status: 1, paymentStatus: ps });
       const check = orderCancellationEligibility(missingPayOrder);
-      assert.equal(check.eligible, true, `Missing/unspecified payment (${ps}) must be eligible for cancellation`);
+      assert.equal(
+        check.eligible,
+        true,
+        `Missing/unspecified payment (${ps}) must be eligible for cancellation`,
+      );
     }
 
     // E. Other non-paid states: Failed (3, "3", "Failed"), Refunded (4, "4", "Refunded") -> Eligible
     for (const ps of [3, "3", "Failed", 4, "4", "Refunded"]) {
       const otherPayOrder = adaptTowTruck({ ...sampleRawOrder, status: 1, paymentStatus: ps });
       const check = orderCancellationEligibility(otherPayOrder);
-      assert.equal(check.eligible, true, `Non-paid status (${ps}) must be eligible for cancellation`);
+      assert.equal(
+        check.eligible,
+        true,
+        `Non-paid status (${ps}) must be eligible for cancellation`,
+      );
     }
 
     // F. Order with assigned driver but unpaid -> Still eligible (payment status is separate from driver)
@@ -237,13 +292,21 @@ async function runCancellationChecks() {
       towTruckDriverFullName: "Assigned Driver",
     });
     const assignedUnpaidCheck = orderCancellationEligibility(assignedUnpaidOrder);
-    assert.equal(assignedUnpaidCheck.eligible, true, "Driver assignment must not imply paid status");
+    assert.equal(
+      assignedUnpaidCheck.eligible,
+      true,
+      "Driver assignment must not imply paid status",
+    );
 
     // G. Invalid / corrupt payment status -> Ineligible with reason 'unknownPayment'
     for (const ps of [99, "corrupt_payment_value"]) {
       const corruptPaymentOrder = adaptTowTruck({ ...sampleRawOrder, paymentStatus: ps });
       const corruptCheck = orderCancellationEligibility(corruptPaymentOrder);
-      assert.equal(corruptCheck.eligible, false, `Corrupted payment status (${ps}) must be rejected safely`);
+      assert.equal(
+        corruptCheck.eligible,
+        false,
+        `Corrupted payment status (${ps}) must be rejected safely`,
+      );
       assert.equal(corruptCheck.reason, "unknownPayment");
     }
   }
@@ -260,8 +323,12 @@ async function runCancellationChecks() {
 
       assert.equal(f.sendCount, 1, "Must send exactly 1 cancel mutation");
       assert.equal(f.invalidations, 1, "Must invalidate queries on success");
-      assert.equal(f.state.phase, "success", "Successful outcome with string status must set phase to success");
-      assert.equal(f.state.message, "cancelSuccess");
+      assert.equal(
+        f.state.phase,
+        "accepted",
+        "Mutation DTO cannot substitute for an authoritative GET",
+      );
+      assert.equal(f.state.message, "cancelAcknowledged");
     }
 
     // B. Real backend DTO returning status as string "InWaiting" (un-updated snapshot)
@@ -274,7 +341,11 @@ async function runCancellationChecks() {
 
       assert.equal(f.sendCount, 1);
       assert.equal(f.invalidations, 1);
-      assert.equal(f.state.phase, "success", "Must not falsely reject un-updated backend snapshot");
+      assert.equal(
+        f.state.phase,
+        "accepted",
+        "Stale mutation DTO acknowledges but does not verify cancellation",
+      );
     }
 
     // C. Real backend DTO returning null data envelope
@@ -287,7 +358,11 @@ async function runCancellationChecks() {
 
       assert.equal(f.sendCount, 1);
       assert.equal(f.invalidations, 1);
-      assert.equal(f.state.phase, "success", "Null data envelope must succeed");
+      assert.equal(
+        f.state.phase,
+        "accepted",
+        "Null data acknowledges the write without proving final state",
+      );
     }
   }
 
@@ -307,7 +382,11 @@ async function runCancellationChecks() {
     const p2 = submitOrderCancellation(f.d, order);
     await Promise.all([p1, p2]);
 
-    assert.equal(f.sendCount, 1, "Concurrent duplicate submission must be guarded and only send 1 mutation");
+    assert.equal(
+      f.sendCount,
+      1,
+      "Concurrent duplicate submission must be guarded and only send 1 mutation",
+    );
   }
 
   // 6. Paid order rejected in UI before sending
@@ -346,8 +425,12 @@ async function runCancellationChecks() {
     assert.equal(f.sendCount, 1);
     assert.equal(f.state.phase, "conflict", "409 error must transition to conflict phase");
     assert.equal(f.state.isConflict, true);
-    assert.equal(f.state.message, "لا يمكن إلغاء الطلب بعد سداد قيمته.");
-    assert.equal(f.invalidations, 1, "409 must invalidate queries so fresh payment status is displayed");
+    assert.equal(f.state.message, "cancelBlockedPaid", "Do not render arbitrary backend messages");
+    assert.equal(
+      f.invalidations,
+      1,
+      "409 must invalidate queries so fresh payment status is displayed",
+    );
   }
 
   // 9. HTTP 404 Privacy-preserving handling
@@ -360,7 +443,11 @@ async function runCancellationChecks() {
     assert.equal(f.sendCount, 1);
     assert.equal(f.state.phase, "rejected");
     assert.equal(f.state.isPrivacy404, true);
-    assert.equal(f.state.message, "cancelNotFound", "404 must map to privacy-preserving message key");
+    assert.equal(
+      f.state.message,
+      "cancelNotFound",
+      "404 must map to privacy-preserving message key",
+    );
     assert.equal(f.invalidations, 1, "404 must invalidate list/queries");
 
     // Verify privacy-preserving messages in Arabic & English
@@ -390,22 +477,32 @@ async function runCancellationChecks() {
 
     // Attempting to submit again while uncertain is blocked (no automatic retry)
     await submitOrderCancellation(f.d, order);
-    assert.equal(f.sendCount, 1, "Must not automatically repeat mutation while outcome is uncertain");
+    assert.equal(
+      f.sendCount,
+      1,
+      "Must not automatically repeat mutation while outcome is uncertain",
+    );
 
     // Case A: Reconciliation GET discovers server DID cancel the order
     f.setRaw({ status: 5 });
     await reconcileOrderCancellation(f.d, order.id);
-    assert.equal(f.orderReads, 1, "Reconciliation executes GET read");
-    assert.equal(f.state.phase, "success", "If GET observes status Canceled, outcome reconciles to success");
+    assert.equal(f.orderReads, 2, "Fresh preflight and reconciliation each execute GET");
+    assert.equal(
+      f.state.phase,
+      "success",
+      "If GET observes status Canceled, outcome reconciles to success",
+    );
 
-    // Case B: Reconciliation GET discovers server did NOT cancel the order
+    // Case B: A non-canceled GET cannot prove that the request did not execute
     const f2 = createCancellationFixture({ throwError: networkError });
     await submitOrderCancellation(f2.d, order);
     assert.equal(f2.state.phase, "uncertain");
 
     f2.setRaw({ status: 1 }); // Still in waiting
     await reconcileOrderCancellation(f2.d, order.id);
-    assert.equal(f2.state.phase, "idle", "If GET observes order was not cancelled, resets to idle for review");
+    assert.equal(f2.state.phase, "uncertain", "A non-canceled GET MUST NOT release the retry lock");
+    await submitOrderCancellation(f2.d, order);
+    assert.equal(f2.sendCount, 1);
   }
 
   // 11. Cancellation Error Normalization (cancellationRejection helper)
@@ -463,8 +560,14 @@ async function runCancellationChecks() {
     ];
 
     for (const key of requiredKeys) {
-      assert.ok(typeof towTruckAr[key] === "string" && towTruckAr[key].length > 0, `Arabic key ${key} must exist`);
-      assert.ok(typeof towTruckEn[key] === "string" && towTruckEn[key].length > 0, `English key ${key} must exist`);
+      assert.ok(
+        typeof towTruckAr[key] === "string" && towTruckAr[key].length > 0,
+        `Arabic key ${key} must exist`,
+      );
+      assert.ok(
+        typeof towTruckEn[key] === "string" && towTruckEn[key].length > 0,
+        `English key ${key} must exist`,
+      );
     }
   }
 
@@ -509,7 +612,12 @@ async function runCancellationChecks() {
   {
     transport = () => ({
       status: 200,
-      data: { success: false, message: "Order cancellation refused", data: null, errors: ["Refused"] },
+      data: {
+        success: false,
+        message: "Order cancellation refused",
+        data: null,
+        errors: ["Refused"],
+      },
     });
     let thrown = null;
     try {
@@ -521,6 +629,8 @@ async function runCancellationChecks() {
     assert.equal(thrown.code, "OP_REJECTED", "Envelope with success: false must throw OP_REJECTED");
   }
 
+  await runR1RecoveryChecks();
+
   console.log("PASS: 16/16 Tow Truck Cancellation & Workflow Safety checks passed successfully.");
 }
 
@@ -528,3 +638,286 @@ runCancellationChecks().catch((err) => {
   console.error("FAIL:", err);
   process.exit(1);
 });
+
+// R1 regressions exercise the same review reset and journal/cache transitions used
+// by the hook. QueryObserver detach/attach and a NEW QueryClient model navigation,
+// remount and document reload; these are behavioral tests, not source searches.
+async function runR1RecoveryChecks() {
+  const { QueryClient, QueryObserver } = req("@tanstack/react-query");
+  const {
+    cancellationKey,
+    cancellationMarker,
+    cancellationState,
+    cancellationBlocks,
+    readCancellationJournal,
+    writeCancellationJournal,
+    clearCancellationJournal,
+  } = load("src/modules/tow-truck/lib/cancellationJournal.ts");
+  const order = adaptTowTruck(sampleRawOrder);
+
+  // T1: Only authoritative read verifies completion, independent of mutation DTO.
+  {
+    const f = createCancellationFixture();
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.state.phase, "success");
+    assert.equal(f.orderReads, 2);
+    assert.equal(f.sendCount, 1);
+    await submitOrderCancellation(f.d, order); // cached pre-write order
+    assert.equal(f.sendCount, 1);
+  }
+  // T2: Explicit rejections consume this review, including application rejection.
+  for (const error of [
+    new AppError("hidden", "CONFLICT", 409),
+    new AppError("hidden", "OP_REJECTED"),
+  ]) {
+    let cleared = 0;
+    const f = createCancellationFixture({
+      throwError: error,
+      deps: {
+        clear: () => {
+          cleared++;
+        },
+      },
+    });
+    await submitOrderCancellation(f.d, order);
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 1);
+    assert.equal(cleared, 1);
+    assert.equal(operationCancellationLocked(f.state), false);
+  }
+  // T3-T5 retain all legacy payment guards in groups 3, 6 and 7 above.
+  // T6: failed fresh read must not write; identity/status validation is also fail-closed.
+  for (const onRead of [
+    async () => {
+      throw new Error("offline");
+    },
+    async () => ({ ...order, id: "999" }),
+    async () => ({ ...order, status: "", statusCode: 99 }),
+  ]) {
+    const f = createCancellationFixture({ onRead });
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 0);
+    assert.equal(f.state.phase, "rejected");
+  }
+  // T7: paid/canceled/changed operational snapshot demands renewed review.
+  for (const delta of [
+    { paymentStatus: 2 },
+    { status: 5 },
+    { towTruckDriverId: 16 },
+    { totalPrice: 201 },
+    { status: 2 },
+  ]) {
+    const f = createCancellationFixture({
+      onRead: async () => adaptTowTruck({ ...sampleRawOrder, ...delta }),
+    });
+    await submitOrderCancellation(f.d, order);
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 0);
+    assert.equal(f.state.phase, "rejected");
+  }
+  // Permission must be checked again after the fresh GET and before mutation.
+  {
+    let authorized = true;
+    const f = createCancellationFixture({
+      onRead: async () => {
+        authorized = false;
+        return order;
+      },
+      deps: { authorized: () => authorized },
+    });
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 0);
+  }
+  // T8: duplicates while the PREflight read is unresolved (not just PUT in flight).
+  {
+    let release;
+    const fresh = new Promise((resolve) => {
+      release = resolve;
+    });
+    const f = createCancellationFixture({ onRead: () => fresh });
+    const first = submitOrderCancellation(f.d, order);
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.orderReads, 1);
+    release(order);
+    await first;
+    assert.equal(f.sendCount, 1);
+  }
+  // T15: inability to save/read back the marker prevents any destructive call.
+  {
+    const f = createCancellationFixture({
+      deps: {
+        mark: () => {
+          throw new Error("quota");
+        },
+      },
+    });
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 0);
+    assert.equal(operationCancellationLocked(f.state), true);
+    assert.equal(f.state.message, "cancelStorage");
+  }
+  // T17: acknowledgment is retained separately when the final read fails.
+  {
+    const f = createCancellationFixture({
+      onRead: async (n) => {
+        if (n > 1) throw new Error("read offline");
+        return order;
+      },
+    });
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.state.phase, "readFailed");
+    assert.equal(f.state.acknowledged, true);
+    assert.equal(f.state.message, "cancelReadFailed");
+    await submitOrderCancellation(f.d, order);
+    assert.equal(f.sendCount, 1);
+  }
+
+  const originalStorage = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
+  const entries = new Map();
+  const storage = {
+    getItem: (key) => entries.get(key) ?? null,
+    setItem: (key, value) => entries.set(key, value),
+    removeItem: (key) => entries.delete(key),
+  };
+  Object.defineProperty(globalThis, "sessionStorage", { configurable: true, value: storage });
+  const clients = [];
+  const client = () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+    clients.push(qc);
+    return qc;
+  };
+  const actor = "admin-1",
+    id = "105",
+    key = cancellationKey(actor, id);
+  let qc = client();
+  let reads = 0,
+    sends = 0,
+    readFails = false,
+    canceled = false;
+  const dependencies = () => ({
+    actor,
+    orderId: id,
+    authorized: () => true,
+    conflict: () => false,
+    get: () => cancellationState(qc, actor, id),
+    set: (next) => qc.setQueryData(key, next),
+    mark: (outcome) => writeCancellationJournal(actor, id, outcome),
+    clear: () => clearCancellationJournal(actor, id),
+    invalidate: async () => {},
+    readOrder: async () => {
+      reads++;
+      if (readFails) throw new Error("offline");
+      return canceled ? { ...order, statusCode: 5, status: "Canceled" } : order;
+    },
+    sendCancel: async () => {
+      sends++;
+      assert.equal(JSON.parse(storage.getItem(cancellationMarker(actor, id))).outcome, "pending");
+      throw new Error("timeout after sending");
+    },
+  });
+  try {
+    // T9: timeout leaves durable unresolved marker, no automatic replay.
+    await submitOrderCancellation(dependencies(), order);
+    assert.equal(sends, 1);
+    assert.equal(reads, 1);
+    assert.equal(cancellationBlocks(qc, actor, id), true);
+    // Persist ONLY minimal non-sensitive identity/outcome; snapshots stay in memory.
+    assert.deepEqual(Object.keys(JSON.parse(storage.getItem(cancellationMarker(actor, id)))), [
+      "version",
+      "actor",
+      "orderId",
+      "outcome",
+    ]);
+    // T10: actual dialog reset helper must preserve unresolved outcome.
+    qc.setQueryData(key, resetCancellationReview(cancellationState(qc, actor, id)));
+    await submitOrderCancellation(dependencies(), order);
+    assert.equal(sends, 1);
+    assert.equal(cancellationState(qc, actor, id).isUncertain, true);
+    // T11: observer remount on same cache, then full reload with new empty cache.
+    let observer = new QueryObserver(qc, { queryKey: key, enabled: false });
+    let unsubscribe = observer.subscribe(() => {});
+    assert.equal(observer.getCurrentResult().data.phase, "uncertain");
+    unsubscribe();
+    observer.destroy();
+    observer = new QueryObserver(qc, { queryKey: key, enabled: false });
+    unsubscribe = observer.subscribe(() => {});
+    assert.equal(observer.getCurrentResult().data.phase, "uncertain");
+    unsubscribe();
+    observer.destroy();
+    qc = client();
+    assert.equal(cancellationState(qc, actor, id).phase, "uncertain");
+    await submitOrderCancellation(dependencies(), order);
+    assert.equal(sends, 1);
+    // T13: an authoritative NON-canceled read does not prove nonexecution.
+    await reconcileOrderCancellation(dependencies(), id);
+    assert.equal(cancellationState(qc, actor, id).phase, "uncertain");
+    await submitOrderCancellation(dependencies(), order);
+    assert.equal(sends, 1);
+    // T14: failed recovery GET keeps lock and record.
+    readFails = true;
+    await reconcileOrderCancellation(dependencies(), id);
+    assert.equal(cancellationState(qc, actor, id).phase, "readFailed");
+    assert.equal(cancellationBlocks(qc, actor, id), true);
+    assert.ok(storage.getItem(cancellationMarker(actor, id)));
+    // T16: other actor/order has no inherited lock, including keys with separators.
+    assert.equal(cancellationBlocks(qc, "admin-2", id), false);
+    assert.equal(cancellationBlocks(qc, actor, "106"), false);
+    assert.notEqual(cancellationMarker("a:b", "c"), cancellationMarker("a", "b:c"));
+    // T12: observation is not attributed to this failed client request.
+    readFails = false;
+    canceled = true;
+    await reconcileOrderCancellation(dependencies(), id);
+    assert.equal(cancellationState(qc, actor, id).phase, "success");
+    assert.equal(cancellationState(qc, actor, id).acknowledged, false);
+    assert.equal(towTruckEn.cancelSuccess, "The latest read shows that the order is canceled.");
+    qc = client();
+    await submitOrderCancellation(dependencies(), order); // stale cache after reload
+    assert.equal(sends, 1);
+    assert.equal(readCancellationJournal(actor, id).phase, "success");
+    // T15: malformed/wrong-identity records fail closed, including on an empty cache.
+    for (const value of [
+      "",
+      "{",
+      "null",
+      JSON.stringify({ version: 1, actor: "other", orderId: id, outcome: "pending" }),
+    ]) {
+      storage.setItem(cancellationMarker(actor, id), value);
+      qc = client();
+      assert.equal(cancellationState(qc, actor, id).message, "cancelStorage");
+      await submitOrderCancellation(dependencies(), order);
+      assert.equal(sends, 1);
+    }
+    // A fresh browser tab session has neither this tab's storage nor QueryClient.
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      value: { ...storage, getItem: () => null },
+    });
+    assert.equal(cancellationBlocks(client(), actor, id), false);
+    Object.defineProperty(globalThis, "sessionStorage", {
+      configurable: true,
+      get: () => {
+        throw new Error("denied");
+      },
+    });
+    assert.equal(readCancellationJournal(actor, id).message, "cancelStorage");
+    assert.throws(() => writeCancellationJournal(actor, id, "pending"));
+  } finally {
+    for (const queryClient of clients) queryClient.clear();
+    if (originalStorage) Object.defineProperty(globalThis, "sessionStorage", originalStorage);
+    else delete globalThis.sessionStorage;
+  }
+  for (const key of [
+    "cancelAcknowledged",
+    "cancelReadFailed",
+    "cancelStorage",
+    "cancelReviewChanged",
+    "cancelReviewFailed",
+    "cancelOperationConflict",
+  ]) {
+    assert.ok(towTruckAr[key]);
+    assert.ok(towTruckEn[key]);
+  }
+  console.log(
+    "PASS: R1 T1–T17 cancellation safety and lifecycle regressions. Run assignment/driver suites for T18.",
+  );
+}

@@ -1,3 +1,9 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { driverOperationBlocks, initialOperationBlocks } from "../lib/driverOperationGuards";
+import { cancellationBlocks } from "../lib/cancellationJournal";
+import { useAppSelector } from "@app/store";
+import { initialAssignmentBlock } from "../lib/dispatchModel";
+import { readRemovalEvidence } from "../lib/reassignment";
 /**
  * @file TowTruckOperationalSummary.tsx
  * @description Operational Summary banner for Tow Truck Workspace.
@@ -14,31 +20,38 @@ interface Props {
   removalHistory?: boolean;
 }
 
-export function TowTruckOperationalSummary({
-  order,
-  removalHistory = false,
-}: Props) {
+export function TowTruckOperationalSummary({ order }: Props) {
   const { t } = useTranslation();
 
-  const nextActionKey = removalHistory
-    ? "opsInitialHeld"
-    : nextActionMessage(order);
+  const actor = useAppSelector((state) => state.auth.user?.id) ?? "";
+  const evidence = readRemovalEvidence(actor, order.id);
+  const qc = useQueryClient();
+  const held =
+    driverOperationBlocks(qc, actor) ||
+    initialOperationBlocks(qc, actor) ||
+    cancellationBlocks(qc, actor, order.id);
+  const nextActionKey = held
+    ? "opsMutationConflict"
+    : order.assignment === "unassigned"
+      ? (initialAssignmentBlock(order, evidence) ??
+        (evidence ? "r2ReplacementReady" : "initialReady"))
+      : nextActionMessage(order);
 
   return (
     <section
-      className="rounded-2xl border border-brand-200 bg-linear-to-r from-brand-50/70 via-white to-brand-50/40 p-5 lg:p-6 shadow-xs space-y-3"
+      className="border-brand-200 from-brand-50/70 to-brand-50/40 space-y-3 rounded-2xl border bg-linear-to-r via-white p-5 shadow-xs lg:p-6"
       aria-labelledby="tow-operational-summary-heading"
     >
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-brand-orange/15 text-brand-orange flex items-center justify-center shrink-0">
+          <div className="bg-brand-orange/15 text-brand-orange flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
             <AlertCircle size={17} aria-hidden="true" />
           </div>
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+            <span className="text-ink-500 text-[11px] font-bold tracking-wider uppercase">
               {t("towTruck.operationalSummary")}
             </span>
-            <h2 id="tow-operational-summary-heading" className="text-base font-bold text-ink-900">
+            <h2 id="tow-operational-summary-heading" className="text-ink-900 text-base font-bold">
               {t("towTruck.verifiedStage")}
             </h2>
           </div>
@@ -47,11 +60,11 @@ export function TowTruckOperationalSummary({
         <TowTruckStageBadge stage={order.stage} />
       </div>
 
-      <div className="rounded-xl border border-brand-200/80 bg-white p-4 shadow-2xs space-y-1.5">
-        <span className="text-xs font-bold text-brand-blue flex items-center gap-1.5">
+      <div className="border-brand-200/80 space-y-1.5 rounded-xl border bg-white p-4 shadow-2xs">
+        <span className="text-brand-blue flex items-center gap-1.5 text-xs font-bold">
           <span>{t("towTruck.nextAction")}:</span>
         </span>
-        <p className="text-xs text-ink-800 font-medium leading-relaxed">
+        <p className="text-ink-800 text-xs leading-relaxed font-medium">
           {t(`towTruck.${nextActionKey}`)}
         </p>
       </div>
