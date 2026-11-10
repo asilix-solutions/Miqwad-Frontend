@@ -5,6 +5,8 @@
  * action (via useLogout — never re-implemented here).
  */
 
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
+import "./adminNavigation.css";
 import type { ReactNode } from "react";
 import { LogOut, User, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -33,38 +35,39 @@ export function AdminTopbar({ children }: AdminTopbarProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-4 sm:px-6 shrink-0"
+      className="admin-topbar shrink-0"
       style={{
         height: "64px",
         backgroundColor: "var(--color-surface, #FFFFFF)",
         borderBlockEnd: "1px solid var(--color-divider, #E5E7EB)",
       }}
     >
-      <div className="flex items-center min-w-0 flex-1">
-        {children}
-      </div>
+      <div className="admin-topbar-leading">{children}</div>
 
-      <div className="flex items-center gap-4 ms-auto">
+      <WorkspaceSwitcher />
+
+      <div className="admin-topbar-account">
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-3 pe-3 ps-1 py-1 rounded-md hover:bg-ink-50 transition-colors"
+                className="admin-account-trigger hover:bg-ink-50 rounded-md"
+                aria-label={t("admin.workspaces.account", { name: user.fullName })}
               >
-                <div className="flex-col items-end hidden sm:flex">
-                  <span className="text-sm font-medium text-ink-900 leading-tight">
+                <div className="admin-account-text">
+                  <span className="text-ink-900 text-sm leading-tight font-medium">
                     {user.fullName}
                   </span>
-                  <span className="text-xs text-ink-500 capitalize">
+                  <span className="text-ink-500 text-xs capitalize">
                     {user.role.replace("_", " ")}
                   </span>
                 </div>
-                <Avatar className="h-9 w-9 bg-brand-100 text-brand-700">
+                <Avatar className="bg-brand-100 text-brand-700 h-9 w-9">
                   <AvatarImage src={user.avatarUrl ?? undefined} alt={user.fullName} />
                   <AvatarFallback>{user.fullName?.charAt(0) ?? "A"}</AvatarFallback>
                 </Avatar>
-                <ChevronDown className="h-4 w-4 text-ink-500 hidden sm:block" aria-hidden />
+                <ChevronDown className="admin-account-chevron text-ink-500 h-4 w-4" aria-hidden />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

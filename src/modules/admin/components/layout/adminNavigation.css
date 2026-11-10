@@ -1,0 +1,164 @@
+/* Navigation styles belong to the shared admin shell, not the queue content. */
+.admin-topbar {
+  display: grid;
+  grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding-inline: 16px;
+}
+.admin-topbar-leading {
+  min-width: 0;
+}
+.admin-topbar-leading > button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.admin-topbar-account {
+  min-width: 0;
+  justify-self: end;
+}
+.admin-workspace-switcher {
+  display: flex;
+  min-width: 0;
+  padding: 3px;
+  gap: 4px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--color-surface-2);
+}
+.admin-workspace-link {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 44px;
+  padding-inline: 12px;
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-ink-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.admin-workspace-link > svg {
+  flex-shrink: 0;
+}
+.admin-workspace-link:hover {
+  background: var(--color-divider);
+}
+.admin-workspace-link[aria-current] {
+  color: var(--color-surface);
+  background: var(--color-brand-blue);
+  font-weight: 700;
+}
+.admin-workspace-full {
+  display: none;
+}
+.admin-account-trigger {
+  display: flex;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.admin-account-text,
+.admin-account-chevron {
+  display: none;
+}
+.admin-context-link:focus-visible,
+.admin-account-trigger:focus-visible,
+.admin-workspace-link:focus-visible {
+  outline: 2px solid var(--color-brand-blue);
+  outline-offset: 3px;
+}
+.admin-service-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-service-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-ink-body);
+  font-size: 14px;
+  line-height: 1.5;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.admin-service-link > svg {
+  flex-shrink: 0;
+}
+.admin-service-link:hover {
+  background: var(--color-surface-2);
+}
+.admin-service-link[aria-current] {
+  background: var(--color-brand-blue);
+  color: var(--color-surface);
+  font-weight: 700;
+}
+@media (min-width: 1280px) {
+  .admin-workspace-full {
+    display: inline;
+  }
+  .admin-workspace-compact {
+    display: none;
+  }
+  .admin-workspace-link {
+    flex-basis: auto;
+  }
+  .admin-account-text {
+    display: flex;
+    flex-direction: column;
+    max-width: 140px;
+  }
+  .admin-account-text > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .admin-account-chevron {
+    display: block;
+  }
+}
+@media (max-width: 639px) {
+  .admin-topbar {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    gap: 4px;
+    padding-inline: 8px;
+  }
+  .admin-workspace-switcher {
+    gap: 2px;
+    padding: 2px;
+  }
+  .admin-workspace-link {
+    gap: 0;
+    padding-inline: 3px;
+    font-size: 12px;
+  }
+  .admin-workspace-link > svg {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-workspace-link {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .admin-workspace-link[aria-current],
+  .admin-service-link[aria-current] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}

@@ -3,6 +3,7 @@
  * @description Dedicated Workspace presentation component for IntraCity Tow Truck Orders.
  * Strictly preserves the established IntraCity layout without redesign (Phase 2D.3 constraint).
  */
+import { useTranslation } from "react-i18next";
 import type { TowTruckOrder } from "../lib/towTruckModel";
 import type { DriverOperations } from "../hooks/useDriverOperations";
 import type { TowTruckCancellation } from "../hooks/useTowTruckCancellation";
@@ -12,7 +13,8 @@ import { TowTruckRouteSection } from "./TowTruckRouteSection";
 import { TowTruckCustomerVehicleSection } from "./TowTruckCustomerVehicleSection";
 import { TowTruckFinanceSection } from "./TowTruckFinanceSection";
 import { TowTruckDriverDispatchSection } from "./TowTruckDriverDispatchSection";
-import { TowTruckAdditionalInfoSection } from "./TowTruckAdditionalInfoSection";
+import { TowTruckSupportingInformationSheet } from "./TowTruckSupportingInformationSheet";
+import { TowTruckDecisionEvidence } from "./TowTruckDecisionEvidence";
 import { TowTruckCancelOrderDialog } from "./TowTruckCancelOrderDialog";
 
 interface Props {
@@ -48,8 +50,9 @@ export function TowTruckIntraCityWorkspace({
   onAssignmentBusyChange,
   onAccountDirtyChange,
 }: Props) {
+  const { t } = useTranslation();
   return (
-    <>
+    <div className="tow-order-layout">
       {/* Header */}
       <TowTruckWorkspaceHeader
         order={order}
@@ -65,21 +68,30 @@ export function TowTruckIntraCityWorkspace({
       <TowTruckOperationalSummary
         order={order}
         removalHistory={operations.removalHistory}
+        stale={stale}
       />
 
-      {/* 2-Column Responsive Operational Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Primary Column (Route & Driver Dispatch) */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <TowTruckRouteSection
-            origin={order.origin}
-            destination={order.destination}
-            sameLocations={order.sameLocations}
-            isInterCity={order.isInterCity}
-            routeSummary={order.routeSummary}
-            intercityDetails={order.intercityDetails}
-          />
+      {/* The first screen contains actionable evidence and exactly one real action owner.
+          Full details remain accessible below without dominating initial scanning. */}
+      <div className="tow-p4r-priority">
+        <div className="tow-p4r-priority-evidence">
+          <TowTruckDecisionEvidence order={order} />
+          {Boolean(order.notes?.trim()) && (
+            <section className="tow-p4r-unclassified-notes" aria-label={t("towTruck.notes")}>
+              <h3>{t("towTruck.notes")}</h3>
+              <p>{order.notes}</p>
+            </section>
+          )}
+          <TowTruckSupportingInformationSheet order={order} />
+        </div>
 
+        {/* Existing dispatch handlers, journals and mutation guards are mounted ONCE. */}
+        <section
+          id="tow-order-action"
+          className="tow-p4r-priority-action"
+          tabIndex={-1}
+          aria-label={t("towTruck.p4rActionWorkspace")}
+        >
           <TowTruckDriverDispatchSection
             order={order}
             stale={stale}
@@ -88,15 +100,29 @@ export function TowTruckIntraCityWorkspace({
             onAssignmentBusyChange={onAssignmentBusyChange}
             onAccountDirtyChange={onAccountDirtyChange}
           />
-        </div>
+        </section>
+      </div>
 
-        {/* Secondary Column (Customer, Vehicle, Finances, Notes) */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+      {/* Full read-only record: one explicit disclosure, not a stack of default-open cards.
+          Required confirmation evidence remains inside the unchanged action owner. */}
+      <details className="tow-p4r-full-record" id="tow-order-record">
+        <summary>
+          <span>{t("towTruck.p4rFullRecord")}</span>
+          <small>{t("towTruck.p4rFullRecordHint")}</small>
+        </summary>
+        <div className="tow-p4r-record-sections">
+          <TowTruckRouteSection
+            origin={order.origin}
+            destination={order.destination}
+            sameLocations={order.sameLocations}
+            isInterCity={order.isInterCity}
+            routeSummary={order.routeSummary}
+            intercityDetails={order.intercityDetails}
+          />
           <TowTruckCustomerVehicleSection order={order} />
           <TowTruckFinanceSection order={order} />
-          <TowTruckAdditionalInfoSection order={order} />
         </div>
-      </div>
+      </details>
 
       {/* Cancellation Confirmation Dialog */}
       <TowTruckCancelOrderDialog
@@ -105,6 +131,6 @@ export function TowTruckIntraCityWorkspace({
         onOpenChange={setCancelDialogOpen}
         cancellation={cancellation}
       />
-    </>
+    </div>
   );
 }

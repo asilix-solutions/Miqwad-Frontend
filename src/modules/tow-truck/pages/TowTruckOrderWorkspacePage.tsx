@@ -18,6 +18,7 @@ import { TowTruckIntraCityWorkspace } from "../components/TowTruckIntraCityWorks
 import { TowTruckUnknownServiceFallback } from "../components/TowTruckUnknownServiceFallback";
 import { readFailureMessage } from "../lib/assignmentFeedback";
 import { isArabicLanguage } from "@modules/vehicles/lib/modelLocalization";
+import { queueReturnDestination, readQueueReturn } from "../lib/queueContinuity";
 import "../towTruck.css";
 
 function WorkspaceLoading() {
@@ -93,18 +94,12 @@ export function TowTruckOrderWorkspacePage() {
 
   const handleBackToQueue = () => {
     if (busy) return;
-    const fromQueue = (location.state as { fromQueue?: string } | null)?.fromQueue;
-    if (fromQueue) {
-      if (fromQueue.startsWith("/")) {
-        navigate(fromQueue);
-      } else if (fromQueue.startsWith("?")) {
-        navigate(`/admin/tow-truck${fromQueue}`);
-      } else {
-        navigate(fromQueue);
-      }
-    } else {
-      navigate("/admin/tow-truck");
-    }
+    // fromQueue is legacy-compatible, but may never redirect outside a real queue route.
+    const destination = queueReturnDestination(location.state);
+    navigate(destination, {
+      replace: true,
+      state: { towQueueReturn: readQueueReturn(location.state), focusQueueHeading: true },
+    });
   };
 
   const handleRefresh = () => {
