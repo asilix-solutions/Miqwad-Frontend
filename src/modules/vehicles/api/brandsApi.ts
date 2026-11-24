@@ -73,15 +73,18 @@ export const brandsApi = {
     return adaptRawBrand(unwrap(data));
   },
 
-  create: async (name: string, image?: File | Blob | string | null): Promise<Brand> => {
-    const { data } = await apiClient.post<ApiEnvelope<RawBrand>>("/Brands", adaptBrandToWritePayload(name, image));
+  create: async (name: string, image?: File): Promise<Brand> => {
+    const { data } = await apiClient.post<ApiEnvelope<RawBrand>>("/Brands", adaptBrandToWritePayload(name, image), {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return adaptRawBrand(unwrap(data));
   },
 
-  update: async (id: number, name: string, image?: File | Blob | string | null): Promise<void> => {
+  update: async (id: number, name: string, image?: File): Promise<void> => {
     const { status, data } = await apiClient.put<ApiEnvelope<RawBrand> | "">(
       `/Brands/${id}`,
       adaptBrandToWritePayload(name, image),
+      { headers: { "Content-Type": "multipart/form-data" } },
     );
     unwrapVoid(status, data);
   },

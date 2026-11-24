@@ -2115,7 +2115,10 @@ const ar = {
       },
       form: {
         name: "الاسم",
-        image: "الصورة (رابط)",
+        image: "شعار الماركة",
+        imageHint: "اختر رمز الماركة وحده؛ يظهر اسمها أسفل الصورة.",
+        invalidImage: "اختر صورة PNG أو JPEG أو WebP أو GIF.",
+        tooLarge: "الحد الأقصى لحجم الشعار 5 ميجابايت.",
       },
       deleteConfirm: {
         title: "حذف الماركة",
@@ -5716,7 +5719,10 @@ const en: typeof ar = {
       },
       form: {
         name: "Name",
-        image: "Image (URL)",
+        image: "Brand logo",
+        imageHint: "Choose the logo mark alone. The card displays the brand name separately.",
+        invalidImage: "Choose a PNG, JPEG, WebP or GIF image.",
+        tooLarge: "The logo must be 5 MB or smaller.",
       },
       deleteConfirm: {
         title: "Delete Brand",

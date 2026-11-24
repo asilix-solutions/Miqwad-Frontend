@@ -118,10 +118,10 @@ export function adaptModelsPage(raw: RawPage<RawModel>, brandId: number): Pagina
 }
 
 /** Builds the create/update multipart request body for a brand, matching the verified live backend contract (`Name`, optional `ImageFile`). */
-export function adaptBrandToWritePayload(name: string, image?: File | Blob | string | null): FormData {
+export function adaptBrandToWritePayload(name: string, image?: File): FormData {
   const formData = new FormData();
   formData.append("Name", name);
-  if (image instanceof Blob) {
+  if (image) {
     formData.append("ImageFile", image);
   }
   return formData;

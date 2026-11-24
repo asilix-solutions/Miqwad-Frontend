@@ -1,8 +1,7 @@
 /**
  * @file BrandFormDialog.tsx
  * @description Create/edit dialog for the real-backend `/api/Brands`
- * resource — single Arabic name + optional image URL (backend accepts a
- * plain `image` string field, not a file upload).
+ * resource — brand name and optional logo file.
  */
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -40,6 +39,7 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
 
   const {
     register,
+    setValue,
     handleSubmit,
     reset,
     formState: { errors },
@@ -47,33 +47,20 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
     resolver: zodResolver(brandSchema),
     defaultValues: {
       name: "",
-      image: "",
     },
   });
 
   useEffect(() => {
-    if (open) {
-      if (mode === "edit" && brand) {
-        reset({
-          name: brand.name,
-          image: brand.image ?? "",
-        });
-      } else {
-        reset({
-          name: "",
-          image: "",
-        });
-      }
-    }
+    if (open) reset({ name: mode === "edit" ? brand?.name ?? "" : "" });
   }, [open, mode, brand, reset]);
 
   const onSubmit = async (data: BrandFormValues) => {
     try {
       if (mode === "create") {
-        await createMutation.mutateAsync({ name: data.name, image: data.image || null });
+        await createMutation.mutateAsync({ name: data.name, image: data.image });
         toast.success(t("superAdmin.brands.success.created"));
       } else if (mode === "edit" && brand) {
-        await updateMutation.mutateAsync({ id: brand.id, name: data.name, image: data.image || null });
+        await updateMutation.mutateAsync({ id: brand.id, name: data.name, image: data.image });
         toast.success(t("superAdmin.brands.success.updated"));
       }
       onOpenChange(false);
@@ -103,9 +90,22 @@ export function BrandFormDialog({ mode, brand, open, onOpenChange }: Props) {
 
           <div className="space-y-2">
             <Label htmlFor="image">{t("superAdmin.brands.form.image")}</Label>
-            <Input id="image" dir="ltr" className="text-left" {...register("image")} disabled={isPending} />
+            <Input
+              id="image"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              disabled={isPending}
+              aria-describedby={errors.image ? "brand-logo-hint brand-logo-error" : "brand-logo-hint"}
+              aria-invalid={Boolean(errors.image)}
+              onChange={(event) =>
+                setValue("image", event.target.files?.[0], { shouldValidate: true })
+              }
+            />
+            <p id="brand-logo-hint" className="text-xs text-muted-foreground">
+              {t("superAdmin.brands.form.imageHint")}
+            </p>
             {errors.image && (
-              <p className="text-sm text-danger-500">{t(errors.image.message as string)}</p>
+              <p id="brand-logo-error" role="alert" className="text-sm text-danger-500">{t(errors.image.message as string)}</p>
             )}
           </div>
 
