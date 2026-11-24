@@ -353,7 +353,7 @@ export function useAdminBrandsQuery() {
 export function useCreateBrandMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ name, image }: { name: string; image?: string | null }) => brandsApi.create(name, image),
+    mutationFn: ({ name, image }: { name: string; image?: File }) => brandsApi.create(name, image),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: brandKeys.all });
     },
@@ -363,7 +363,7 @@ export function useCreateBrandMutation() {
 export function useUpdateBrandMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, name, image }: { id: number; name: string; image?: string | null }) =>
+    mutationFn: ({ id, name, image }: { id: number; name: string; image?: File }) =>
       brandsApi.update(id, name, image),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: brandKeys.all });

@@ -73,13 +73,17 @@ export type CityFormValues = z.infer<typeof citySchema>;
 export { createCitySchema, type CreateCityFormValues, type CreateCityParsedValues } from "./citySchema";
 
 
-/** Schema used by the admin brand create/edit dialog — real backend, single name + optional image URL. */
+/** Schema used by the admin brand create/edit dialog — real backend, single name + optional logo file. */
 export const brandSchema = z.object({
   name: z
     .string()
     .min(1, { message: "common.requiredField" })
     .max(150),
-  image: z.string().max(500).optional().or(z.literal("")),
+  image: z
+    .file()
+    .mime(["image/png", "image/jpeg", "image/webp", "image/gif"], "superAdmin.brands.form.invalidImage")
+    .max(5 * 1024 * 1024, "superAdmin.brands.form.tooLarge")
+    .optional(),
 });
 
 export type BrandFormValues = z.infer<typeof brandSchema>;
