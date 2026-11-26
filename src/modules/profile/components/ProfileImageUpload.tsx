@@ -14,7 +14,7 @@
  * for local-only data-URL previews (products form); this one talks to the
  * real /api/profile/image endpoint and must not be conflated with it.
  */
-import { useRef, useState, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@shared/components/ui/toastContext";
@@ -26,12 +26,13 @@ import {
   useDeleteProfileImage,
 } from "../hooks/useProfileImage";
 
-const MAX_SIZE_MB = 8;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_SIZE_MB = 5;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
 export interface ProfileImageUploadProps {
-  /** Single-letter fallback rendered when no image exists. */
-  fallbackInitial: string;
+  /** Fallback content rendered when no image exists. */
+  fallbackInitial: ReactNode;
 }
 
 export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps) {
@@ -40,6 +41,7 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
+  const [failedUrl, setFailedUrl] = useState<string>();
   const imageQuery = useProfileImageQuery();
   const uploadMutation = useUploadProfileImage();
   const deleteMutation = useDeleteProfileImage();
@@ -50,7 +52,7 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
   const handleFile = (file: File) => {
     setLocalError(null);
 
-    if (!file.type.startsWith("image/")) {
+    if (!IMAGE_TYPES.includes(file.type)) {
       setLocalError(t("accountProfile.image.errors.invalidType"));
       return;
     }
@@ -82,13 +84,20 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
     return <ProviderSkeleton variant="circle" width={64} height={64} />;
   }
 
-  const displayError = localError ?? (imageQuery.isError ? t("accountProfile.image.loadFailed") : undefined);
+  const loadFailed = imageQuery.isError || Boolean(imageUrl && failedUrl === imageUrl);
+  const displayError = localError ?? (loadFailed ? t("accountProfile.image.loadFailed") : undefined);
 
   return (
     <div className="flex flex-col gap-1.5">
       <div className="group relative h-16 w-16 shrink-0 overflow-hidden rounded-full shadow-[var(--shadow-provider-sm)]">
-        {imageUrl ? (
-          <img src={imageUrl} alt="" aria-hidden className="h-full w-full object-cover" />
+        {imageUrl && imageUrl !== failedUrl ? (
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden
+            className="h-full w-full object-cover"
+            onError={() => setFailedUrl(imageUrl)}
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[var(--color-brand-orange)] text-2xl font-semibold text-white">
             {fallbackInitial}
@@ -103,6 +112,8 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
           className={cn(
             "absolute inset-0 flex items-center justify-center",
             "bg-[var(--color-ink-body)]/40 opacity-0",
+            "[@media(hover:none)]:items-end [@media(hover:none)]:justify-start [@media(hover:none)]:p-1",
+            "[@media(hover:none)]:bg-transparent [@media(hover:none)]:opacity-100",
             "transition-opacity duration-[var(--dur-fast)]",
             "group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none",
             "disabled:cursor-not-allowed",
@@ -111,7 +122,7 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
           {isBusy ? (
             <Loader2 className="h-5 w-5 animate-spin text-white" aria-hidden />
           ) : (
-            <Camera className="h-5 w-5 text-white" aria-hidden />
+            <Camera className="h-5 w-5 rounded-full bg-[var(--color-ink-body)]/70 p-0.5 text-white" aria-hidden />
           )}
         </button>
 
@@ -130,7 +141,7 @@ export function ProfileImageUpload({ fallbackInitial }: ProfileImageUploadProps)
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_TYPES.join(",")}
         onChange={handleInputChange}
         className="hidden"
         tabIndex={-1}

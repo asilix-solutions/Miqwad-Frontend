@@ -840,6 +840,7 @@ const ar = {
       },
     },
     image: {
+      workshopPhoto: "صورة الورشة",
       change: "تغيير الصورة الشخصية",
       remove: "حذف الصورة الشخصية",
       uploadSuccess: "تم تحديث الصورة الشخصية بنجاح",
@@ -848,7 +849,7 @@ const ar = {
       removeFailed: "تعذّر حذف الصورة الشخصية",
       loadFailed: "تعذّر تحميل الصورة الشخصية",
       errors: {
-        invalidType: "الملف يجب أن يكون صورة",
+        invalidType: "اختر صورة JPEG أو PNG أو GIF أو WebP.",
         tooLarge: "حجم الصورة يجب ألا يتجاوز {{size}} ميجابايت",
       },
     },
@@ -4435,6 +4436,7 @@ const en: typeof ar = {
       },
     },
     image: {
+      workshopPhoto: "Workshop photo",
       change: "Change profile photo",
       remove: "Remove profile photo",
       uploadSuccess: "Profile photo updated successfully",
@@ -4443,7 +4445,7 @@ const en: typeof ar = {
       removeFailed: "Failed to remove profile photo",
       loadFailed: "Failed to load profile photo",
       errors: {
-        invalidType: "The file must be an image",
+        invalidType: "Choose a JPEG, PNG, GIF or WebP image.",
         tooLarge: "Image size must not exceed {{size}} MB",
       },
     },
