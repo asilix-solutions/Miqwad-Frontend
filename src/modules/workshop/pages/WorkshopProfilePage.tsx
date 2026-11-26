@@ -148,6 +148,22 @@ function SafeImage({ src, alt, className, fallback, ariaHidden }: SafeImageProps
 
 export function WorkshopProfilePage() {
   const { t } = useTranslation();
+
+  return (
+    <div className="space-y-6">
+      <ProviderCard>
+        <h2 className="mb-3 text-sm font-semibold text-[var(--color-ink-body)]">
+          {t("accountProfile.image.workshopPhoto")}
+        </h2>
+        <ProfileImageUpload fallbackInitial={<Wrench className="h-6 w-6" aria-hidden />} />
+      </ProviderCard>
+      <WorkshopProfileDetails />
+    </div>
+  );
+}
+
+function WorkshopProfileDetails() {
+  const { t } = useTranslation();
   const toast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const initializedRef = useRef(false);
@@ -483,12 +499,6 @@ export function WorkshopProfilePage() {
             {!isEditing && profile.isVerified && (
               <ProviderStatusPill tone="success" label={t("providers.profile.verified")} />
             )}
-          </div>
-
-          <div className="mb-4">
-            <ProfileImageUpload
-              fallbackInitial={profile.companyName?.trim().charAt(0) || "م"}
-            />
           </div>
 
           {isEditing ? (
